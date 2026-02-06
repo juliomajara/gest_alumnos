@@ -28,7 +28,7 @@ $page_title = 'Dashboard | Gestor de Alumnos';
         <a class="nav-link" href="#">Empresas</a>
         <a class="nav-link" href="#">Prácticas</a>
         <a class="nav-link" href="#">Profesores</a>
-        <a class="nav-link" href="#">Calendario</a>
+        <a class="nav-link" href="calendario.php">Calendario</a>
         <a class="nav-link" href="#">Configuración</a>
       </nav>
       <div class="sidebar-footer">
@@ -46,7 +46,7 @@ $page_title = 'Dashboard | Gestor de Alumnos';
         </div>
         <div class="header-actions">
           <button class="ghost-button" type="button">Exportar</button>
-          <button class="primary-button" type="button">Crear reporte</button>
+          <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
         </div>
       </header>
 
@@ -143,5 +143,23 @@ $page_title = 'Dashboard | Gestor de Alumnos';
       </section>
     </main>
   </div>
+  <script>
+    const editToggle = document.getElementById('editToggle');
+    const storageKey = 'calendarEditMode';
+    let editMode = localStorage.getItem(storageKey) === 'true';
+
+    const updateEditButton = () => {
+      editToggle.classList.toggle('is-active', editMode);
+      editToggle.textContent = editMode ? 'Modo edición activado' : 'Modo edición';
+    };
+
+    updateEditButton();
+
+    editToggle.addEventListener('click', () => {
+      editMode = !editMode;
+      localStorage.setItem(storageKey, String(editMode));
+      updateEditButton();
+    });
+  </script>
 </body>
 </html>
