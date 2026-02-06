@@ -93,10 +93,7 @@ $active_page = 'calendario';
         <div>
           <h1>Calendario del curso <?php echo htmlspecialchars($course_label, ENT_QUOTES, 'UTF-8'); ?></h1>
           <p class="subheading">Selecciona un curso escolar y marca los días no lectivos para ajustar el calendario.</p>
-        </div>
-        <div class="header-actions calendar-header-actions">
-          <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
-          <form method="get">
+          <form method="get" class="calendar-select-form">
             <label class="calendar-select">
               <span class="calendar-select-label">Curso</span>
               <select name="curso_id" onchange="this.form.submit()">
@@ -109,6 +106,9 @@ $active_page = 'calendario';
             </label>
           </form>
         </div>
+        <div class="header-actions">
+          <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
+        </div>
       </header>
 
       <section class="calendar-grid">
@@ -119,9 +119,8 @@ $active_page = 'calendario';
             $first_day = new DateTime(sprintf('%04d-%02d-01', $month_year, $month_number));
             $days_in_month = (int) $first_day->format('t');
             $weekday_start = (int) $first_day->format('N');
-            $is_summer = in_array($month_number, [7, 8], true);
           ?>
-          <article class="calendar-month<?php echo $is_summer ? ' month-summer' : ''; ?>">
+          <article class="calendar-month">
             <header class="calendar-month-title">
               <h3><?php echo htmlspecialchars($month['mes'], ENT_QUOTES, 'UTF-8'); ?></h3>
               <span><?php echo $month_year; ?></span>
