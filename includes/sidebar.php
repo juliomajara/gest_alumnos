@@ -9,7 +9,7 @@ $nav_items = [
   [
     'key' => 'alumnos',
     'label' => 'Alumnos',
-    'href' => '#',
+    'href' => 'alumnos.php',
   ],
   [
     'key' => 'empresas',
