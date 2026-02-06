@@ -20,21 +20,22 @@
 body {
   background: var(--bg);
   color: var(--text);
+  font-size: 0.9rem;
 }
 
 .page {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 240px 1fr;
   min-height: 100vh;
 }
 
 .sidebar {
   background: var(--card);
-  padding: 32px 24px;
+  padding: 24px 18px;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .brand {
@@ -44,9 +45,9 @@ body {
 }
 
 .brand-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #b8c7ff, var(--primary));
   display: grid;
   place-items: center;
@@ -66,15 +67,15 @@ body {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .nav-link {
   text-decoration: none;
   color: var(--muted);
   font-weight: 500;
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
   transition: all 0.2s ease;
 }
 
@@ -87,20 +88,20 @@ body {
 .sidebar-footer {
   margin-top: auto;
   background: #f1f4ff;
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .content {
-  padding: 40px 48px;
+  padding: 28px 32px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .topbar {
@@ -109,8 +110,8 @@ body {
   align-items: center;
   gap: 24px;
   background: var(--card);
-  border-radius: 18px;
-  padding: 16px 20px;
+  border-radius: 14px;
+  padding: 12px 16px;
   box-shadow: var(--shadow);
 }
 
@@ -126,8 +127,8 @@ body {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 12px 16px 12px 44px;
-  font-size: 0.95rem;
+  padding: 10px 14px 10px 40px;
+  font-size: 0.9rem;
   background: #f9faff;
   color: var(--text);
 }
@@ -160,7 +161,7 @@ body {
 .header {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
+  gap: 16px;
   align-items: flex-start;
 }
 
@@ -172,8 +173,8 @@ body {
 
 .subheading {
   color: var(--muted);
-  margin-top: 10px;
-  max-width: 520px;
+  margin-top: 8px;
+  max-width: 480px;
 }
 
 .header-actions {
@@ -184,9 +185,10 @@ body {
 .primary-button,
 .ghost-button {
   border: none;
-  border-radius: 12px;
-  padding: 10px 16px;
+  border-radius: 10px;
+  padding: 8px 12px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -210,9 +212,10 @@ body {
 
 .edit-toggle {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 16px;
+  border-radius: 10px;
+  padding: 8px 12px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   background: #e5e9f5;
   color: #5f6f99;
@@ -228,23 +231,23 @@ body {
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+  gap: 16px;
 }
 
 .card {
   background: var(--card);
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: 16px;
+  padding: 16px;
   box-shadow: var(--shadow);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .card h2 {
-  font-size: 2rem;
-  margin: 8px 0;
+  font-size: 1.6rem;
+  margin: 6px 0;
 }
 
 .card-label {
@@ -254,14 +257,14 @@ body {
 
 .card-note {
   color: #5f6f99;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .card-badge {
   background: #eef2ff;
   color: #4965f0;
-  font-size: 0.75rem;
-  padding: 6px 10px;
+  font-size: 0.7rem;
+  padding: 4px 8px;
   border-radius: 999px;
   font-weight: 600;
 }
@@ -272,50 +275,50 @@ body {
 
 .calendar-panel {
   background: var(--card);
-  border-radius: 24px;
-  padding: 28px;
+  border-radius: 18px;
+  padding: 20px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
 }
 
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
 }
 
 .calendar-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 14px;
 }
 
 .month-card {
-  border-radius: 18px;
+  border-radius: 14px;
   border: 1px solid var(--border);
-  padding: 16px;
+  padding: 12px;
   background: #fdfdff;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .month-header h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 .month-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--muted);
   text-align: center;
 }
@@ -323,17 +326,17 @@ body {
 .month-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .day {
-  height: 32px;
-  width: 32px;
-  border-radius: 12px;
+  height: 28px;
+  width: 28px;
+  border-radius: 8px;
   border: 1px solid #e8ecf7;
   display: grid;
   place-items: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text);
   background: #fff;
 }
@@ -366,15 +369,15 @@ body {
 .calendar-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  font-size: 0.85rem;
+  gap: 12px;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
 .legend-dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   margin-right: 8px;
   vertical-align: middle;
@@ -399,17 +402,17 @@ body {
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
+  gap: 18px;
 }
 
 .panel {
   background: var(--card);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 16px;
+  padding: 18px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .panel-header p {
@@ -419,15 +422,15 @@ body {
 
 .panel-grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .panel-link {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  border-radius: 14px;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: #f5f7ff;
   color: var(--text);
   text-decoration: none;
@@ -443,29 +446,29 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .activity li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
-  border-radius: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: #f7f9ff;
 }
 
 .activity p {
   color: var(--muted);
-  font-size: 0.85rem;
-  margin-top: 6px;
+  font-size: 0.8rem;
+  margin-top: 4px;
 }
 
 .status {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   background: #e4f7ec;
   color: #2d8a57;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: 999px;
   font-weight: 600;
 }
@@ -476,45 +479,45 @@ body {
 }
 
 .calendar-controls {
-  gap: 16px;
+  gap: 12px;
 }
 
 .calendar-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .calendar-select {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   font-weight: 600;
   color: var(--text);
 }
 
 .calendar-select-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--muted);
 }
 
 .calendar-select select {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 0.95rem;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
   background: #fff;
-  min-width: 200px;
+  min-width: 180px;
 }
 
 .calendar-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .legend-item {
@@ -524,8 +527,8 @@ body {
 }
 
 .legend-dot {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   display: inline-block;
   background: #e5e9f5;
@@ -545,18 +548,18 @@ body {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
 }
 
 .calendar-month {
   background: var(--card);
-  border-radius: 20px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 14px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .calendar-month-title {
@@ -568,14 +571,14 @@ body {
 
 .calendar-month-title span {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .calendar-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 4px;
+  font-size: 0.7rem;
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 600;
@@ -584,16 +587,16 @@ body {
 .calendar-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .calendar-day {
   border: 1px solid var(--border);
-  border-radius: 10px;
-  min-height: 36px;
+  border-radius: 8px;
+  min-height: 30px;
   background: #fff;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text);
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
