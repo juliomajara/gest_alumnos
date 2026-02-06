@@ -185,6 +185,7 @@ body {
 
 .calendar-select-form {
   margin-top: 12px;
+  max-width: 260px;
 }
 .primary-button,
 .ghost-button {
@@ -500,6 +501,7 @@ body {
   gap: 4px;
   font-weight: 600;
   color: var(--text);
+  width: 100%;
 }
 
 .calendar-select-label {
@@ -513,7 +515,8 @@ body {
   padding: 8px 10px;
   font-size: 0.9rem;
   background: #fff;
-  min-width: 180px;
+  min-width: 0;
+  width: 100%;
 }
 
 .calendar-legend {
