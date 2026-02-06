@@ -95,7 +95,6 @@ $active_page = 'calendario';
           <p class="subheading">Selecciona un curso escolar y marca los días no lectivos para ajustar el calendario.</p>
           <form method="get" class="calendar-select-form">
             <label class="calendar-select">
-              <span class="calendar-select-label">Curso</span>
               <select name="curso_id" onchange="this.form.submit()">
                 <?php foreach ($courses as $course): ?>
                   <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
