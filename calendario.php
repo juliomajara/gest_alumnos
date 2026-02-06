@@ -91,21 +91,11 @@ $active_page = 'calendario';
     <main class="content">
       <header class="header">
         <div>
-          <p class="eyebrow">Calendario académico</p>
           <h1>Calendario del curso <?php echo htmlspecialchars($course_label, ENT_QUOTES, 'UTF-8'); ?></h1>
           <p class="subheading">Selecciona un curso escolar y marca los días no lectivos para ajustar el calendario.</p>
         </div>
-        <div class="header-actions">
+        <div class="header-actions calendar-header-actions">
           <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
-        </div>
-      </header>
-
-      <section class="panel calendar-controls">
-        <div class="calendar-toolbar">
-          <div>
-            <h3>Curso escolar</h3>
-            <p>Elige el curso del que quieres ver el calendario completo.</p>
-          </div>
           <form method="get">
             <label class="calendar-select">
               <span class="calendar-select-label">Curso</span>
@@ -119,12 +109,7 @@ $active_page = 'calendario';
             </label>
           </form>
         </div>
-        <div class="calendar-legend">
-          <span class="legend-item"><span class="legend-dot weekend"></span> Fines de semana</span>
-          <span class="legend-item"><span class="legend-dot no-lectivo"></span> No lectivo</span>
-          <span class="legend-item"><span class="legend-dot summer"></span> Julio y agosto</span>
-        </div>
-      </section>
+      </header>
 
       <section class="calendar-grid">
         <?php foreach ($months as $month): ?>
