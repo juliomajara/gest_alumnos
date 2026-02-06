@@ -38,6 +38,22 @@ $page_title = 'Dashboard | Gestor de Alumnos';
     </aside>
 
     <main class="content">
+      <div class="topbar">
+        <div class="topbar-search">
+          <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+            </svg>
+          </span>
+          <input type="search" placeholder="Buscar alumnos, empresas, profesores" aria-label="Buscar alumnos, empresas y profesores">
+        </div>
+        <div class="topbar-actions">
+          <button class="ghost-button" type="button">Notificaciones</button>
+          <button class="primary-button" type="button">Nuevo registro</button>
+        </div>
+      </div>
+
       <header class="header">
         <div>
           <p class="eyebrow">Bienvenido</p>
@@ -53,36 +69,114 @@ $page_title = 'Dashboard | Gestor de Alumnos';
       <section class="cards">
         <article class="card highlight">
           <div>
-            <p class="card-label">Registros totales</p>
-            <h2>2,450</h2>
-            <p class="card-note">+12% este mes</p>
+            <p class="card-label">Alumnos totales</p>
+            <h2>1,284</h2>
+            <p class="card-note">Censo completo actualizado</p>
           </div>
-          <span class="card-badge">Resumen</span>
+          <span class="card-badge">General</span>
         </article>
         <article class="card">
           <div>
-            <p class="card-label">Alumnos activos</p>
-            <h2>1,835</h2>
-            <p class="card-note">98% asistencia media</p>
+            <p class="card-label">Alumnos de tutoría</p>
+            <h2>326</h2>
+            <p class="card-note">Seguimiento con tutores asignados</p>
           </div>
-          <span class="card-badge">Academia</span>
+          <span class="card-badge">Tutorías</span>
         </article>
         <article class="card">
           <div>
-            <p class="card-label">Cursos abiertos</p>
-            <h2>42</h2>
-            <p class="card-note">15 nuevos esta semana</p>
+            <p class="card-label">Alumnos con empresa asignada</p>
+            <h2>892</h2>
+            <p class="card-note">Prácticas gestionadas activamente</p>
           </div>
-          <span class="card-badge">Oferta</span>
+          <span class="card-badge">Empresas</span>
         </article>
-        <article class="card">
+      </section>
+
+      <section class="calendar-panel">
+        <div class="calendar-header">
           <div>
-            <p class="card-label">Solicitudes pendientes</p>
-            <h2>18</h2>
-            <p class="card-note">Requieren revisión</p>
+            <p class="eyebrow">Calendario</p>
+            <h2>Planificación de 4 meses</h2>
+            <p class="subheading">Consulta hitos, tutorías y entregas previstas en el calendario.</p>
           </div>
-          <span class="card-badge">Alertas</span>
-        </article>
+          <div class="calendar-actions">
+            <button class="ghost-button" type="button">Hoy</button>
+          </div>
+        </div>
+        <div class="calendar-grid">
+          <article class="month-card">
+            <div class="month-header">
+              <h3>Febrero de 2026</h3>
+            </div>
+            <div class="month-weekdays">
+              <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+            </div>
+            <div class="month-days">
+              <span class="day muted">26</span><span class="day muted">27</span><span class="day muted">28</span><span class="day muted">29</span><span class="day muted">30</span><span class="day muted">31</span>
+              <span class="day weekend">1</span>
+              <span class="day">2</span><span class="day">3</span><span class="day">4</span><span class="day">5</span><span class="day today">6</span><span class="day">7</span><span class="day weekend">8</span>
+              <span class="day">9</span><span class="day">10</span><span class="day">11</span><span class="day">12</span><span class="day">13</span><span class="day event">14</span><span class="day weekend">15</span>
+              <span class="day">16</span><span class="day">17</span><span class="day">18</span><span class="day">19</span><span class="day">20</span><span class="day event">21</span><span class="day weekend">22</span>
+              <span class="day">23</span><span class="day">24</span><span class="day">25</span><span class="day">26</span><span class="day">27</span><span class="day">28</span><span class="day weekend muted">1</span>
+            </div>
+          </article>
+          <article class="month-card">
+            <div class="month-header">
+              <h3>Marzo de 2026</h3>
+            </div>
+            <div class="month-weekdays">
+              <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+            </div>
+            <div class="month-days">
+              <span class="day muted">23</span><span class="day muted">24</span><span class="day muted">25</span><span class="day muted">26</span><span class="day muted">27</span><span class="day muted">28</span>
+              <span class="day weekend">1</span>
+              <span class="day">2</span><span class="day">3</span><span class="day">4</span><span class="day">5</span><span class="day">6</span><span class="day event">7</span><span class="day weekend">8</span>
+              <span class="day">9</span><span class="day">10</span><span class="day">11</span><span class="day">12</span><span class="day">13</span><span class="day event">14</span><span class="day weekend">15</span>
+              <span class="day">16</span><span class="day">17</span><span class="day">18</span><span class="day">19</span><span class="day">20</span><span class="day event">21</span><span class="day weekend">22</span>
+              <span class="day">23</span><span class="day">24</span><span class="day">25</span><span class="day">26</span><span class="day event">27</span><span class="day">28</span><span class="day weekend">29</span>
+              <span class="day">30</span><span class="day">31</span><span class="day muted">1</span><span class="day muted">2</span><span class="day muted">3</span><span class="day muted">4</span><span class="day weekend muted">5</span>
+            </div>
+          </article>
+          <article class="month-card">
+            <div class="month-header">
+              <h3>Abril de 2026</h3>
+            </div>
+            <div class="month-weekdays">
+              <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+            </div>
+            <div class="month-days">
+              <span class="day muted">30</span><span class="day muted">31</span>
+              <span class="day">1</span><span class="day">2</span><span class="day">3</span><span class="day">4</span><span class="day weekend">5</span>
+              <span class="day">6</span><span class="day event">7</span><span class="day">8</span><span class="day">9</span><span class="day">10</span><span class="day">11</span><span class="day weekend">12</span>
+              <span class="day">13</span><span class="day">14</span><span class="day">15</span><span class="day event">16</span><span class="day">17</span><span class="day">18</span><span class="day weekend">19</span>
+              <span class="day">20</span><span class="day">21</span><span class="day">22</span><span class="day">23</span><span class="day">24</span><span class="day event">25</span><span class="day weekend">26</span>
+              <span class="day">27</span><span class="day">28</span><span class="day">29</span><span class="day">30</span><span class="day muted">1</span><span class="day muted">2</span><span class="day weekend muted">3</span>
+            </div>
+          </article>
+          <article class="month-card">
+            <div class="month-header">
+              <h3>Mayo de 2026</h3>
+            </div>
+            <div class="month-weekdays">
+              <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+            </div>
+            <div class="month-days">
+              <span class="day muted">27</span><span class="day muted">28</span><span class="day muted">29</span><span class="day muted">30</span>
+              <span class="day">1</span><span class="day">2</span><span class="day weekend">3</span>
+              <span class="day">4</span><span class="day">5</span><span class="day">6</span><span class="day">7</span><span class="day">8</span><span class="day event">9</span><span class="day weekend">10</span>
+              <span class="day">11</span><span class="day">12</span><span class="day">13</span><span class="day">14</span><span class="day event">15</span><span class="day">16</span><span class="day weekend">17</span>
+              <span class="day">18</span><span class="day">19</span><span class="day">20</span><span class="day">21</span><span class="day">22</span><span class="day event">23</span><span class="day weekend">24</span>
+              <span class="day">25</span><span class="day">26</span><span class="day">27</span><span class="day">28</span><span class="day">29</span><span class="day">30</span><span class="day weekend">31</span>
+            </div>
+          </article>
+        </div>
+        <div class="calendar-legend">
+          <span><span class="legend-dot today"></span>Hoy</span>
+          <span><span class="legend-dot event"></span>Día con hitos</span>
+          <span><span class="legend-dot weekend"></span>Fin de semana</span>
+          <span><span class="legend-dot muted"></span>Otro mes</span>
+        </div>
       </section>
 
       <section class="grid">
