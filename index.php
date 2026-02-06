@@ -25,9 +25,10 @@ $page_title = 'Dashboard | Gestor de Alumnos';
       <nav class="nav">
         <a class="nav-link active" href="index.php">Dashboard</a>
         <a class="nav-link" href="#">Alumnos</a>
-        <a class="nav-link" href="#">Cursos</a>
+        <a class="nav-link" href="#">Empresas</a>
+        <a class="nav-link" href="#">Prácticas</a>
         <a class="nav-link" href="#">Profesores</a>
-        <a class="nav-link" href="#">Evaluaciones</a>
+        <a class="nav-link" href="#">Calendario</a>
         <a class="nav-link" href="#">Configuración</a>
       </nav>
       <div class="sidebar-footer">
