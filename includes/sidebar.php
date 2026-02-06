@@ -34,7 +34,7 @@ $nav_items = [
   [
     'key' => 'configuracion',
     'label' => 'Configuración',
-    'href' => '#',
+    'href' => 'configuracion.php',
   ],
 ];
 ?>
