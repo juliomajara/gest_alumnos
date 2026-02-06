@@ -1,5 +1,6 @@
 <?php
 $page_title = 'Dashboard | Gestor de Alumnos';
+$active_page = 'dashboard';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -14,28 +15,7 @@ $page_title = 'Dashboard | Gestor de Alumnos';
 </head>
 <body>
   <div class="page">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-icon">GA</div>
-        <div>
-          <p class="brand-title">Gestor de Alumnos</p>
-          <p class="brand-subtitle">Panel central</p>
-        </div>
-      </div>
-      <nav class="nav">
-        <a class="nav-link active" href="index.php">Dashboard</a>
-        <a class="nav-link" href="#">Alumnos</a>
-        <a class="nav-link" href="#">Empresas</a>
-        <a class="nav-link" href="#">Prácticas</a>
-        <a class="nav-link" href="#">Profesores</a>
-        <a class="nav-link" href="calendario.php">Calendario</a>
-        <a class="nav-link" href="#">Configuración</a>
-      </nav>
-      <div class="sidebar-footer">
-        <p>Acceso rápido a todos los módulos.</p>
-        <button class="primary-button" type="button">Nueva entrada</button>
-      </div>
-    </aside>
+    <?php require __DIR__ . '/includes/sidebar.php'; ?>
 
     <main class="content">
       <div class="topbar">
