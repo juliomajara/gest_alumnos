@@ -182,6 +182,11 @@ body {
   gap: 12px;
 }
 
+.calendar-header-actions {
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 .primary-button,
 .ghost-button {
   border: none;
@@ -582,6 +587,7 @@ body {
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 600;
+  text-align: center;
 }
 
 .calendar-days {
