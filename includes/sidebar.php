@@ -56,8 +56,4 @@ $nav_items = [
       </a>
     <?php endforeach; ?>
   </nav>
-  <div class="sidebar-footer">
-    <p>Acceso rápido a todos los módulos.</p>
-    <button class="primary-button" type="button">Nueva entrada</button>
-  </div>
 </aside>
