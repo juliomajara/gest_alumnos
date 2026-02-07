@@ -15,6 +15,11 @@ $students_stmt = $pdo->prepare(
     a.apellido2,
     a.nombre,
     a.telefono,
+    a.email_personal,
+    a.nia,
+    a.dni,
+    a.seg_soc,
+    a.fecha_nacimiento,
     g.grupo,
     pe.estado AS practicas_estado
   FROM alumnos a
@@ -70,7 +75,7 @@ $active_page = 'alumnos';
       <section class="panel">
         <div class="panel-header">
           <h3>Listado de alumnos</h3>
-          <p>Grupo, apellidos y nombre, teléfono y estado actual de prácticas.</p>
+          <p>Grupo, apellidos y nombre, datos de contacto, identificadores y estado actual de prácticas.</p>
         </div>
 
         <div class="panel-grid">
@@ -80,6 +85,11 @@ $active_page = 'alumnos';
                 <th>Grupo</th>
                 <th>Apellidos y nombre</th>
                 <th>Teléfono</th>
+                <th>Correo personal</th>
+                <th>NIA</th>
+                <th>DNI</th>
+                <th>Nº Seg. Social</th>
+                <th>Fecha nacimiento</th>
                 <th>Prácticas</th>
                 <th>Detalle</th>
               </tr>
@@ -87,7 +97,7 @@ $active_page = 'alumnos';
             <tbody>
               <?php if (!$students): ?>
                 <tr>
-                  <td colspan="5">No hay alumnos registrados.</td>
+                  <td colspan="10">No hay alumnos registrados.</td>
                 </tr>
               <?php else: ?>
                 <?php foreach ($students as $student): ?>
@@ -96,6 +106,13 @@ $active_page = 'alumnos';
                     $nombre_completo = sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre']);
                     $grupo = $student['grupo'] ?: 'Sin grupo';
                     $telefono = $student['telefono'] ?: 'No disponible';
+                    $email_personal = $student['email_personal'] ?: 'No disponible';
+                    $nia = $student['nia'] ?: 'No disponible';
+                    $dni = $student['dni'] ?: 'No disponible';
+                    $seg_soc = $student['seg_soc'] ?: 'No disponible';
+                    $fecha_nacimiento = $student['fecha_nacimiento']
+                      ? (new DateTime($student['fecha_nacimiento']))->format('d/m/Y')
+                      : 'No disponible';
                     $estado = $student['practicas_estado'] ?: 'Sin estado';
                     $detalle_url = sprintf('alumno_detalle.php?id_alumno=%d', (int) $student['id_alumno']);
                   ?>
@@ -103,6 +120,11 @@ $active_page = 'alumnos';
                     <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
                     <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
                     <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($email_personal, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($nia, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($seg_soc, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($fecha_nacimiento, ENT_QUOTES, 'UTF-8'); ?></td>
                     <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
                     <td>
                       <a href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">Ver ficha</a>
