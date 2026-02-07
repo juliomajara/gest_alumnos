@@ -92,6 +92,58 @@ $students_stmt = $pdo->prepare(
 $students_stmt->execute($params);
 $students = $students_stmt->fetchAll();
 
+function render_student_rows(array $students): string
+{
+  ob_start();
+  if (!$students): ?>
+    <tr>
+      <td colspan="10">No hay alumnos para los filtros seleccionados.</td>
+    </tr>
+  <?php else: ?>
+    <?php foreach ($students as $student): ?>
+      <?php
+        $apellido2 = $student['apellido2'] ? ' ' . $student['apellido2'] : '';
+        $nombre_completo = sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre']);
+        $grupo = $student['grupo'] ?: 'Sin grupo';
+        $telefono = $student['telefono'] ?: 'No disponible';
+        $email_personal = $student['correo_personal'] ?: 'No disponible';
+        $nia = $student['nia'] ?: 'No disponible';
+        $dni = $student['dni'] ?: 'No disponible';
+        $seg_soc = $student['seg_soc'] ?: 'No disponible';
+        $fecha_nacimiento = $student['fecha_nacimiento']
+          ? (new DateTime($student['fecha_nacimiento']))->format('d/m/Y')
+          : 'No disponible';
+        $estado = $student['practicas_estado'] ?: 'Sin estado';
+        $detalle_url = sprintf('alumno_detalle.php?id_alumno=%d', (int) $student['id_alumno']);
+      ?>
+      <tr>
+        <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($email_personal, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($nia, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($seg_soc, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($fecha_nacimiento, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <a href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">Ver ficha</a>
+        </td>
+      </tr>
+    <?php endforeach; ?>
+  <?php endif;
+
+  return ob_get_clean();
+}
+
+$rows_html = render_student_rows($students);
+
+if (($_GET['ajax'] ?? '') === '1') {
+  header('Content-Type: text/html; charset=UTF-8');
+  echo $rows_html;
+  exit;
+}
+
 $page_title = 'Alumnos | Gestor de Alumnos';
 $active_page = 'alumnos';
 ?>
@@ -148,7 +200,6 @@ $active_page = 'alumnos';
               <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
             </select>
           </label>
-          <button class="primary-button" type="submit">Aplicar filtros</button>
         </div>
       </form>
 
@@ -175,48 +226,64 @@ $active_page = 'alumnos';
               </tr>
             </thead>
             <tbody>
-              <?php if (!$students): ?>
-                <tr>
-                  <td colspan="10">No hay alumnos para los filtros seleccionados.</td>
-                </tr>
-              <?php else: ?>
-                <?php foreach ($students as $student): ?>
-                  <?php
-                    $apellido2 = $student['apellido2'] ? ' ' . $student['apellido2'] : '';
-                    $nombre_completo = sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre']);
-                    $grupo = $student['grupo'] ?: 'Sin grupo';
-                    $telefono = $student['telefono'] ?: 'No disponible';
-                    $email_personal = $student['correo_personal'] ?: 'No disponible';
-                    $nia = $student['nia'] ?: 'No disponible';
-                    $dni = $student['dni'] ?: 'No disponible';
-                    $seg_soc = $student['seg_soc'] ?: 'No disponible';
-                    $fecha_nacimiento = $student['fecha_nacimiento']
-                      ? (new DateTime($student['fecha_nacimiento']))->format('d/m/Y')
-                      : 'No disponible';
-                    $estado = $student['practicas_estado'] ?: 'Sin estado';
-                    $detalle_url = sprintf('alumno_detalle.php?id_alumno=%d', (int) $student['id_alumno']);
-                  ?>
-                  <tr>
-                    <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($email_personal, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($nia, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($seg_soc, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($fecha_nacimiento, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td>
-                      <a href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">Ver ficha</a>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              <?php endif; ?>
+              <?php echo $rows_html; ?>
             </tbody>
           </table>
         </div>
       </section>
     </main>
   </div>
+  <script>
+    const form = document.querySelector('.topbar');
+    const searchInput = document.querySelector('input[name="q"]');
+    const groupSelect = document.querySelector('select[name="grupo_id"]');
+    const tableBody = document.querySelector('tbody');
+    let debounceTimer = null;
+
+    const updateResults = (withDebounce = false) => {
+      if (debounceTimer) {
+        window.clearTimeout(debounceTimer);
+      }
+
+      const run = () => {
+        const params = new URLSearchParams(new FormData(form));
+        const urlParams = new URLSearchParams(params);
+
+        params.set('ajax', '1');
+
+        fetch(`alumnos.php?${params.toString()}`, {
+          headers: {
+            'X-Requested-With': 'fetch'
+          }
+        })
+          .then((response) => response.text())
+          .then((html) => {
+            tableBody.innerHTML = html;
+            history.replaceState(null, '', `?${urlParams.toString()}`);
+          })
+          .catch(() => {});
+      };
+
+      if (withDebounce) {
+        debounceTimer = window.setTimeout(run, 250);
+        return;
+      }
+
+      run();
+    };
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      updateResults();
+    });
+
+    searchInput.addEventListener('input', () => {
+      updateResults(true);
+    });
+
+    groupSelect.addEventListener('change', () => {
+      updateResults();
+    });
+  </script>
 </body>
 </html>
