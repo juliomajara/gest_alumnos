@@ -42,13 +42,13 @@ $students_stmt = $pdo->prepare(
   LEFT JOIN (
     SELECT id_entidad, MIN(telefono) AS telefono
     FROM telefonos
-    WHERE entidad_tipo = 'alumno'
+    WHERE entidad_tipo = \'alumno\'
     GROUP BY id_entidad
   ) t ON t.id_entidad = a.id_alumno
   LEFT JOIN (
     SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
     FROM correos
-    WHERE entidad_tipo = 'alumno'
+    WHERE entidad_tipo = \'alumno\'
     GROUP BY id_entidad
   ) c ON c.id_entidad = a.id_alumno
   ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre'
