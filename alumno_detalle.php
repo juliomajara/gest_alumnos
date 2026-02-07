@@ -36,6 +36,26 @@ function format_bool(?int $value, string $fallback = 'No disponible'): string {
   return $value === 1 ? 'Sí' : 'No';
 }
 
+function pick_contact_value(array $items, string $value_key, array $preferred_labels): ?string {
+  foreach ($preferred_labels as $label) {
+    foreach ($items as $item) {
+      if (!isset($item['etiqueta'])) {
+        continue;
+      }
+      if (strtolower((string) $item['etiqueta']) === strtolower($label)) {
+        return $item[$value_key] ?? null;
+      }
+    }
+  }
+
+  if (!$items) {
+    return null;
+  }
+
+  $first = $items[0];
+  return $first[$value_key] ?? null;
+}
+
 $student = null;
 $course_entries = [];
 $modules = [];
@@ -195,6 +215,10 @@ if ($student) {
   $emails = $emails_stmt->fetchAll();
 }
 
+$telefono_principal = pick_contact_value($phones, 'telefono', ['principal', 'personal']);
+$correo_educamadrid = pick_contact_value($emails, 'direccion_correo', ['educamadrid', 'educa madrid', 'institucional']);
+$correo_personal = pick_contact_value($emails, 'direccion_correo', ['personal']);
+
 $apellido2 = $student && $student['apellido2'] ? ' ' . $student['apellido2'] : '';
 $nombre_completo = $student
   ? sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre'])
@@ -280,15 +304,15 @@ $dias_semana = [
                 </tr>
                 <tr>
                   <th>Teléfono</th>
-                  <td><?php echo htmlspecialchars(format_value($student['telefono']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></td>
                 </tr>
                 <tr>
                   <th>Email EducaMadrid</th>
-                  <td><?php echo htmlspecialchars(format_value($student['email_educamadrid']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td><?php echo htmlspecialchars(format_value($correo_educamadrid), ENT_QUOTES, 'UTF-8'); ?></td>
                 </tr>
                 <tr>
                   <th>Email personal</th>
-                  <td><?php echo htmlspecialchars(format_value($student['email_personal']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td><?php echo htmlspecialchars(format_value($correo_personal), ENT_QUOTES, 'UTF-8'); ?></td>
                 </tr>
                 <tr>
                   <th>Horas FFE aprobadas</th>
@@ -655,8 +679,8 @@ $dias_semana = [
 
         <section class="panel">
           <div class="panel-header">
-            <h3>Contactos adicionales</h3>
-            <p>Teléfonos y correos adicionales asociados al alumno.</p>
+            <h3>Contactos del alumno</h3>
+            <p>Teléfonos y correos asociados al alumno.</p>
           </div>
           <div class="panel-grid">
             <table>

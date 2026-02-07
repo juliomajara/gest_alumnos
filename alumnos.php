@@ -14,8 +14,8 @@ $students_stmt = $pdo->prepare(
     a.apellido1,
     a.apellido2,
     a.nombre,
-    a.telefono,
-    a.email_personal,
+    t.telefono,
+    c.direccion_correo AS correo_personal,
     a.nia,
     a.dni,
     a.seg_soc,
@@ -39,6 +39,18 @@ $students_stmt = $pdo->prepare(
   ) p ON p.id_alumno = a.id_alumno
   LEFT JOIN practicas_estados pe
     ON pe.id_practicas_estado = p.id_practicas_estado
+  LEFT JOIN (
+    SELECT id_entidad, MIN(telefono) AS telefono
+    FROM telefonos
+    WHERE entidad_tipo = 'alumno'
+    GROUP BY id_entidad
+  ) t ON t.id_entidad = a.id_alumno
+  LEFT JOIN (
+    SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+    FROM correos
+    WHERE entidad_tipo = 'alumno'
+    GROUP BY id_entidad
+  ) c ON c.id_entidad = a.id_alumno
   ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre'
 );
 
@@ -106,7 +118,7 @@ $active_page = 'alumnos';
                     $nombre_completo = sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre']);
                     $grupo = $student['grupo'] ?: 'Sin grupo';
                     $telefono = $student['telefono'] ?: 'No disponible';
-                    $email_personal = $student['email_personal'] ?: 'No disponible';
+                    $email_personal = $student['correo_personal'] ?: 'No disponible';
                     $nia = $student['nia'] ?: 'No disponible';
                     $dni = $student['dni'] ?: 'No disponible';
                     $seg_soc = $student['seg_soc'] ?: 'No disponible';
