@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 06-02-2026 a las 23:17:10
+-- Tiempo de generación: 07-02-2026 a las 11:51:23
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -36,9 +36,6 @@ CREATE TABLE `alumnos` (
   `apellido2` varchar(60) DEFAULT NULL,
   `nombre` varchar(60) NOT NULL,
   `fecha_nacimiento` date DEFAULT NULL,
-  `telefono` varchar(20) DEFAULT NULL,
-  `email_educamadrid` varchar(150) DEFAULT NULL,
-  `email_personal` varchar(150) DEFAULT NULL,
   `horas_ffe_aprobadas` smallint(5) UNSIGNED DEFAULT NULL,
   `id_provincia` int(10) UNSIGNED DEFAULT NULL,
   `id_localidad` int(10) UNSIGNED DEFAULT NULL,
