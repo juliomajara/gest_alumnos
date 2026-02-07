@@ -27,8 +27,10 @@ $filters = [];
 $params = ['active_course_id' => $active_course_id];
 
 if ($search_term !== '') {
-  $filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term OR a.apellido2 LIKE :search_term)';
+  $filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term1 OR a.apellido2 LIKE :search_term2)';
   $params['search_term'] = '%' . $search_term . '%';
+  $params['search_term1'] = '%' . $search_term . '%';
+  $params['search_term2'] = '%' . $search_term . '%';
 }
 
 if ($selected_group !== '') {
