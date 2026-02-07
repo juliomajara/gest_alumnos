@@ -8,6 +8,40 @@ $pdo = db();
 $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
 $active_course_id = $active_course_id ? (int) $active_course_id : 0;
 
+$search_term = trim((string) ($_GET['q'] ?? ''));
+$selected_group = (string) ($_GET['grupo_id'] ?? '');
+$selected_group = $selected_group === '' ? '' : $selected_group;
+
+$groups_stmt = $pdo->prepare(
+  'SELECT DISTINCT g.id_grupo, g.grupo
+   FROM grupos g
+   INNER JOIN alumno_curso ac
+    ON ac.id_grupo = g.id_grupo
+    AND ac.id_curso_escolar = :active_course_id
+   ORDER BY g.grupo'
+);
+$groups_stmt->execute(['active_course_id' => $active_course_id]);
+$groups = $groups_stmt->fetchAll();
+
+$filters = [];
+$params = ['active_course_id' => $active_course_id];
+
+if ($search_term !== '') {
+  $filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term OR a.apellido2 LIKE :search_term)';
+  $params['search_term'] = '%' . $search_term . '%';
+}
+
+if ($selected_group !== '') {
+  if ($selected_group === 'sin') {
+    $filters[] = 'g.id_grupo IS NULL';
+  } elseif (ctype_digit($selected_group)) {
+    $filters[] = 'g.id_grupo = :group_id';
+    $params['group_id'] = (int) $selected_group;
+  }
+}
+
+$where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
+
 $students_stmt = $pdo->prepare(
   'SELECT
     a.id_alumno,
@@ -51,10 +85,11 @@ $students_stmt = $pdo->prepare(
     WHERE entidad_tipo = \'alumno\'
     GROUP BY id_entidad
   ) c ON c.id_entidad = a.id_alumno
+  ' . $where_clause . '
   ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre'
 );
 
-$students_stmt->execute(['active_course_id' => $active_course_id]);
+$students_stmt->execute($params);
 $students = $students_stmt->fetchAll();
 
 $page_title = 'Alumnos | Gestor de Alumnos';
@@ -84,6 +119,39 @@ $active_page = 'alumnos';
         </div>
       </header>
 
+      <form class="topbar" method="get">
+        <div class="topbar-search">
+          <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+            </svg>
+          </span>
+          <input
+            type="search"
+            name="q"
+            placeholder="Buscar por nombre o apellidos"
+            aria-label="Buscar por nombre o apellidos"
+            value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+          >
+        </div>
+        <div class="topbar-actions">
+          <label class="calendar-select">
+            <span class="calendar-select-label">Grupo</span>
+            <select name="grupo_id">
+              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Todos los grupos</option>
+              <?php foreach ($groups as $group): ?>
+                <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+              <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
+            </select>
+          </label>
+          <button class="primary-button" type="submit">Aplicar filtros</button>
+        </div>
+      </form>
+
       <section class="panel">
         <div class="panel-header">
           <h3>Listado de alumnos</h3>
@@ -109,7 +177,7 @@ $active_page = 'alumnos';
             <tbody>
               <?php if (!$students): ?>
                 <tr>
-                  <td colspan="10">No hay alumnos registrados.</td>
+                  <td colspan="10">No hay alumnos para los filtros seleccionados.</td>
                 </tr>
               <?php else: ?>
                 <?php foreach ($students as $student): ?>
