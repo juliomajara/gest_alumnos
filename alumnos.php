@@ -167,7 +167,6 @@ $active_page = 'alumnos';
     <main class="content">
       <header class="header">
         <div>
-          <p class="eyebrow">Listado</p>
           <h1>Alumnos</h1>
           <p class="subheading">Consulta la información básica del alumnado y accede al detalle completo.</p>
         </div>
@@ -191,7 +190,6 @@ $active_page = 'alumnos';
         </div>
         <div class="topbar-actions">
           <label class="calendar-select">
-            <span class="calendar-select-label">Grupo</span>
             <select name="grupo_id">
               <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Todos los grupos</option>
               <?php foreach ($groups as $group): ?>
