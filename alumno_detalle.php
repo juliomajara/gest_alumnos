@@ -274,151 +274,183 @@ $dias_semana = [
           </div>
         </section>
       <?php else: ?>
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Datos personales y contacto</h3>
-            <p>Información básica de identificación y contacto del alumno.</p>
-          </div>
-          <div class="panel-grid">
-            <table>
-              <tbody>
-                <tr>
-                  <th>ID alumno</th>
-                  <td><?php echo htmlspecialchars(format_value($student['id_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>NIA</th>
-                  <td><?php echo htmlspecialchars(format_value($student['nia']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>DNI</th>
-                  <td><?php echo htmlspecialchars(format_value($student['dni']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Nº Seguridad Social</th>
-                  <td><?php echo htmlspecialchars(format_value($student['seg_soc']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Fecha de nacimiento</th>
-                  <td><?php echo htmlspecialchars(format_date($student['fecha_nacimiento']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Teléfono</th>
-                  <td><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Email EducaMadrid</th>
-                  <td><?php echo htmlspecialchars(format_value($correo_educamadrid), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Email personal</th>
-                  <td><?php echo htmlspecialchars(format_value($correo_personal), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Horas FFE aprobadas</th>
-                  <td><?php echo htmlspecialchars(format_value($student['horas_ffe_aprobadas']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Repite curso</th>
-                  <td><?php echo htmlspecialchars(format_bool($student['repite_curso']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Datos personales y contacto</h3>
+              <p>Información básica de identificación y contacto del alumno.</p>
+            </div>
+            <div class="panel-grid">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>ID alumno</th>
+                    <td><?php echo htmlspecialchars(format_value($student['id_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>NIA</th>
+                    <td><?php echo htmlspecialchars(format_value($student['nia']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>DNI</th>
+                    <td><?php echo htmlspecialchars(format_value($student['dni']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Nº Seguridad Social</th>
+                    <td><?php echo htmlspecialchars(format_value($student['seg_soc']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Fecha de nacimiento</th>
+                    <td><?php echo htmlspecialchars(format_date($student['fecha_nacimiento']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Teléfono principal</th>
+                    <td><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Email EducaMadrid</th>
+                    <td><?php echo htmlspecialchars(format_value($correo_educamadrid), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Email personal</th>
+                    <td><?php echo htmlspecialchars(format_value($correo_personal), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Teléfonos registrados</th>
+                    <td>
+                      <?php
+                        $telefono_items = [];
+                        foreach ($phones as $phone) {
+                          $etiqueta = format_value($phone['etiqueta'], '');
+                          $telefono_label = $etiqueta ? $etiqueta . ': ' : '';
+                          $telefono_items[] = $telefono_label . $phone['telefono'];
+                        }
+                      ?>
+                      <?php echo htmlspecialchars($telefono_items ? implode(' · ', $telefono_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Correos registrados</th>
+                    <td>
+                      <?php
+                        $correo_items = [];
+                        foreach ($emails as $email) {
+                          $etiqueta = format_value($email['etiqueta'], '');
+                          $correo_label = $etiqueta ? $etiqueta . ': ' : '';
+                          $correo_items[] = $correo_label . $email['direccion_correo'];
+                        }
+                      ?>
+                      <?php echo htmlspecialchars($correo_items ? implode(' · ', $correo_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Horas FFE aprobadas</th>
+                    <td><?php echo htmlspecialchars(format_value($student['horas_ffe_aprobadas']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Repite curso</th>
+                    <td><?php echo htmlspecialchars(format_bool($student['repite_curso']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Dirección y localización</h3>
-            <p>Provincia, localidad y código postal registrados para el alumno.</p>
-          </div>
-          <div class="panel-grid">
-            <table>
-              <tbody>
-                <tr>
-                  <th>Provincia</th>
-                  <td><?php echo htmlspecialchars(format_value($student['provincia']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Localidad</th>
-                  <td><?php echo htmlspecialchars(format_value($student['localidad']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Código postal</th>
-                  <td><?php echo htmlspecialchars(format_value($student['cp']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Tutores legales</h3>
+              <p>Datos de contacto de las personas tutoras asociadas al alumno.</p>
+            </div>
+            <div class="panel-grid">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Tutor/a 1</th>
+                    <td><?php echo htmlspecialchars(format_value($student['nombre_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Teléfono tutor/a 1</th>
+                    <td><?php echo htmlspecialchars(format_value($student['telefono_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Correo tutor/a 1</th>
+                    <td><?php echo htmlspecialchars(format_value($student['correo_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Tutor/a 2</th>
+                    <td><?php echo htmlspecialchars(format_value($student['nombre_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Teléfono tutor/a 2</th>
+                    <td><?php echo htmlspecialchars(format_value($student['telefono_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Correo tutor/a 2</th>
+                    <td><?php echo htmlspecialchars(format_value($student['correo_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
 
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Tutores legales</h3>
-            <p>Datos de contacto de las personas tutoras asociadas al alumno.</p>
-          </div>
-          <div class="panel-grid">
-            <table>
-              <tbody>
-                <tr>
-                  <th>Tutor/a 1</th>
-                  <td><?php echo htmlspecialchars(format_value($student['nombre_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Teléfono tutor/a 1</th>
-                  <td><?php echo htmlspecialchars(format_value($student['telefono_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Correo tutor/a 1</th>
-                  <td><?php echo htmlspecialchars(format_value($student['correo_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Tutor/a 2</th>
-                  <td><?php echo htmlspecialchars(format_value($student['nombre_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Teléfono tutor/a 2</th>
-                  <td><?php echo htmlspecialchars(format_value($student['telefono_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Correo tutor/a 2</th>
-                  <td><?php echo htmlspecialchars(format_value($student['correo_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Dirección y localización</h3>
+              <p>Provincia, localidad y código postal registrados para el alumno.</p>
+            </div>
+            <div class="panel-grid">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Provincia</th>
+                    <td><?php echo htmlspecialchars(format_value($student['provincia']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Localidad</th>
+                    <td><?php echo htmlspecialchars(format_value($student['localidad']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                  <tr>
+                    <th>Código postal</th>
+                    <td><?php echo htmlspecialchars(format_value($student['cp']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Faltas y observaciones</h3>
-            <p>Resumen de faltas acumuladas y comentarios del equipo docente.</p>
-          </div>
-          <div class="panel-grid">
-            <table>
-              <tbody>
-                <tr>
-                  <th>Faltas 10 días</th>
-                  <td>
-                    <?php echo htmlspecialchars(format_date($student['faltas_10_dia']), ENT_QUOTES, 'UTF-8'); ?>
-                    (<?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
-                  </td>
-                </tr>
-                <tr>
-                  <th>Faltas 15 días</th>
-                  <td>
-                    <?php echo htmlspecialchars(format_date($student['faltas_15_dia']), ENT_QUOTES, 'UTF-8'); ?>
-                    (<?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
-                  </td>
-                </tr>
-                <tr>
-                  <th>Comentarios</th>
-                  <td><?php echo htmlspecialchars(format_value($student['comentarios']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Faltas y observaciones</h3>
+              <p>Resumen de faltas acumuladas y comentarios del equipo docente.</p>
+            </div>
+            <div class="panel-grid">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Faltas 10 días</th>
+                    <td>
+                      <?php echo htmlspecialchars(format_date($student['faltas_10_dia']), ENT_QUOTES, 'UTF-8'); ?>
+                      (<?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Faltas 15 días</th>
+                    <td>
+                      <?php echo htmlspecialchars(format_date($student['faltas_15_dia']), ENT_QUOTES, 'UTF-8'); ?>
+                      (<?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Comentarios</th>
+                    <td><?php echo htmlspecialchars(format_value($student['comentarios']), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
 
         <section class="panel">
           <div class="panel-header">
@@ -556,7 +588,7 @@ $dias_semana = [
         <section class="panel">
           <div class="panel-header">
             <h3>Prácticas</h3>
-            <p>Empresas, fechas y estado de las prácticas del alumno.</p>
+            <p>Empresas, fechas, estado y horario de las prácticas del alumno.</p>
           </div>
           <div class="panel-grid">
             <table>
@@ -640,13 +672,6 @@ $dias_semana = [
               </tbody>
             </table>
           </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Horario de prácticas</h3>
-            <p>Distribución semanal de las prácticas asociadas al alumno.</p>
-          </div>
           <div class="panel-grid">
             <table>
               <thead>
@@ -669,46 +694,6 @@ $dias_semana = [
                       <td><?php echo htmlspecialchars($dias_semana[(int) $horario['dia_semana']] ?? 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars($horario['hora_entrada'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars($horario['hora_salida'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Contactos del alumno</h3>
-            <p>Teléfonos y correos asociados al alumno.</p>
-          </div>
-          <div class="panel-grid">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tipo</th>
-                  <th>Etiqueta</th>
-                  <th>Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!$phones && !$emails): ?>
-                  <tr>
-                    <td colspan="3">No hay contactos adicionales.</td>
-                  </tr>
-                <?php else: ?>
-                  <?php foreach ($phones as $phone): ?>
-                    <tr>
-                      <td>Teléfono</td>
-                      <td><?php echo htmlspecialchars(format_value($phone['etiqueta']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($phone['telefono'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                  <?php foreach ($emails as $email): ?>
-                    <tr>
-                      <td>Correo</td>
-                      <td><?php echo htmlspecialchars(format_value($email['etiqueta']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($email['direccion_correo'], ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
