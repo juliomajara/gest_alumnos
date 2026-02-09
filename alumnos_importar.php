@@ -118,10 +118,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               "INSERT INTO telefonos (entidad_tipo, id_entidad, telefono, etiqueta) VALUES ('alumno', :id_entidad, :telefono, 'Personal')"
             );
             $select_email = $pdo->prepare(
-              "SELECT id_correo FROM correos WHERE entidad_tipo = 'alumno' AND id_entidad = :id_entidad AND direccion_correo = :direccion_correo LIMIT 1"
+              "SELECT id_correo, direccion_correo FROM correos WHERE entidad_tipo = 'alumno' AND id_entidad = :id_entidad AND direccion_correo = :direccion_correo LIMIT 1"
             );
             $insert_email = $pdo->prepare(
               "INSERT INTO correos (entidad_tipo, id_entidad, direccion_correo, etiqueta) VALUES ('alumno', :id_entidad, :direccion_correo, 'Personal')"
+            );
+            $update_email = $pdo->prepare(
+              "UPDATE correos SET direccion_correo = :direccion_correo WHERE id_correo = :id_correo"
+            );
+            $update_student_emails = $pdo->prepare(
+              'UPDATE alumnos
+               SET correo_tutor1 = COALESCE(:correo_tutor1, correo_tutor1),
+                   correo_tutor2 = COALESCE(:correo_tutor2, correo_tutor2)
+               WHERE id_alumno = :id_alumno'
             );
             $select_alumno_curso = $pdo->prepare(
               'SELECT 1 FROM alumno_curso WHERE id_alumno = :id_alumno AND id_curso_escolar = :id_curso_escolar LIMIT 1'
@@ -253,10 +262,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
               }
 
+              if ($correo_tutor1 !== '' || $correo_tutor2 !== '') {
+                $update_student_emails->execute([
+                  'id_alumno' => $id_alumno,
+                  'correo_tutor1' => $correo_tutor1 !== '' ? $correo_tutor1 : null,
+                  'correo_tutor2' => $correo_tutor2 !== '' ? $correo_tutor2 : null,
+                ]);
+              }
+
               if ($correo_alumno !== '') {
                 $select_email->execute(['id_entidad' => $id_alumno, 'direccion_correo' => $correo_alumno]);
-                if (!$select_email->fetchColumn()) {
+                $existing_email = $select_email->fetch(PDO::FETCH_ASSOC);
+                if (!$existing_email) {
                   $insert_email->execute(['id_entidad' => $id_alumno, 'direccion_correo' => $correo_alumno]);
+                } elseif ($existing_email['direccion_correo'] !== $correo_alumno) {
+                  $update_email->execute([
+                    'id_correo' => $existing_email['id_correo'],
+                    'direccion_correo' => $correo_alumno,
+                  ]);
                 }
               }
 
