@@ -493,15 +493,15 @@ body {
   gap: 6px;
 }
 
-.teacher-table .is-row-editing .contact-text,
-.teacher-table .is-row-editing .name-text {
+.teacher-table.is-editing .is-row-editing .contact-text,
+.teacher-table.is-editing .is-row-editing .name-text {
   display: none;
 }
 
-.teacher-table .is-row-editing .contact-input,
-.teacher-table .is-row-editing .name-inputs,
-.teacher-table .is-row-editing .save-button,
-.teacher-table .is-row-editing .save-status {
+.teacher-table.is-editing .is-row-editing .contact-input,
+.teacher-table.is-editing .is-row-editing .name-inputs,
+.teacher-table.is-editing .is-row-editing .save-button,
+.teacher-table.is-editing .is-row-editing .save-status {
   display: block;
 }
 
