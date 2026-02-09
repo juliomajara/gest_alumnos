@@ -11,7 +11,10 @@ $active_course_id = $active_course_id ? (int) $active_course_id : 0;
 $search_term = trim((string) ($_GET['q'] ?? ''));
 
 $filters = [];
-$params = ['active_course_id' => $active_course_id];
+$params = [
+  'active_course_id_gt' => $active_course_id,
+  'active_course_id_mp' => $active_course_id,
+];
 
 if ($search_term !== '') {
   $filters[] = '(p.apellido1 LIKE :search_term OR p.apellido2 LIKE :search_term1 OR p.nombre LIKE :search_term2 OR p.dni LIKE :search_term3)';
@@ -52,7 +55,7 @@ $professors_stmt = $pdo->prepare(
            GROUP_CONCAT(DISTINCT g.grupo ORDER BY g.grupo SEPARATOR ", ") AS grupos_tutor
     FROM grupos_tutores gt
     INNER JOIN grupos g ON g.id_grupo = gt.id_grupo
-    WHERE gt.id_curso_escolar = :active_course_id
+    WHERE gt.id_curso_escolar = :active_course_id_gt
     GROUP BY gt.id_profesor
   ) gt ON gt.id_profesor = p.id_profesor
   LEFT JOIN (
@@ -64,7 +67,7 @@ $professors_stmt = $pdo->prepare(
            ) AS modulos
     FROM modulos_profesores mp
     INNER JOIN modulos m ON m.id_modulo = mp.id_modulo
-    WHERE mp.id_curso_escolar = :active_course_id
+    WHERE mp.id_curso_escolar = :active_course_id_mp
     GROUP BY mp.id_profesor
   ) mp ON mp.id_profesor = p.id_profesor
   ' . $where_clause . '
