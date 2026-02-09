@@ -11,7 +11,10 @@ $active_course_id = $active_course_id ? (int) $active_course_id : 0;
 $search_term = trim((string) ($_GET['q'] ?? ''));
 
 $filters = [];
-$params = ['active_course_id' => $active_course_id];
+$params = [
+  'active_course_id_tutores' => $active_course_id,
+  'active_course_id_modulos' => $active_course_id,
+];
 
 if ($search_term !== '') {
   $filters[] = '(p.nombre LIKE :search_term OR p.apellido1 LIKE :search_term1 OR p.apellido2 LIKE :search_term2 OR p.dni LIKE :search_term3)';
@@ -23,6 +26,7 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
+// Nota para evitar HY093 en PDO: no reutilizar el mismo nombre de placeholder en múltiples JOIN.
 $teachers_stmt = $pdo->prepare(
   'SELECT
     p.id_profesor,
@@ -43,11 +47,11 @@ $teachers_stmt = $pdo->prepare(
   FROM profesores p
   LEFT JOIN grupos_tutores gt
     ON gt.id_profesor = p.id_profesor
-    AND gt.id_curso_escolar = :active_course_id
+    AND gt.id_curso_escolar = :active_course_id_tutores
   LEFT JOIN grupos g ON g.id_grupo = gt.id_grupo
   LEFT JOIN modulos_profesores mp
     ON mp.id_profesor = p.id_profesor
-    AND mp.id_curso_escolar = :active_course_id
+    AND mp.id_curso_escolar = :active_course_id_modulos
   LEFT JOIN modulos m ON m.id_modulo = mp.id_modulo
   ' . $where_clause . '
   GROUP BY p.id_profesor, p.apellido1, p.apellido2, p.nombre, p.dni
