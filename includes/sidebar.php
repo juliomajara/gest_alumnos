@@ -26,11 +26,6 @@ $nav_items = [
     'label' => 'Calendario',
     'href' => 'calendario.php',
   ],
-  [
-    'key' => 'configuracion',
-    'label' => 'Configuración',
-    'href' => 'configuracion.php',
-  ],
 ];
 ?>
 <aside class="sidebar">
