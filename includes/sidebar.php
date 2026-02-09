@@ -24,7 +24,7 @@ $nav_items = [
   [
     'key' => 'profesores',
     'label' => 'Profesores',
-    'href' => '#',
+    'href' => 'profesores.php',
   ],
   [
     'key' => 'calendario',
