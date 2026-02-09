@@ -26,8 +26,7 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
-$professors_stmt = $pdo->prepare(
-  'SELECT
+$professors_sql = 'SELECT
     p.id_profesor,
     p.apellido1,
     p.apellido2,
@@ -76,10 +75,15 @@ $professors_stmt = $pdo->prepare(
       AND g.id_curso <=> m.id_curso
     WHERE mp.id_curso_escolar = :active_course_id_mp
     GROUP BY mp.id_profesor
-  ) mp ON mp.id_profesor = p.id_profesor
-  ' . $where_clause . '
-  ORDER BY p.apellido1, p.apellido2, p.nombre'
-);
+  ) mp ON mp.id_profesor = p.id_profesor';
+
+if ($where_clause !== '') {
+  $professors_sql .= "\n  " . $where_clause;
+}
+
+$professors_sql .= "\n  ORDER BY p.apellido1, p.apellido2, p.nombre";
+
+$professors_stmt = $pdo->prepare($professors_sql);
 
 $professors_stmt->execute($params);
 $professors = $professors_stmt->fetchAll();
