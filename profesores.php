@@ -510,6 +510,15 @@ $active_page = 'profesores';
         return;
       }
 
+      if (!editMode) {
+        toggle.checked = false;
+        const row = toggle.closest('tr');
+        if (row) {
+          row.classList.remove('is-row-editing');
+        }
+        return;
+      }
+
       const row = toggle.closest('tr');
       if (!row) {
         return;
