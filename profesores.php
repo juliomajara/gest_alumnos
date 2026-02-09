@@ -61,12 +61,19 @@ $professors_stmt = $pdo->prepare(
   LEFT JOIN (
     SELECT mp.id_profesor,
            GROUP_CONCAT(
-             DISTINCT TRIM(CONCAT(m.materia_general, " ", m.materia_propia))
-             ORDER BY m.materia_general, m.materia_propia
+             DISTINCT CASE
+               WHEN g.grupo IS NULL OR g.grupo = '' THEN m.abreviatura
+               ELSE CONCAT(m.abreviatura, ' (', g.grupo, ')')
+             END
+             ORDER BY m.abreviatura, g.grupo
              SEPARATOR ", "
            ) AS modulos
     FROM modulos_profesores mp
     INNER JOIN modulos m ON m.id_modulo = mp.id_modulo
+    LEFT JOIN grupos g
+      ON g.id_nivel <=> m.id_nivel
+      AND g.id_ciclo <=> m.id_ciclo
+      AND g.id_curso <=> m.id_curso
     WHERE mp.id_curso_escolar = :active_course_id_mp
     GROUP BY mp.id_profesor
   ) mp ON mp.id_profesor = p.id_profesor
