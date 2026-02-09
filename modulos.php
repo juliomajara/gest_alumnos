@@ -23,23 +23,17 @@ $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
 $modules_stmt = $pdo->prepare(
   'SELECT
-    m.id_modulo,
-    m.id_nivel,
-    n.nivel,
     m.id_ciclo,
-    c.ciclo,
     c.abreviatura AS ciclo_abreviatura,
     m.id_curso,
     cu.curso,
     m.codigo,
     m.abreviatura,
-    m.tipo,
     m.materia_general,
     m.materia_propia,
     m.horas_semanales,
     m.horas_totales
   FROM modulos m
-  LEFT JOIN niveles n ON n.id_nivel = m.id_nivel
   LEFT JOIN ciclos c ON c.id_ciclo = m.id_ciclo
   LEFT JOIN cursos cu ON cu.id_curso = m.id_curso
   ' . $where_clause . '
@@ -54,54 +48,31 @@ function render_module_rows(array $modules): string
   ob_start();
   if (!$modules): ?>
     <tr>
-      <td colspan="11">No hay módulos para los filtros seleccionados.</td>
+      <td colspan="6">No hay módulos para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($modules as $module): ?>
       <?php
-        $id_modulo = $module['id_modulo'] ? (string) $module['id_modulo'] : 'No disponible';
-        $nivel = 'No disponible';
-        if ($module['id_nivel']) {
-          $nivel_nombre = $module['nivel'] ?: 'No disponible';
-          $nivel = sprintf('%d · %s', (int) $module['id_nivel'], $nivel_nombre);
-        }
-
         $ciclo = 'No disponible';
-        if ($module['id_ciclo']) {
-          $ciclo_label = trim((string) $module['ciclo_abreviatura']);
-          if ($module['ciclo']) {
-            $ciclo_label = $ciclo_label !== ''
-              ? $ciclo_label . ' - ' . $module['ciclo']
-              : $module['ciclo'];
-          }
-          $ciclo_label = $ciclo_label !== '' ? $ciclo_label : 'No disponible';
-          $ciclo = sprintf('%d · %s', (int) $module['id_ciclo'], $ciclo_label);
-        }
-
-        $curso = 'No disponible';
-        if ($module['id_curso']) {
-          $curso_nombre = $module['curso'] ?: 'No disponible';
-          $curso = sprintf('%d · %s', (int) $module['id_curso'], $curso_nombre);
+        $ciclo_abreviatura = trim((string) ($module['ciclo_abreviatura'] ?? ''));
+        $curso_numero = trim((string) ($module['curso'] ?? ''));
+        if ($ciclo_abreviatura !== '' || $curso_numero !== '') {
+          $ciclo = $ciclo_abreviatura . $curso_numero;
         }
 
         $codigo = $module['codigo'] ?: 'No disponible';
         $abreviatura = $module['abreviatura'] ?: 'No disponible';
-        $tipo = $module['tipo'] ?: 'No disponible';
-        $materia_general = $module['materia_general'] ?: 'No disponible';
-        $materia_propia = $module['materia_propia'] ?: 'No disponible';
+        $materia_propia = trim((string) ($module['materia_propia'] ?? ''));
+        $materia_general = trim((string) ($module['materia_general'] ?? ''));
+        $nombre = $materia_propia !== '' ? $materia_propia : ($materia_general !== '' ? $materia_general : 'No disponible');
         $horas_semanales = $module['horas_semanales'] !== null ? (string) $module['horas_semanales'] : 'No disponible';
         $horas_totales = $module['horas_totales'] !== null ? (string) $module['horas_totales'] : 'No disponible';
       ?>
       <tr>
-        <td><?php echo htmlspecialchars($id_modulo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($nivel, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($curso, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($materia_general, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($materia_propia, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
@@ -174,15 +145,10 @@ $active_page = 'modulos';
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Nivel</th>
                 <th>Ciclo</th>
-                <th>Curso</th>
                 <th>Código</th>
                 <th>Abreviatura</th>
-                <th>Tipo</th>
-                <th>Materia general</th>
-                <th>Materia propia</th>
+                <th>Nombre</th>
                 <th>Horas semanales</th>
                 <th>Horas totales</th>
               </tr>
