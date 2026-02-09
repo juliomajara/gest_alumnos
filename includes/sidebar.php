@@ -12,6 +12,11 @@ $nav_items = [
     'href' => 'alumnos.php',
   ],
   [
+    'key' => 'modulos',
+    'label' => 'Módulos',
+    'href' => 'modulos.php',
+  ],
+  [
     'key' => 'empresas',
     'label' => 'Empresas',
     'href' => 'empresas.php',
