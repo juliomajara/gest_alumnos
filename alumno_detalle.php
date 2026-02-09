@@ -230,7 +230,16 @@ if ($student) {
 }
 
 $telefono_principal = pick_contact_value($phones, 'telefono', ['principal', 'personal']);
-$correo_educamadrid = pick_contact_value($emails, 'direccion_correo', ['educamadrid', 'educa madrid', 'institucional']);
+$correo_educamadrid = null;
+foreach ($emails as $email) {
+  if (!isset($email['etiqueta'])) {
+    continue;
+  }
+  if (strtolower((string) $email['etiqueta']) === 'educamadrid') {
+    $correo_educamadrid = $email['direccion_correo'] ?? null;
+    break;
+  }
+}
 $correo_personal = pick_contact_value($emails, 'direccion_correo', ['personal']);
 $grupo_actual = null;
 if ($course_entries) {
