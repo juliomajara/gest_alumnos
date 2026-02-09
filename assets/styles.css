@@ -430,6 +430,14 @@ body {
   gap: 10px;
 }
 
+.panel-table-aligned th {
+  text-align: right;
+}
+
+.panel-table-aligned td {
+  text-align: left;
+}
+
 .panel-link {
   display: flex;
   flex-direction: column;

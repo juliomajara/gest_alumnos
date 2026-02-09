@@ -310,7 +310,7 @@ $dias_semana = [
               <p>Información básica de identificación y contacto del alumno.</p>
             </div>
             <div class="panel-grid">
-              <table>
+              <table class="panel-table-aligned">
                 <tbody>
                   <tr>
                     <th>NIA</th>
@@ -394,7 +394,7 @@ $dias_semana = [
               <p>Datos de contacto de las personas tutoras asociadas al alumno.</p>
             </div>
             <div class="panel-grid">
-              <table>
+              <table class="panel-table-aligned">
                 <tbody>
                   <tr>
                     <th>Tutor/a 1</th>
@@ -433,7 +433,7 @@ $dias_semana = [
               <p>Provincia, localidad y código postal registrados para el alumno.</p>
             </div>
             <div class="panel-grid">
-              <table>
+              <table class="panel-table-aligned">
                 <tbody>
                   <tr>
                     <th>Provincia</th>
@@ -458,7 +458,7 @@ $dias_semana = [
               <p>Resumen de faltas acumuladas y comentarios del equipo docente.</p>
             </div>
             <div class="panel-grid">
-              <table>
+              <table class="panel-table-aligned">
                 <tbody>
                   <tr>
                     <th>Faltas 10 días</th>
