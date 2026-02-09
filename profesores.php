@@ -26,7 +26,8 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
-$professors_sql = 'SELECT
+$professors_sql = <<<'SQL'
+  SELECT
     p.id_profesor,
     p.apellido1,
     p.apellido2,
@@ -40,13 +41,13 @@ $professors_sql = 'SELECT
   LEFT JOIN (
     SELECT id_entidad, MIN(telefono) AS telefono
     FROM telefonos
-    WHERE entidad_tipo = \'profesor\'
+    WHERE entidad_tipo = 'profesor'
     GROUP BY id_entidad
   ) t ON t.id_entidad = p.id_profesor
   LEFT JOIN (
     SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
     FROM correos
-    WHERE entidad_tipo = \'profesor\'
+    WHERE entidad_tipo = 'profesor'
     GROUP BY id_entidad
   ) c ON c.id_entidad = p.id_profesor
   LEFT JOIN (
@@ -75,7 +76,8 @@ $professors_sql = 'SELECT
       AND g.id_curso <=> m.id_curso
     WHERE mp.id_curso_escolar = :active_course_id_mp
     GROUP BY mp.id_profesor
-  ) mp ON mp.id_profesor = p.id_profesor';
+  ) mp ON mp.id_profesor = p.id_profesor
+SQL;
 
 if ($where_clause !== '') {
   $professors_sql .= "\n  " . $where_clause;
