@@ -153,11 +153,6 @@ function render_professor_rows(array $professors, array $modules_by_professor): 
         $grupos_tutor = $professor['grupos_tutor'] ?: 'Sin grupo';
         $modules = $modules_by_professor[$professor['id_profesor']] ?? [];
         $module_entries = [];
-
-<<<<<<< Updated upstream
-        $module_index = 0;
-=======
->>>>>>> Stashed changes
         foreach ($modules as $module) {
           $abreviatura = $module['abreviatura'] ?: 'No disponible';
           $materia_general = $module['materia_general'] ?: 'No disponible';
@@ -170,22 +165,6 @@ function render_professor_rows(array $professors, array $modules_by_professor): 
           $horas_totales = $module['horas_totales'] !== null ? (string) $module['horas_totales'] : 'No disponible';
           $grupo = $module['grupo'];
           $grupo_label = ($grupo !== null && $grupo !== '') ? ' (' . $grupo . ')' : '';
-<<<<<<< Updated upstream
-          $tooltip_id = 'module-tooltip-' . $professor['id_profesor'] . '-' . $module_index;
-
-          $module_entries[] = sprintf(
-            '<span class="module-item"><span class="help-tooltip"><button type="button" class="module-trigger" aria-describedby="%s">%s</button><span class="help-tooltip-content" id="%s" role="tooltip"><span class="help-tooltip-title">Módulo %s</span><dl class="module-modal__list"><div><dt>Nombre completo</dt><dd>%s</dd></div><div><dt>Horas semanales</dt><dd>%s</dd></div><div><dt>Horas totales</dt><dd>%s</dd></div></dl></span></span>%s</span>',
-            htmlspecialchars($tooltip_id, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($tooltip_id, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($grupo_label, ENT_QUOTES, 'UTF-8')
-          );
-          $module_index++;
-=======
 
           $module_entries[] = sprintf(
             '<span class="module-item"><button type="button" class="module-trigger" data-module-name="%s" data-module-abbr="%s" data-hours-weekly="%s" data-hours-total="%s" aria-haspopup="dialog">%s</button>%s</span>',
@@ -196,7 +175,6 @@ function render_professor_rows(array $professors, array $modules_by_professor): 
             htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($grupo_label, ENT_QUOTES, 'UTF-8')
           );
->>>>>>> Stashed changes
         }
       ?>
       <tr>
@@ -378,8 +356,6 @@ $active_page = 'profesores';
       updateResults(true);
     });
 
-<<<<<<< Updated upstream
-=======
     const openModuleModal = (trigger) => {
       const moduleName = trigger.dataset.moduleName || 'No disponible';
       const moduleAbbr = trigger.dataset.moduleAbbr || 'Detalle del módulo';
@@ -429,7 +405,6 @@ $active_page = 'profesores';
         closeModuleModal();
       }
     });
->>>>>>> Stashed changes
   </script>
 </body>
 </html>
