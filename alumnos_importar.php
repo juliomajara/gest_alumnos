@@ -56,6 +56,15 @@ function normalize_estado(string $estado): string {
   return mb_strtolower(trim($estado), 'UTF-8');
 }
 
+function normalize_email(string $email): string {
+  $email = trim($email);
+  if ($email === '') {
+    return '';
+  }
+
+  return mb_strtolower($email, 'UTF-8');
+}
+
 $course_year_cache = [];
 $nivel_cache = [];
 $curso_cache = [];
@@ -177,10 +186,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               $dni = get_csv_value($row, $header_map, ['C_NUMIDE']);
               $fecha_nacimiento = parse_spanish_date(get_csv_value($row, $header_map, ['F_NACIMIENTO']));
               $seg_soc = get_csv_value($row, $header_map, ['NUM_SS']);
-              $correo_tutor1 = get_csv_value($row, $header_map, ['CORREO_TUT1']);
-              $correo_tutor2 = get_csv_value($row, $header_map, ['CORREO_TUT2']);
+              $correo_tutor1 = normalize_email(get_csv_value($row, $header_map, ['CORREO_TUT1']));
+              $correo_tutor2 = normalize_email(get_csv_value($row, $header_map, ['CORREO_TUT2']));
               $telefono = get_csv_value($row, $header_map, ['TELEFONO']);
-              $correo_alumno = get_csv_value($row, $header_map, ['CORREO_AL']);
+              $correo_alumno = normalize_email(get_csv_value($row, $header_map, ['CORREO_AL']));
 
               $anio_curso = get_csv_value($row, $header_map, ['C_ANNO']);
               $nivel_texto = get_csv_value($row, $header_map, ['NIVEL']);
