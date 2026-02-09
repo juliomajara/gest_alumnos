@@ -54,27 +54,13 @@ $students_stmt = $pdo->prepare(
     c.direccion_correo AS correo_personal,
     a.nia,
     a.dni,
-    a.seg_soc,
-    a.fecha_nacimiento,
-    g.grupo,
-    pe.estado AS practicas_estado
+    g.grupo
   FROM alumnos a
   LEFT JOIN alumno_curso ac
     ON ac.id_alumno = a.id_alumno
     AND ac.id_curso_escolar = :active_course_id
   LEFT JOIN grupos g
     ON g.id_grupo = ac.id_grupo
-  LEFT JOIN (
-    SELECT p1.id_alumno, p1.id_practicas_estado
-    FROM practicas p1
-    INNER JOIN (
-      SELECT id_alumno, MAX(id_practica) AS max_id
-      FROM practicas
-      GROUP BY id_alumno
-    ) p2 ON p1.id_practica = p2.max_id
-  ) p ON p.id_alumno = a.id_alumno
-  LEFT JOIN practicas_estados pe
-    ON pe.id_practicas_estado = p.id_practicas_estado
   LEFT JOIN (
     SELECT id_entidad, MIN(telefono) AS telefono
     FROM telefonos
@@ -99,7 +85,7 @@ function render_student_rows(array $students): string
   ob_start();
   if (!$students): ?>
     <tr>
-      <td colspan="10">No hay alumnos para los filtros seleccionados.</td>
+      <td colspan="6">No hay alumnos para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($students as $student): ?>
@@ -111,26 +97,19 @@ function render_student_rows(array $students): string
         $email_personal = $student['correo_personal'] ?: 'No disponible';
         $nia = $student['nia'] ?: 'No disponible';
         $dni = $student['dni'] ?: 'No disponible';
-        $seg_soc = $student['seg_soc'] ?: 'No disponible';
-        $fecha_nacimiento = $student['fecha_nacimiento']
-          ? (new DateTime($student['fecha_nacimiento']))->format('d/m/Y')
-          : 'No disponible';
-        $estado = $student['practicas_estado'] ?: 'Sin estado';
         $detalle_url = sprintf('alumno_detalle.php?id_alumno=%d', (int) $student['id_alumno']);
       ?>
       <tr>
         <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <a href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">
+            <?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>
+          </a>
+        </td>
         <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($email_personal, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($nia, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($seg_soc, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($fecha_nacimiento, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td>
-          <a href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">Ver ficha</a>
-        </td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -206,7 +185,7 @@ $active_page = 'alumnos';
       <section class="panel">
         <div class="panel-header">
           <h3>Listado de alumnos</h3>
-          <p>Grupo, apellidos y nombre, datos de contacto, identificadores y estado actual de prácticas.</p>
+          <p>Grupo, apellidos y nombre, datos de contacto e identificadores básicos.</p>
         </div>
 
         <div class="panel-grid">
@@ -219,10 +198,6 @@ $active_page = 'alumnos';
                 <th>Correo personal</th>
                 <th>NIA</th>
                 <th>DNI</th>
-                <th>Nº Seg. Social</th>
-                <th>Fecha nacimiento</th>
-                <th>Prácticas</th>
-                <th>Detalle</th>
               </tr>
             </thead>
             <tbody>
