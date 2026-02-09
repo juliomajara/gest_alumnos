@@ -430,6 +430,74 @@ body {
   gap: 10px;
 }
 
+.teacher-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.teacher-table th,
+.teacher-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.teacher-table .contact-input,
+.teacher-table .contact-actions-cell,
+.teacher-table .teacher-actions-header {
+  display: none;
+}
+
+.teacher-table.is-editing .contact-text {
+  display: none;
+}
+
+.teacher-table.is-editing .contact-input,
+.teacher-table.is-editing .contact-actions-cell,
+.teacher-table.is-editing .teacher-actions-header {
+  display: table-cell;
+}
+
+.teacher-table.is-editing .contact-input {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: #fff;
+}
+
+.teacher-table .contact-actions {
+  white-space: nowrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.teacher-table.is-editing .contact-actions {
+  display: flex;
+}
+
+.teacher-table .save-button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.teacher-table .save-status {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.teacher-table .save-status.is-success {
+  color: #2d8a57;
+}
+
+.teacher-table .save-status.is-error {
+  color: #c92a2a;
+}
+
 .panel-table-aligned th {
   text-align: right;
 }
