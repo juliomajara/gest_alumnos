@@ -90,7 +90,51 @@ $professors_stmt = $pdo->prepare($professors_sql);
 $professors_stmt->execute($params);
 $professors = $professors_stmt->fetchAll();
 
-function render_professor_rows(array $professors): string
+$modules_by_professor = [];
+$professor_ids = array_column($professors, 'id_profesor');
+
+if ($professor_ids) {
+  $placeholders = [];
+  $module_params = ['active_course_id_mp' => $active_course_id];
+
+  foreach ($professor_ids as $index => $professor_id) {
+    $placeholder = ':professor_' . $index;
+    $placeholders[] = $placeholder;
+    $module_params[$placeholder] = (int) $professor_id;
+  }
+
+  $modules_sql = sprintf(
+    "SELECT\n"
+    . "  mp.id_profesor,\n"
+    . "  m.id_modulo,\n"
+    . "  m.abreviatura,\n"
+    . "  m.materia_general,\n"
+    . "  m.materia_propia,\n"
+    . "  m.horas_semanales,\n"
+    . "  m.horas_totales,\n"
+    . "  g.grupo\n"
+    . "FROM modulos_profesores mp\n"
+    . "INNER JOIN modulos m ON m.id_modulo = mp.id_modulo\n"
+    . "LEFT JOIN grupos g\n"
+    . "  ON g.id_nivel <=> m.id_nivel\n"
+    . "  AND g.id_ciclo <=> m.id_ciclo\n"
+    . "  AND g.id_curso <=> m.id_curso\n"
+    . "WHERE mp.id_curso_escolar = :active_course_id_mp\n"
+    . "  AND mp.id_profesor IN (%s)\n"
+    . "ORDER BY m.abreviatura, g.grupo",
+    implode(', ', $placeholders)
+  );
+
+  $modules_stmt = $pdo->prepare($modules_sql);
+  $modules_stmt->execute($module_params);
+  $modules = $modules_stmt->fetchAll();
+
+  foreach ($modules as $module) {
+    $modules_by_professor[$module['id_profesor']][] = $module;
+  }
+}
+
+function render_professor_rows(array $professors, array $modules_by_professor): string
 {
   ob_start();
   if (!$professors): ?>
@@ -107,7 +151,37 @@ function render_professor_rows(array $professors): string
         $telefono = $professor['telefono'] ?: 'No disponible';
         $correo = $professor['correo'] ?: 'No disponible';
         $grupos_tutor = $professor['grupos_tutor'] ?: 'Sin grupo';
-        $modulos = $professor['modulos'] ?: 'Sin módulos';
+        $modules = $modules_by_professor[$professor['id_profesor']] ?? [];
+        $module_entries = [];
+
+        $module_index = 0;
+        foreach ($modules as $module) {
+          $abreviatura = $module['abreviatura'] ?: 'No disponible';
+          $materia_general = $module['materia_general'] ?: 'No disponible';
+          $materia_propia = $module['materia_propia'] ?: 'No disponible';
+          $nombre_completo = trim($materia_general . ' / ' . $materia_propia);
+          if ($nombre_completo === '') {
+            $nombre_completo = 'No disponible';
+          }
+          $horas_semanales = $module['horas_semanales'] !== null ? (string) $module['horas_semanales'] : 'No disponible';
+          $horas_totales = $module['horas_totales'] !== null ? (string) $module['horas_totales'] : 'No disponible';
+          $grupo = $module['grupo'];
+          $grupo_label = ($grupo !== null && $grupo !== '') ? ' (' . $grupo . ')' : '';
+          $tooltip_id = 'module-tooltip-' . $professor['id_profesor'] . '-' . $module_index;
+
+          $module_entries[] = sprintf(
+            '<span class="module-item"><span class="help-tooltip"><button type="button" class="module-trigger" aria-describedby="%s">%s</button><span class="help-tooltip-content" id="%s" role="tooltip"><span class="help-tooltip-title">Módulo %s</span><dl class="module-modal__list"><div><dt>Nombre completo</dt><dd>%s</dd></div><div><dt>Horas semanales</dt><dd>%s</dd></div><div><dt>Horas totales</dt><dd>%s</dd></div></dl></span></span>%s</span>',
+            htmlspecialchars($tooltip_id, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($tooltip_id, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($grupo_label, ENT_QUOTES, 'UTF-8')
+          );
+          $module_index++;
+        }
       ?>
       <tr>
         <td><?php echo htmlspecialchars($apellido1, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -117,7 +191,13 @@ function render_professor_rows(array $professors): string
         <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($grupos_tutor, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($modulos, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <?php if ($module_entries): ?>
+            <?php echo implode(', ', $module_entries); ?>
+          <?php else: ?>
+            <?php echo htmlspecialchars('Sin módulos', ENT_QUOTES, 'UTF-8'); ?>
+          <?php endif; ?>
+        </td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -125,7 +205,7 @@ function render_professor_rows(array $professors): string
   return ob_get_clean();
 }
 
-$rows_html = render_professor_rows($professors);
+$rows_html = render_professor_rows($professors, $modules_by_professor);
 
 if (($_GET['ajax'] ?? '') === '1') {
   header('Content-Type: text/html; charset=UTF-8');
@@ -252,6 +332,7 @@ $active_page = 'profesores';
     searchInput.addEventListener('input', () => {
       updateResults(true);
     });
+
   </script>
 </body>
 </html>
