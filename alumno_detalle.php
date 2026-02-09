@@ -568,7 +568,7 @@ $dias_semana = [
                     <?php
                       $nombre_modulo = trim($module['materia_general'] . ' ' . $module['materia_propia']);
                       $curso_numero = $module['curso'];
-                      $curso_label = $curso_numero ? $curso_numero . 'º' : 'No disponible';
+                      $curso_label = $curso_numero ? $curso_numero : 'No disponible';
                       $horas_semanales = is_numeric($module['horas_semanales']) ? (int) $module['horas_semanales'] : 0;
                       $horas_totales = is_numeric($module['horas_totales']) ? (int) $module['horas_totales'] : 0;
                       $total_horas_semanales += $horas_semanales;
