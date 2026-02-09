@@ -154,6 +154,7 @@ function render_professor_rows(array $professors, array $modules_by_professor): 
         $modules = $modules_by_professor[$professor['id_profesor']] ?? [];
         $module_entries = [];
 
+        $module_index = 0;
         foreach ($modules as $module) {
           $abreviatura = $module['abreviatura'] ?: 'No disponible';
           $materia_general = $module['materia_general'] ?: 'No disponible';
@@ -166,16 +167,20 @@ function render_professor_rows(array $professors, array $modules_by_professor): 
           $horas_totales = $module['horas_totales'] !== null ? (string) $module['horas_totales'] : 'No disponible';
           $grupo = $module['grupo'];
           $grupo_label = ($grupo !== null && $grupo !== '') ? ' (' . $grupo . ')' : '';
+          $tooltip_id = 'module-tooltip-' . $professor['id_profesor'] . '-' . $module_index;
 
           $module_entries[] = sprintf(
-            '<span class="module-item"><button type="button" class="module-trigger" data-module-name="%s" data-module-abbr="%s" data-hours-weekly="%s" data-hours-total="%s" aria-haspopup="dialog">%s</button>%s</span>',
-            htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'),
+            '<span class="module-item"><span class="help-tooltip"><button type="button" class="module-trigger" aria-describedby="%s">%s</button><span class="help-tooltip-content" id="%s" role="tooltip"><span class="help-tooltip-title">Módulo %s</span><dl class="module-modal__list"><div><dt>Nombre completo</dt><dd>%s</dd></div><div><dt>Horas semanales</dt><dd>%s</dd></div><div><dt>Horas totales</dt><dd>%s</dd></div></dl></span></span>%s</span>',
+            htmlspecialchars($tooltip_id, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($tooltip_id, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'),
-            htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'),
             htmlspecialchars($grupo_label, ENT_QUOTES, 'UTF-8')
           );
+          $module_index++;
         }
       ?>
       <tr>
@@ -281,39 +286,10 @@ $active_page = 'profesores';
       </section>
     </main>
   </div>
-  <div class="module-modal" id="module-modal" aria-hidden="true">
-    <div class="module-modal__backdrop" data-module-close></div>
-    <div class="module-modal__panel" role="dialog" aria-modal="true" aria-labelledby="module-modal-title">
-      <button type="button" class="module-modal__close" data-module-close aria-label="Cerrar">×</button>
-      <h4 class="module-modal__title" id="module-modal-title">Detalle del módulo</h4>
-      <dl class="module-modal__list">
-        <div>
-          <dt>Nombre completo</dt>
-          <dd data-module-field="name">No disponible</dd>
-        </div>
-        <div>
-          <dt>Horas semanales</dt>
-          <dd data-module-field="weekly">No disponible</dd>
-        </div>
-        <div>
-          <dt>Horas totales</dt>
-          <dd data-module-field="total">No disponible</dd>
-        </div>
-      </dl>
-    </div>
-  </div>
   <script>
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
     const tableBody = document.querySelector('tbody');
-    const moduleModal = document.querySelector('#module-modal');
-    const moduleModalTitle = document.querySelector('#module-modal-title');
-    const moduleModalFields = {
-      name: moduleModal.querySelector('[data-module-field="name"]'),
-      weekly: moduleModal.querySelector('[data-module-field="weekly"]'),
-      total: moduleModal.querySelector('[data-module-field="total"]')
-    };
-    let activeModuleTrigger = null;
     let debounceTimer = null;
 
     const updateResults = (withDebounce = false) => {
@@ -357,55 +333,6 @@ $active_page = 'profesores';
       updateResults(true);
     });
 
-    const openModuleModal = (trigger) => {
-      const moduleName = trigger.dataset.moduleName || 'No disponible';
-      const moduleAbbr = trigger.dataset.moduleAbbr || 'Detalle del módulo';
-      const hoursWeekly = trigger.dataset.hoursWeekly || 'No disponible';
-      const hoursTotal = trigger.dataset.hoursTotal || 'No disponible';
-
-      moduleModalTitle.textContent = `Módulo ${moduleAbbr}`;
-      moduleModalFields.name.textContent = moduleName;
-      moduleModalFields.weekly.textContent = hoursWeekly;
-      moduleModalFields.total.textContent = hoursTotal;
-      moduleModal.classList.add('is-open');
-      moduleModal.setAttribute('aria-hidden', 'false');
-      trigger.setAttribute('aria-expanded', 'true');
-      activeModuleTrigger = trigger;
-    };
-
-    const closeModuleModal = () => {
-      if (!moduleModal.classList.contains('is-open')) {
-        return;
-      }
-      moduleModal.classList.remove('is-open');
-      moduleModal.setAttribute('aria-hidden', 'true');
-      if (activeModuleTrigger) {
-        activeModuleTrigger.setAttribute('aria-expanded', 'false');
-        activeModuleTrigger.focus();
-        activeModuleTrigger = null;
-      }
-    };
-
-    tableBody.addEventListener('click', (event) => {
-      const trigger = event.target.closest('.module-trigger');
-      if (!trigger) {
-        return;
-      }
-      event.preventDefault();
-      openModuleModal(trigger);
-    });
-
-    moduleModal.addEventListener('click', (event) => {
-      if (event.target.closest('[data-module-close]')) {
-        closeModuleModal();
-      }
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        closeModuleModal();
-      }
-    });
   </script>
 </body>
 </html>
