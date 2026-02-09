@@ -511,6 +511,96 @@ body {
   gap: 10px;
 }
 
+.module-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.module-trigger {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.module-trigger:focus {
+  outline: 2px solid rgba(86, 111, 235, 0.4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.module-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.module-modal.is-open {
+  display: flex;
+}
+
+.module-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.module-modal__panel {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 20px 22px;
+  width: min(360px, 90vw);
+  z-index: 1;
+}
+
+.module-modal__title {
+  margin: 0 24px 12px 0;
+  font-size: 1rem;
+}
+
+.module-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 1px solid var(--border);
+  background: #f5f7ff;
+  color: var(--text);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.module-modal__list {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.module-modal__list dt {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.module-modal__list dd {
+  margin: 0;
+  color: var(--muted);
+}
+
 .panel-table-aligned th {
   text-align: right;
 }
