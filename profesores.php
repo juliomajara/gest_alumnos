@@ -430,6 +430,41 @@ $active_page = 'profesores';
     const storageKey = 'teachersEditMode';
     let editMode = localStorage.getItem(storageKey) === 'true';
 
+    const syncRowDisplay = (row, isRowEditing) => {
+      if (!row) {
+        return;
+      }
+
+      const textNodes = row.querySelectorAll('.name-text, .contact-text');
+      const nameInputs = row.querySelector('.name-inputs');
+      const contactInputs = row.querySelectorAll('.contact-input');
+
+      textNodes.forEach((node) => {
+        node.hidden = isRowEditing;
+      });
+
+      if (nameInputs) {
+        nameInputs.hidden = !isRowEditing;
+      }
+
+      contactInputs.forEach((node) => {
+        node.hidden = !isRowEditing;
+      });
+    };
+
+    const syncAllRows = () => {
+      if (!teacherTable) {
+        return;
+      }
+
+      teacherTable.querySelectorAll('tbody tr').forEach((row) => {
+        const toggle = row.querySelector('.row-edit-toggle');
+        const isRowEditing = editMode && toggle && toggle.checked;
+        row.classList.toggle('is-row-editing', Boolean(isRowEditing));
+        syncRowDisplay(row, Boolean(isRowEditing));
+      });
+    };
+
     const updateEditButton = () => {
       if (!editToggle || !teacherTable) {
         return;
@@ -446,6 +481,7 @@ $active_page = 'profesores';
       }
       editToggle.classList.toggle('is-active', editMode);
       editToggle.textContent = editMode ? 'Modo edición activado' : 'Modo edición';
+      syncAllRows();
     };
 
     updateEditButton();
@@ -515,6 +551,7 @@ $active_page = 'profesores';
         const row = toggle.closest('tr');
         if (row) {
           row.classList.remove('is-row-editing');
+          syncRowDisplay(row, false);
         }
         return;
       }
@@ -525,6 +562,7 @@ $active_page = 'profesores';
       }
 
       row.classList.toggle('is-row-editing', toggle.checked);
+      syncRowDisplay(row, toggle.checked);
     });
 
     tableBody.addEventListener('click', (event) => {
