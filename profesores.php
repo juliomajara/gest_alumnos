@@ -24,7 +24,10 @@ $groups_stmt->execute(['active_course_id' => $active_course_id]);
 $groups = $groups_stmt->fetchAll();
 
 $filters = [];
-$params = ['active_course_id' => $active_course_id];
+$params = [
+  'active_course_id_gt' => $active_course_id,
+  'active_course_id_mp' => $active_course_id,
+];
 
 if ($search_term !== '') {
   $filters[] = '(p.nombre LIKE :search_term OR p.apellido1 LIKE :search_term1 OR p.apellido2 LIKE :search_term2 OR p.dni LIKE :search_term3)';
@@ -59,12 +62,12 @@ $teachers_stmt = $pdo->prepare(
   FROM profesores p
   LEFT JOIN grupos_tutores gt
     ON gt.id_profesor = p.id_profesor
-    AND gt.id_curso_escolar = :active_course_id
+    AND gt.id_curso_escolar = :active_course_id_gt
   LEFT JOIN grupos g
     ON g.id_grupo = gt.id_grupo
   LEFT JOIN modulos_profesores mp
     ON mp.id_profesor = p.id_profesor
-    AND mp.id_curso_escolar = :active_course_id
+    AND mp.id_curso_escolar = :active_course_id_mp
   LEFT JOIN (
     SELECT id_entidad, MIN(telefono) AS telefono
     FROM telefonos
