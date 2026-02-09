@@ -28,6 +28,20 @@ function format_date(?string $value, string $fallback = 'No disponible'): string
   return $value;
 }
 
+function calculate_age(?string $value): ?int {
+  if ($value === null || $value === '') {
+    return null;
+  }
+
+  $date = DateTime::createFromFormat('Y-m-d', $value);
+  if (!$date || $date->format('Y-m-d') !== $value) {
+    return null;
+  }
+
+  $today = new DateTime('today');
+  return $date->diff($today)->y;
+}
+
 function format_bool(?int $value, string $fallback = 'No disponible'): string {
   if ($value === null) {
     return $fallback;
@@ -218,11 +232,26 @@ if ($student) {
 $telefono_principal = pick_contact_value($phones, 'telefono', ['principal', 'personal']);
 $correo_educamadrid = pick_contact_value($emails, 'direccion_correo', ['educamadrid', 'educa madrid', 'institucional']);
 $correo_personal = pick_contact_value($emails, 'direccion_correo', ['personal']);
+$grupo_actual = null;
+if ($course_entries) {
+  foreach ($course_entries as $course_entry) {
+    if ($course_entry['activo']) {
+      $grupo_actual = $course_entry['grupo'];
+      break;
+    }
+  }
+  if ($grupo_actual === null) {
+    $grupo_actual = $course_entries[0]['grupo'];
+  }
+}
 
 $apellido2 = $student && $student['apellido2'] ? ' ' . $student['apellido2'] : '';
 $nombre_completo = $student
   ? sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre'])
   : 'Alumno no encontrado';
+$nombre_completo_con_grupo = $student && $grupo_actual
+  ? $nombre_completo . ' - ' . $grupo_actual
+  : $nombre_completo;
 
 $page_title = $student
   ? sprintf('Ficha de %s | Gestor de Alumnos', $nombre_completo)
@@ -258,7 +287,7 @@ $dias_semana = [
       <header class="header">
         <div>
           <p class="eyebrow">Ficha de alumno</p>
-          <h1><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></h1>
+          <h1><?php echo htmlspecialchars($nombre_completo_con_grupo, ENT_QUOTES, 'UTF-8'); ?></h1>
           <p class="subheading">Consulta el detalle académico, personal y administrativo asociado al alumno.</p>
         </div>
         <div class="header-actions">
@@ -284,10 +313,6 @@ $dias_semana = [
               <table>
                 <tbody>
                   <tr>
-                    <th>ID alumno</th>
-                    <td><?php echo htmlspecialchars(format_value($student['id_alumno']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
                     <th>NIA</th>
                     <td><?php echo htmlspecialchars(format_value($student['nia']), ENT_QUOTES, 'UTF-8'); ?></td>
                   </tr>
@@ -301,7 +326,14 @@ $dias_semana = [
                   </tr>
                   <tr>
                     <th>Fecha de nacimiento</th>
-                    <td><?php echo htmlspecialchars(format_date($student['fecha_nacimiento']), ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td>
+                      <?php
+                        $fecha_nacimiento = format_date($student['fecha_nacimiento']);
+                        $edad_alumno = calculate_age($student['fecha_nacimiento']);
+                        $edad_texto = $edad_alumno !== null ? ' (' . $edad_alumno . ' años)' : '';
+                      ?>
+                      <?php echo htmlspecialchars($fecha_nacimiento . $edad_texto, ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
                   </tr>
                   <tr>
                     <th>Teléfono principal</th>
@@ -508,40 +540,56 @@ $dias_semana = [
               <thead>
                 <tr>
                   <th>Módulo</th>
-                  <th>Tipo</th>
                   <th>Código</th>
-                  <th>Nivel / Ciclo / Curso</th>
+                  <th>Curso</th>
                   <th>Horas</th>
                 </tr>
               </thead>
               <tbody>
                 <?php if (!$modules): ?>
                   <tr>
-                    <td colspan="5">No hay módulos asociados.</td>
+                    <td colspan="4">No hay módulos asociados.</td>
                   </tr>
                 <?php else: ?>
+                  <?php
+                    $total_horas_semanales = 0;
+                    $total_horas_totales = 0;
+                  ?>
                   <?php foreach ($modules as $module): ?>
                     <?php
                       $nombre_modulo = trim($module['materia_general'] . ' ' . $module['materia_propia']);
-                      $nivel_ciclo = array_filter([
-                        $module['nivel'] ? 'Nivel: ' . $module['nivel'] : null,
-                        $module['ciclo'] ? 'Ciclo: ' . $module['ciclo'] : null,
-                        $module['curso'] ? 'Curso: ' . $module['curso'] : null,
-                      ]);
+                      $curso_numero = $module['curso'];
+                      $curso_label = $curso_numero ? $curso_numero . 'º' : 'No disponible';
+                      $horas_semanales = is_numeric($module['horas_semanales']) ? (int) $module['horas_semanales'] : 0;
+                      $horas_totales = is_numeric($module['horas_totales']) ? (int) $module['horas_totales'] : 0;
+                      $total_horas_semanales += $horas_semanales;
+                      $total_horas_totales += $horas_totales;
                       $horas = sprintf(
                         '%s semanales / %s totales',
-                        format_value($module['horas_semanales'], '0'),
-                        format_value($module['horas_totales'], '0')
+                        format_value((string) $horas_semanales, '0'),
+                        format_value((string) $horas_totales, '0')
                       );
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars($nombre_modulo ?: 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(format_value($module['tipo']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($module['codigo']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($nivel_ciclo ? implode(' · ', $nivel_ciclo) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($curso_label, ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars($horas, ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
+                  <tr>
+                    <th colspan="3">Total horas matriculadas</th>
+                    <td>
+                      <?php
+                        $total_horas = sprintf(
+                          '%s semanales / %s totales',
+                          format_value((string) $total_horas_semanales, '0'),
+                          format_value((string) $total_horas_totales, '0')
+                        );
+                      ?>
+                      <?php echo htmlspecialchars($total_horas, ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                  </tr>
                 <?php endif; ?>
               </tbody>
             </table>
