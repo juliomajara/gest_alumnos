@@ -14,7 +14,7 @@ $nav_items = [
   [
     'key' => 'empresas',
     'label' => 'Empresas',
-    'href' => '#',
+    'href' => 'empresas.php',
   ],
   [
     'key' => 'practicas',
