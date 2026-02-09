@@ -555,7 +555,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
       <section class="panel">
         <div class="panel-header">
-          <h3>CSV de alumnos</h3>
+          <h3 class="panel-title-with-help">
+            CSV de alumnos
+            <span class="help-tooltip">
+              <button
+                type="button"
+                class="help-tooltip-trigger"
+                aria-label="Ayuda para exportar el CSV de alumnos"
+                aria-describedby="csv-help"
+              >
+                ?
+              </button>
+              <span class="help-tooltip-content" id="csv-help" role="tooltip">
+                <span class="help-tooltip-title">Cómo exportar el CSV desde Raíces</span>
+                <ol>
+                  <li>Entrar en Raíces.</li>
+                  <li>Navegar a Utilidades &gt; Explotación de datos.</li>
+                  <li>En el campo "Módulo" seleccionar "Matriculación".</li>
+                  <li>En el campo "Consulta" seleccionar "Matriculados con materias y profesores".</li>
+                  <li>En el campo "Curso académico" seleccionar el actual.</li>
+                  <li>En el campo "Exportar los datos al formato" seleccionar "Fichero CSV".</li>
+                </ol>
+              </span>
+            </span>
+          </h3>
           <p>Selecciona el archivo CSV exportado desde el sistema académico y confirma la importación.</p>
         </div>
 
