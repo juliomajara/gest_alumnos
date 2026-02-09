@@ -17,6 +17,9 @@ if ($is_post) {
     header('Content-Type: application/json; charset=UTF-8');
 
     $id_profesor = isset($payload['id_profesor']) ? (int) $payload['id_profesor'] : 0;
+    $apellido1 = trim((string) ($payload['apellido1'] ?? ''));
+    $apellido2 = trim((string) ($payload['apellido2'] ?? ''));
+    $nombre = trim((string) ($payload['nombre'] ?? ''));
     $telefono = trim((string) ($payload['telefono'] ?? ''));
     $correo = trim((string) ($payload['correo'] ?? ''));
     $dni = trim((string) ($payload['dni'] ?? ''));
@@ -29,8 +32,18 @@ if ($is_post) {
     try {
       $pdo->beginTransaction();
 
-      $update_profesor = $pdo->prepare('UPDATE profesores SET dni = :dni WHERE id_profesor = :id_profesor');
+      $update_profesor = $pdo->prepare(
+        'UPDATE profesores
+         SET apellido1 = :apellido1,
+             apellido2 = :apellido2,
+             nombre = :nombre,
+             dni = :dni
+         WHERE id_profesor = :id_profesor'
+      );
       $update_profesor->execute([
+        'apellido1' => $apellido1,
+        'apellido2' => $apellido2 === '' ? null : $apellido2,
+        'nombre' => $nombre,
         'dni' => $dni === '' ? null : $dni,
         'id_profesor' => $id_profesor,
       ]);
@@ -104,6 +117,9 @@ if ($is_post) {
 
     echo json_encode([
       'success' => true,
+      'apellido1' => $apellido1,
+      'apellido2' => $apellido2,
+      'nombre' => $nombre,
       'telefono' => $telefono !== '' ? $telefono : 'No disponible',
       'correo' => $correo !== '' ? $correo : 'No disponible',
       'dni' => $dni !== '' ? $dni : 'No disponible',
@@ -218,7 +234,32 @@ function render_teacher_rows(array $teachers): string
       ?>
       <tr data-profesor-id="<?php echo (int) $teacher['id_profesor']; ?>">
         <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td class="name-cell">
+          <span class="name-text"><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></span>
+          <div class="name-inputs">
+            <input
+              class="contact-input"
+              type="text"
+              name="apellido1"
+              placeholder="Primer apellido"
+              value="<?php echo htmlspecialchars($teacher['apellido1'], ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <input
+              class="contact-input"
+              type="text"
+              name="apellido2"
+              placeholder="Segundo apellido"
+              value="<?php echo htmlspecialchars($teacher['apellido2'], ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <input
+              class="contact-input"
+              type="text"
+              name="nombre"
+              placeholder="Nombre"
+              value="<?php echo htmlspecialchars($teacher['nombre'], ENT_QUOTES, 'UTF-8'); ?>"
+            >
+          </div>
+        </td>
         <td class="contact-cell">
           <span class="contact-text"><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></span>
           <input
@@ -252,6 +293,10 @@ function render_teacher_rows(array $teachers): string
         <td><?php echo htmlspecialchars($modulos, ENT_QUOTES, 'UTF-8'); ?></td>
         <td class="contact-actions-cell">
           <div class="contact-actions">
+            <label class="edit-row-toggle">
+              <input class="row-edit-toggle" type="checkbox" aria-label="Editar profesor">
+              <span>Editar</span>
+            </label>
             <button class="ghost-button save-button" type="button">Guardar</button>
             <span class="save-status" aria-live="polite"></span>
           </div>
@@ -374,6 +419,15 @@ $active_page = 'profesores';
         return;
       }
       teacherTable.classList.toggle('is-editing', editMode);
+      if (!editMode) {
+        teacherTable.querySelectorAll('.row-edit-toggle').forEach((toggle) => {
+          toggle.checked = false;
+          const row = toggle.closest('tr');
+          if (row) {
+            row.classList.remove('is-row-editing');
+          }
+        });
+      }
       editToggle.classList.toggle('is-active', editMode);
       editToggle.textContent = editMode ? 'Modo edición activado' : 'Modo edición';
     };
@@ -434,6 +488,20 @@ $active_page = 'profesores';
       updateResults();
     });
 
+    tableBody.addEventListener('change', (event) => {
+      const toggle = event.target.closest('.row-edit-toggle');
+      if (!toggle) {
+        return;
+      }
+
+      const row = toggle.closest('tr');
+      if (!row) {
+        return;
+      }
+
+      row.classList.toggle('is-row-editing', toggle.checked);
+    });
+
     tableBody.addEventListener('click', (event) => {
       const button = event.target.closest('.save-button');
       if (!button) {
@@ -446,15 +514,21 @@ $active_page = 'profesores';
       }
 
       const profesorId = row.dataset.profesorId;
+      const apellido1Input = row.querySelector('input[name="apellido1"]');
+      const apellido2Input = row.querySelector('input[name="apellido2"]');
+      const nombreInput = row.querySelector('input[name="nombre"]');
       const telefonoInput = row.querySelector('input[name="telefono"]');
       const correoInput = row.querySelector('input[name="correo"]');
       const dniInput = row.querySelector('input[name="dni"]');
       const status = row.querySelector('.save-status');
 
-      if (!profesorId || !telefonoInput || !correoInput || !dniInput || !status) {
+      if (!profesorId || !apellido1Input || !apellido2Input || !nombreInput || !telefonoInput || !correoInput || !dniInput || !status) {
         return;
       }
 
+      const apellido1 = apellido1Input.value.trim();
+      const apellido2 = apellido2Input.value.trim();
+      const nombre = nombreInput.value.trim();
       const telefono = telefonoInput.value.trim();
       const correo = correoInput.value.trim();
       const dni = dniInput.value.trim();
@@ -472,6 +546,9 @@ $active_page = 'profesores';
         body: JSON.stringify({
           action: 'update_profesor',
           id_profesor: profesorId,
+          apellido1,
+          apellido2,
+          nombre,
           telefono,
           correo,
           dni
@@ -481,6 +558,12 @@ $active_page = 'profesores';
         .then((data) => {
           if (!data.success) {
             throw new Error(data.message || 'No se pudo guardar.');
+          }
+
+          const nameText = row.querySelector('.name-text');
+          if (nameText) {
+            const apellido2Value = data.apellido2 ? ` ${data.apellido2}` : '';
+            nameText.textContent = `${data.apellido1}${apellido2Value}, ${data.nombre}`;
           }
 
           const contactTexts = row.querySelectorAll('.contact-cell .contact-text');
