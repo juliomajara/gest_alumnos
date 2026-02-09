@@ -21,11 +21,6 @@ $nav_items = [
     'label' => 'Empresas',
     'href' => 'empresas.php',
   ],
-    [
-    'key' => 'profesores',
-    'label' => 'Profesores',
-    'href' => 'profesores.php',
-  ],
   [
     'key' => 'practicas',
     'label' => 'Prácticas',
