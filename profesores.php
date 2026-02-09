@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/validaciones.php';
 
 $pdo = db();
 
@@ -26,6 +27,21 @@ if ($is_post) {
 
     if ($id_profesor <= 0) {
       echo json_encode(['success' => false, 'message' => 'Profesor no válido.']);
+      exit;
+    }
+
+    if ($telefono !== '' && !es_telefono_movil_espanol($telefono)) {
+      echo json_encode(['success' => false, 'message' => 'El teléfono no es válido.']);
+      exit;
+    }
+
+    if ($correo !== '' && !es_correo_valido($correo)) {
+      echo json_encode(['success' => false, 'message' => 'El correo no es válido.']);
+      exit;
+    }
+
+    if ($dni !== '' && !es_dni_nie_valido($dni)) {
+      echo json_encode(['success' => false, 'message' => 'El DNI/NIE no es válido.']);
       exit;
     }
 
