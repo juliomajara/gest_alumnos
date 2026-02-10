@@ -857,13 +857,49 @@ $active_page = 'empresas';
       return response.json();
     };
 
+    const setCpLookupLoading = (direccionItem, isLoading) => {
+      if (!direccionItem) {
+        return;
+      }
+
+      const cpInput = direccionItem.querySelector('input[name*="[cp]"]');
+      const cpLabel = cpInput?.closest('label');
+      if (!cpLabel) {
+        return;
+      }
+
+      let status = cpLabel.querySelector('[data-cp-loading-status]');
+      if (!status) {
+        status = document.createElement('small');
+        status.setAttribute('data-cp-loading-status', '1');
+        status.hidden = true;
+        cpLabel.appendChild(status);
+      }
+
+      status.hidden = !isLoading;
+      status.textContent = isLoading ? '⏳ Cargando datos de dirección…' : '';
+    };
+
     const loadLocalidadesForProvincia = async (localidadSelect, idProvincia) => {
-      if (!localidadSelect || !idProvincia) {
+      if (!localidadSelect) {
         return false;
       }
 
+      localidadSelect.innerHTML = '<option value="">Selecciona</option>';
+
+      if (!idProvincia) {
+        return true;
+      }
+
+      const requestKey = String(Date.now()) + String(Math.random());
+      localidadSelect.dataset.loadingProvinciaRequest = requestKey;
+
       const data = await fetchJson(`empresa_nueva.php?action=list_localidades&id_provincia=${encodeURIComponent(idProvincia)}`);
       if (!data || !data.ok || !Array.isArray(data.items)) {
+        return false;
+      }
+
+      if (localidadSelect.dataset.loadingProvinciaRequest !== requestKey) {
         return false;
       }
 
@@ -873,7 +909,7 @@ $active_page = 'empresas';
       }
 
       localidadSelect.innerHTML = options.join('');
-      return true;
+      return localidadSelect.options.length > 0;
     };
 
     const lookupProvinciaId = async (idPais, provinciaName) => {
@@ -914,20 +950,27 @@ $active_page = 'empresas';
       const rawPostalCode = (cpInput?.value || '').trim();
       const postalCode = rawPostalCode.replace(/[\s-]+/g, '');
       const idPais = (paisSelect?.value || '').trim();
-      const countryCode = await resolveCountryCode(paisSelect);
 
-      if (!idPais || !countryCode || !postalCode || postalCode.length < 2) {
+      if (!idPais || !postalCode || postalCode.length < 2) {
         return;
       }
 
-      const lookupKey = `${idPais}-${countryCode}-${postalCode}`;
-      if (direccionItem.dataset.lastLookupKey === lookupKey) {
-        return;
-      }
-      direccionItem.dataset.lastLookupKey = lookupKey;
-      direccionItem.dataset.lookupKey = lookupKey;
+      setCpLookupLoading(direccionItem, true);
 
       try {
+        const countryCode = await resolveCountryCode(paisSelect);
+        if (!countryCode) {
+          return;
+        }
+
+        const lookupKey = `${idPais}-${countryCode}-${postalCode}`;
+        if (direccionItem.dataset.lastLookupKey === lookupKey) {
+          return;
+        }
+
+        direccionItem.dataset.lastLookupKey = lookupKey;
+        direccionItem.dataset.lookupKey = lookupKey;
+
         const response = await fetch(`https://api.zippopotam.us/${encodeURIComponent(countryCode)}/${encodeURIComponent(postalCode)}`);
         if (!response.ok) {
           return;
@@ -941,25 +984,31 @@ $active_page = 'empresas';
 
         const provinciaName = (place.state || place['state abbreviation'] || '').trim();
         const localidadName = (place['place name'] || '').trim();
-
         const idProvincia = await lookupProvinciaId(idPais, provinciaName);
+
         if (!idProvincia || direccionItem.dataset.lookupKey !== lookupKey) {
           return;
         }
 
         provinciaSelect.value = String(idProvincia);
+        provinciaSelect.dispatchEvent(new Event('change'));
 
-        await loadLocalidadesForProvincia(localidadSelect, idProvincia);
-        if (direccionItem.dataset.lookupKey !== lookupKey) {
+        const localidadesLoaded = await loadLocalidadesForProvincia(localidadSelect, idProvincia);
+        if (!localidadesLoaded || direccionItem.dataset.lookupKey !== lookupKey) {
           return;
         }
 
         const idLocalidad = await lookupLocalidadId(idPais, idProvincia, localidadName);
-        if (idLocalidad) {
-          localidadSelect.value = String(idLocalidad);
+        if (!idLocalidad || direccionItem.dataset.lookupKey !== lookupKey) {
+          return;
         }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 30));
+        localidadSelect.value = String(idLocalidad);
       } catch (_) {
         // Silencio intencional para no mostrar errores técnicos.
+      } finally {
+        setCpLookupLoading(direccionItem, false);
       }
     };
 
@@ -1002,6 +1051,21 @@ $active_page = 'empresas';
         fetchAddressFromPostalCode(cpInput.closest('.empresa-direccion-item'));
       }
     }, true);
+
+    document.addEventListener('change', (event) => {
+      const provinciaSelect = event.target.closest('.empresa-direccion-item select[name*="[id_provincia]"]');
+      if (!provinciaSelect || !event.isTrusted) {
+        return;
+      }
+
+      const direccionItem = provinciaSelect.closest('.empresa-direccion-item');
+      const localidadSelect = direccionItem?.querySelector('select[name*="[id_localidad]"]');
+      if (!localidadSelect) {
+        return;
+      }
+
+      loadLocalidadesForProvincia(localidadSelect, provinciaSelect.value);
+    });
 
     const createPhoneBlock = (namePrefix) => {
       const wrapper = document.createElement('div');
