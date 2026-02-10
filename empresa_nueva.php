@@ -686,7 +686,7 @@ $active_page = 'empresas';
       const countryCode = resolveCountryCode(paisSelect);
       const postalCode = (cpInput?.value || '').trim();
 
-      if (!countryCode || !postalCode) {
+      if (!countryCode || !postalCode || postalCode.length < 2) {
         return;
       }
 
@@ -716,23 +716,6 @@ $active_page = 'empresas';
       }
     };
 
-    const schedulePostalLookup = (direccionItem) => {
-      if (!direccionItem) {
-        return;
-      }
-
-      const pending = Number(direccionItem.dataset.lookupTimer || 0);
-      if (pending) {
-        window.clearTimeout(pending);
-      }
-
-      const timeoutId = window.setTimeout(() => {
-        fetchAddressFromPostalCode(direccionItem);
-      }, 350);
-
-      direccionItem.dataset.lookupTimer = String(timeoutId);
-    };
-
     const replaceIndex = (value, index) => value.replaceAll('__INDEX__', String(index));
 
     const addItemFromTemplate = (listSelector, templateSelector) => {
@@ -752,10 +735,7 @@ $active_page = 'empresas';
     document.addEventListener('click', (event) => {
       const addButton = event.target.closest('[data-add-item]');
       if (addButton) {
-        const addedItem = addItemFromTemplate(addButton.dataset.addItem, addButton.dataset.template);
-        if (addedItem && addedItem.classList.contains('empresa-direccion-item')) {
-          schedulePostalLookup(addedItem);
-        }
+        addItemFromTemplate(addButton.dataset.addItem, addButton.dataset.template);
         return;
       }
 
@@ -767,18 +747,14 @@ $active_page = 'empresas';
         }
       }
 
-      const countrySelect = event.target.closest('.empresa-direccion-item select[name*="[id_pais]"]');
-      if (countrySelect) {
-        schedulePostalLookup(countrySelect.closest('.empresa-direccion-item'));
-      }
     });
 
-    document.addEventListener('input', (event) => {
+    document.addEventListener('blur', (event) => {
       const cpInput = event.target.closest('.empresa-direccion-item input[name*="[cp]"]');
       if (cpInput) {
-        schedulePostalLookup(cpInput.closest('.empresa-direccion-item'));
+        fetchAddressFromPostalCode(cpInput.closest('.empresa-direccion-item'));
       }
-    });
+    }, true);
 
     const createPhoneBlock = (namePrefix) => {
       const wrapper = document.createElement('div');
