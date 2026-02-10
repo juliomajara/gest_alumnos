@@ -25,13 +25,13 @@ body {
 
 .page {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 190px 1fr;
   min-height: 100vh;
 }
 
 .sidebar {
   background: var(--card);
-  padding: 24px 18px;
+  padding: 16px 12px;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -41,8 +41,8 @@ body {
 
 .sidebar-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  justify-content: center;
+  align-items: center;
   gap: 12px;
 }
 
@@ -54,8 +54,8 @@ body {
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--muted);
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,13 +91,13 @@ body {
 }
 
 .page.sidebar-collapsed {
-  grid-template-columns: 60px 1fr;
+  grid-template-columns: 44px 1fr;
 }
 
 .sidebar.collapsed {
-  padding: 16px 10px;
+  padding: 10px 6px;
   align-items: center;
-  gap: 14px;
+  gap: 0;
 }
 
 .sidebar.collapsed .sidebar-header {

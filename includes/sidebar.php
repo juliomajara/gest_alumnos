@@ -40,15 +40,6 @@ $nav_items = [
 ?>
 <aside class="sidebar" id="appSidebar">
   <div class="sidebar-header">
-    <div class="brand">
-      <div class="brand-icon">GA</div>
-      <div class="brand-text">
-        <p class="brand-title">Gestor de Alumnos</p>
-        <p class="brand-subtitle">Panel central</p>
-      </div>
-    </div>
-  </div>
-  <div class="sidebar-handle">
     <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="Colapsar sidebar">
       <span class="sidebar-toggle-icon" id="sidebarToggleIcon" aria-hidden="true">‹</span>
       <span class="sr-only" id="sidebarToggleLabel">Colapsar sidebar</span>
