@@ -617,7 +617,7 @@ $active_page = 'empresas';
       germany: 'DE',
       italia: 'IT',
       italy: 'IT',
-      reino unido: 'GB',
+      'reino unido': 'GB',
       uk: 'GB',
       usa: 'US',
       'estados unidos': 'US',
@@ -637,7 +637,7 @@ $active_page = 'empresas';
       switzerland: 'CH',
       austria: 'AT',
       holanda: 'NL',
-      paises bajos: 'NL',
+      'paises bajos': 'NL',
       'paises bajos (holanda)': 'NL',
       irlanda: 'IE',
     };
