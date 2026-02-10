@@ -555,10 +555,6 @@ $active_page = 'empresas';
                 <input type="text" name="direcciones[__INDEX__][puerta]">
               </label>
               <label>
-                Código postal
-                <input type="text" name="direcciones[__INDEX__][cp]">
-              </label>
-              <label>
                 País
                 <select name="direcciones[__INDEX__][id_pais]">
                   <option value="">Selecciona</option>
@@ -566,6 +562,10 @@ $active_page = 'empresas';
                     <option value="<?php echo (int) $pais['id_pais']; ?>"><?php echo htmlspecialchars($pais['pais'], ENT_QUOTES, 'UTF-8'); ?></option>
                   <?php endforeach; ?>
                 </select>
+              </label>
+              <label>
+                Código postal
+                <input type="text" name="direcciones[__INDEX__][cp]">
               </label>
               <label>
                 Provincia
@@ -599,6 +599,140 @@ $active_page = 'empresas';
   </div>
 
   <script>
+    const normalizeText = (value) => (value || '')
+      .toString()
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+    const countryNameToCode = {
+      espana: 'ES',
+      espanya: 'ES',
+      spain: 'ES',
+      portugal: 'PT',
+      francia: 'FR',
+      france: 'FR',
+      alemania: 'DE',
+      germany: 'DE',
+      italia: 'IT',
+      italy: 'IT',
+      reino unido: 'GB',
+      uk: 'GB',
+      usa: 'US',
+      'estados unidos': 'US',
+      mexico: 'MX',
+      argentina: 'AR',
+      colombia: 'CO',
+      chile: 'CL',
+      peru: 'PE',
+      uruguay: 'UY',
+      paraguay: 'PY',
+      brasil: 'BR',
+      brazil: 'BR',
+      andorra: 'AD',
+      belgica: 'BE',
+      belgium: 'BE',
+      suiza: 'CH',
+      switzerland: 'CH',
+      austria: 'AT',
+      holanda: 'NL',
+      paises bajos: 'NL',
+      'paises bajos (holanda)': 'NL',
+      irlanda: 'IE',
+    };
+
+    const resolveCountryCode = (paisSelect) => {
+      if (!paisSelect || !paisSelect.value) {
+        return '';
+      }
+
+      const option = paisSelect.options[paisSelect.selectedIndex];
+      const optionText = (option?.textContent || '').trim();
+
+      if (/^[A-Za-z]{2}$/.test(optionText)) {
+        return optionText.toUpperCase();
+      }
+
+      const normalized = normalizeText(optionText);
+      return countryNameToCode[normalized] || '';
+    };
+
+    const setSelectByText = (select, text) => {
+      if (!select || !text) {
+        return false;
+      }
+
+      const normalizedTarget = normalizeText(text);
+      const option = Array.from(select.options).find((item) => normalizeText(item.textContent) === normalizedTarget);
+      if (!option) {
+        return false;
+      }
+
+      select.value = option.value;
+      return true;
+    };
+
+    const fetchAddressFromPostalCode = async (direccionItem) => {
+      if (!direccionItem) {
+        return;
+      }
+
+      const paisSelect = direccionItem.querySelector('select[name*="[id_pais]"]');
+      const cpInput = direccionItem.querySelector('input[name*="[cp]"]');
+      const provinciaSelect = direccionItem.querySelector('select[name*="[id_provincia]"]');
+      const localidadSelect = direccionItem.querySelector('select[name*="[id_localidad]"]');
+
+      const countryCode = resolveCountryCode(paisSelect);
+      const postalCode = (cpInput?.value || '').trim();
+
+      if (!countryCode || !postalCode) {
+        return;
+      }
+
+      direccionItem.dataset.lookupKey = `${countryCode}-${postalCode}`;
+
+      try {
+        const response = await fetch(`https://api.zippopotam.us/${encodeURIComponent(countryCode)}/${encodeURIComponent(postalCode)}`);
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const place = Array.isArray(data.places) && data.places.length > 0 ? data.places[0] : null;
+        if (!place) {
+          return;
+        }
+
+        const currentLookupKey = `${countryCode}-${postalCode}`;
+        if (direccionItem.dataset.lookupKey !== currentLookupKey) {
+          return;
+        }
+
+        setSelectByText(provinciaSelect, place.state || place['state abbreviation'] || '');
+        setSelectByText(localidadSelect, place['place name'] || '');
+      } catch (_) {
+        // Silencio intencional para no mostrar errores técnicos.
+      }
+    };
+
+    const schedulePostalLookup = (direccionItem) => {
+      if (!direccionItem) {
+        return;
+      }
+
+      const pending = Number(direccionItem.dataset.lookupTimer || 0);
+      if (pending) {
+        window.clearTimeout(pending);
+      }
+
+      const timeoutId = window.setTimeout(() => {
+        fetchAddressFromPostalCode(direccionItem);
+      }, 350);
+
+      direccionItem.dataset.lookupTimer = String(timeoutId);
+    };
+
     const replaceIndex = (value, index) => value.replaceAll('__INDEX__', String(index));
 
     const addItemFromTemplate = (listSelector, templateSelector) => {
@@ -618,7 +752,10 @@ $active_page = 'empresas';
     document.addEventListener('click', (event) => {
       const addButton = event.target.closest('[data-add-item]');
       if (addButton) {
-        addItemFromTemplate(addButton.dataset.addItem, addButton.dataset.template);
+        const addedItem = addItemFromTemplate(addButton.dataset.addItem, addButton.dataset.template);
+        if (addedItem && addedItem.classList.contains('empresa-direccion-item')) {
+          schedulePostalLookup(addedItem);
+        }
         return;
       }
 
@@ -628,6 +765,18 @@ $active_page = 'empresas';
         if (wrapper) {
           wrapper.remove();
         }
+      }
+
+      const countrySelect = event.target.closest('.empresa-direccion-item select[name*="[id_pais]"]');
+      if (countrySelect) {
+        schedulePostalLookup(countrySelect.closest('.empresa-direccion-item'));
+      }
+    });
+
+    document.addEventListener('input', (event) => {
+      const cpInput = event.target.closest('.empresa-direccion-item input[name*="[cp]"]');
+      if (cpInput) {
+        schedulePostalLookup(cpInput.closest('.empresa-direccion-item'));
       }
     });
 
