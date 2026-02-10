@@ -66,10 +66,161 @@ function normalize_entity_list($value): array {
   return is_array($value) ? $value : [];
 }
 
+function normalize_lookup_value(string $value): string {
+  $normalized = trim(mb_strtolower($value, 'UTF-8'));
+  if ($normalized === '') {
+    return '';
+  }
+
+  $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+  if ($ascii !== false) {
+    $normalized = $ascii;
+  }
+
+  $normalized = preg_replace('/\b(provincia|provincia de|comunidad|comunidad de|principado|region|regiao|región|de|del|d\')\b/u', ' ', $normalized) ?? $normalized;
+  $normalized = preg_replace('/[^a-z0-9]+/u', ' ', $normalized) ?? $normalized;
+  $normalized = trim(preg_replace('/\s+/u', ' ', $normalized) ?? $normalized);
+
+  return $normalized;
+}
+
+function calculate_lookup_score(string $needle, string $candidate): float {
+  if ($needle === '' || $candidate === '') {
+    return 0.0;
+  }
+
+  if ($needle === $candidate) {
+    return 1000.0;
+  }
+
+  $score = 0.0;
+  if (str_contains($candidate, $needle) || str_contains($needle, $candidate)) {
+    $score += 250.0;
+  }
+
+  similar_text($needle, $candidate, $similarityPercent);
+  $score += $similarityPercent;
+
+  return $score;
+}
+
+function pick_best_lookup_match(string $needle, array $rows, string $nameKey): ?array {
+  $normalizedNeedle = normalize_lookup_value($needle);
+  if ($normalizedNeedle === '') {
+    return null;
+  }
+
+  $bestRow = null;
+  $bestScore = 0.0;
+
+  foreach ($rows as $row) {
+    $normalizedCandidate = normalize_lookup_value((string) ($row[$nameKey] ?? ''));
+    if ($normalizedCandidate === '') {
+      continue;
+    }
+
+    $score = calculate_lookup_score($normalizedNeedle, $normalizedCandidate);
+    if ($score > $bestScore) {
+      $bestScore = $score;
+      $bestRow = $row;
+    }
+  }
+
+  return $bestScore >= 45.0 ? $bestRow : null;
+}
+
+if (isset($_GET['action'])) {
+  header('Content-Type: application/json; charset=utf-8');
+
+  $action = (string) $_GET['action'];
+
+  try {
+    if ($action === 'list_localidades') {
+      $id_provincia = isset($_GET['id_provincia']) ? (int) $_GET['id_provincia'] : 0;
+      if ($id_provincia <= 0) {
+        echo json_encode(['ok' => true, 'items' => []], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $stmt = $pdo->prepare('SELECT id_localidad, nombre FROM localidades WHERE id_provincia = :id_provincia ORDER BY nombre');
+      $stmt->execute(['id_provincia' => $id_provincia]);
+      echo json_encode(['ok' => true, 'items' => $stmt->fetchAll()], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    if ($action === 'lookup_provincia') {
+      $name = trim((string) ($_GET['name'] ?? ''));
+      $id_pais = isset($_GET['id_pais']) ? (int) $_GET['id_pais'] : 0;
+
+      if ($name === '') {
+        echo json_encode(['ok' => true, 'id_provincia' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      if ($id_pais > 0) {
+        $stmt = $pdo->prepare('SELECT id_provincia, nombre FROM provincias WHERE id_pais = :id_pais ORDER BY nombre');
+        $stmt->execute(['id_pais' => $id_pais]);
+      } else {
+        $stmt = $pdo->query('SELECT id_provincia, nombre FROM provincias ORDER BY nombre');
+      }
+
+      $match = pick_best_lookup_match($name, $stmt->fetchAll(), 'nombre');
+      echo json_encode(['ok' => true, 'id_provincia' => $match !== null ? (int) $match['id_provincia'] : null], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    if ($action === 'lookup_localidad') {
+      $name = trim((string) ($_GET['name'] ?? ''));
+      $id_provincia = isset($_GET['id_provincia']) ? (int) $_GET['id_provincia'] : 0;
+      $id_pais = isset($_GET['id_pais']) ? (int) $_GET['id_pais'] : 0;
+
+      if ($name === '') {
+        echo json_encode(['ok' => true, 'id_localidad' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $sql = 'SELECT l.id_localidad, l.nombre FROM localidades l INNER JOIN provincias p ON p.id_provincia = l.id_provincia WHERE 1=1';
+      $params = [];
+      if ($id_provincia > 0) {
+        $sql .= ' AND l.id_provincia = :id_provincia';
+        $params['id_provincia'] = $id_provincia;
+      }
+      if ($id_pais > 0) {
+        $sql .= ' AND p.id_pais = :id_pais';
+        $params['id_pais'] = $id_pais;
+      }
+      $sql .= ' ORDER BY l.nombre';
+
+      $stmt = $pdo->prepare($sql);
+      $stmt->execute($params);
+
+      $match = pick_best_lookup_match($name, $stmt->fetchAll(), 'nombre');
+      echo json_encode(['ok' => true, 'id_localidad' => $match !== null ? (int) $match['id_localidad'] : null], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    echo json_encode(['ok' => false, 'error' => 'Action no soportada'], JSON_UNESCAPED_UNICODE);
+    exit;
+  } catch (Throwable $exception) {
+    echo json_encode(['ok' => false, 'error' => 'Error interno'], JSON_UNESCAPED_UNICODE);
+    exit;
+  }
+}
+
 $via_options = $pdo->query('SELECT id_via, via FROM vias ORDER BY via')->fetchAll();
-$pais_options = $pdo->query('SELECT id_pais, pais FROM paises ORDER BY pais')->fetchAll();
+$pais_options = $pdo->query('SELECT id_pais, pais, codigo_iso FROM paises ORDER BY pais')->fetchAll();
 $provincia_options = $pdo->query('SELECT id_provincia, nombre FROM provincias ORDER BY nombre')->fetchAll();
 $localidad_options = $pdo->query('SELECT id_localidad, nombre FROM localidades ORDER BY nombre')->fetchAll();
+
+$pais_id_to_code = [];
+foreach ($pais_options as $pais) {
+  $id = isset($pais['id_pais']) ? (int) $pais['id_pais'] : 0;
+  $iso = strtoupper(trim((string) ($pais['codigo_iso'] ?? '')));
+
+  if ($id > 0 && preg_match('/^[A-Z]{2}$/', $iso)) {
+    $pais_id_to_code[(string) $id] = $iso;
+  }
+}
 
 $errors = [];
 $form_values = $_POST;
@@ -606,71 +757,66 @@ $active_page = 'empresas';
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
 
-    const countryNameToCode = {
-      espana: 'ES',
-      espanya: 'ES',
-      spain: 'ES',
-      portugal: 'PT',
-      francia: 'FR',
-      france: 'FR',
-      alemania: 'DE',
-      germany: 'DE',
-      italia: 'IT',
-      italy: 'IT',
-      'reino unido': 'GB',
-      uk: 'GB',
-      usa: 'US',
-      'estados unidos': 'US',
-      mexico: 'MX',
-      argentina: 'AR',
-      colombia: 'CO',
-      chile: 'CL',
-      peru: 'PE',
-      uruguay: 'UY',
-      paraguay: 'PY',
-      brasil: 'BR',
-      brazil: 'BR',
-      andorra: 'AD',
-      belgica: 'BE',
-      belgium: 'BE',
-      suiza: 'CH',
-      switzerland: 'CH',
-      austria: 'AT',
-      holanda: 'NL',
-      'paises bajos': 'NL',
-      'paises bajos (holanda)': 'NL',
-      irlanda: 'IE',
-    };
+    const paisIdToCode = <?php echo json_encode($pais_id_to_code, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
     const resolveCountryCode = (paisSelect) => {
       if (!paisSelect || !paisSelect.value) {
         return '';
       }
 
-      const option = paisSelect.options[paisSelect.selectedIndex];
-      const optionText = (option?.textContent || '').trim();
-
-      if (/^[A-Za-z]{2}$/.test(optionText)) {
-        return optionText.toUpperCase();
-      }
-
-      const normalized = normalizeText(optionText);
-      return countryNameToCode[normalized] || '';
+      return paisIdToCode[String(paisSelect.value)] || '';
     };
 
-    const setSelectByText = (select, text) => {
-      if (!select || !text) {
+    const fetchJson = async (url) => {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!response.ok) {
+        return null;
+      }
+      return response.json();
+    };
+
+    const loadLocalidadesForProvincia = async (localidadSelect, idProvincia) => {
+      if (!localidadSelect || !idProvincia) {
         return false;
       }
 
-      const normalizedTarget = normalizeText(text);
-      const option = Array.from(select.options).find((item) => normalizeText(item.textContent) === normalizedTarget);
-      if (!option) {
+      const data = await fetchJson(`empresa_nueva.php?action=list_localidades&id_provincia=${encodeURIComponent(idProvincia)}`);
+      if (!data || !data.ok || !Array.isArray(data.items)) {
         return false;
       }
 
-      select.value = option.value;
+      const options = ['<option value="">Selecciona</option>'];
+      for (const item of data.items) {
+        options.push(`<option value="${String(item.id_localidad)}">${String(item.nombre)}</option>`);
+      }
+
+      localidadSelect.innerHTML = options.join('');
       return true;
+    };
+
+    const lookupProvinciaId = async (idPais, provinciaName) => {
+      if (!idPais || !provinciaName) {
+        return null;
+      }
+
+      const data = await fetchJson(
+        `empresa_nueva.php?action=lookup_provincia&id_pais=${encodeURIComponent(idPais)}&name=${encodeURIComponent(provinciaName)}`
+      );
+
+      return data?.ok ? data.id_provincia : null;
+    };
+
+    const lookupLocalidadId = async (idPais, idProvincia, localidadName) => {
+      if (!idPais || !localidadName) {
+        return null;
+      }
+
+      const provinciaParam = idProvincia ? `&id_provincia=${encodeURIComponent(idProvincia)}` : '';
+      const data = await fetchJson(
+        `empresa_nueva.php?action=lookup_localidad&id_pais=${encodeURIComponent(idPais)}${provinciaParam}&name=${encodeURIComponent(localidadName)}`
+      );
+
+      return data?.ok ? data.id_localidad : null;
     };
 
     const fetchAddressFromPostalCode = async (direccionItem) => {
@@ -685,12 +831,18 @@ $active_page = 'empresas';
 
       const countryCode = resolveCountryCode(paisSelect);
       const postalCode = (cpInput?.value || '').trim();
+      const idPais = (paisSelect?.value || '').trim();
 
-      if (!countryCode || !postalCode || postalCode.length < 2) {
+      if (!idPais || !countryCode || !postalCode || postalCode.length < 2) {
         return;
       }
 
-      direccionItem.dataset.lookupKey = `${countryCode}-${postalCode}`;
+      const lookupKey = `${idPais}-${countryCode}-${postalCode}`;
+      if (direccionItem.dataset.lastLookupKey === lookupKey) {
+        return;
+      }
+      direccionItem.dataset.lastLookupKey = lookupKey;
+      direccionItem.dataset.lookupKey = lookupKey;
 
       try {
         const response = await fetch(`https://api.zippopotam.us/${encodeURIComponent(countryCode)}/${encodeURIComponent(postalCode)}`);
@@ -700,17 +852,29 @@ $active_page = 'empresas';
 
         const data = await response.json();
         const place = Array.isArray(data.places) && data.places.length > 0 ? data.places[0] : null;
-        if (!place) {
+        if (!place || direccionItem.dataset.lookupKey !== lookupKey) {
           return;
         }
 
-        const currentLookupKey = `${countryCode}-${postalCode}`;
-        if (direccionItem.dataset.lookupKey !== currentLookupKey) {
+        const provinciaName = (place.state || place['state abbreviation'] || '').trim();
+        const localidadName = (place['place name'] || '').trim();
+
+        const idProvincia = await lookupProvinciaId(idPais, provinciaName);
+        if (!idProvincia || direccionItem.dataset.lookupKey !== lookupKey) {
           return;
         }
 
-        setSelectByText(provinciaSelect, place.state || place['state abbreviation'] || '');
-        setSelectByText(localidadSelect, place['place name'] || '');
+        provinciaSelect.value = String(idProvincia);
+
+        await loadLocalidadesForProvincia(localidadSelect, idProvincia);
+        if (direccionItem.dataset.lookupKey !== lookupKey) {
+          return;
+        }
+
+        const idLocalidad = await lookupLocalidadId(idPais, idProvincia, localidadName);
+        if (idLocalidad) {
+          localidadSelect.value = String(idLocalidad);
+        }
       } catch (_) {
         // Silencio intencional para no mostrar errores técnicos.
       }
