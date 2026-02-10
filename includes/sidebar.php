@@ -48,7 +48,7 @@ $nav_items = [
       </div>
     </div>
     <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="Colapsar sidebar">
-      <span class="sidebar-toggle-icon" aria-hidden="true">❮</span>
+      <span class="sidebar-toggle-icon" id="sidebarToggleIcon" aria-hidden="true">←</span>
       <span class="sr-only">Colapsar sidebar</span>
     </button>
   </div>
@@ -67,8 +67,9 @@ $nav_items = [
   (function () {
     const sidebar = document.getElementById('appSidebar');
     const toggle = document.getElementById('sidebarToggle');
+    const toggleIcon = document.getElementById('sidebarToggleIcon');
 
-    if (!sidebar || !toggle) {
+    if (!sidebar || !toggle || !toggleIcon) {
       return;
     }
 
@@ -85,6 +86,7 @@ $nav_items = [
 
       toggle.setAttribute('aria-expanded', String(!isCollapsed));
       toggle.setAttribute('aria-label', isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar');
+      toggleIcon.textContent = isCollapsed ? '→' : '←';
     };
 
     updateSidebar();
