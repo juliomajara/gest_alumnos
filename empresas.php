@@ -11,8 +11,15 @@ $filters = [];
 $params = [];
 
 if ($search_term !== '') {
-  $filters[] = '(TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2)) LIKE :search_term OR e.cif LIKE :search_term OR CAST(e.convenio AS CHAR) LIKE :search_term)';
-  $params['search_term'] = '%' . $search_term . '%';
+  $filters[] = '(
+    TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2)) LIKE :search_term_nombre
+    OR e.cif LIKE :search_term_cif
+    OR CAST(e.convenio AS CHAR) LIKE :search_term_convenio
+  )';
+  $search_like = '%' . $search_term . '%';
+  $params['search_term_nombre'] = $search_like;
+  $params['search_term_cif'] = $search_like;
+  $params['search_term_convenio'] = $search_like;
 }
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
