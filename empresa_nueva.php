@@ -382,7 +382,7 @@ $active_page = 'empresas';
       <?php endif; ?>
 
       <form method="post" class="panel entity-form empresa-form" id="empresaForm">
-        <div class="grid empresa-form-grid">
+        <div class="empresa-form-grid">
           <section class="panel empresa-block empresa-block-main">
             <div class="panel-header">
               <h3>Datos de la empresa</h3>
@@ -448,7 +448,7 @@ $active_page = 'empresas';
             </div>
           </section>
 
-          <section class="panel empresa-block">
+          <section class="panel empresa-block empresa-block-contactos">
             <div class="panel-header">
               <h3>Personas de contacto</h3>
               <p>Personas con las que se gestiona la comunicación habitual.</p>
@@ -459,7 +459,7 @@ $active_page = 'empresas';
             <div class="entity-stack" id="contactosList"></div>
           </section>
 
-          <section class="panel empresa-block">
+          <section class="panel empresa-block empresa-block-tutores">
             <div class="panel-header">
               <h3>Tutores de la empresa</h3>
               <p>Tutores vinculados para el seguimiento de prácticas.</p>
