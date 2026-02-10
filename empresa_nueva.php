@@ -84,6 +84,47 @@ function normalize_lookup_value(string $value): string {
   return $normalized;
 }
 
+function guess_iso_code_from_country_name(string $countryName): string {
+  $normalized = normalize_lookup_value($countryName);
+  if ($normalized === '') {
+    return '';
+  }
+
+  $map = [
+    'espana' => 'ES',
+    'spain' => 'ES',
+    'portugal' => 'PT',
+    'francia' => 'FR',
+    'france' => 'FR',
+    'alemania' => 'DE',
+    'germany' => 'DE',
+    'italia' => 'IT',
+    'italy' => 'IT',
+    'reino unido' => 'GB',
+    'united kingdom' => 'GB',
+    'gran bretana' => 'GB',
+    'irlanda' => 'IE',
+    'ireland' => 'IE',
+    'belgica' => 'BE',
+    'belgium' => 'BE',
+    'paises bajos' => 'NL',
+    'netherlands' => 'NL',
+    'luxemburgo' => 'LU',
+    'luxembourg' => 'LU',
+    'suiza' => 'CH',
+    'switzerland' => 'CH',
+    'andorra' => 'AD',
+    'estados unidos' => 'US',
+    'united states' => 'US',
+    'mexico' => 'MX',
+    'argentina' => 'AR',
+    'chile' => 'CL',
+    'colombia' => 'CO',
+  ];
+
+  return $map[$normalized] ?? '';
+}
+
 function calculate_lookup_score(string $needle, string $candidate): float {
   if ($needle === '' || $candidate === '') {
     return 0.0;
@@ -148,6 +189,31 @@ if (isset($_GET['action'])) {
       exit;
     }
 
+    if ($action === 'country_code') {
+      $id_pais = isset($_GET['id_pais']) ? (int) $_GET['id_pais'] : 0;
+      if ($id_pais <= 0) {
+        echo json_encode(['ok' => true, 'code' => ''], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $stmt = $pdo->prepare('SELECT pais, codigo_iso FROM paises WHERE id_pais = :id_pais LIMIT 1');
+      $stmt->execute(['id_pais' => $id_pais]);
+      $row = $stmt->fetch();
+
+      if (!$row) {
+        echo json_encode(['ok' => true, 'code' => ''], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $iso = strtoupper(trim((string) ($row['codigo_iso'] ?? '')));
+      if (!preg_match('/^[A-Z]{2}$/', $iso)) {
+        $iso = guess_iso_code_from_country_name((string) ($row['pais'] ?? ''));
+      }
+
+      echo json_encode(['ok' => true, 'code' => $iso], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
     if ($action === 'lookup_provincia') {
       $name = trim((string) ($_GET['name'] ?? ''));
       $id_pais = isset($_GET['id_pais']) ? (int) $_GET['id_pais'] : 0;
@@ -165,7 +231,7 @@ if (isset($_GET['action'])) {
       }
 
       $match = pick_best_lookup_match($name, $stmt->fetchAll(), 'nombre');
-      echo json_encode(['ok' => true, 'id_provincia' => $match !== null ? (int) $match['id_provincia'] : null], JSON_UNESCAPED_UNICODE);
+      echo json_encode(['ok' => true, 'id_provincia' => $match !== null ? (int) $match['id_provincia'] : null, 'nombre' => $match['nombre'] ?? null], JSON_UNESCAPED_UNICODE);
       exit;
     }
 
@@ -195,7 +261,7 @@ if (isset($_GET['action'])) {
       $stmt->execute($params);
 
       $match = pick_best_lookup_match($name, $stmt->fetchAll(), 'nombre');
-      echo json_encode(['ok' => true, 'id_localidad' => $match !== null ? (int) $match['id_localidad'] : null], JSON_UNESCAPED_UNICODE);
+      echo json_encode(['ok' => true, 'id_localidad' => $match !== null ? (int) $match['id_localidad'] : null, 'nombre' => $match['nombre'] ?? null], JSON_UNESCAPED_UNICODE);
       exit;
     }
 
@@ -217,8 +283,12 @@ foreach ($pais_options as $pais) {
   $id = isset($pais['id_pais']) ? (int) $pais['id_pais'] : 0;
   $iso = strtoupper(trim((string) ($pais['codigo_iso'] ?? '')));
 
-  if ($id > 0 && preg_match('/^[A-Z]{2}$/', $iso)) {
-    $pais_id_to_code[(string) $id] = $iso;
+  if (!preg_match('/^[A-Z]{2}$/', $iso)) {
+    $iso = guess_iso_code_from_country_name((string) ($pais['pais'] ?? ''));
+  }
+
+  if ($id > 0 && $iso !== '') {
+    $pais_id_to_code[(string) $id] = strtoupper($iso);
   }
 }
 
@@ -759,12 +829,24 @@ $active_page = 'empresas';
 
     const paisIdToCode = <?php echo json_encode($pais_id_to_code, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
-    const resolveCountryCode = (paisSelect) => {
+    const resolveCountryCode = async (paisSelect) => {
       if (!paisSelect || !paisSelect.value) {
         return '';
       }
 
-      return paisIdToCode[String(paisSelect.value)] || '';
+      const idPais = String(paisSelect.value);
+      const inlineCode = paisIdToCode[idPais] || '';
+      if (inlineCode) {
+        return inlineCode;
+      }
+
+      const data = await fetchJson(`empresa_nueva.php?action=country_code&id_pais=${encodeURIComponent(idPais)}`);
+      const code = (data?.ok ? String(data.code || '').trim().toUpperCase() : '');
+      if (code) {
+        paisIdToCode[idPais] = code;
+      }
+
+      return code;
     };
 
     const fetchJson = async (url) => {
@@ -829,9 +911,10 @@ $active_page = 'empresas';
       const provinciaSelect = direccionItem.querySelector('select[name*="[id_provincia]"]');
       const localidadSelect = direccionItem.querySelector('select[name*="[id_localidad]"]');
 
-      const countryCode = resolveCountryCode(paisSelect);
-      const postalCode = (cpInput?.value || '').trim();
+      const rawPostalCode = (cpInput?.value || '').trim();
+      const postalCode = rawPostalCode.replace(/[\s-]+/g, '');
       const idPais = (paisSelect?.value || '').trim();
+      const countryCode = await resolveCountryCode(paisSelect);
 
       if (!idPais || !countryCode || !postalCode || postalCode.length < 2) {
         return;
