@@ -72,13 +72,15 @@ function render_company_rows(array $companies): string
           $company['apellido2'] ?? ''
         ], static fn ($value) => trim((string) $value) !== '')));
         $nombre = $nombreCompleto !== '' ? $nombreCompleto : 'No disponible';
+        $idEmpresa = (int) ($company['id_empresa'] ?? 0);
+        $detalleUrl = 'empresa_detalle.php?id_empresa=' . $idEmpresa;
         $telefono = $company['telefono'] ?: 'No disponible';
         $correo = $company['correo'] ?: 'No disponible';
         $convenio = $company['convenio'] ? (string) $company['convenio'] : 'No disponible';
       ?>
       <tr>
         <td><?php echo htmlspecialchars($convenio, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><a href="<?php echo htmlspecialchars($detalleUrl, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></a></td>
         <td><?php echo htmlspecialchars($cif, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></td>
