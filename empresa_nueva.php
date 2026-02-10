@@ -381,190 +381,214 @@ $active_page = 'empresas';
         </section>
       <?php endif; ?>
 
-      <form method="post" class="panel entity-form" id="empresaForm">
-        <div class="panel-header">
-          <h3>Datos de la empresa</h3>
-          <p>Información identificativa y administrativa principal.</p>
+      <form method="post" class="panel entity-form empresa-form" id="empresaForm">
+        <div class="grid empresa-form-grid">
+          <section class="panel empresa-block empresa-block-main">
+            <div class="panel-header">
+              <h3>Datos de la empresa</h3>
+              <p>Información identificativa y administrativa principal.</p>
+            </div>
+
+            <div class="entity-grid empresa-datos-grid">
+              <label>
+                Nombre *
+                <input type="text" name="empresa[nombre]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['nombre'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </label>
+              <label>
+                CIF
+                <input type="text" name="empresa[cif]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['cif'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </label>
+              <label>
+                Apellido 1
+                <input type="text" name="empresa[apellido1]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['apellido1'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </label>
+              <label>
+                Apellido 2
+                <input type="text" name="empresa[apellido2]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['apellido2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </label>
+              <label>
+                Número de convenio
+                <input type="text" name="empresa[numero_convenio]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['numero_convenio'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </label>
+            </div>
+
+            <section class="entity-section empresa-subsection" id="mediosContactoSection">
+              <div class="entity-section-header">
+                <h3>Medios de contacto</h3>
+              </div>
+              <div class="grid empresa-medios-grid">
+                <section class="entity-nested-section" id="telefonosEmpresaSection">
+                  <div class="entity-section-header">
+                    <h4>Teléfonos</h4>
+                    <button type="button" class="edit-toggle" data-add-item="#telefonosEmpresaList" data-template="#telefonoEmpresaTemplate">Añadir teléfono</button>
+                  </div>
+                  <div class="entity-stack" id="telefonosEmpresaList"></div>
+                </section>
+
+                <section class="entity-nested-section" id="correosEmpresaSection">
+                  <div class="entity-section-header">
+                    <h4>Correos</h4>
+                    <button type="button" class="edit-toggle" data-add-item="#correosEmpresaList" data-template="#correoEmpresaTemplate">Añadir correo</button>
+                  </div>
+                  <div class="entity-stack" id="correosEmpresaList"></div>
+                </section>
+              </div>
+            </section>
+          </section>
+
+          <section class="panel empresa-block empresa-block-direcciones">
+            <div class="panel-header">
+              <h3>Direcciones</h3>
+              <p>Direcciones asociadas a la empresa.</p>
+            </div>
+
+            <div class="entity-stack" id="direccionesList"></div>
+            <div>
+              <button type="button" class="edit-toggle" data-add-item="#direccionesList" data-template="#direccionTemplate">Añadir dirección</button>
+            </div>
+          </section>
+
+          <section class="panel empresa-block">
+            <div class="panel-header">
+              <h3>Personas de contacto</h3>
+              <p>Personas con las que se gestiona la comunicación habitual.</p>
+            </div>
+            <div class="entity-section-header">
+              <button type="button" class="edit-toggle" id="addContactoButton">Añadir persona de contacto</button>
+            </div>
+            <div class="entity-stack" id="contactosList"></div>
+          </section>
+
+          <section class="panel empresa-block">
+            <div class="panel-header">
+              <h3>Tutores de la empresa</h3>
+              <p>Tutores vinculados para el seguimiento de prácticas.</p>
+            </div>
+            <div class="entity-section-header">
+              <button type="button" class="edit-toggle" id="addTutorButton">Añadir tutor</button>
+            </div>
+            <div class="entity-stack" id="tutoresList"></div>
+          </section>
         </div>
 
-        <div class="entity-grid">
-          <label>
-            CIF
-            <input type="text" name="empresa[cif]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['cif'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-          </label>
-          <label>
-            Nombre
-            <input type="text" name="empresa[nombre]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['nombre'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-          </label>
-          <label>
-            Apellido 1
-            <input type="text" name="empresa[apellido1]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['apellido1'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-          </label>
-          <label>
-            Apellido 2
-            <input type="text" name="empresa[apellido2]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['apellido2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-          </label>
-          <label>
-            Número de convenio
-            <input type="text" name="empresa[numero_convenio]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['numero_convenio'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-          </label>
-        </div>
-
-        <section class="entity-section" id="telefonosEmpresaSection">
-          <div class="entity-section-header">
-            <h3>Teléfonos de la empresa</h3>
-            <button type="button" class="edit-toggle" data-add-item="#telefonosEmpresaList" data-template="#telefonoEmpresaTemplate">Añadir teléfono</button>
-          </div>
-          <div class="entity-stack" id="telefonosEmpresaList"></div>
-          <template id="telefonoEmpresaTemplate">
-            <div class="entity-repeatable-item">
-              <div class="entity-inline-grid">
-                <label>
-                  Teléfono
-                  <input type="text" name="telefonos_empresa[__INDEX__][telefono]">
-                </label>
-                <label>
-                  Etiqueta
-                  <select name="telefonos_empresa[__INDEX__][etiqueta]">
-                    <option value="Trabajo">Trabajo</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Otro">Otro</option>
-                  </select>
-                </label>
-              </div>
+        <template id="telefonoEmpresaTemplate">
+          <div class="entity-repeatable-item empresa-inline-item">
+            <div class="entity-inline-grid empresa-contact-item-grid">
+              <label>
+                Número
+                <input type="text" name="telefonos_empresa[__INDEX__][telefono]">
+              </label>
+              <label>
+                Etiqueta
+                <select name="telefonos_empresa[__INDEX__][etiqueta]">
+                  <option value="Trabajo">Trabajo</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
               <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
             </div>
-          </template>
-        </section>
-
-        <section class="entity-section" id="correosEmpresaSection">
-          <div class="entity-section-header">
-            <h3>Correos de la empresa</h3>
-            <button type="button" class="edit-toggle" data-add-item="#correosEmpresaList" data-template="#correoEmpresaTemplate">Añadir correo</button>
           </div>
-          <div class="entity-stack" id="correosEmpresaList"></div>
-          <template id="correoEmpresaTemplate">
-            <div class="entity-repeatable-item">
-              <div class="entity-inline-grid">
-                <label>
-                  Correo
-                  <input type="email" name="correos_empresa[__INDEX__][correo]">
-                </label>
-                <label>
-                  Etiqueta
-                  <select name="correos_empresa[__INDEX__][etiqueta]">
-                    <option value="Trabajo">Trabajo</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Otro">Otro</option>
-                  </select>
-                </label>
-              </div>
+        </template>
+
+        <template id="correoEmpresaTemplate">
+          <div class="entity-repeatable-item empresa-inline-item">
+            <div class="entity-inline-grid empresa-contact-item-grid">
+              <label>
+                Correo
+                <input type="email" name="correos_empresa[__INDEX__][correo]">
+              </label>
+              <label>
+                Etiqueta
+                <select name="correos_empresa[__INDEX__][etiqueta]">
+                  <option value="Trabajo">Trabajo</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </label>
               <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
             </div>
-          </template>
-        </section>
-
-        <section class="entity-section">
-          <div class="entity-section-header">
-            <h3>Direcciones</h3>
-            <button type="button" class="edit-toggle" data-add-item="#direccionesList" data-template="#direccionTemplate">Añadir dirección</button>
           </div>
-          <div class="entity-stack" id="direccionesList"></div>
-          <template id="direccionTemplate">
-            <div class="entity-repeatable-item">
-              <div class="entity-grid">
-                <label>
-                  Etiqueta
-                  <select name="direcciones[__INDEX__][etiqueta]">
-                    <option value="Principal">Principal</option>
-                    <option value="Centro de Trabajo">Centro de Trabajo</option>
-                  </select>
-                </label>
-                <label>
-                  Tipo de vía
-                  <select name="direcciones[__INDEX__][id_via]">
-                    <option value="">Selecciona</option>
-                    <?php foreach ($via_options as $via): ?>
-                      <option value="<?php echo (int) $via['id_via']; ?>"><?php echo htmlspecialchars($via['via'], ENT_QUOTES, 'UTF-8'); ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </label>
-                <label>
-                  Nombre de la vía
-                  <input type="text" name="direcciones[__INDEX__][nombre_via]">
-                </label>
-                <label>
-                  Número
-                  <input type="text" name="direcciones[__INDEX__][numero]">
-                </label>
-                <label>
-                  Bloque
-                  <input type="text" name="direcciones[__INDEX__][bloque]">
-                </label>
-                <label>
-                  Escalera
-                  <input type="text" name="direcciones[__INDEX__][escalera]">
-                </label>
-                <label>
-                  Planta
-                  <input type="text" name="direcciones[__INDEX__][planta]">
-                </label>
-                <label>
-                  Puerta
-                  <input type="text" name="direcciones[__INDEX__][puerta]">
-                </label>
-                <label>
-                  Código postal
-                  <input type="text" name="direcciones[__INDEX__][cp]">
-                </label>
-                <label>
-                  País
-                  <select name="direcciones[__INDEX__][id_pais]">
-                    <option value="">Selecciona</option>
-                    <?php foreach ($pais_options as $pais): ?>
-                      <option value="<?php echo (int) $pais['id_pais']; ?>"><?php echo htmlspecialchars($pais['pais'], ENT_QUOTES, 'UTF-8'); ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </label>
-                <label>
-                  Provincia
-                  <select name="direcciones[__INDEX__][id_provincia]">
-                    <option value="">Selecciona</option>
-                    <?php foreach ($provincia_options as $provincia): ?>
-                      <option value="<?php echo (int) $provincia['id_provincia']; ?>"><?php echo htmlspecialchars($provincia['nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </label>
-                <label>
-                  Localidad
-                  <select name="direcciones[__INDEX__][id_localidad]">
-                    <option value="">Selecciona</option>
-                    <?php foreach ($localidad_options as $localidad): ?>
-                      <option value="<?php echo (int) $localidad['id_localidad']; ?>"><?php echo htmlspecialchars($localidad['nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
-                    <?php endforeach; ?>
-                  </select>
-                </label>
-              </div>
-              <button type="button" class="ghost-button" data-remove-item>Eliminar dirección</button>
+        </template>
+
+        <template id="direccionTemplate">
+          <div class="entity-repeatable-item empresa-direccion-item">
+            <div class="entity-grid empresa-direccion-grid">
+              <label>
+                Etiqueta
+                <select name="direcciones[__INDEX__][etiqueta]">
+                  <option value="Principal">Principal</option>
+                  <option value="Centro de Trabajo">Centro de Trabajo</option>
+                </select>
+              </label>
+              <label>
+                Tipo de vía
+                <select name="direcciones[__INDEX__][id_via]">
+                  <option value="">Selecciona</option>
+                  <?php foreach ($via_options as $via): ?>
+                    <option value="<?php echo (int) $via['id_via']; ?>"><?php echo htmlspecialchars($via['via'], ENT_QUOTES, 'UTF-8'); ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
+              <label>
+                Nombre de la vía
+                <input type="text" name="direcciones[__INDEX__][nombre_via]">
+              </label>
+              <label>
+                Número
+                <input type="text" name="direcciones[__INDEX__][numero]">
+              </label>
+              <label>
+                Bloque
+                <input type="text" name="direcciones[__INDEX__][bloque]">
+              </label>
+              <label>
+                Escalera
+                <input type="text" name="direcciones[__INDEX__][escalera]">
+              </label>
+              <label>
+                Planta
+                <input type="text" name="direcciones[__INDEX__][planta]">
+              </label>
+              <label>
+                Puerta
+                <input type="text" name="direcciones[__INDEX__][puerta]">
+              </label>
+              <label>
+                Código postal
+                <input type="text" name="direcciones[__INDEX__][cp]">
+              </label>
+              <label>
+                País
+                <select name="direcciones[__INDEX__][id_pais]">
+                  <option value="">Selecciona</option>
+                  <?php foreach ($pais_options as $pais): ?>
+                    <option value="<?php echo (int) $pais['id_pais']; ?>"><?php echo htmlspecialchars($pais['pais'], ENT_QUOTES, 'UTF-8'); ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
+              <label>
+                Provincia
+                <select name="direcciones[__INDEX__][id_provincia]">
+                  <option value="">Selecciona</option>
+                  <?php foreach ($provincia_options as $provincia): ?>
+                    <option value="<?php echo (int) $provincia['id_provincia']; ?>"><?php echo htmlspecialchars($provincia['nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
+              <label>
+                Localidad
+                <select name="direcciones[__INDEX__][id_localidad]">
+                  <option value="">Selecciona</option>
+                  <?php foreach ($localidad_options as $localidad): ?>
+                    <option value="<?php echo (int) $localidad['id_localidad']; ?>"><?php echo htmlspecialchars($localidad['nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
             </div>
-          </template>
-        </section>
-
-        <section class="entity-section">
-          <div class="entity-section-header">
-            <h3>Personas de contacto</h3>
-            <button type="button" class="edit-toggle" id="addContactoButton">Añadir persona de contacto</button>
+            <button type="button" class="ghost-button" data-remove-item>Eliminar dirección</button>
           </div>
-          <div class="entity-stack" id="contactosList"></div>
-        </section>
-
-        <section class="entity-section">
-          <div class="entity-section-header">
-            <h3>Tutores de la empresa</h3>
-            <button type="button" class="edit-toggle" id="addTutorButton">Añadir tutor</button>
-          </div>
-          <div class="entity-stack" id="tutoresList"></div>
-        </section>
+        </template>
 
         <div class="form-actions">
           <button type="submit" class="primary-button">Guardar</button>
