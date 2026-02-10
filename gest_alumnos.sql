@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-02-2026 a las 21:23:28
+-- Tiempo de generación: 10-02-2026 a las 23:29:39
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -837,7 +837,45 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (132, 'alumno', 133, 'carlosutreroduran@gmail.com', 'Personal'),
 (133, 'alumno', 134, 'yaizav210907@gmail.com', 'Personal'),
 (134, 'alumno', 135, 'zhoujj.081@gmail.com', 'Personal'),
-(135, 'profesor', 1, 'julio.sanchezfernandez@educa.madrid.org', 'Personal');
+(135, 'profesor', 1, 'julio.sanchezfernandez@educa.madrid.org', 'Personal'),
+(141, 'empresa', 7, 'mreal@gapd.es', NULL),
+(142, 'empresa', 8, 'mariajose.camacho@bisiona.com', NULL),
+(143, 'empresa', 9, 'cesar@redphoneservices.com', NULL),
+(144, 'empresa', 10, 'juan.fernandez@cw-consulting.es', NULL),
+(145, 'empresa', 11, 'kate.laborio@waima.es', NULL),
+(146, 'empresa', 12, 'clubvoleibolaranjuez@gmail.com', NULL),
+(147, 'empresa', 13, 'fernando@datarecover.es', NULL),
+(148, 'empresa', 14, 'jorteso@elecnor.es', NULL),
+(149, 'empresa', 15, 'rleonsa@gmail.com', NULL),
+(150, 'empresa', 16, 'rrhh@fractalia.es', NULL),
+(151, 'empresa', 17, 'administracion@gtpsistemas.es', NULL),
+(152, 'empresa', 18, 'fcu.secretariadireccion@clinica.urjc.es', NULL),
+(153, 'empresa', 19, 'agomez@globaltis.com', NULL),
+(154, 'empresa', 20, 'carmen.munoz@graddo.es', NULL),
+(155, 'empresa', 21, 'd.ruiz@grupoitsl.com', NULL),
+(156, 'empresa', 22, 'lmartinezp@hiberus.com', NULL),
+(157, 'empresa', 23, 'ana.ramiro@info-computer.com', NULL),
+(158, 'empresa', 24, 'jorge.arevalo@iberpixel.com', NULL),
+(159, 'empresa', 25, 'sprieto@iconestudio.eu', NULL),
+(160, 'empresa', 26, 'josemanuelperez@madrid.org', NULL),
+(161, 'empresa', 27, 'japrabadan@minsait.com', NULL),
+(162, 'empresa', 28, 'victor.hita@inetum.world', NULL),
+(163, 'empresa', 30, 'javier.riera@jas.com', NULL),
+(164, 'empresa', 31, 'jfrutos@jetcomputer.es', NULL),
+(165, 'empresa', 32, 'villaverdesantiagos@johndeere.com', NULL),
+(166, 'empresa', 33, 'info@dnainformatica.es', NULL),
+(167, 'empresa', 34, 'juliangrande@infoneri.com', NULL),
+(168, 'empresa', 35, 'anaborges@landatel.com', NULL),
+(169, 'empresa', 36, 'administracion@m2sistemas.com', NULL),
+(170, 'empresa', 37, 'jesus.delavieja@parquewarner.com', NULL),
+(171, 'empresa', 38, 'raul@memorysistemas.com', NULL),
+(172, 'empresa', 39, 'a.poveda@motiva2.net', NULL),
+(173, 'empresa', 41, 'e.brites@rbeuropa.com', NULL),
+(174, 'empresa', 42, 'paula.castillo@seringe.com', NULL),
+(175, 'empresa', 43, 'rosa.robles@tainnde.com', NULL),
+(176, 'empresa', 44, 'mbelinchon@viewnext.com', NULL),
+(177, 'empresa', 45, 'mcarretero@w3networking.es', NULL),
+(178, 'empresa', 46, 'shernandez@zelenza.com', NULL);
 
 -- --------------------------------------------------------
 
@@ -903,6 +941,48 @@ CREATE TABLE `direcciones` (
   `principal` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `direcciones`
+--
+
+INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provincia`, `id_localidad`, `id_via`, `nombre_via`, `numero`, `bloque`, `escalera`, `planta`, `puerta`, `otros`, `etiqueta`, `cp`, `principal`) VALUES
+(6, 7, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Virgilio 21 | 28223 · Madrid · Madrid', NULL, NULL, 1),
+(7, 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Valle del Roncal 12 | 28232 · Las Rozas · Madrid', NULL, NULL, 1),
+(8, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Bajada del Salvador 5 | 45223 · Seseña · Toledo', NULL, NULL, 1),
+(9, 10, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle López de Hoyos 35 | Planta 1 | 28002 · Madrid · Madrid', NULL, NULL, 1),
+(10, 11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Capellanes 8 | 28902 · Getafe · Madrid', NULL, NULL, 1),
+(11, 13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Las Norias 92 | 28221 · Majadahonda · Madrid', NULL, NULL, 1),
+(12, 14, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Marqués de Mondéjar 33 | 28028 · Madrid · Madrid', NULL, NULL, 1),
+(13, 15, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Magdalena 36 | Planta Bajo, Puerta 6 | Getafe · Madrid', NULL, NULL, 1),
+(14, 16, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Ronda Poniente 2-16 | Bloque Edificio 8, Planta 2 | 28760 · Tres Cantos · Madrid', NULL, NULL, 1),
+(15, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Lima 25 | 28945 · Fuenlabrada · Madrid', NULL, NULL, 1),
+(16, 18, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Atenas s/n | 28922 · Alcorcón · Madrid | Campus Alcorcón - Universidad Rey Juan Carlos  Avda. Europa esquina con Calle Estambul (es la entrada más cercana a la clínica.)  Edificio Clínica Universitaria – 2ª planta - Despacho 2041 Secretaría de dirección (Saliendo del ascensor a mano izquierda de', NULL, NULL, 1),
+(17, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Rosales 42 | Bloque 4, Planta 1ª, Puerta Derecha | Getafe · Madrid', NULL, NULL, 1),
+(18, 21, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Progreso 2 | 28906 · Getafe · Madrid | Oficina 214', NULL, NULL, 1),
+(19, 22, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Paseo Isabel la Católica 6 | 50009 · Zaragoza · Zaragoza', NULL, NULL, 1),
+(20, 23, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Rosales 42 | 28021 · Madrid · Madrid | Bloque 3, nave 210, 211, 212', NULL, NULL, 1),
+(21, 24, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Patrimonio Mundial 7 | Puerta Oficina 57 | 28300 · Aranjuez · Madrid', NULL, NULL, 1),
+(22, 26, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Fuenlabrada 92 | 28981 · Parla · Madrid', NULL, NULL, 1),
+(23, 27, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Roc Boronat 133 | 08018 · Barcelona · Barcelona', NULL, NULL, 1),
+(24, 28, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Travesía Costa Brava 4 | 28034 · Madrid · Madrid', NULL, NULL, 1),
+(25, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Paseo de la Castellana 79 | Planta 7 | 28046 · Madrid · Madrid', NULL, NULL, 1),
+(26, 30, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida de Suiza 18-20 | Planta 2 | 28821 · Coslada · Madrid', NULL, NULL, 1),
+(27, 31, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Fernando Alonso 32 | 28914 · Leganés · Madrid', NULL, NULL, 1),
+(28, 32, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Carretera A-42 12,200 | 28905 · Getafe · Madrid', NULL, NULL, 1),
+(29, 33, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Andalucía 24 | Planta 3, Puerta B | 28903 · Getafe · Madrid', NULL, NULL, 1),
+(30, 34, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Reyes Católicos 5 | Planta 4, Puerta B | 28802 · Alcalá de Henares · Madrid', NULL, NULL, 1),
+(31, 36, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Real de Pinto 91 | 28021 · Madrid · Madrid | Posterior. Nave A14', NULL, NULL, 1),
+(32, 37, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Carretera M-301 15,500 | 28330 · San Martín de la Vega · Madrid | Parque Warner Madrid', NULL, NULL, 1),
+(33, 38, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Valle de Tobalina 42 | 28021 · Madrid · Madrid', NULL, NULL, 1),
+(34, 39, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Santa Leonor 75 | Bloque Edificio E, Planta 4, Puerta Izquierda | 28037 · Madrid · Madrid', NULL, NULL, 1),
+(35, 40, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle General Arfrando 7 | 28010 · Madrid · Madrid', NULL, NULL, 1),
+(36, 41, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Horno Nave 51 | 45230 · Numancia de la Sagra · Toledo | Polígono Industrial Villa', NULL, NULL, 1),
+(37, 42, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Magdalena 14 | 28901 · Getafe · Madrid', NULL, NULL, 1),
+(38, 43, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Plaza Villafranca de los Barros 4 | 28034 · Madrid · Madrid | Posterior', NULL, NULL, 1),
+(39, 44, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Burgos 8A | 28036 · Madrid · Madrid | 6ª planta', NULL, NULL, 1),
+(40, 45, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Desarrollo 5 | 28906 · Getafe · Madrid', NULL, NULL, 1),
+(41, 46, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida San Diego 1 | 28053 · Madrid · Madrid', NULL, NULL, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -919,6 +999,52 @@ CREATE TABLE `empresas` (
   `notas` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `empresas`
+--
+
+INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `convenio`, `notas`) VALUES
+(7, 'A28634046', 'Algoritmos, Procesos y Diseños, S.A.', '', '', 374, NULL),
+(8, NULL, 'Bisiona Business Solutions, S.L.', '', '', 577, NULL),
+(9, '02767448L', 'César Martin', 'Lara', 'Bastidas', 917, NULL),
+(10, 'B87159117', 'Cloud Workspace Consulting, S.L.', '', '', 581, NULL),
+(11, 'B87216024', 'CloudAPPi, S.L.', '', '', 498, NULL),
+(12, NULL, 'Club Voleibol Aranjuez', '', '', NULL, NULL),
+(13, 'B84837947', 'Data Recover, S.L.', '', '', NULL, NULL),
+(14, 'A79486833', 'Elecnor Servicios y Proyecto, S.A.U.', '', '', 424, NULL),
+(15, 'B85669778', 'ELEOOS Solutions, S.L.', '', '', 583, NULL),
+(16, 'B84933894', 'Fractalia IT Systems España', '', '', 593, NULL),
+(17, 'B84523786', 'Fuenlabrada GPT Sistemas, S.L.', '', '', 1350, NULL),
+(18, 'G87063285', 'Fundación de la Clínica Universitaria de la Universidad Rey ', '', '', 900, NULL),
+(19, 'B83542357', 'Globaltis', '', '', 588, NULL),
+(20, NULL, 'Graddo II', '', '', 586, NULL),
+(21, 'B87999504', 'Gruservit, Grupo De Servicios Informaticos y Tecnologia, S.L', '', '', 960, NULL),
+(22, NULL, 'Hiberus Sistemas Informaticos', '', '', 587, NULL),
+(23, 'B84425420', 'Ibérica Infocomputer, S.L.', '', '', 1325, NULL),
+(24, 'B83835645', 'Iberpixel, S.L.', '', '', 663, NULL),
+(25, NULL, 'Iconestudios', '', '', 590, NULL),
+(26, NULL, 'IES La Laguna', '', '', NULL, NULL),
+(27, 'B82627019', 'Indra Business Consulting S.L.', '', '', NULL, NULL),
+(28, 'A28855260', 'Inetum España, S.A.U.', '', '', 582, NULL),
+(29, 'B88129218', 'Innovaciones Tecnológicas de Informática y Comunicaciones, S', '', '', NULL, NULL),
+(30, 'B64989213', 'Jas Worlwide, S.L.', '', '', 571, NULL),
+(31, 'B82049602', 'Jet Computer, S.L.', '', '', 805, NULL),
+(32, 'A28061075', 'Jhon Deere Ibérica, S.A.', '', '', NULL, NULL),
+(33, '47314697V', 'José Luis', 'Julián', 'Tebar', 715, NULL),
+(34, '52100377H', 'Julián', 'Grande', 'Santamaría', 1320, NULL),
+(35, 'B83170944', 'Landatel Comunicaciones, S.L.', '', '', 589, NULL),
+(36, 'B86870904', 'M2 Sistemas Informáticos, S.L.', '', '', 573, NULL),
+(37, 'B83331041', 'Madrid Theme Park Management S.L.U.', '', '', 408, NULL),
+(38, 'B81848749', 'Memory Sistemas Informáticos, S.L.', '', '', 433, NULL),
+(39, 'B83184598', 'Motiva Consulting, S.L.', '', '', 579, NULL),
+(40, 'B87625109', 'My City Stay, S.L.', '', '', 592, NULL),
+(41, 'B87208070', 'RB Europa', '', '', 576, NULL),
+(42, 'A28843159', 'Seringe, S.A.', '', '', 1322, NULL),
+(43, 'B87250478', 'Talento, Innovación y Desarrollo, S.L.', '', '', NULL, NULL),
+(44, 'A80157746', 'ViewNext, S.A.', '', '', 558, NULL),
+(45, 'B86664661', 'W3 Networking, S.L.', '', '', 578, NULL),
+(46, 'B86218609', 'Zelenza, S.L.', '', '', NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -934,6 +1060,50 @@ CREATE TABLE `empresas_contactos` (
   `cargo` varchar(60) DEFAULT NULL,
   `comentarios` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `empresas_contactos`
+--
+
+INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `cargo`, `comentarios`) VALUES
+(6, 7, '', NULL, 'Mercedes Real', NULL, NULL),
+(7, 8, '', NULL, 'María José Camacho', NULL, NULL),
+(8, 9, '', NULL, 'César Martin Lara', NULL, NULL),
+(9, 10, '', NULL, 'Fátima', NULL, NULL),
+(10, 11, '', NULL, 'Mary Kate Laborio', NULL, NULL),
+(11, 12, '', NULL, 'Alejandro Morillo', NULL, NULL),
+(12, 13, '', NULL, 'Fernando Hípola', NULL, NULL),
+(13, 14, '', NULL, 'Javier Orteso', NULL, NULL),
+(14, 15, '', NULL, 'Rafael León', NULL, NULL),
+(15, 16, '', NULL, 'Sonia', NULL, NULL),
+(16, 17, '', NULL, 'Elena Cimarra', NULL, NULL),
+(17, 18, '', NULL, 'Nuria Meitín', NULL, NULL),
+(18, 19, '', NULL, 'Alejandro Gómez', NULL, NULL),
+(19, 20, '', NULL, 'Mª Carmen Muñoz', NULL, NULL),
+(20, 21, '', NULL, 'Daniel Ruiz', NULL, NULL),
+(21, 22, '', NULL, 'Leticia Martínez', NULL, NULL),
+(22, 23, '', NULL, 'Ana Ramiro', NULL, NULL),
+(23, 24, '', NULL, 'Jorge Arévalo', NULL, NULL),
+(24, 25, '', NULL, 'Sandra Prieto', NULL, NULL),
+(25, 26, '', NULL, 'José Manuel Pérez', NULL, NULL),
+(26, 27, '', NULL, 'José Antonio Pérez', NULL, NULL),
+(27, 28, '', NULL, 'Victor Manuel Hita', NULL, NULL),
+(28, 30, '', NULL, 'Javier Riera', NULL, NULL),
+(29, 31, '', NULL, 'Jorge López', NULL, NULL),
+(30, 32, '', NULL, 'Santiago Villaverde', NULL, NULL),
+(31, 33, '', NULL, 'José Luis Julián', NULL, NULL),
+(32, 34, '', NULL, 'Julián Grande', NULL, NULL),
+(33, 35, '', NULL, 'Ana María Borges', NULL, NULL),
+(34, 36, '', NULL, 'Sofía León', NULL, NULL),
+(35, 37, '', NULL, 'Jesús de la Vieja', NULL, NULL),
+(36, 38, '', NULL, 'Raúl Navarro', NULL, NULL),
+(37, 39, '', NULL, 'Anabel Poveda', NULL, NULL),
+(38, 41, '', NULL, 'Eliana Brites', NULL, NULL),
+(39, 42, '', NULL, 'Paula del Castillo', NULL, NULL),
+(40, 43, '', NULL, 'Rosa Robles', NULL, NULL),
+(41, 44, '', NULL, 'María Belinchón', NULL, NULL),
+(42, 45, '', NULL, 'Marta Carretero', NULL, NULL),
+(43, 46, '', NULL, 'Soraya Hernández', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1014,7 +1184,8 @@ INSERT INTO `grupos_tutores` (`id_grupo_tutor`, `id_grupo`, `id_profesor`, `id_c
 CREATE TABLE `localidades` (
   `id_localidad` int(10) UNSIGNED NOT NULL,
   `id_provincia` int(10) UNSIGNED NOT NULL,
-  `nombre` varchar(60) NOT NULL
+  `nombre` varchar(60) NOT NULL,
+  `cp` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1828,7 +1999,40 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (132, 'alumno', 133, '630416206', 'Personal'),
 (133, 'alumno', 134, '647727693', 'Personal'),
 (134, 'alumno', 135, '624890110', 'Personal'),
-(135, 'profesor', 1, '649496323', 'Personal');
+(135, 'profesor', 1, '649496323', 'Personal'),
+(140, 'empresa', 7, '678527255', NULL),
+(141, 'empresa', 8, '916266050', NULL),
+(142, 'empresa', 9, '622711605', NULL),
+(143, 'empresa', 10, '630318527', NULL),
+(144, 'empresa', 13, '606563024', NULL),
+(145, 'empresa', 14, '608100381', NULL),
+(146, 'empresa', 15, '629238899', NULL),
+(147, 'empresa', 16, '917994070', NULL),
+(148, 'empresa', 17, '91 492 09 90', NULL),
+(149, 'empresa', 18, '914888664', NULL),
+(150, 'empresa', 19, '916651232', NULL),
+(151, 'empresa', 20, '603414847', NULL),
+(152, 'empresa', 21, '620541219', NULL),
+(153, 'empresa', 22, '976106620', NULL),
+(154, 'empresa', 23, '910771230', NULL),
+(155, 'empresa', 24, '675950134', NULL),
+(156, 'empresa', 26, '607762221', NULL),
+(157, 'empresa', 27, '961001789', NULL),
+(158, 'empresa', 28, '679740541', NULL),
+(159, 'empresa', 31, '639131055', NULL),
+(160, 'empresa', 32, '914958465', NULL),
+(161, 'empresa', 33, '610711636', NULL),
+(162, 'empresa', 34, '607419044', NULL),
+(163, 'empresa', 35, '911461700', NULL),
+(164, 'empresa', 36, '911610392', NULL),
+(165, 'empresa', 37, '635122115', NULL),
+(166, 'empresa', 38, '669703997', NULL),
+(167, 'empresa', 39, '637569787', NULL),
+(168, 'empresa', 41, '606901136', NULL),
+(169, 'empresa', 42, '600710980', NULL),
+(170, 'empresa', 43, '640071938', NULL),
+(171, 'empresa', 45, '682436145', NULL),
+(172, 'empresa', 46, '639277346', NULL);
 
 -- --------------------------------------------------------
 
@@ -2177,7 +2381,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=136;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
 
 --
 -- AUTO_INCREMENT de la tabla `cursos`
@@ -2195,19 +2399,19 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
 --
 ALTER TABLE `empresas`
-  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
@@ -2261,7 +2465,7 @@ ALTER TABLE `niveles`
 -- AUTO_INCREMENT de la tabla `no_lectivos`
 --
 ALTER TABLE `no_lectivos`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `paises`
@@ -2321,7 +2525,7 @@ ALTER TABLE `provincias`
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=136;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
@@ -2344,7 +2548,7 @@ ALTER TABLE `alumnos`
 -- Filtros para la tabla `alumno_curso`
 --
 ALTER TABLE `alumno_curso`
-  ADD CONSTRAINT `fk_ac_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_ac_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_ac_ciclo` FOREIGN KEY (`id_ciclo`) REFERENCES `ciclos` (`id_ciclo`),
   ADD CONSTRAINT `fk_ac_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`),
   ADD CONSTRAINT `fk_ac_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
@@ -2355,14 +2559,14 @@ ALTER TABLE `alumno_curso`
 -- Filtros para la tabla `alumno_modulo`
 --
 ALTER TABLE `alumno_modulo`
-  ADD CONSTRAINT `fk_am_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_am_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_am_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`);
 
 --
 -- Filtros para la tabla `asistencia_mensual`
 --
 ALTER TABLE `asistencia_mensual`
-  ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_as_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_as_mes` FOREIGN KEY (`id_mes`) REFERENCES `meses` (`id_mes`);
 
@@ -2370,7 +2574,7 @@ ALTER TABLE `asistencia_mensual`
 -- Filtros para la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  ADD CONSTRAINT `fk_dir_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`),
+  ADD CONSTRAINT `fk_dir_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_dir_localidad` FOREIGN KEY (`id_localidad`) REFERENCES `localidades` (`id_localidad`),
   ADD CONSTRAINT `fk_dir_pais` FOREIGN KEY (`id_pais`) REFERENCES `paises` (`id_pais`),
   ADD CONSTRAINT `fk_dir_provincia` FOREIGN KEY (`id_provincia`) REFERENCES `provincias` (`id_provincia`),
@@ -2380,13 +2584,13 @@ ALTER TABLE `direcciones`
 -- Filtros para la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  ADD CONSTRAINT `fk_con_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`);
+  ADD CONSTRAINT `fk_con_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `empresas_tutores`
 --
 ALTER TABLE `empresas_tutores`
-  ADD CONSTRAINT `fk_tut_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`);
+  ADD CONSTRAINT `fk_tut_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `grupos`
@@ -2401,7 +2605,7 @@ ALTER TABLE `grupos`
 --
 ALTER TABLE `grupos_tutores`
   ADD CONSTRAINT `fk_gt_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
-  ADD CONSTRAINT `fk_gt_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`),
+  ADD CONSTRAINT `fk_gt_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_gt_profesor` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`);
 
 --
@@ -2423,16 +2627,16 @@ ALTER TABLE `modulos`
 --
 ALTER TABLE `modulos_profesores`
   ADD CONSTRAINT `fk_mp_curso_escolar_ref` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
-  ADD CONSTRAINT `fk_mp_modulo_ref` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`),
+  ADD CONSTRAINT `fk_mp_modulo_ref` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_mp_profesor_ref` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`);
 
 --
 -- Filtros para la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  ADD CONSTRAINT `fk_pra_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_pra_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`),
-  ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`),
+  ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_estado` FOREIGN KEY (`id_practicas_estado`) REFERENCES `practicas_estados` (`id_practicas_estado`),
   ADD CONSTRAINT `fk_pra_tutor` FOREIGN KEY (`id_empresa_tutor`) REFERENCES `empresas_tutores` (`id_empresas_tutor`);
 
@@ -2440,7 +2644,7 @@ ALTER TABLE `practicas`
 -- Filtros para la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  ADD CONSTRAINT `fk_hor_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`);
+  ADD CONSTRAINT `fk_hor_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `provincias`

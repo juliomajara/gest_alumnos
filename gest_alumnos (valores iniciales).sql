@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-02-2026 a las 21:24:46
+-- Tiempo de generación: 10-02-2026 a las 23:30:44
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -296,7 +296,8 @@ CREATE TABLE `grupos_tutores` (
 CREATE TABLE `localidades` (
   `id_localidad` int(10) UNSIGNED NOT NULL,
   `id_provincia` int(10) UNSIGNED NOT NULL,
-  `nombre` varchar(60) NOT NULL
+  `nombre` varchar(60) NOT NULL,
+  `cp` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -455,6 +456,14 @@ CREATE TABLE `niveles` (
   `id_nivel` int(10) UNSIGNED NOT NULL,
   `nivel` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `niveles`
+--
+
+INSERT INTO `niveles` (`id_nivel`, `nivel`) VALUES
+(1, 'F.P. Grado Medio'),
+(2, 'F.P. Grado Superior');
 
 -- --------------------------------------------------------
 
@@ -730,22 +739,6 @@ CREATE TABLE `practicas_anexos` (
   `resumen` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `practicas_anexos`
---
-
-INSERT INTO `practicas_anexos` (`id_practicas_anexo`, `anexo`, `descripcion`, `resumen`) VALUES
-(1, 'Anexo 1.1', 'Convenio entre centro docente y entidad colaboradora', 'Convenio'),
-(2, 'Anexo 1.1', 'Acuerdo entre centro docente y centro público colaborador', 'Acuerdo'),
-(3, 'Anexo 2.1', 'Relación de alumnos', 'Relación de alumnos'),
-(4, 'Anexo 2.1', 'Cambio de condiciones', 'Cambio de condiciones'),
-(5, 'Anexo 2.2', 'Comunicación a la DAT de la relación de alumnos', 'Comunicación a la DAT'),
-(6, 'Anexo 3', 'Plan de formación en empresa', 'Plan de formación'),
-(7, 'Anexo 4', 'Solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional', 'Autorización excepcional'),
-(8, 'Anexo 6', 'Comunicación en caso de no realizarse la FFE en el primer curso o periodo por falta de puestos formativos', 'Comunicación de no FFE'),
-(9, 'Anexo ?', 'Ficha de seguimiento periódico', 'Ficha de seguimiento'),
-(10, 'Anexo ?', 'Informe de valoración final del tutor de empresa', 'Informe final');
-
 -- --------------------------------------------------------
 
 --
@@ -757,17 +750,6 @@ CREATE TABLE `practicas_anexos_estados` (
   `estado` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `practicas_anexos_estados`
---
-
-INSERT INTO `practicas_anexos_estados` (`id_practicas_anexo_estado`, `estado`) VALUES
-(1, 'Firmado por el representante de la empresa'),
-(2, 'Firmado por el director del centro'),
-(3, 'Firmado por el tutor en la empresa'),
-(4, 'Firmado por el tutor en el centro'),
-(5, 'Firmado por el alumno');
-
 -- --------------------------------------------------------
 
 --
@@ -778,17 +760,6 @@ CREATE TABLE `practicas_estados` (
   `id_practicas_estado` int(10) UNSIGNED NOT NULL,
   `estado` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `practicas_estados`
---
-
-INSERT INTO `practicas_estados` (`id_practicas_estado`, `estado`) VALUES
-(1, 'Sin asignar'),
-(2, 'Asignada'),
-(3, 'En curso'),
-(4, 'Anulada'),
-(5, 'Terminada');
 
 -- --------------------------------------------------------
 
@@ -814,20 +785,6 @@ CREATE TABLE `practicas_pasos` (
   `id_practicas_paso` int(10) UNSIGNED NOT NULL,
   `paso` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `practicas_pasos`
---
-
-INSERT INTO `practicas_pasos` (`id_practicas_paso`, `paso`) VALUES
-(1, 'Datos pedidos a la empresa'),
-(2, 'Enviado a firmar por el representante de la empresa'),
-(3, 'Enviado a firmar por el director del centro'),
-(4, 'Enviado a firmar por el tutor en la empresa'),
-(5, 'Enviado a firmar por el tutor en el centro'),
-(6, 'Enviado a firmar por el alumno'),
-(7, 'Enviado al alumno'),
-(8, 'Enviado a la empresa');
 
 -- --------------------------------------------------------
 
@@ -1353,7 +1310,7 @@ ALTER TABLE `modulos_profesores`
 -- AUTO_INCREMENT de la tabla `niveles`
 --
 ALTER TABLE `niveles`
-  MODIFY `id_nivel` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_nivel` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `no_lectivos`
@@ -1377,19 +1334,19 @@ ALTER TABLE `practicas`
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
 --
 ALTER TABLE `practicas_anexos`
-  MODIFY `id_practicas_anexo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_practicas_anexo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos_estados`
 --
 ALTER TABLE `practicas_anexos_estados`
-  MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_estados`
 --
 ALTER TABLE `practicas_estados`
-  MODIFY `id_practicas_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_practicas_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_horario`
@@ -1401,7 +1358,7 @@ ALTER TABLE `practicas_horario`
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
 --
 ALTER TABLE `practicas_pasos`
-  MODIFY `id_practicas_paso` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_practicas_paso` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `profesores`
@@ -1442,7 +1399,7 @@ ALTER TABLE `alumnos`
 -- Filtros para la tabla `alumno_curso`
 --
 ALTER TABLE `alumno_curso`
-  ADD CONSTRAINT `fk_ac_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_ac_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_ac_ciclo` FOREIGN KEY (`id_ciclo`) REFERENCES `ciclos` (`id_ciclo`),
   ADD CONSTRAINT `fk_ac_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`),
   ADD CONSTRAINT `fk_ac_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
@@ -1453,14 +1410,14 @@ ALTER TABLE `alumno_curso`
 -- Filtros para la tabla `alumno_modulo`
 --
 ALTER TABLE `alumno_modulo`
-  ADD CONSTRAINT `fk_am_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_am_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_am_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`);
 
 --
 -- Filtros para la tabla `asistencia_mensual`
 --
 ALTER TABLE `asistencia_mensual`
-  ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_as_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_as_mes` FOREIGN KEY (`id_mes`) REFERENCES `meses` (`id_mes`);
 
@@ -1468,7 +1425,7 @@ ALTER TABLE `asistencia_mensual`
 -- Filtros para la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  ADD CONSTRAINT `fk_dir_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`),
+  ADD CONSTRAINT `fk_dir_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_dir_localidad` FOREIGN KEY (`id_localidad`) REFERENCES `localidades` (`id_localidad`),
   ADD CONSTRAINT `fk_dir_pais` FOREIGN KEY (`id_pais`) REFERENCES `paises` (`id_pais`),
   ADD CONSTRAINT `fk_dir_provincia` FOREIGN KEY (`id_provincia`) REFERENCES `provincias` (`id_provincia`),
@@ -1478,13 +1435,13 @@ ALTER TABLE `direcciones`
 -- Filtros para la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  ADD CONSTRAINT `fk_con_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`);
+  ADD CONSTRAINT `fk_con_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `empresas_tutores`
 --
 ALTER TABLE `empresas_tutores`
-  ADD CONSTRAINT `fk_tut_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`);
+  ADD CONSTRAINT `fk_tut_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `grupos`
@@ -1499,7 +1456,7 @@ ALTER TABLE `grupos`
 --
 ALTER TABLE `grupos_tutores`
   ADD CONSTRAINT `fk_gt_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
-  ADD CONSTRAINT `fk_gt_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`),
+  ADD CONSTRAINT `fk_gt_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_gt_profesor` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`);
 
 --
@@ -1521,16 +1478,16 @@ ALTER TABLE `modulos`
 --
 ALTER TABLE `modulos_profesores`
   ADD CONSTRAINT `fk_mp_curso_escolar_ref` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
-  ADD CONSTRAINT `fk_mp_modulo_ref` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`),
+  ADD CONSTRAINT `fk_mp_modulo_ref` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_mp_profesor_ref` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`);
 
 --
 -- Filtros para la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  ADD CONSTRAINT `fk_pra_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`),
+  ADD CONSTRAINT `fk_pra_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`),
-  ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`),
+  ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_estado` FOREIGN KEY (`id_practicas_estado`) REFERENCES `practicas_estados` (`id_practicas_estado`),
   ADD CONSTRAINT `fk_pra_tutor` FOREIGN KEY (`id_empresa_tutor`) REFERENCES `empresas_tutores` (`id_empresas_tutor`);
 
@@ -1538,7 +1495,7 @@ ALTER TABLE `practicas`
 -- Filtros para la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  ADD CONSTRAINT `fk_hor_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`);
+  ADD CONSTRAINT `fk_hor_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `provincias`
