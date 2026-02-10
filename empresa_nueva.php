@@ -1184,11 +1184,11 @@ $active_page = 'empresas';
 
     const createPhoneBlock = (namePrefix) => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'entity-repeatable-item';
+      wrapper.className = 'entity-repeatable-item empresa-inline-item';
       wrapper.innerHTML = `
-        <div class="entity-inline-grid">
+        <div class="entity-inline-grid empresa-contact-item-grid">
           <label>
-            Teléfono
+            Número
             <input type="text" name="${namePrefix}[telefonos][__INDEX__][telefono]">
           </label>
           <label>
@@ -1199,17 +1199,17 @@ $active_page = 'empresas';
               <option value="Otro">Otro</option>
             </select>
           </label>
+          <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
         </div>
-        <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
       `;
       return wrapper;
     };
 
     const createEmailBlock = (namePrefix) => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'entity-repeatable-item';
+      wrapper.className = 'entity-repeatable-item empresa-inline-item';
       wrapper.innerHTML = `
-        <div class="entity-inline-grid">
+        <div class="entity-inline-grid empresa-contact-item-grid">
           <label>
             Correo
             <input type="email" name="${namePrefix}[correos][__INDEX__][correo]">
@@ -1222,8 +1222,8 @@ $active_page = 'empresas';
               <option value="Otro">Otro</option>
             </select>
           </label>
+          <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
         </div>
-        <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
       `;
       return wrapper;
     };
@@ -1246,9 +1246,6 @@ $active_page = 'empresas';
 
       addPhone.addEventListener('click', () => addNestedBlock(phoneList, createPhoneBlock));
       addEmail.addEventListener('click', () => addNestedBlock(emailList, createEmailBlock));
-
-      addNestedBlock(phoneList, createPhoneBlock);
-      addNestedBlock(emailList, createEmailBlock);
     };
 
     const createEntityCard = (entityType, entityIndex, extraFieldLabel, extraFieldName) => {
@@ -1277,19 +1274,21 @@ $active_page = 'empresas';
             <input type="text" name="${entityType}[${entityIndex}][${extraFieldName}]">
           </label>
         </div>
-        <div class="entity-nested-section">
-          <div class="entity-section-header">
-            <h4>Teléfonos</h4>
-            <button type="button" class="edit-toggle nested-add-phone">Añadir teléfono</button>
-          </div>
-          <div class="entity-stack nested-phone-list"></div>
-        </div>
-        <div class="entity-nested-section">
-          <div class="entity-section-header">
-            <h4>Correos</h4>
-            <button type="button" class="edit-toggle nested-add-email">Añadir correo</button>
-          </div>
-          <div class="entity-stack nested-email-list"></div>
+        <div class="grid empresa-medios-grid">
+          <section class="entity-nested-section">
+            <div class="entity-section-header">
+              <h4>Teléfonos</h4>
+              <button type="button" class="edit-toggle nested-add-phone">Añadir teléfono</button>
+            </div>
+            <div class="entity-stack nested-phone-list"></div>
+          </section>
+          <section class="entity-nested-section">
+            <div class="entity-section-header">
+              <h4>Correos</h4>
+              <button type="button" class="edit-toggle nested-add-email">Añadir correo</button>
+            </div>
+            <div class="entity-stack nested-email-list"></div>
+          </section>
         </div>
       `;
       return card;
@@ -1318,9 +1317,6 @@ $active_page = 'empresas';
 
     addItemFromTemplate('#telefonosEmpresaList', '#telefonoEmpresaTemplate');
     addItemFromTemplate('#correosEmpresaList', '#correoEmpresaTemplate');
-    addItemFromTemplate('#direccionesList', '#direccionTemplate');
-    addContacto();
-    addTutor();
   </script>
 </body>
 </html>
