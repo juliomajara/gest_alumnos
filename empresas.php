@@ -11,11 +11,8 @@ $filters = [];
 $params = [];
 
 if ($search_term !== '') {
-  $filters[] = '(e.nombre LIKE :search_term OR e.cif LIKE :search_term1 OR e.apellido1 LIKE :search_term2 OR e.apellido2 LIKE :search_term3)';
+  $filters[] = '(TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2)) LIKE :search_term OR e.cif LIKE :search_term OR CAST(e.convenio AS CHAR) LIKE :search_term)';
   $params['search_term'] = '%' . $search_term . '%';
-  $params['search_term1'] = '%' . $search_term . '%';
-  $params['search_term2'] = '%' . $search_term . '%';
-  $params['search_term3'] = '%' . $search_term . '%';
 }
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
@@ -56,29 +53,28 @@ function render_company_rows(array $companies): string
   ob_start();
   if (!$companies): ?>
     <tr>
-      <td colspan="8">No hay empresas para los filtros seleccionados.</td>
+      <td colspan="5">No hay empresas para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($companies as $company): ?>
       <?php
         $cif = $company['cif'] ?: 'No disponible';
-        $nombre = $company['nombre'] ?: 'No disponible';
-        $apellido1 = $company['apellido1'] ?: 'No disponible';
-        $apellido2 = $company['apellido2'] ?: 'No disponible';
+        $nombreCompleto = trim(implode(' ', array_filter([
+          $company['nombre'] ?? '',
+          $company['apellido1'] ?? '',
+          $company['apellido2'] ?? ''
+        ], static fn ($value) => trim((string) $value) !== '')));
+        $nombre = $nombreCompleto !== '' ? $nombreCompleto : 'No disponible';
         $telefono = $company['telefono'] ?: 'No disponible';
         $correo = $company['correo'] ?: 'No disponible';
         $convenio = $company['convenio'] ? (string) $company['convenio'] : 'No disponible';
-        $notas = $company['notas'] ? trim($company['notas']) : 'Sin notas';
       ?>
       <tr>
-        <td><?php echo htmlspecialchars($cif, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($convenio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($apellido1, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($apellido2, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($cif, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($convenio, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($notas, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -149,14 +145,11 @@ $active_page = 'empresas';
           <table>
             <thead>
               <tr>
+                <th>Convenio</th>
+                <th>Nombre</th>
                 <th>CIF</th>
-                <th>Empresa</th>
-                <th>Apellido 1</th>
-                <th>Apellido 2</th>
                 <th>Teléfono</th>
                 <th>Correo</th>
-                <th>Convenio</th>
-                <th>Notas</th>
               </tr>
             </thead>
             <tbody>
