@@ -536,6 +536,102 @@ body {
   box-shadow: 0 10px 24px rgba(86, 111, 235, 0.12);
 }
 
+.entity-form {
+  gap: 18px;
+}
+
+.entity-section,
+.entity-nested-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.entity-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.entity-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.entity-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.entity-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.entity-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.entity-form input,
+.entity-form select,
+.entity-form textarea {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: #fff;
+}
+
+.entity-form input:focus,
+.entity-form select:focus,
+.entity-form textarea:focus {
+  outline: 2px solid rgba(107, 138, 253, 0.35);
+  border-color: rgba(107, 138, 253, 0.5);
+}
+
+.entity-repeatable-item {
+  border: 1px solid var(--border);
+  background: #f9faff;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.entity-card {
+  background: #f5f7ff;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.form-errors {
+  list-style: disc;
+  padding-left: 18px;
+  color: #b42318;
+}
+
 .activity {
   list-style: none;
   display: flex;
