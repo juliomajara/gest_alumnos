@@ -617,6 +617,66 @@ body {
   gap: 18px;
 }
 
+.empresa-form {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.empresa-form-grid {
+  width: 100%;
+}
+
+.empresa-block {
+  gap: 14px;
+}
+
+.empresa-block-main .panel-header,
+.empresa-block-direcciones .panel-header {
+  margin-bottom: 2px;
+}
+
+.empresa-datos-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.empresa-subsection {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.empresa-medios-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.empresa-form .entity-nested-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: #f9faff;
+}
+
+.empresa-contact-item-grid {
+  grid-template-columns: minmax(180px, 2fr) minmax(140px, 1fr) auto;
+  align-items: end;
+}
+
+.empresa-inline-item {
+  background: #fff;
+}
+
+.empresa-inline-item .ghost-button {
+  align-self: end;
+}
+
+.empresa-direccion-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.empresa-direccion-item .ghost-button {
+  align-self: flex-end;
+}
+
 .entity-section,
 .entity-nested-section {
   display: flex;
