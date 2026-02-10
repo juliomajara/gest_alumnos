@@ -60,7 +60,7 @@ function render_company_rows(array $companies): string
   ob_start();
   if (!$companies): ?>
     <tr>
-      <td colspan="5">No hay empresas para los filtros seleccionados.</td>
+      <td colspan="6">No hay empresas para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($companies as $company): ?>
@@ -74,6 +74,7 @@ function render_company_rows(array $companies): string
         $nombre = $nombreCompleto !== '' ? $nombreCompleto : 'No disponible';
         $idEmpresa = (int) ($company['id_empresa'] ?? 0);
         $detalleUrl = 'empresa_detalle.php?id_empresa=' . $idEmpresa;
+        $editarUrl = 'empresa_editar.php?id_empresa=' . $idEmpresa;
         $telefono = $company['telefono'] ?: 'No disponible';
         $correo = $company['correo'] ?: 'No disponible';
         $convenio = $company['convenio'] ? (string) $company['convenio'] : 'No disponible';
@@ -84,6 +85,7 @@ function render_company_rows(array $companies): string
         <td><?php echo htmlspecialchars($cif, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><a href="<?php echo htmlspecialchars($editarUrl, ENT_QUOTES, 'UTF-8'); ?>">Editar</a></td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -162,6 +164,7 @@ $active_page = 'empresas';
                 <th>CIF</th>
                 <th>Teléfono</th>
                 <th>Correo</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
