@@ -24,7 +24,7 @@ $nav_items = [
   [
     'key' => 'practicas',
     'label' => 'Prácticas',
-    'href' => '#',
+    'href' => 'practicas.php',
   ],
   [
     'key' => 'calendario',
