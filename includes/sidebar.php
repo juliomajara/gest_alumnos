@@ -42,14 +42,16 @@ $nav_items = [
   <div class="sidebar-header">
     <div class="brand">
       <div class="brand-icon">GA</div>
-      <div>
+      <div class="brand-text">
         <p class="brand-title">Gestor de Alumnos</p>
         <p class="brand-subtitle">Panel central</p>
       </div>
     </div>
+  </div>
+  <div class="sidebar-handle">
     <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="Colapsar sidebar">
-      <span class="sidebar-toggle-icon" id="sidebarToggleIcon" aria-hidden="true">←</span>
-      <span class="sr-only">Colapsar sidebar</span>
+      <span class="sidebar-toggle-icon" id="sidebarToggleIcon" aria-hidden="true">‹</span>
+      <span class="sr-only" id="sidebarToggleLabel">Colapsar sidebar</span>
     </button>
   </div>
   <nav class="nav">
@@ -78,15 +80,18 @@ $nav_items = [
     let isCollapsed = localStorage.getItem(storageKey) === 'true';
 
     const updateSidebar = () => {
+      const isExpanded = !isCollapsed;
+      const ariaLabel = isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar';
+
       sidebar.classList.toggle('collapsed', isCollapsed);
 
       if (page) {
         page.classList.toggle('sidebar-collapsed', isCollapsed);
       }
 
-      toggle.setAttribute('aria-expanded', String(!isCollapsed));
-      toggle.setAttribute('aria-label', isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar');
-      toggleIcon.textContent = isCollapsed ? '→' : '←';
+      toggle.setAttribute('aria-expanded', String(isExpanded));
+      toggle.setAttribute('aria-label', ariaLabel);
+      toggleIcon.textContent = isCollapsed ? '›' : '‹';
     };
 
     updateSidebar();
