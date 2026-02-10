@@ -38,13 +38,19 @@ $nav_items = [
   ],
 ];
 ?>
-<aside class="sidebar">
-  <div class="brand">
-    <div class="brand-icon">GA</div>
-    <div>
-      <p class="brand-title">Gestor de Alumnos</p>
-      <p class="brand-subtitle">Panel central</p>
+<aside class="sidebar" id="appSidebar">
+  <div class="sidebar-header">
+    <div class="brand">
+      <div class="brand-icon">GA</div>
+      <div>
+        <p class="brand-title">Gestor de Alumnos</p>
+        <p class="brand-subtitle">Panel central</p>
+      </div>
     </div>
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="Colapsar sidebar">
+      <span class="sidebar-toggle-icon" aria-hidden="true">❮</span>
+      <span class="sr-only">Colapsar sidebar</span>
+    </button>
   </div>
   <nav class="nav">
     <?php foreach ($nav_items as $item): ?>
@@ -57,3 +63,36 @@ $nav_items = [
     <?php endforeach; ?>
   </nav>
 </aside>
+<script>
+  (function () {
+    const sidebar = document.getElementById('appSidebar');
+    const toggle = document.getElementById('sidebarToggle');
+
+    if (!sidebar || !toggle) {
+      return;
+    }
+
+    const page = sidebar.closest('.page');
+    const storageKey = 'sidebarCollapsed';
+    let isCollapsed = localStorage.getItem(storageKey) === 'true';
+
+    const updateSidebar = () => {
+      sidebar.classList.toggle('collapsed', isCollapsed);
+
+      if (page) {
+        page.classList.toggle('sidebar-collapsed', isCollapsed);
+      }
+
+      toggle.setAttribute('aria-expanded', String(!isCollapsed));
+      toggle.setAttribute('aria-label', isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar');
+    };
+
+    updateSidebar();
+
+    toggle.addEventListener('click', () => {
+      isCollapsed = !isCollapsed;
+      localStorage.setItem(storageKey, String(isCollapsed));
+      updateSidebar();
+    });
+  })();
+</script>
