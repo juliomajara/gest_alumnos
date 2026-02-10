@@ -55,14 +55,26 @@ $nav_items = [
       </a>
     <?php endforeach; ?>
   </nav>
+  <button class="sidebar-scroll-top is-hidden" id="sidebarScrollTop" type="button">Volver arriba</button>
 </aside>
+<button
+  id="sidebarFloatingTab"
+  class="sidebar-float-tab"
+  type="button"
+  aria-label="Abrir menú"
+  aria-expanded="false"
+>
+  <span aria-hidden="true">☰</span>
+</button>
 <script>
   (function () {
     const sidebar = document.getElementById('appSidebar');
     const toggle = document.getElementById('sidebarToggle');
     const toggleIcon = document.getElementById('sidebarToggleIcon');
+    const floatingTab = document.getElementById('sidebarFloatingTab');
+    const scrollTopButton = document.getElementById('sidebarScrollTop');
 
-    if (!sidebar || !toggle || !toggleIcon) {
+    if (!sidebar || !toggle || !toggleIcon || !floatingTab || !scrollTopButton) {
       return;
     }
 
@@ -74,23 +86,40 @@ $nav_items = [
       const isExpanded = !isCollapsed;
       const ariaLabel = isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar';
 
-      sidebar.classList.toggle('collapsed', isCollapsed);
-
       if (page) {
-        page.classList.toggle('sidebar-collapsed', isCollapsed);
+        page.classList.toggle('sidebar-hidden', isCollapsed);
       }
 
       toggle.setAttribute('aria-expanded', String(isExpanded));
       toggle.setAttribute('aria-label', ariaLabel);
       toggleIcon.textContent = isCollapsed ? '›' : '‹';
+      floatingTab.classList.toggle('is-visible', isCollapsed);
+      floatingTab.setAttribute('aria-expanded', String(isExpanded));
+    };
+
+    const updateScrollTopVisibility = () => {
+      scrollTopButton.classList.toggle('is-hidden', window.scrollY === 0);
     };
 
     updateSidebar();
+    updateScrollTopVisibility();
 
     toggle.addEventListener('click', () => {
       isCollapsed = !isCollapsed;
       localStorage.setItem(storageKey, String(isCollapsed));
       updateSidebar();
     });
+
+    floatingTab.addEventListener('click', () => {
+      isCollapsed = false;
+      localStorage.setItem(storageKey, String(isCollapsed));
+      updateSidebar();
+    });
+
+    scrollTopButton.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', updateScrollTopVisibility, { passive: true });
   })();
 </script>
