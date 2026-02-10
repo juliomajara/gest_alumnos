@@ -121,6 +121,9 @@ $active_page = 'empresas';
           <h1>Empresas</h1>
           <p class="subheading">Consulta la información básica de las empresas registradas en el sistema.</p>
         </div>
+        <div class="header-actions">
+          <a class="edit-toggle" href="empresa_nueva.php">Añadir nueva empresa</a>
+        </div>
       </header>
 
       <form class="topbar" method="get">
