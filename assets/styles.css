@@ -94,6 +94,14 @@ body {
   grid-template-columns: 44px 1fr;
 }
 
+.page.sidebar-hidden {
+  grid-template-columns: 1fr;
+}
+
+.page.sidebar-hidden .sidebar {
+  display: none;
+}
+
 .sidebar.collapsed {
   padding: 10px 6px;
   align-items: center;
@@ -120,6 +128,60 @@ body {
 .sidebar.collapsed .sidebar-handle {
   width: 100%;
   justify-content: center;
+}
+
+.sidebar-scroll-top {
+  margin-top: auto;
+  position: sticky;
+  bottom: 12px;
+  border: 1px solid var(--border);
+  background: #f5f7ff;
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-scroll-top:hover {
+  background: #eef2ff;
+  color: var(--text);
+  border-color: #d5deef;
+}
+
+.sidebar-scroll-top.is-hidden {
+  display: none;
+}
+
+.sidebar-float-tab {
+  position: fixed;
+  top: 90px;
+  left: 12px;
+  z-index: 1000;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(22, 35, 63, 0.14);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-float-tab:hover {
+  background: #f5f7ff;
+  color: var(--text);
+  border-color: #d5deef;
+}
+
+.sidebar-float-tab.is-visible {
+  display: inline-flex;
 }
 
 .brand {
