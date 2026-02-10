@@ -999,10 +999,31 @@ $active_page = 'empresas';
       return data?.ok ? data : null;
     };
 
-    const fetchAddressFromPostalCode = async (direccionItem) => {
+    const normalizePostalCode = (value) => String(value || '').trim().replace(/[\s-]+/g, '');
+
+    const resetDireccionLocalidad = (direccionItem) => {
       if (!direccionItem) {
         return;
       }
+
+      const localidadInput = direccionItem.querySelector('input[name*="[localidad]"]');
+      const idLocalidadInput = direccionItem.querySelector('input[name*="[id_localidad]"]');
+
+      if (localidadInput) {
+        localidadInput.value = '';
+      }
+
+      if (idLocalidadInput) {
+        idLocalidadInput.value = '';
+      }
+    };
+
+    const fetchAddressFromPostalCode = async (direccionItem, options = {}) => {
+      if (!direccionItem) {
+        return;
+      }
+
+      const forceRefresh = options.forceRefresh === true;
 
       const paisSelect = direccionItem.querySelector('select[name*="[id_pais]"]');
       const cpInput = direccionItem.querySelector('input[name*="[cp]"]');
@@ -1010,14 +1031,19 @@ $active_page = 'empresas';
       const localidadInput = direccionItem.querySelector('input[name*="[localidad]"]');
       const idLocalidadInput = direccionItem.querySelector('input[name*="[id_localidad]"]');
 
-      const rawPostalCode = (cpInput?.value || '').trim();
-      const postalCode = rawPostalCode.replace(/[\s-]+/g, '');
+      const postalCode = normalizePostalCode(cpInput?.value || '');
       const idPais = (paisSelect?.value || '').trim();
-      const existingLocalidad = (localidadInput?.value || '').trim();
       const prefix = postalCode.slice(0, 2);
+      const cpChanged = direccionItem.dataset.lastCp !== postalCode;
 
       if (!idPais || !postalCode || postalCode.length < 2) {
         return;
+      }
+
+      if (cpChanged) {
+        direccionItem.dataset.lastCp = postalCode;
+        resetDireccionLocalidad(direccionItem);
+        delete direccionItem.dataset.lastLookupKey;
       }
 
       setCpLookupLoading(direccionItem, true);
@@ -1028,8 +1054,8 @@ $active_page = 'empresas';
           return;
         }
 
-        const lookupKey = `${idPais}-${countryCode}-${postalCode}`;
-        if (direccionItem.dataset.lastLookupKey === lookupKey) {
+        const lookupKey = `${idPais}-${postalCode}`;
+        if (!cpChanged && !forceRefresh && direccionItem.dataset.lastLookupKey === lookupKey) {
           return;
         }
 
@@ -1058,8 +1084,7 @@ $active_page = 'empresas';
           return;
         }
 
-        const localidadWasEmpty = existingLocalidad === '';
-        if (localidadInput && localidadWasEmpty) {
+        if (localidadInput) {
           localidadInput.value = localidadName;
         }
 
@@ -1077,7 +1102,7 @@ $active_page = 'empresas';
           idLocalidadInput.value = localidadDb.id_localidad ? String(localidadDb.id_localidad) : '';
         }
 
-        if (localidadInput && localidadWasEmpty && localidadDb.nombre) {
+        if (localidadInput && localidadDb.nombre) {
           localidadInput.value = String(localidadDb.nombre);
         }
       } catch (_) {
@@ -1128,16 +1153,20 @@ $active_page = 'empresas';
     }, true);
 
     document.addEventListener('change', (event) => {
+      const cpInput = event.target.closest('.empresa-direccion-item input[name*="[cp]"]');
+      if (cpInput) {
+        fetchAddressFromPostalCode(cpInput.closest('.empresa-direccion-item'));
+        return;
+      }
+
       const provinciaSelect = event.target.closest('.empresa-direccion-item select[name*="[id_provincia]"]');
       if (!provinciaSelect || !event.isTrusted) {
         return;
       }
 
       const direccionItem = provinciaSelect.closest('.empresa-direccion-item');
-      const idLocalidadInput = direccionItem?.querySelector('input[name*="[id_localidad]"]');
-      if (idLocalidadInput) {
-        idLocalidadInput.value = '';
-      }
+      resetDireccionLocalidad(direccionItem);
+      fetchAddressFromPostalCode(direccionItem, { forceRefresh: true });
     });
 
     document.addEventListener('input', (event) => {
