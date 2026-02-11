@@ -6,6 +6,12 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
+$allowed_groups = ['ASIR1', 'ASIR2', 'DAM1', 'DAM2', 'DAW1', 'DAW2', 'SMR1', 'SMR2'];
+$selected_group = strtoupper(trim((string) ($_GET['grupo'] ?? '')));
+
+if (!in_array($selected_group, $allowed_groups, true)) {
+  $selected_group = '';
+}
 
 $filters = [];
 $params = [];
@@ -17,6 +23,17 @@ if ($search_term !== '') {
   $params['search_term2'] = '%' . $search_term . '%';
   $params['search_term3'] = '%' . $search_term . '%';
   $params['search_term4'] = '%' . $search_term . '%';
+}
+
+if ($selected_group !== '') {
+  $filters[] = 'EXISTS (
+    SELECT 1
+    FROM grupos g
+    WHERE g.id_ciclo = m.id_ciclo
+      AND g.id_curso = m.id_curso
+      AND g.grupo LIKE :group_prefix
+  )';
+  $params['group_prefix'] = $selected_group . '%';
 }
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
@@ -140,7 +157,19 @@ $active_page = 'modulos';
             value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
           >
         </div>
-        <div class="topbar-actions"></div>
+        <div class="topbar-actions entity-form">
+          <label for="grupo">
+            Grupo
+            <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
+            <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Todos los grupos</option>
+            <?php foreach ($allowed_groups as $group): ?>
+              <option value="<?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_group === $group ? 'selected' : ''; ?>>
+                <?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>
+              </option>
+            <?php endforeach; ?>
+            </select>
+          </label>
+        </div>
       </form>
 
       <section class="panel">
@@ -172,6 +201,7 @@ $active_page = 'modulos';
   <script>
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
+    const groupSelect = document.querySelector('select[name="grupo"]');
     const tableBody = document.querySelector('tbody');
     let debounceTimer = null;
 
@@ -214,6 +244,10 @@ $active_page = 'modulos';
 
     searchInput.addEventListener('input', () => {
       updateResults(true);
+    });
+
+    groupSelect.addEventListener('change', () => {
+      updateResults();
     });
   </script>
 </body>
