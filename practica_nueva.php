@@ -508,8 +508,8 @@ $dias_semana = [
             <h3>Horario</h3>
             <p>Introduce tramos de mañana y tarde para cada día.</p>
           </div>
-          <div class="panel-grid">
-            <table>
+          <div class="panel-grid practica-horario" data-schedule-container>
+            <table class="practica-horario-table">
               <thead>
                 <tr>
                   <th rowspan="2">Día</th>
@@ -589,8 +589,29 @@ $dias_semana = [
     const hoursInput = document.getElementById('horas');
     const startDateInput = document.getElementById('fecha_inicio');
     const endDateInput = document.getElementById('fecha_fin');
-    const timeInputs = document.querySelectorAll('input[type="time"][data-day]');
+    const scheduleContainer = document.querySelector('[data-schedule-container]');
     const nonTeachingDays = new Set(<?php echo json_encode(array_values($no_lectivos), JSON_UNESCAPED_UNICODE); ?>);
+
+
+    const copyMondayFieldToWeekdays = (sourceInput) => {
+      if (!sourceInput || !scheduleContainer) {
+        return;
+      }
+
+      const sourceDay = Number(sourceInput.dataset.day || 0);
+      const sourceSegment = sourceInput.dataset.segment || '';
+      if (sourceDay !== 1 || sourceSegment === '') {
+        return;
+      }
+
+      for (let day = 2; day <= 5; day += 1) {
+        const target = scheduleContainer.querySelector(`input[type="time"][data-day="${day}"][data-segment="${sourceSegment}"]`);
+        if (!target) {
+          continue;
+        }
+        target.value = sourceInput.value;
+      }
+    };
 
     const resetSelect = (select, placeholder) => {
       select.innerHTML = '';
@@ -780,12 +801,28 @@ $dias_semana = [
       tutorSelect.disabled = false;
     });
 
-    timeInputs.forEach((input) => {
-      input.addEventListener('input', () => {
+    if (scheduleContainer) {
+      scheduleContainer.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || target.type !== 'time' || !target.dataset.day) {
+          return;
+        }
+
         updateDayTotals();
         calculateEndDate();
       });
-    });
+
+      scheduleContainer.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || target.type !== 'time' || !target.dataset.day) {
+          return;
+        }
+
+        copyMondayFieldToWeekdays(target);
+        updateDayTotals();
+        calculateEndDate();
+      });
+    }
 
     startDateInput.addEventListener('change', calculateEndDate);
     hoursInput.addEventListener('input', calculateEndDate);
