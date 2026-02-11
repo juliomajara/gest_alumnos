@@ -747,15 +747,48 @@ body {
   align-self: end;
 }
 
-.empresa-direccion-grid {
-  grid-template-columns: 1fr;
+.empresa-direccion-item .empresa-direccion-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
 }
 
-.empresa-direccion-grid-row--5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+.empresa-direccion-item .empresa-direccion-grid > .entity-grid {
+  display: contents;
 }
+
+.empresa-direccion-item .empresa-direccion-grid label {
+  min-width: 0;
+}
+
+.empresa-direccion-item .empresa-direccion-grid input,
+.empresa-direccion-item .empresa-direccion-grid select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.empresa-direccion-item .direccion-etiqueta { grid-column: span 3; }
+.empresa-direccion-item .direccion-via { grid-column: span 3; }
+.empresa-direccion-item .direccion-nombre-via { grid-column: span 6; }
+
+.empresa-direccion-item .direccion-numero { grid-column: span 2; }
+.empresa-direccion-item .direccion-bloque { grid-column: span 2; }
+.empresa-direccion-item .direccion-escalera { grid-column: span 2; }
+.empresa-direccion-item .direccion-puerta { grid-column: span 2; }
+.empresa-direccion-item .direccion-planta { grid-column: span 4; }
+
+.empresa-direccion-item .direccion-pais { grid-column: span 7; }
+.empresa-direccion-item .direccion-cp { grid-column: span 5; }
+
+.empresa-direccion-item .direccion-provincia { grid-column: span 6; }
+.empresa-direccion-item .direccion-localidad { grid-column: span 6; }
+
+.empresa-direccion-item .direccion-otros { grid-column: 1 / -1; }
 
 .empresa-direccion-item .ghost-button {
+  margin-top: 10px;
   align-self: flex-end;
 }
 
@@ -810,9 +843,16 @@ body {
 @media (max-width: 980px) {
   .entity-grid--3,
   .entity-grid--4,
-  .entity-grid--4-anexo,
-  .empresa-direccion-grid-row--5 {
+  .entity-grid--4-anexo {
     grid-template-columns: 1fr;
+  }
+
+  .empresa-direccion-item .empresa-direccion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .empresa-direccion-item .empresa-direccion-grid > .entity-grid > label {
+    grid-column: 1 / -1 !important;
   }
 }
 
