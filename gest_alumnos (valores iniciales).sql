@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 10-02-2026 a las 23:30:44
+-- Tiempo de generación: 11-02-2026 a las 09:49:53
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -130,6 +130,19 @@ CREATE TABLE `correos` (
   `id_entidad` int(10) UNSIGNED NOT NULL,
   `direccion_correo` varchar(150) NOT NULL,
   `etiqueta` varchar(60) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `criterios_evaluacion`
+--
+
+CREATE TABLE `criterios_evaluacion` (
+  `id_ce` int(10) UNSIGNED NOT NULL,
+  `id_ra` int(10) UNSIGNED NOT NULL,
+  `codigo` char(1) NOT NULL,
+  `descripcion` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -299,6 +312,16 @@ CREATE TABLE `localidades` (
   `nombre` varchar(60) NOT NULL,
   `cp` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `localidades`
+--
+
+INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`, `cp`) VALUES
+(1, 28, 'Getafe', '28905'),
+(2, 8, 'Barcelona', '08080'),
+(3, 45, 'Talavera De La Reina', '45600'),
+(4, 28, 'Madrid', '28028');
 
 -- --------------------------------------------------------
 
@@ -874,6 +897,19 @@ INSERT INTO `provincias` (`id_provincia`, `id_pais`, `nombre`, `cp_prefijo`) VAL
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `resultados_aprendizaje`
+--
+
+CREATE TABLE `resultados_aprendizaje` (
+  `id_ra` int(10) UNSIGNED NOT NULL,
+  `id_modulo` int(10) UNSIGNED NOT NULL,
+  `numero` int(10) UNSIGNED NOT NULL,
+  `descripcion` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `telefonos`
 --
 
@@ -1026,6 +1062,13 @@ ALTER TABLE `ciclos`
 --
 ALTER TABLE `correos`
   ADD PRIMARY KEY (`id_correo`);
+
+--
+-- Indices de la tabla `criterios_evaluacion`
+--
+ALTER TABLE `criterios_evaluacion`
+  ADD PRIMARY KEY (`id_ce`),
+  ADD KEY `fk_ce_ra` (`id_ra`);
 
 --
 -- Indices de la tabla `cursos`
@@ -1195,6 +1238,13 @@ ALTER TABLE `provincias`
   ADD KEY `fk_prov_pais` (`id_pais`);
 
 --
+-- Indices de la tabla `resultados_aprendizaje`
+--
+ALTER TABLE `resultados_aprendizaje`
+  ADD PRIMARY KEY (`id_ra`),
+  ADD KEY `fk_ra_modulo` (`id_modulo`);
+
+--
 -- Indices de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
@@ -1233,6 +1283,12 @@ ALTER TABLE `ciclos`
 --
 ALTER TABLE `correos`
   MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `criterios_evaluacion`
+--
+ALTER TABLE `criterios_evaluacion`
+  MODIFY `id_ce` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `cursos`
@@ -1286,7 +1342,7 @@ ALTER TABLE `grupos_tutores`
 -- AUTO_INCREMENT de la tabla `localidades`
 --
 ALTER TABLE `localidades`
-  MODIFY `id_localidad` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_localidad` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `meses`
@@ -1373,6 +1429,12 @@ ALTER TABLE `provincias`
   MODIFY `id_provincia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
+-- AUTO_INCREMENT de la tabla `resultados_aprendizaje`
+--
+ALTER TABLE `resultados_aprendizaje`
+  MODIFY `id_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
@@ -1420,6 +1482,12 @@ ALTER TABLE `asistencia_mensual`
   ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_as_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_as_mes` FOREIGN KEY (`id_mes`) REFERENCES `meses` (`id_mes`);
+
+--
+-- Filtros para la tabla `criterios_evaluacion`
+--
+ALTER TABLE `criterios_evaluacion`
+  ADD CONSTRAINT `fk_ce_ra` FOREIGN KEY (`id_ra`) REFERENCES `resultados_aprendizaje` (`id_ra`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `direcciones`
@@ -1502,6 +1570,12 @@ ALTER TABLE `practicas_horario`
 --
 ALTER TABLE `provincias`
   ADD CONSTRAINT `fk_prov_pais` FOREIGN KEY (`id_pais`) REFERENCES `paises` (`id_pais`);
+
+--
+-- Filtros para la tabla `resultados_aprendizaje`
+--
+ALTER TABLE `resultados_aprendizaje`
+  ADD CONSTRAINT `fk_ra_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

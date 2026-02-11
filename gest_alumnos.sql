@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 10-02-2026 a las 23:29:39
+-- Tiempo de generación: 11-02-2026 a las 09:53:35
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -838,14 +838,12 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (133, 'alumno', 134, 'yaizav210907@gmail.com', 'Personal'),
 (134, 'alumno', 135, 'zhoujj.081@gmail.com', 'Personal'),
 (135, 'profesor', 1, 'julio.sanchezfernandez@educa.madrid.org', 'Personal'),
-(141, 'empresa', 7, 'mreal@gapd.es', NULL),
 (142, 'empresa', 8, 'mariajose.camacho@bisiona.com', NULL),
 (143, 'empresa', 9, 'cesar@redphoneservices.com', NULL),
 (144, 'empresa', 10, 'juan.fernandez@cw-consulting.es', NULL),
 (145, 'empresa', 11, 'kate.laborio@waima.es', NULL),
 (146, 'empresa', 12, 'clubvoleibolaranjuez@gmail.com', NULL),
 (147, 'empresa', 13, 'fernando@datarecover.es', NULL),
-(148, 'empresa', 14, 'jorteso@elecnor.es', NULL),
 (149, 'empresa', 15, 'rleonsa@gmail.com', NULL),
 (150, 'empresa', 16, 'rrhh@fractalia.es', NULL),
 (151, 'empresa', 17, 'administracion@gtpsistemas.es', NULL),
@@ -875,7 +873,91 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (175, 'empresa', 43, 'rosa.robles@tainnde.com', NULL),
 (176, 'empresa', 44, 'mbelinchon@viewnext.com', NULL),
 (177, 'empresa', 45, 'mcarretero@w3networking.es', NULL),
-(178, 'empresa', 46, 'shernandez@zelenza.com', NULL);
+(178, 'empresa', 46, 'shernandez@zelenza.com', NULL),
+(179, 'empresa', 7, 'mreal@gapd.es', 'Trabajo'),
+(182, 'empresa', 14, 'jorteso@elecnor.es', NULL),
+(183, 'empresa_contacto', 47, 'irene.soto@elecnor.com', 'Trabajo'),
+(184, 'empresa_contacto', 48, 'aycalero@elecnor.es', 'Trabajo'),
+(185, 'empresa_tutor', 1, 'gzubia@elecnor.com', 'Trabajo');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `criterios_evaluacion`
+--
+
+CREATE TABLE `criterios_evaluacion` (
+  `id_ce` int(10) UNSIGNED NOT NULL,
+  `id_ra` int(10) UNSIGNED NOT NULL,
+  `codigo` char(1) NOT NULL,
+  `descripcion` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `criterios_evaluacion`
+--
+
+INSERT INTO `criterios_evaluacion` (`id_ce`, `id_ra`, `codigo`, `descripcion`) VALUES
+(1, 1, 'a', 'Se han descrito los bloques que componen un equipo microinformático y sus funciones.'),
+(2, 1, 'b', 'Se ha reconocido la arquitectura de buses.'),
+(3, 1, 'c', 'Se han descrito las características de los tipos de microprocesadores (frecuencia, tensiones, potencia, zócalos, entre otros).'),
+(4, 1, 'd', 'Se ha descrito la función de los disipadores y ventiladores.'),
+(5, 1, 'e', 'Se han descrito las características y utilidades más importantes de la configuración de la placa base.'),
+(6, 1, 'f', 'Se han evaluado tipos de chasis para la placa base y el resto de componentes.'),
+(7, 1, 'g', 'Se han identificado y manipulado los componentes básicos (módulos de memoria, discos fijos y sus controladoras, soportes de memorias auxiliares, entre otros).'),
+(8, 1, 'h', 'Se ha analizado la función del adaptador gráfico y el monitor.'),
+(9, 1, 'i', 'Se han identificado y manipulado distintos adaptadores (gráficos, LAN, modems, entre otros).'),
+(10, 1, 'j', 'Se han identificado los elementos que acompañan a un componente de integración (documentación, controladores, cables y utilidades, entre otros).'),
+(11, 2, 'a', 'Se han seleccionado las herramientas y útiles necesarios para el ensamblado de equipos microinformáticos.'),
+(12, 2, 'b', 'Se ha interpretado la documentación técnica de todos los componentes a ensamblar.'),
+(13, 2, 'c', 'Se ha determinado el sistema de apertura / cierre del chasis y los distintos sistemas de fijación para ensamblar-desensamblar los elementos del equipo.'),
+(14, 2, 'd', 'Se han ensamblado diferentes conjuntos de placa base, microprocesador y elementos de refrigeración en diferentes modelos de chasis, según las especificaciones dadas.'),
+(15, 2, 'e', 'Se han ensamblado los módulos de memoria RAM, los discos fijos, las unidades de lectura / grabación en soportes de memoria auxiliar y otros componentes.'),
+(16, 2, 'f', 'Se han configurado parámetros básicos del conjunto accediendo a la configuración de la placa base.'),
+(17, 2, 'g', 'Se han ejecutado utilidades de chequeo y diagnóstico para verificar las prestaciones del conjunto ensamblado.'),
+(18, 2, 'h', 'Se ha realizado un informe de montaje.'),
+(19, 3, 'a', 'Se ha identificado el tipo de señal a medir con el aparato correspondiente.'),
+(20, 3, 'b', 'Se ha seleccionado la magnitud, el rango de medida y se ha conectado el aparato según la magnitud a medir.'),
+(21, 3, 'c', 'Se ha relacionado la medida obtenida con los valores típicos.'),
+(22, 3, 'd', 'Se han identificado los bloques de una fuente de alimentación (F.A.) para un ordenador personal.'),
+(23, 3, 'e', 'Se han enumerado las tensiones proporcionadas por una F.A. típica.'),
+(24, 3, 'f', 'Se han medido las tensiones en F.A. típicas de ordenadores personales.'),
+(25, 3, 'g', 'Se han identificado los bloques de un sistema de alimentación ininterrumpida.'),
+(26, 3, 'h', 'Se han medido las señales en los puntos significativos de un SAI.'),
+(27, 4, 'a', 'Se han reconocido las señales acústicas y/o visuales que avisan de problemas en el hardware de un equipo.'),
+(28, 4, 'b', 'Se han identificado y solventado las averías producidas por sobrecalentamiento del microprocesador.'),
+(29, 4, 'c', 'Se han identificado y solventado averías típicas de un equipo microinformático (mala conexión de componentes, incompatibilidades, problemas en discos fijos, suciedad, entre otras).'),
+(30, 4, 'd', 'Se han sustituido componentes deteriorados.'),
+(31, 4, 'e', 'Se ha verificado la compatibilidad de los componentes sustituidos.'),
+(32, 4, 'f', 'Se han realizado actualizaciones y ampliaciones de componentes.'),
+(33, 4, 'g', 'Se han elaborado informes de avería (reparación o ampliación).'),
+(34, 5, 'a', 'Se ha reconocido la diferencia entre una instalación estándar y una preinstalación de software.'),
+(35, 5, 'b', 'Se han identificado y probado las distintas secuencias de arranque configurables en la placa base.'),
+(36, 5, 'c', 'Se han inicializado equipos desde distintos soportes de memoria auxiliar.'),
+(37, 5, 'd', 'Se han realizado imágenes de una preinstalación de software.'),
+(38, 5, 'e', 'Se han restaurado imágenes sobre el disco fijo desde distintos soportes.'),
+(39, 5, 'f', 'Se han descrito las utilidades para la creación de imágenes de partición/disco.'),
+(40, 6, 'a', 'Se han reconocido las nuevas posibilidades para dar forma al conjunto chasis-placa base.'),
+(41, 6, 'b', 'Se han descrito las prestaciones y características de algunas de las plataformas semiensambladas («barebones») más representativas del momento.'),
+(42, 6, 'c', 'Se han descrito las características de los ordenadores de entretenimiento multimedia (HTPC), los chasis y componentes específicos empleados en su ensamblado.'),
+(43, 6, 'd', 'Se han descrito las características diferenciales que demandan los equipos informáticos empleados en otros campos de aplicación específicos.'),
+(44, 6, 'e', 'Se ha evaluado la presencia de la informática móvil como mercado emergente, con una alta demanda en equipos y dispositivos con características específicas: móviles, PDA, navegadores, entre otros.'),
+(45, 6, 'f', 'Se ha evaluado la presencia del «modding» como corriente alternativa al ensamblado de equipos microinformáticos.'),
+(46, 7, 'a', 'Se han identificado y solucionado problemas mecánicos en periféricos de impresión estándar.'),
+(47, 7, 'b', 'Se han sustituido consumibles en periféricos de impresión estándar.'),
+(48, 7, 'c', 'Se han identificado y solucionado problemas mecánicos en periféricos de entrada.'),
+(49, 7, 'd', 'Se han asociado las características y prestaciones de los periféricos de captura de imágenes digitales, fijas y en movimiento con sus posibles aplicaciones.'),
+(50, 7, 'e', 'Se han asociado las características y prestaciones de otros periféricos multimedia con sus posibles aplicaciones.'),
+(51, 7, 'f', 'Se han reconocido los usos y ámbitos de aplicación de equipos de fotocopiado, impresión digital profesional y filmado.'),
+(52, 7, 'g', 'Se han aplicado técnicas de mantenimiento preventivo a los periféricos.'),
+(53, 8, 'a', 'Se han identificado los riesgos y el nivel de peligrosidad que suponen la manipulación de los materiales, herramientas, útiles, máquinas y medios de transporte.'),
+(54, 8, 'b', 'Se han operado las máquinas respetando las normas de seguridad.'),
+(55, 8, 'c', 'Se han identificado las causas más frecuentes de accidentes en la manipulación de materiales, herramientas, máquinas de corte y conformado, entre otras.'),
+(56, 8, 'd', 'Se han descrito los elementos de seguridad (protecciones, alarmas, pasos de emergencia, entre otros) de las máquinas y los equipos de protección individual (calzado, protección ocular, indumentaria, entre otros) que se deben emplear en las distintas operaciones de montaje y mantenimiento.'),
+(57, 8, 'e', 'Se ha relacionado la manipulación de materiales, herramientas y máquinas con las medidas de seguridad y protección personal requeridos.'),
+(58, 8, 'f', 'Se han identificado las posibles fuentes de contaminación del entorno ambiental.'),
+(59, 8, 'g', 'Se han clasificado los residuos generados para su retirada selectiva.'),
+(60, 8, 'h', 'Se ha valorado el orden y la limpieza de instalaciones y equipos como primer factor de prevención de riesgos.');
 
 -- --------------------------------------------------------
 
@@ -946,13 +1028,11 @@ CREATE TABLE `direcciones` (
 --
 
 INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provincia`, `id_localidad`, `id_via`, `nombre_via`, `numero`, `bloque`, `escalera`, `planta`, `puerta`, `otros`, `etiqueta`, `cp`, `principal`) VALUES
-(6, 7, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Virgilio 21 | 28223 · Madrid · Madrid', NULL, NULL, 1),
 (7, 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Valle del Roncal 12 | 28232 · Las Rozas · Madrid', NULL, NULL, 1),
 (8, 9, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Bajada del Salvador 5 | 45223 · Seseña · Toledo', NULL, NULL, 1),
 (9, 10, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle López de Hoyos 35 | Planta 1 | 28002 · Madrid · Madrid', NULL, NULL, 1),
 (10, 11, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Capellanes 8 | 28902 · Getafe · Madrid', NULL, NULL, 1),
 (11, 13, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Las Norias 92 | 28221 · Majadahonda · Madrid', NULL, NULL, 1),
-(12, 14, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Marqués de Mondéjar 33 | 28028 · Madrid · Madrid', NULL, NULL, 1),
 (13, 15, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Magdalena 36 | Planta Bajo, Puerta 6 | Getafe · Madrid', NULL, NULL, 1),
 (14, 16, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Ronda Poniente 2-16 | Bloque Edificio 8, Planta 2 | 28760 · Tres Cantos · Madrid', NULL, NULL, 1),
 (15, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Lima 25 | 28945 · Fuenlabrada · Madrid', NULL, NULL, 1),
@@ -981,7 +1061,8 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (38, 43, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Plaza Villafranca de los Barros 4 | 28034 · Madrid · Madrid | Posterior', NULL, NULL, 1),
 (39, 44, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida Burgos 8A | 28036 · Madrid · Madrid | 6ª planta', NULL, NULL, 1),
 (40, 45, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Calle Desarrollo 5 | 28906 · Getafe · Madrid', NULL, NULL, 1),
-(41, 46, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida San Diego 1 | 28053 · Madrid · Madrid', NULL, NULL, 1);
+(41, 46, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'Avenida San Diego 1 | 28053 · Madrid · Madrid', NULL, NULL, 1),
+(45, 14, 1, 28, 4, 10, 'Marqués de Mondéjar', '33', NULL, NULL, NULL, NULL, NULL, 'Principal', '28028', 1);
 
 -- --------------------------------------------------------
 
@@ -1004,14 +1085,14 @@ CREATE TABLE `empresas` (
 --
 
 INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `convenio`, `notas`) VALUES
-(7, 'A28634046', 'Algoritmos, Procesos y Diseños, S.A.', '', '', 374, NULL),
+(7, 'A28634046', 'Algoritmos, Procesos y Diseños, S.A.', NULL, NULL, 374, NULL),
 (8, NULL, 'Bisiona Business Solutions, S.L.', '', '', 577, NULL),
 (9, '02767448L', 'César Martin', 'Lara', 'Bastidas', 917, NULL),
 (10, 'B87159117', 'Cloud Workspace Consulting, S.L.', '', '', 581, NULL),
 (11, 'B87216024', 'CloudAPPi, S.L.', '', '', 498, NULL),
 (12, NULL, 'Club Voleibol Aranjuez', '', '', NULL, NULL),
 (13, 'B84837947', 'Data Recover, S.L.', '', '', NULL, NULL),
-(14, 'A79486833', 'Elecnor Servicios y Proyecto, S.A.U.', '', '', 424, NULL),
+(14, 'A79486833', 'Elecnor Servicios y Proyecto, S.A.U.', NULL, NULL, 424, NULL),
 (15, 'B85669778', 'ELEOOS Solutions, S.L.', '', '', 583, NULL),
 (16, 'B84933894', 'Fractalia IT Systems España', '', '', 593, NULL),
 (17, 'B84523786', 'Fuenlabrada GPT Sistemas, S.L.', '', '', 1350, NULL),
@@ -1066,14 +1147,12 @@ CREATE TABLE `empresas_contactos` (
 --
 
 INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `cargo`, `comentarios`) VALUES
-(6, 7, '', NULL, 'Mercedes Real', NULL, NULL),
 (7, 8, '', NULL, 'María José Camacho', NULL, NULL),
 (8, 9, '', NULL, 'César Martin Lara', NULL, NULL),
 (9, 10, '', NULL, 'Fátima', NULL, NULL),
 (10, 11, '', NULL, 'Mary Kate Laborio', NULL, NULL),
 (11, 12, '', NULL, 'Alejandro Morillo', NULL, NULL),
 (12, 13, '', NULL, 'Fernando Hípola', NULL, NULL),
-(13, 14, '', NULL, 'Javier Orteso', NULL, NULL),
 (14, 15, '', NULL, 'Rafael León', NULL, NULL),
 (15, 16, '', NULL, 'Sonia', NULL, NULL),
 (16, 17, '', NULL, 'Elena Cimarra', NULL, NULL),
@@ -1103,7 +1182,10 @@ INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido
 (40, 43, '', NULL, 'Rosa Robles', NULL, NULL),
 (41, 44, '', NULL, 'María Belinchón', NULL, NULL),
 (42, 45, '', NULL, 'Marta Carretero', NULL, NULL),
-(43, 46, '', NULL, 'Soraya Hernández', NULL, NULL);
+(43, 46, '', NULL, 'Soraya Hernández', NULL, NULL),
+(44, 7, 'Real', NULL, 'Mercedes', NULL, NULL),
+(47, 14, 'Soto', 'García', 'Irene', 'RR.HH.', NULL),
+(48, 14, 'Calero', NULL, 'Alejandra', 'RR.HH.', NULL);
 
 -- --------------------------------------------------------
 
@@ -1120,6 +1202,13 @@ CREATE TABLE `empresas_tutores` (
   `dni` varchar(20) DEFAULT NULL,
   `comentarios` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `empresas_tutores`
+--
+
+INSERT INTO `empresas_tutores` (`id_empresas_tutor`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `dni`, `comentarios`) VALUES
+(1, 14, 'Zubia', 'Saez', 'Gonzalo Miguel', '16076514C', NULL);
 
 -- --------------------------------------------------------
 
@@ -1187,6 +1276,16 @@ CREATE TABLE `localidades` (
   `nombre` varchar(60) NOT NULL,
   `cp` varchar(10) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `localidades`
+--
+
+INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`, `cp`) VALUES
+(1, 28, 'Getafe', '28905'),
+(2, 8, 'Barcelona', '08080'),
+(3, 45, 'Talavera De La Reina', '45600'),
+(4, 28, 'Madrid', '28028');
 
 -- --------------------------------------------------------
 
@@ -1631,6 +1730,13 @@ CREATE TABLE `practicas` (
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `practicas`
+--
+
+INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `horas`, `requiere_anexo_5`, `requiere_anexo_6`, `observaciones`) VALUES
+(1, 44, 14, 45, 1, 143, 1, '2026-02-23', '2026-05-20', 500, 0, 0, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1717,6 +1823,22 @@ CREATE TABLE `practicas_horario` (
   `hora_entrada` time NOT NULL,
   `hora_salida` time NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `practicas_horario`
+--
+
+INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_semana`, `hora_entrada`, `hora_salida`) VALUES
+(1, 1, 1, '08:30:00', '14:00:00'),
+(2, 1, 1, '15:00:00', '17:30:00'),
+(3, 1, 2, '08:30:00', '14:00:00'),
+(4, 1, 2, '15:00:00', '17:30:00'),
+(5, 1, 3, '08:30:00', '14:00:00'),
+(6, 1, 3, '15:00:00', '17:30:00'),
+(7, 1, 4, '08:30:00', '14:00:00'),
+(8, 1, 4, '15:00:00', '17:30:00'),
+(9, 1, 5, '08:30:00', '14:00:00'),
+(10, 1, 5, '15:00:00', '17:30:00');
 
 -- --------------------------------------------------------
 
@@ -1845,6 +1967,33 @@ INSERT INTO `provincias` (`id_provincia`, `id_pais`, `nombre`, `cp_prefijo`) VAL
 (50, 1, 'Zaragoza', 50),
 (51, 1, 'Ceuta', 51),
 (52, 1, 'Melilla', 52);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `resultados_aprendizaje`
+--
+
+CREATE TABLE `resultados_aprendizaje` (
+  `id_ra` int(10) UNSIGNED NOT NULL,
+  `id_modulo` int(10) UNSIGNED NOT NULL,
+  `numero` int(10) UNSIGNED NOT NULL,
+  `descripcion` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `resultados_aprendizaje`
+--
+
+INSERT INTO `resultados_aprendizaje` (`id_ra`, `id_modulo`, `numero`, `descripcion`) VALUES
+(1, 2, 1, 'Selecciona los componentes de integración de un equipo microinformático estándar, describiendo sus funciones y comparando prestaciones de distintos fabricantes.'),
+(2, 2, 2, 'Ensambla un equipo microinformático, interpretando planos e instrucciones del fabricante aplicando técnicas de montaje.'),
+(3, 2, 3, 'Mide parámetros eléctricos, identificando el tipo de señal y relacionándola con sus unidades características.'),
+(4, 2, 4, 'Mantiene equipos informáticos interpretando las recomendaciones de los fabricantes y relacionando las disfunciones con sus causas.'),
+(5, 2, 5, 'Instala software en un equipo informático utilizando una imagen almacenada en un soporte de memoria y justificando el procedimiento a seguir.'),
+(6, 2, 6, 'Reconoce nuevas tendencias en el ensamblaje de equipos microinformáticos describiendo sus ventajas y adaptándolas a las características de uso de los equipos.'),
+(7, 2, 7, 'Mantiene periféricos, interpretando las recomendaciones de los fabricantes de equipos y relacionando disfunciones con sus causas.'),
+(8, 2, 8, 'Cumple las normas de prevención de riesgos laborales y de protección ambiental, identificando los riesgos asociados, las medidas y equipos para prevenirlos.');
 
 -- --------------------------------------------------------
 
@@ -2000,12 +2149,10 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (133, 'alumno', 134, '647727693', 'Personal'),
 (134, 'alumno', 135, '624890110', 'Personal'),
 (135, 'profesor', 1, '649496323', 'Personal'),
-(140, 'empresa', 7, '678527255', NULL),
 (141, 'empresa', 8, '916266050', NULL),
 (142, 'empresa', 9, '622711605', NULL),
 (143, 'empresa', 10, '630318527', NULL),
 (144, 'empresa', 13, '606563024', NULL),
-(145, 'empresa', 14, '608100381', NULL),
 (146, 'empresa', 15, '629238899', NULL),
 (147, 'empresa', 16, '917994070', NULL),
 (148, 'empresa', 17, '91 492 09 90', NULL),
@@ -2032,7 +2179,11 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (169, 'empresa', 42, '600710980', NULL),
 (170, 'empresa', 43, '640071938', NULL),
 (171, 'empresa', 45, '682436145', NULL),
-(172, 'empresa', 46, '639277346', NULL);
+(172, 'empresa', 46, '639277346', NULL),
+(173, 'empresa', 7, '678527255', 'Trabajo'),
+(176, 'empresa', 14, '608100381', NULL),
+(177, 'empresa_contacto', 47, '660 78 03 66', 'Trabajo'),
+(178, 'empresa_tutor', 1, '917251004', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -2175,6 +2326,13 @@ ALTER TABLE `ciclos`
 --
 ALTER TABLE `correos`
   ADD PRIMARY KEY (`id_correo`);
+
+--
+-- Indices de la tabla `criterios_evaluacion`
+--
+ALTER TABLE `criterios_evaluacion`
+  ADD PRIMARY KEY (`id_ce`),
+  ADD KEY `fk_ce_ra` (`id_ra`);
 
 --
 -- Indices de la tabla `cursos`
@@ -2344,6 +2502,13 @@ ALTER TABLE `provincias`
   ADD KEY `fk_prov_pais` (`id_pais`);
 
 --
+-- Indices de la tabla `resultados_aprendizaje`
+--
+ALTER TABLE `resultados_aprendizaje`
+  ADD PRIMARY KEY (`id_ra`),
+  ADD KEY `fk_ra_modulo` (`id_modulo`);
+
+--
 -- Indices de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
@@ -2381,7 +2546,13 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=186;
+
+--
+-- AUTO_INCREMENT de la tabla `criterios_evaluacion`
+--
+ALTER TABLE `criterios_evaluacion`
+  MODIFY `id_ce` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT de la tabla `cursos`
@@ -2399,7 +2570,7 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
@@ -2411,13 +2582,13 @@ ALTER TABLE `empresas`
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
 --
 ALTER TABLE `empresas_tutores`
-  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `grupos`
@@ -2435,7 +2606,7 @@ ALTER TABLE `grupos_tutores`
 -- AUTO_INCREMENT de la tabla `localidades`
 --
 ALTER TABLE `localidades`
-  MODIFY `id_localidad` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_localidad` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `meses`
@@ -2477,7 +2648,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -2501,7 +2672,7 @@ ALTER TABLE `practicas_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
@@ -2522,10 +2693,16 @@ ALTER TABLE `provincias`
   MODIFY `id_provincia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
+-- AUTO_INCREMENT de la tabla `resultados_aprendizaje`
+--
+ALTER TABLE `resultados_aprendizaje`
+  MODIFY `id_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=179;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
@@ -2569,6 +2746,12 @@ ALTER TABLE `asistencia_mensual`
   ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_as_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_as_mes` FOREIGN KEY (`id_mes`) REFERENCES `meses` (`id_mes`);
+
+--
+-- Filtros para la tabla `criterios_evaluacion`
+--
+ALTER TABLE `criterios_evaluacion`
+  ADD CONSTRAINT `fk_ce_ra` FOREIGN KEY (`id_ra`) REFERENCES `resultados_aprendizaje` (`id_ra`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `direcciones`
@@ -2651,6 +2834,12 @@ ALTER TABLE `practicas_horario`
 --
 ALTER TABLE `provincias`
   ADD CONSTRAINT `fk_prov_pais` FOREIGN KEY (`id_pais`) REFERENCES `paises` (`id_pais`);
+
+--
+-- Filtros para la tabla `resultados_aprendizaje`
+--
+ALTER TABLE `resultados_aprendizaje`
+  ADD CONSTRAINT `fk_ra_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
