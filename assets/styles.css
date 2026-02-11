@@ -1298,6 +1298,14 @@ body {
   align-items: end;
 }
 
+.practicas-ras .entity-grid--3 {
+  align-items: end;
+}
+
+.practicas-ras-filter-actions .primary-button {
+  margin-bottom: 1px;
+}
+
 .practicas-ras-tree {
   display: flex;
   flex-direction: column;
@@ -1361,6 +1369,10 @@ body {
 
 .practicas-ras-ra-summary input {
   width: 100%;
+}
+
+.practicas-ras-percentage-input {
+  width: 96px;
 }
 
 .practicas-ras-criteria ul {

@@ -53,12 +53,25 @@ function find_column(array $columns, array $candidates): ?string {
   return null;
 }
 
+function format_ra_label(mixed $number, int $raId): string {
+  $raw = trim((string) $number);
+  if ($raw === '') {
+    return 'RA' . $raId . '.';
+  }
+
+  if (preg_match('/(\d+)/', $raw, $matches)) {
+    return 'RA' . $matches[1] . '.';
+  }
+
+  return 'RA' . $raId . '.';
+}
+
 $courses = [];
 $course_map = [];
 $can_filter_by_select_course = false;
 
 try {
-  $courses_stmt = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY id_curso_escolar DESC');
+  $courses_stmt = $pdo->query('SELECT id_curso_escolar, curso_escolar, activo FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC');
   $courses = $courses_stmt->fetchAll();
 
   foreach ($courses as $course) {
@@ -85,7 +98,15 @@ if (!in_array($selected_cycle, $available_cycles, true)) {
 $selected_course_label = '';
 if ($can_filter_by_select_course) {
   if ($selected_course_id === '' && count($courses) > 0) {
-    $selected_course_id = (string) (int) $courses[0]['id_curso_escolar'];
+    $active_course = null;
+    foreach ($courses as $course) {
+      if ((int) ($course['activo'] ?? 0) === 1) {
+        $active_course = $course;
+        break;
+      }
+    }
+
+    $selected_course_id = (string) (int) (($active_course ?? $courses[0])['id_curso_escolar'] ?? 0);
   }
   if ($selected_course_id !== '' && isset($course_map[$selected_course_id])) {
     $selected_course_label = $course_map[$selected_course_id];
@@ -432,8 +453,8 @@ if ($filters_ready) {
                     <table class="practicas-ras-table">
                       <thead>
                         <tr>
-                          <th scope="col">Resultado de aprendizaje</th>
                           <th scope="col">% cedido a la empresa</th>
+                          <th scope="col">Resultado de aprendizaje</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -441,19 +462,15 @@ if ($filters_ready) {
                           <?php
                             $ra_id = (int) $ra['id_ra'];
                             $ra_number = trim((string) ($ra['numero'] ?? ''));
+                            $ra_label = format_ra_label($ra['numero'] ?? '', $ra_id);
                             $saved_value = $saved_percentages[$ra_id] ?? '';
                           ?>
                           <tr>
-                            <td>
-                              <?php if ($ra_number !== ''): ?>
-                                <p><strong>RA <?php echo htmlspecialchars($ra_number, ENT_QUOTES, 'UTF-8'); ?></strong></p>
-                              <?php endif; ?>
-                              <p><?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?></p>
-                            </td>
                             <td class="practicas-ras-percentage-cell">
                               <label>
                                 <span class="sr-only">Porcentaje empresa para RA <?php echo htmlspecialchars($ra_number !== '' ? $ra_number : (string) $ra_id, ENT_QUOTES, 'UTF-8'); ?></span>
                                 <input
+                                  class="practicas-ras-percentage-input"
                                   type="number"
                                   name="porcentajes[<?php echo $ra_id; ?>]"
                                   min="0"
@@ -462,6 +479,9 @@ if ($filters_ready) {
                                   value="<?php echo htmlspecialchars($saved_value, ENT_QUOTES, 'UTF-8'); ?>"
                                 >
                               </label>
+                            </td>
+                            <td>
+                              <p><strong><?php echo htmlspecialchars($ra_label, ENT_QUOTES, 'UTF-8'); ?></strong> <?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?></p>
                             </td>
                           </tr>
                         <?php endforeach; ?>
