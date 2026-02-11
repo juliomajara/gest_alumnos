@@ -532,71 +532,78 @@ $dias_semana = [
             </label>
           </div>
 
-          <div class="panel-header">
-            <h3>Horario</h3>
-            <p>Introduce tramos de mañana y tarde para cada día.</p>
-          </div>
-          <div class="panel-grid practica-horario" data-schedule-container>
-            <table class="practica-horario-table">
-              <thead>
-                <tr>
-                  <th rowspan="2">Día</th>
-                  <th colspan="2">Mañana</th>
-                  <th colspan="2">Tarde</th>
-                  <th rowspan="2">Total</th>
-                </tr>
-                <tr>
-                  <th>Entrada</th>
-                  <th>Salida</th>
-                  <th>Entrada</th>
-                  <th>Salida</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($dias_semana as $day_number => $day_name): ?>
-                  <?php $day_values = is_array($form_values['horario'][$day_number] ?? null) ? $form_values['horario'][$day_number] : []; ?>
-                  <tr>
-                    <td><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="manana_entrada" name="horario[<?php echo $day_number; ?>][manana_entrada]" value="<?php echo htmlspecialchars((string) ($day_values['manana_entrada'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
-                    <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="manana_salida" name="horario[<?php echo $day_number; ?>][manana_salida]" value="<?php echo htmlspecialchars((string) ($day_values['manana_salida'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
-                    <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="tarde_entrada" name="horario[<?php echo $day_number; ?>][tarde_entrada]" value="<?php echo htmlspecialchars((string) ($day_values['tarde_entrada'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
-                    <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="tarde_salida" name="horario[<?php echo $day_number; ?>][tarde_salida]" value="<?php echo htmlspecialchars((string) ($day_values['tarde_salida'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
-                    <td><output data-day-total="<?php echo $day_number; ?>">0</output></td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <div class="practica-nueva-layout">
+            <div class="practica-nueva-block practica-nueva-block--horario">
+              <div class="panel-header">
+                <h3>Horario</h3>
+                <p>Introduce tramos de mañana y tarde para cada día.</p>
+              </div>
+              <div class="panel-grid practica-horario" data-schedule-container>
+                <table class="practica-horario-table">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">Día</th>
+                      <th colspan="2">Mañana</th>
+                      <th colspan="2">Tarde</th>
+                      <th rowspan="2">Total</th>
+                    </tr>
+                    <tr>
+                      <th>Entrada</th>
+                      <th>Salida</th>
+                      <th>Entrada</th>
+                      <th>Salida</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($dias_semana as $day_number => $day_name): ?>
+                      <?php $day_values = is_array($form_values['horario'][$day_number] ?? null) ? $form_values['horario'][$day_number] : []; ?>
+                      <tr>
+                        <td><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="manana_entrada" name="horario[<?php echo $day_number; ?>][manana_entrada]" value="<?php echo htmlspecialchars((string) ($day_values['manana_entrada'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
+                        <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="manana_salida" name="horario[<?php echo $day_number; ?>][manana_salida]" value="<?php echo htmlspecialchars((string) ($day_values['manana_salida'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
+                        <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="tarde_entrada" name="horario[<?php echo $day_number; ?>][tarde_entrada]" value="<?php echo htmlspecialchars((string) ($day_values['tarde_entrada'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
+                        <td><input type="time" data-day="<?php echo $day_number; ?>" data-segment="tarde_salida" name="horario[<?php echo $day_number; ?>][tarde_salida]" value="<?php echo htmlspecialchars((string) ($day_values['tarde_salida'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"></td>
+                        <td><output data-day-total="<?php echo $day_number; ?>">0</output></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-        <section class="entity-section">
-          <div class="panel-header">
-            <h3>Planificación</h3>
-            <p>Define fechas, horas y observaciones.</p>
-          </div>
-          <div class="entity-grid entity-grid--4 entity-grid--4-anexo">
-            <label>
-              Anexo
-              <input type="number" name="anexo" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['anexo'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-            </label>
-            <label>
-              Fecha de inicio
-              <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo htmlspecialchars((string) ($form_values['fecha_inicio'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
-            </label>
-            <label>
-              Horas a realizar
-              <input type="number" name="horas" id="horas" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['horas'] ?? '500'), ENT_QUOTES, 'UTF-8'); ?>" required>
-            </label>
-            <label>
-              Fecha de finalización
-              <input type="date" name="fecha_fin" id="fecha_fin" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly required>
-            </label>
-          </div>
-          <div class="entity-grid entity-grid--full">
-            <label>
-              Observaciones
-              <textarea name="observaciones" id="observaciones"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
-            </label>
+            <div class="practica-nueva-block practica-nueva-block--planificacion">
+              <div class="panel-header">
+                <h3>Planificación</h3>
+                <p>Define fechas y horas.</p>
+              </div>
+              <div class="entity-grid entity-grid--4 entity-grid--4-anexo practica-nueva-planificacion-grid">
+                <label>
+                  Anexo
+                  <input type="number" name="anexo" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['anexo'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                </label>
+                <label>
+                  Fecha de inicio
+                  <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo htmlspecialchars((string) ($form_values['fecha_inicio'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </label>
+                <label>
+                  Horas a realizar
+                  <input type="number" name="horas" id="horas" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['horas'] ?? '500'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                </label>
+                <label>
+                  Fecha de finalización
+                  <input type="date" name="fecha_fin" id="fecha_fin" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly required>
+                </label>
+              </div>
+            </div>
+
+            <div class="practica-nueva-block practica-nueva-block--observaciones">
+              <div class="entity-grid entity-grid--full">
+                <label>
+                  Observaciones
+                  <textarea name="observaciones" id="observaciones"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+                </label>
+              </div>
+            </div>
           </div>
         </section>
 
