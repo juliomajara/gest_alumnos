@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
+if (!defined('PRACTICAS_RAS_DEBUG')) {
+  define('PRACTICAS_RAS_DEBUG', false);
+}
+
 $pdo = db();
 $page_title = 'Porcentaje RA/CE en empresa | Gestor de Alumnos';
 $active_page = 'configuracion';
@@ -66,6 +70,54 @@ function format_ra_label(mixed $number, int $raId): string {
   return 'RA' . $raId . '.';
 }
 
+function should_debug_practicas_ras(): bool {
+  if (PRACTICAS_RAS_DEBUG) {
+    return true;
+  }
+
+  $debug_value = $_GET['debug_practicas_ras'] ?? $_POST['debug_practicas_ras'] ?? '';
+  return in_array((string) $debug_value, ['1', 'true', 'on', 'yes'], true);
+}
+
+function has_column(PDO $pdo, string $table, string $column): bool {
+  $stmt = $pdo->prepare(
+    'SELECT COUNT(*)
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name AND COLUMN_NAME = :column_name'
+  );
+  $stmt->execute([
+    'table_name' => $table,
+    'column_name' => $column,
+  ]);
+
+  return (int) $stmt->fetchColumn() > 0;
+}
+
+function has_index(PDO $pdo, string $table, string $index): bool {
+  $stmt = $pdo->prepare(
+    'SELECT COUNT(*)
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name AND INDEX_NAME = :index_name'
+  );
+  $stmt->execute([
+    'table_name' => $table,
+    'index_name' => $index,
+  ]);
+
+  return (int) $stmt->fetchColumn() > 0;
+}
+
+function find_missing_columns(array $columns, array $required): array {
+  $missing = [];
+  foreach ($required as $required_column) {
+    if (!in_array($required_column, $columns, true)) {
+      $missing[] = $required_column;
+    }
+  }
+
+  return $missing;
+}
+
 $courses = [];
 $course_map = [];
 $can_filter_by_select_course = false;
@@ -87,6 +139,9 @@ try {
 }
 
 $available_cycles = ['SMR', 'ASIR', 'DAW', 'DAM'];
+$debug_mode = should_debug_practicas_ras();
+$debug_details = [];
+$active_database = null;
 
 $selected_course_id = trim((string) ($_GET['curso'] ?? $_POST['curso'] ?? ''));
 $selected_course_text = trim((string) ($_GET['curso_texto'] ?? $_POST['curso_texto'] ?? ''));
@@ -115,53 +170,110 @@ if ($can_filter_by_select_course) {
   $selected_course_label = $selected_course_text;
 }
 
+$required_practicas_columns = ['curso_escolar', 'ciclo', 'id_modulo', 'id_ra', 'porcentaje'];
 $practicas_columns = [];
 $practicas_table_ready = false;
-$column_course = null;
-$column_cycle = null;
-$column_module = null;
-$column_ra = null;
-$column_percentage = null;
+$missing_practicas_columns = [];
+$practicas_table_exists = false;
+$schema_error_message = null;
 
 try {
-  $columns_stmt = $pdo->query('SHOW COLUMNS FROM practicas_ras');
-  foreach ($columns_stmt->fetchAll() as $column) {
-    $practicas_columns[] = (string) $column['Field'];
+  $active_database = $pdo->query('SELECT DATABASE()')->fetchColumn();
+  $active_database = $active_database === false ? '' : (string) $active_database;
+
+  $table_exists_stmt = $pdo->prepare(
+    'SELECT COUNT(*)
+     FROM INFORMATION_SCHEMA.TABLES
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name'
+  );
+  $table_exists_stmt->execute(['table_name' => 'practicas_ras']);
+  $practicas_table_exists = (int) $table_exists_stmt->fetchColumn() > 0;
+
+  if (!$practicas_table_exists) {
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS practicas_ras (
+        id_practica_ra INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        curso_escolar VARCHAR(20) NOT NULL,
+        ciclo VARCHAR(20) NOT NULL,
+        id_modulo INT UNSIGNED NOT NULL,
+        id_ra INT UNSIGNED NOT NULL,
+        porcentaje DECIMAL(5,2) NOT NULL,
+        PRIMARY KEY (id_practica_ra),
+        UNIQUE KEY uq_practicas_ras_context (curso_escolar, ciclo, id_modulo, id_ra),
+        KEY idx_practicas_ras_curso_ciclo (curso_escolar, ciclo),
+        KEY idx_practicas_ras_id_ra (id_ra)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
+
+    $practicas_table_exists = true;
   }
 
-  $column_course = find_column($practicas_columns, ['curso_escolar', 'id_curso_escolar']);
-  $column_cycle = find_column($practicas_columns, ['ciclo', 'id_ciclo']);
-  $column_module = find_column($practicas_columns, ['id_modulo']);
-  $column_ra = find_column($practicas_columns, ['id_ra']);
-  $column_percentage = find_column($practicas_columns, ['porcentaje']);
-
-  $practicas_table_ready = $column_course !== null
-    && $column_cycle !== null
-    && $column_module !== null
-    && $column_ra !== null
-    && $column_percentage !== null;
-} catch (Throwable $exception) {
-  $practicas_columns = [];
-  $practicas_table_ready = false;
-}
-
-$course_storage_value = $column_course === 'id_curso_escolar' ? $selected_course_id : $selected_course_label;
-$cycle_storage_value = $column_cycle === 'id_ciclo' ? null : $selected_cycle;
-
-if ($column_cycle === 'id_ciclo' && $selected_cycle !== '') {
-  try {
-    $cycle_id_stmt = $pdo->prepare('SELECT id_ciclo FROM ciclos WHERE abreviatura = :abreviatura LIMIT 1');
-    $cycle_id_stmt->execute(['abreviatura' => $selected_cycle]);
-    $cycle_storage_value = $cycle_id_stmt->fetchColumn();
-    if ($cycle_storage_value !== false) {
-      $cycle_storage_value = (string) (int) $cycle_storage_value;
-    } else {
-      $cycle_storage_value = null;
+  if ($practicas_table_exists) {
+    if (!has_column($pdo, 'practicas_ras', 'curso_escolar')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD COLUMN curso_escolar VARCHAR(20) NULL AFTER id_practica_ra');
     }
-  } catch (Throwable $exception) {
-    $cycle_storage_value = null;
+    if (!has_column($pdo, 'practicas_ras', 'ciclo')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD COLUMN ciclo VARCHAR(20) NULL AFTER curso_escolar');
+    }
+    if (!has_column($pdo, 'practicas_ras', 'id_modulo')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD COLUMN id_modulo INT UNSIGNED NULL AFTER ciclo');
+    }
+    if (!has_column($pdo, 'practicas_ras', 'id_ra')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD COLUMN id_ra INT UNSIGNED NULL AFTER id_modulo');
+    }
+    if (!has_column($pdo, 'practicas_ras', 'porcentaje')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD COLUMN porcentaje DECIMAL(5,2) NULL AFTER id_ra');
+    }
+
+    if (has_column($pdo, 'practicas_ras', 'id_curso_escolar') && has_column($pdo, 'practicas_ras', 'curso_escolar')) {
+      $pdo->exec(
+        'UPDATE practicas_ras pr
+         LEFT JOIN cursos_escolares ce ON ce.id_curso_escolar = pr.id_curso_escolar
+         SET pr.curso_escolar = COALESCE(pr.curso_escolar, ce.curso_escolar)
+         WHERE pr.curso_escolar IS NULL OR pr.curso_escolar = ""'
+      );
+    }
+
+    if (has_column($pdo, 'practicas_ras', 'id_ciclo') && has_column($pdo, 'practicas_ras', 'ciclo')) {
+      $pdo->exec(
+        'UPDATE practicas_ras pr
+         LEFT JOIN ciclos c ON c.id_ciclo = pr.id_ciclo
+         SET pr.ciclo = COALESCE(pr.ciclo, c.abreviatura)
+         WHERE pr.ciclo IS NULL OR pr.ciclo = ""'
+      );
+    }
+
+    if (!has_index($pdo, 'practicas_ras', 'idx_practicas_ras_curso_ciclo')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD INDEX idx_practicas_ras_curso_ciclo (curso_escolar, ciclo)');
+    }
+    if (!has_index($pdo, 'practicas_ras', 'idx_practicas_ras_id_ra')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD INDEX idx_practicas_ras_id_ra (id_ra)');
+    }
+    if (!has_index($pdo, 'practicas_ras', 'uq_practicas_ras_context')) {
+      $pdo->exec('ALTER TABLE practicas_ras ADD UNIQUE INDEX uq_practicas_ras_context (curso_escolar, ciclo, id_modulo, id_ra)');
+    }
+  }
+
+  if ($practicas_table_exists) {
+    $columns_stmt = $pdo->query('SHOW COLUMNS FROM practicas_ras');
+    foreach ($columns_stmt->fetchAll() as $column) {
+      $practicas_columns[] = (string) $column['Field'];
+    }
+  }
+
+  $missing_practicas_columns = find_missing_columns($practicas_columns, $required_practicas_columns);
+  $practicas_table_ready = $practicas_table_exists && !$missing_practicas_columns;
+} catch (Throwable $exception) {
+  $practicas_table_ready = false;
+  $schema_error_message = $exception->getMessage();
+  if ($debug_mode && $exception instanceof PDOException) {
+    $debug_details[] = 'SQLSTATE: ' . ($exception->errorInfo[0] ?? $exception->getCode());
+    $debug_details[] = 'Excepción SQL: ' . $exception->getMessage();
   }
 }
+
+$course_storage_value = $selected_course_label;
+$cycle_storage_value = $selected_cycle;
 
 $messages = [];
 $errors = [];
@@ -174,15 +286,19 @@ $saved_percentages = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guardar') {
   if (!$practicas_table_ready) {
-    $errors[] = 'La tabla practicas_ras no está disponible o no contiene las columnas necesarias para guardar.';
+    if (!$practicas_table_exists) {
+      $errors[] = 'La tabla no existe en la BD ' . ($active_database !== '' ? $active_database : '(sin base activa)') . '.';
+    } elseif ($missing_practicas_columns) {
+      $errors[] = 'La tabla practicas_ras existe, pero faltan columnas: ' . implode(', ', $missing_practicas_columns) . '.';
+    } elseif ($schema_error_message !== null) {
+      $errors[] = 'No se ha podido validar la estructura de practicas_ras: ' . $schema_error_message;
+    } else {
+      $errors[] = 'La tabla practicas_ras no está lista para guardar por un problema de estructura no identificado.';
+    }
   }
 
   if (!$filters_ready) {
     $errors[] = 'Selecciona curso escolar y ciclo antes de guardar.';
-  }
-
-  if ($column_cycle === 'id_ciclo' && $cycle_storage_value === null) {
-    $errors[] = 'No se ha podido resolver el ciclo seleccionado.';
   }
 
   if (!$errors) {
@@ -214,8 +330,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
 
         $delete_sql = sprintf(
           'DELETE FROM practicas_ras WHERE %s = :curso AND %s = :ciclo',
-          $column_course,
-          $column_cycle
+          'curso_escolar',
+          'ciclo'
         );
         $delete_stmt = $pdo->prepare($delete_sql);
         $delete_stmt->execute([
@@ -226,11 +342,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
         if ($percentages_to_save) {
           $insert_sql = sprintf(
             'INSERT INTO practicas_ras (%s, %s, %s, %s, %s) VALUES (:curso, :ciclo, :id_modulo, :id_ra, :porcentaje)',
-            $column_course,
-            $column_cycle,
-            $column_module,
-            $column_ra,
-            $column_percentage
+            'curso_escolar',
+            'ciclo',
+            'id_modulo',
+            'id_ra',
+            'porcentaje'
           );
           $insert_stmt = $pdo->prepare($insert_sql);
 
@@ -258,7 +374,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
         if ($pdo->inTransaction()) {
           $pdo->rollBack();
         }
-        $errors[] = 'No se han podido guardar los porcentajes. Revisa la configuración de la tabla practicas_ras.';
+        if ($exception instanceof PDOException) {
+          $errors[] = 'No se han podido guardar los porcentajes. SQLSTATE ' . ($exception->errorInfo[0] ?? $exception->getCode()) . ': ' . $exception->getMessage();
+          if ($debug_mode) {
+            $debug_details[] = 'Error guardando en BD ' . ($active_database !== '' ? $active_database : '(sin base activa)') . '.';
+          }
+        } else {
+          $errors[] = 'No se han podido guardar los porcentajes: ' . $exception->getMessage();
+        }
       }
     }
   }
@@ -311,10 +434,10 @@ if ($filters_ready) {
           'SELECT %s AS id_ra, %s AS porcentaje
            FROM practicas_ras
            WHERE %s = :curso AND %s = :ciclo',
-          $column_ra,
-          $column_percentage,
-          $column_course,
-          $column_cycle
+          'id_ra',
+          'porcentaje',
+          'curso_escolar',
+          'ciclo'
         )
       );
       $saved_stmt->execute([
@@ -406,6 +529,12 @@ if ($filters_ready) {
             <?php foreach ($errors as $error): ?>
               <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
             <?php endforeach; ?>
+            <?php if ($debug_mode): ?>
+              <li>BD activa: <?php echo htmlspecialchars($active_database !== '' ? $active_database : '(sin base activa)', ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php foreach ($debug_details as $detail): ?>
+                <li><?php echo htmlspecialchars($detail, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </ul>
         </section>
       <?php endif; ?>
