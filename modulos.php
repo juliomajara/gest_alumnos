@@ -23,6 +23,7 @@ $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
 $modules_stmt = $pdo->prepare(
   'SELECT
+    m.id_modulo,
     m.id_ciclo,
     c.abreviatura AS ciclo_abreviatura,
     m.id_curso,
@@ -65,6 +66,7 @@ function render_module_rows(array $modules): string
         $materia_propia = trim((string) ($module['materia_propia'] ?? ''));
         $materia_general = trim((string) ($module['materia_general'] ?? ''));
         $nombre = $materia_propia !== '' ? $materia_propia : ($materia_general !== '' ? $materia_general : 'No disponible');
+        $id_modulo = (int) ($module['id_modulo'] ?? 0);
         $horas_semanales = $module['horas_semanales'] !== null ? (string) $module['horas_semanales'] : 'No disponible';
         $horas_totales = $module['horas_totales'] !== null ? (string) $module['horas_totales'] : 'No disponible';
       ?>
@@ -72,7 +74,13 @@ function render_module_rows(array $modules): string
         <td><?php echo htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <?php if ($id_modulo > 0): ?>
+            <a href="modulo_detalle.php?id_modulo=<?php echo urlencode((string) $id_modulo); ?>"><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></a>
+          <?php else: ?>
+            <?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?>
+          <?php endif; ?>
+        </td>
         <td><?php echo htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
