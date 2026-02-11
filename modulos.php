@@ -50,11 +50,27 @@ $modules_stmt = $pdo->prepare(
     m.materia_general,
     m.materia_propia,
     m.horas_semanales,
-    m.horas_totales
+    m.horas_totales,
+    COUNT(DISTINCT ra.id_ra) AS total_ra,
+    COUNT(DISTINCT ce.id_ce) AS total_ce
   FROM modulos m
   LEFT JOIN ciclos c ON c.id_ciclo = m.id_ciclo
   LEFT JOIN cursos cu ON cu.id_curso = m.id_curso
+  LEFT JOIN resultados_aprendizaje ra ON ra.id_modulo = m.id_modulo
+  LEFT JOIN criterios_evaluacion ce ON ce.id_ra = ra.id_ra
   ' . $where_clause . '
+  GROUP BY
+    m.id_modulo,
+    m.id_ciclo,
+    c.abreviatura,
+    m.id_curso,
+    cu.curso,
+    m.codigo,
+    m.abreviatura,
+    m.materia_general,
+    m.materia_propia,
+    m.horas_semanales,
+    m.horas_totales
   ORDER BY c.abreviatura, cu.curso, m.abreviatura'
 );
 
@@ -66,7 +82,7 @@ function render_module_rows(array $modules): string
   ob_start();
   if (!$modules): ?>
     <tr>
-      <td colspan="6">No hay módulos para los filtros seleccionados.</td>
+      <td colspan="8">No hay módulos para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($modules as $module): ?>
@@ -86,6 +102,8 @@ function render_module_rows(array $modules): string
         $id_modulo = (int) ($module['id_modulo'] ?? 0);
         $horas_semanales = $module['horas_semanales'] !== null ? (string) $module['horas_semanales'] : 'No disponible';
         $horas_totales = $module['horas_totales'] !== null ? (string) $module['horas_totales'] : 'No disponible';
+        $total_ra = (int) ($module['total_ra'] ?? 0);
+        $total_ce = (int) ($module['total_ce'] ?? 0);
       ?>
       <tr>
         <td><?php echo htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -100,6 +118,8 @@ function render_module_rows(array $modules): string
         </td>
         <td><?php echo htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars((string) $total_ra, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars((string) $total_ce, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -188,6 +208,8 @@ $active_page = 'modulos';
                 <th>Nombre</th>
                 <th>Horas semanales</th>
                 <th>Horas totales</th>
+                <th>RA</th>
+                <th>CE</th>
               </tr>
             </thead>
             <tbody>
