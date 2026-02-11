@@ -39,6 +39,57 @@ function practice_full_name(array $row, string $nameKey = 'nombre'): string {
   return trim($apellidos . ', ' . $nombre, ' ,');
 }
 
+function practice_address_label(array $address): string {
+  $prefix = !empty($address['principal']) ? '[Principal]' : '[CT]';
+
+  $street = trim(implode(' ', array_filter([
+    trim((string) ($address['via'] ?? '')),
+    trim((string) ($address['nombre_via'] ?? '')),
+    trim((string) ($address['numero'] ?? '')),
+  ], static fn (string $value): bool => $value !== '')));
+
+  $parts = [];
+  if ($street !== '') {
+    $parts[] = $street;
+  }
+
+  $bloque = trim((string) ($address['bloque'] ?? ''));
+  if ($bloque !== '') {
+    $parts[] = 'Bloque ' . $bloque;
+  }
+
+  $escalera = trim((string) ($address['escalera'] ?? ''));
+  if ($escalera !== '') {
+    $parts[] = 'Esc. ' . $escalera;
+  }
+
+  $planta = trim((string) ($address['planta'] ?? ''));
+  if ($planta !== '') {
+    $parts[] = 'Planta ' . $planta;
+  }
+
+  $puerta = trim((string) ($address['puerta'] ?? ''));
+  if ($puerta !== '') {
+    $parts[] = $puerta;
+  }
+
+  $cpLocalidad = trim(implode(' ', array_filter([
+    trim((string) ($address['cp'] ?? '')),
+    trim((string) ($address['localidad'] ?? '')),
+  ], static fn (string $value): bool => $value !== '')));
+  if ($cpLocalidad !== '') {
+    $parts[] = $cpLocalidad;
+  }
+
+  $direccionCompleta = $parts ? implode(', ', $parts) : ('Dirección #' . (int) ($address['id_direccion'] ?? 0));
+  $provincia = trim((string) ($address['provincia'] ?? ''));
+  if ($provincia !== '') {
+    $direccionCompleta .= ' (' . $provincia . ')';
+  }
+
+  return $prefix . ' ' . $direccionCompleta;
+}
+
 $active_course_stmt = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares WHERE activo = 1 ORDER BY id_curso_escolar DESC LIMIT 1');
 $active_course = $active_course_stmt->fetch();
 if (!$active_course) {
@@ -108,46 +159,30 @@ if (($_GET['action'] ?? '') !== '') {
     $address_stmt = $pdo->prepare(
       'SELECT d.id_direccion,
               d.etiqueta,
+              d.principal,
               d.nombre_via,
               d.numero,
+              d.bloque,
+              d.escalera,
+              d.planta,
+              d.puerta,
               d.cp,
               v.via,
-              l.nombre AS localidad
+              l.nombre AS localidad,
+              p.nombre AS provincia
        FROM direcciones d
        LEFT JOIN vias v ON v.id_via = d.id_via
        LEFT JOIN localidades l ON l.id_localidad = d.id_localidad
+       LEFT JOIN provincias p ON p.id_provincia = d.id_provincia
        WHERE d.id_empresa = :id_empresa
        ORDER BY d.principal DESC, d.id_direccion'
     );
     $address_stmt->execute(['id_empresa' => $company_id]);
     $direcciones = [];
     foreach ($address_stmt->fetchAll() as $address) {
-      $fragments = [];
-      if (!empty($address['etiqueta'])) {
-        $fragments[] = (string) $address['etiqueta'];
-      }
-
-      $street = trim(implode(' ', array_filter([
-        (string) ($address['via'] ?? ''),
-        (string) ($address['nombre_via'] ?? ''),
-        (string) ($address['numero'] ?? ''),
-      ], static fn (string $value): bool => trim($value) !== '')));
-      if ($street !== '') {
-        $fragments[] = $street;
-      }
-
-      $cp_localidad = trim(implode(' ', array_filter([
-        (string) ($address['cp'] ?? ''),
-        (string) ($address['localidad'] ?? ''),
-      ], static fn (string $value): bool => trim($value) !== '')));
-      if ($cp_localidad !== '') {
-        $fragments[] = $cp_localidad;
-      }
-
-      $label = $fragments ? implode(' · ', $fragments) : 'Dirección #' . (int) $address['id_direccion'];
       $direcciones[] = [
         'id_direccion' => (int) $address['id_direccion'],
-        'label' => $label,
+        'label' => practice_address_label($address),
       ];
     }
 
@@ -334,14 +369,21 @@ if ($selected_company > 0) {
   $address_stmt = $pdo->prepare(
     'SELECT d.id_direccion,
             d.etiqueta,
+            d.principal,
             d.nombre_via,
             d.numero,
+            d.bloque,
+            d.escalera,
+            d.planta,
+            d.puerta,
             d.cp,
             v.via,
-            l.nombre AS localidad
+            l.nombre AS localidad,
+            p.nombre AS provincia
      FROM direcciones d
      LEFT JOIN vias v ON v.id_via = d.id_via
      LEFT JOIN localidades l ON l.id_localidad = d.id_localidad
+     LEFT JOIN provincias p ON p.id_provincia = d.id_provincia
      WHERE d.id_empresa = :id_empresa
      ORDER BY d.principal DESC, d.id_direccion'
   );
@@ -471,22 +513,8 @@ $dias_semana = [
               <select name="id_direccion" id="id_direccion" <?php echo $selected_company > 0 ? '' : 'disabled'; ?>>
                 <option value=""><?php echo $selected_company > 0 ? 'Selecciona una dirección' : 'Selecciona primero una empresa'; ?></option>
                 <?php foreach ($company_addresses as $address): ?>
-                  <?php
-                    $label_parts = array_filter([
-                      (string) ($address['etiqueta'] ?? ''),
-                      trim(implode(' ', array_filter([
-                        (string) ($address['via'] ?? ''),
-                        (string) ($address['nombre_via'] ?? ''),
-                        (string) ($address['numero'] ?? ''),
-                      ], static fn (string $value): bool => trim($value) !== ''))),
-                      trim(implode(' ', array_filter([
-                        (string) ($address['cp'] ?? ''),
-                        (string) ($address['localidad'] ?? ''),
-                      ], static fn (string $value): bool => trim($value) !== ''))),
-                    ], static fn (string $value): bool => trim($value) !== '');
-                  ?>
                   <option value="<?php echo (int) $address['id_direccion']; ?>" <?php echo (int) $address['id_direccion'] === $selected_address ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($label_parts ? implode(' · ', $label_parts) : ('Dirección #' . (int) $address['id_direccion']), ENT_QUOTES, 'UTF-8'); ?>
+                    <?php echo htmlspecialchars(practice_address_label($address), ENT_QUOTES, 'UTF-8'); ?>
                   </option>
                 <?php endforeach; ?>
               </select>
