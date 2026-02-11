@@ -414,7 +414,7 @@ if ($filters_ready) {
         <form method="post" class="panel entity-form panel-grid">
           <div class="panel-header">
             <h3>Distribución por módulos y resultados de aprendizaje</h3>
-            <p>Expande cada módulo y RA para consultar los CE asociados e indicar el porcentaje para empresa.</p>
+            <p>Revisa cada módulo y asigna el porcentaje cedido a la empresa para cada resultado de aprendizaje.</p>
           </div>
 
           <input type="hidden" name="action" value="guardar">
@@ -434,32 +434,54 @@ if ($filters_ready) {
                   $module_id = (int) $module['id_modulo'];
                   $module_ras = $ras_by_module[$module_id] ?? [];
                 ?>
-                <details class="practicas-ras-module">
-                  <summary>
-                    <span><?php echo htmlspecialchars(format_module_name($module), ENT_QUOTES, 'UTF-8'); ?></span>
-                    <small><?php echo count($module_ras); ?> RA</small>
-                  </summary>
+                <section class="practicas-ras-module panel-grid">
+                  <div class="panel-header">
+                    <h3><?php echo htmlspecialchars(format_module_name($module), ENT_QUOTES, 'UTF-8'); ?></h3>
+                    <p><?php echo count($module_ras); ?> RA</p>
+                  </div>
 
-                  <div class="practicas-ras-content">
-                    <?php if (!$module_ras): ?>
-                      <p>Este módulo no tiene resultados de aprendizaje registrados.</p>
-                    <?php else: ?>
-                      <?php foreach ($module_ras as $ra): ?>
-                        <?php
-                          $ra_id = (int) $ra['id_ra'];
-                          $criteria = $ces_by_ra[$ra_id] ?? [];
-                          $ra_number = trim((string) ($ra['numero'] ?? ''));
-                          $saved_value = $saved_percentages[$ra_id] ?? '';
-                        ?>
-                        <details class="practicas-ras-ra">
-                          <summary>
-                            <div class="practicas-ras-ra-summary">
-                              <span>
-                                <strong>RA <?php echo htmlspecialchars($ra_number !== '' ? $ra_number : '-', ENT_QUOTES, 'UTF-8'); ?></strong>
-                                <?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?>
-                              </span>
+                  <?php if (!$module_ras): ?>
+                    <p>Este módulo no tiene resultados de aprendizaje registrados.</p>
+                  <?php else: ?>
+                    <table class="practicas-ras-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Resultado de aprendizaje</th>
+                          <th scope="col">% cedido a la empresa</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php foreach ($module_ras as $ra): ?>
+                          <?php
+                            $ra_id = (int) $ra['id_ra'];
+                            $criteria = $ces_by_ra[$ra_id] ?? [];
+                            $ra_number = trim((string) ($ra['numero'] ?? ''));
+                            $saved_value = $saved_percentages[$ra_id] ?? '';
+                          ?>
+                          <tr>
+                            <td>
+                              <?php if ($ra_number !== ''): ?>
+                                <p><strong>RA <?php echo htmlspecialchars($ra_number, ENT_QUOTES, 'UTF-8'); ?></strong></p>
+                              <?php endif; ?>
+                              <p><?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?></p>
+
+                              <?php if ($criteria): ?>
+                                <details class="practicas-ras-criteria">
+                                  <summary>Ver criterios de evaluación (<?php echo count($criteria); ?>)</summary>
+                                  <ul>
+                                    <?php foreach ($criteria as $criterion): ?>
+                                      <li>
+                                        <strong><?php echo htmlspecialchars((string) ($criterion['codigo'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></strong>
+                                        <?php echo htmlspecialchars((string) ($criterion['descripcion'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                                      </li>
+                                    <?php endforeach; ?>
+                                  </ul>
+                                </details>
+                              <?php endif; ?>
+                            </td>
+                            <td class="practicas-ras-percentage-cell">
                               <label>
-                                % empresa
+                                <span class="sr-only">Porcentaje empresa para RA <?php echo htmlspecialchars($ra_number !== '' ? $ra_number : (string) $ra_id, ENT_QUOTES, 'UTF-8'); ?></span>
                                 <input
                                   type="number"
                                   name="porcentajes[<?php echo $ra_id; ?>]"
@@ -469,28 +491,13 @@ if ($filters_ready) {
                                   value="<?php echo htmlspecialchars($saved_value, ENT_QUOTES, 'UTF-8'); ?>"
                                 >
                               </label>
-                            </div>
-                          </summary>
-
-                          <div class="practicas-ras-content practicas-ras-criteria">
-                            <?php if (!$criteria): ?>
-                              <p>Sin criterios de evaluación para este RA.</p>
-                            <?php else: ?>
-                              <ul>
-                                <?php foreach ($criteria as $criterion): ?>
-                                  <li>
-                                    <strong><?php echo htmlspecialchars((string) ($criterion['codigo'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></strong>
-                                    <?php echo htmlspecialchars((string) ($criterion['descripcion'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
-                                  </li>
-                                <?php endforeach; ?>
-                              </ul>
-                            <?php endif; ?>
-                          </div>
-                        </details>
-                      <?php endforeach; ?>
-                    <?php endif; ?>
-                  </div>
-                </details>
+                            </td>
+                          </tr>
+                        <?php endforeach; ?>
+                      </tbody>
+                    </table>
+                  <?php endif; ?>
+                </section>
               <?php endforeach; ?>
             </div>
 
