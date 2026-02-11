@@ -1123,6 +1123,49 @@ body {
   margin: 0 auto;
 }
 
+.practica-nueva-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(260px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.practica-nueva-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.practica-nueva-block--horario {
+  grid-column: 1;
+}
+
+.practica-nueva-block--planificacion {
+  grid-column: 2;
+}
+
+.practica-nueva-block--observaciones {
+  grid-column: 1;
+}
+
+.practica-nueva-block--horario .practica-horario {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.practica-nueva-planificacion-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+
+@media (max-width: 980px) {
+  .practica-nueva-layout,
+  .practica-nueva-planificacion-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .practica-horario-table {
   width: 100%;
   border-collapse: collapse;
