@@ -460,7 +460,7 @@ $dias_semana = [
         </section>
       <?php endif; ?>
 
-      <form method="post" class="panel entity-form">
+      <form method="post" class="panel entity-form practica-nueva-form">
         <input type="hidden" name="id_curso_escolar" value="<?php echo $active_course_id; ?>">
 
         <section class="entity-section">
@@ -468,16 +468,16 @@ $dias_semana = [
             <h3>Datos generales</h3>
             <p>Selecciona curso, alumno y empresa.</p>
           </div>
-          <div class="entity-grid entity-grid--4">
-            <label>
+          <div class="entity-grid entity-grid--4 practica-nueva-datos-grid">
+            <label class="practica-curso">
               Curso escolar
               <input type="text" value="<?php echo htmlspecialchars((string) ($active_course['curso_escolar'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?>" readonly>
             </label>
-            <label>
+            <label class="practica-anexo">
               Anexo
               <input type="number" name="anexo" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['anexo'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
             </label>
-            <label>
+            <label class="practica-grupo">
               Grupo
               <select name="id_grupo" id="id_grupo" required>
                 <option value="">Selecciona un grupo</option>
@@ -488,7 +488,7 @@ $dias_semana = [
                 <?php endforeach; ?>
               </select>
             </label>
-            <label>
+            <label class="practica-alumno">
               Alumno
               <select name="id_alumno" id="id_alumno" <?php echo $selected_group > 0 ? '' : 'disabled'; ?> required>
                 <option value=""><?php echo $selected_group > 0 ? 'Selecciona un alumno' : 'Selecciona primero un grupo'; ?></option>
