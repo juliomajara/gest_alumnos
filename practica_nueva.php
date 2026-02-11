@@ -468,10 +468,14 @@ $dias_semana = [
             <h3>Datos generales</h3>
             <p>Selecciona curso, alumno y empresa.</p>
           </div>
-          <div class="entity-grid entity-grid--3">
+          <div class="entity-grid entity-grid--4">
             <label>
               Curso escolar
               <input type="text" value="<?php echo htmlspecialchars((string) ($active_course['curso_escolar'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?>" readonly>
+            </label>
+            <label>
+              Anexo
+              <input type="number" name="anexo" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['anexo'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
             </label>
             <label>
               Grupo
@@ -576,11 +580,7 @@ $dias_semana = [
                 <h3>Planificación</h3>
                 <p>Define fechas y horas.</p>
               </div>
-              <div class="entity-grid entity-grid--4 entity-grid--4-anexo practica-nueva-planificacion-grid">
-                <label>
-                  Anexo
-                  <input type="number" name="anexo" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['anexo'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
-                </label>
+              <div class="entity-grid practica-nueva-planificacion-grid">
                 <label>
                   Fecha de inicio
                   <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo htmlspecialchars((string) ($form_values['fecha_inicio'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
@@ -593,16 +593,24 @@ $dias_semana = [
                   Fecha de finalización
                   <input type="date" name="fecha_fin" id="fecha_fin" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly required>
                 </label>
-              </div>
-            </div>
-
-            <div class="practica-nueva-block practica-nueva-block--observaciones">
-              <div class="entity-grid entity-grid--full">
                 <label>
-                  Observaciones
-                  <textarea name="observaciones" id="observaciones"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+                  Días computados
+                  <input type="text" id="dias_computados" value="" readonly>
+                </label>
+                <label>
+                  Horas último día
+                  <input type="text" id="horas_ultimo_dia" value="" readonly>
                 </label>
               </div>
+            </div>
+          </div>
+
+          <div class="practica-nueva-block practica-nueva-block--observaciones">
+            <div class="entity-grid entity-grid--full">
+              <label>
+                Observaciones
+                <textarea name="observaciones" id="observaciones"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+              </label>
             </div>
           </div>
         </section>
@@ -624,6 +632,8 @@ $dias_semana = [
     const hoursInput = document.getElementById('horas');
     const startDateInput = document.getElementById('fecha_inicio');
     const endDateInput = document.getElementById('fecha_fin');
+    const computedDaysInput = document.getElementById('dias_computados');
+    const lastDayHoursInput = document.getElementById('horas_ultimo_dia');
     const scheduleContainer = document.querySelector('[data-schedule-container]');
     const nonTeachingDays = new Set(<?php echo json_encode(array_values($no_lectivos), JSON_UNESCAPED_UNICODE); ?>);
 
@@ -705,25 +715,40 @@ $dias_semana = [
       return result;
     };
 
-    const calculateEndDate = () => {
+    const formatHours = (value) => {
+      if (!Number.isFinite(value)) {
+        return '';
+      }
+      return Number.isInteger(value) ? String(value) : value.toFixed(2);
+    };
+
+    const calculatePlanning = () => {
       const startValue = startDateInput.value;
       const targetHours = Math.max(0, Number(hoursInput.value || 0));
       const weeklyHours = getWeeklyTeachingHours();
       const weeklyTotal = Object.values(weeklyHours).reduce((sum, value) => sum + value, 0);
 
-      if (!startValue || targetHours <= 0 || weeklyTotal <= 0) {
+      const resetPlanning = () => {
         endDateInput.value = '';
+        computedDaysInput.value = '';
+        lastDayHoursInput.value = '';
+      };
+
+      if (!startValue || targetHours <= 0 || weeklyTotal <= 0) {
+        resetPlanning();
         return;
       }
 
       const startDate = new Date(`${startValue}T00:00:00`);
       if (Number.isNaN(startDate.getTime())) {
-        endDateInput.value = '';
+        resetPlanning();
         return;
       }
 
       let current = new Date(startDate);
       let accumulated = 0;
+      let computedDays = 0;
+      let lastDayHours = 0;
       let guard = 0;
 
       while (guard < 4000) {
@@ -733,9 +758,18 @@ $dias_semana = [
         const dateKey = toIsoDate(current);
 
         if (mappedDay <= 5 && !nonTeachingDays.has(dateKey)) {
-          accumulated += weeklyHours[mappedDay] || 0;
+          const todayHours = weeklyHours[mappedDay] || 0;
+          if (todayHours > 0) {
+            computedDays += 1;
+            const remainingHours = Math.max(0, targetHours - accumulated);
+            lastDayHours = Math.min(todayHours, remainingHours);
+            accumulated += lastDayHours;
+          }
+
           if (accumulated >= targetHours) {
             endDateInput.value = dateKey;
+            computedDaysInput.value = String(computedDays);
+            lastDayHoursInput.value = formatHours(lastDayHours);
             return;
           }
         }
@@ -743,14 +777,14 @@ $dias_semana = [
         current.setDate(current.getDate() + 1);
       }
 
-      endDateInput.value = '';
+      resetPlanning();
     };
 
     const updateHoursByStudent = async () => {
       const studentId = Number(studentSelect.value || 0);
       if (studentId <= 0) {
         hoursInput.value = '500';
-        calculateEndDate();
+        calculatePlanning();
         return;
       }
 
@@ -764,7 +798,7 @@ $dias_semana = [
         hoursInput.value = '500';
       }
 
-      calculateEndDate();
+      calculatePlanning();
     };
 
     groupSelect.addEventListener('change', async () => {
@@ -774,7 +808,7 @@ $dias_semana = [
 
       if (groupId <= 0) {
         hoursInput.value = '500';
-        calculateEndDate();
+        calculatePlanning();
         return;
       }
 
@@ -844,7 +878,7 @@ $dias_semana = [
         }
 
         updateDayTotals();
-        calculateEndDate();
+        calculatePlanning();
       });
 
       scheduleContainer.addEventListener('change', (event) => {
@@ -855,15 +889,15 @@ $dias_semana = [
 
         copyMondayFieldToWeekdays(target);
         updateDayTotals();
-        calculateEndDate();
+        calculatePlanning();
       });
     }
 
-    startDateInput.addEventListener('change', calculateEndDate);
-    hoursInput.addEventListener('input', calculateEndDate);
+    startDateInput.addEventListener('change', calculatePlanning);
+    hoursInput.addEventListener('input', calculatePlanning);
 
     updateDayTotals();
-    calculateEndDate();
+    calculatePlanning();
   </script>
 </body>
 </html>
