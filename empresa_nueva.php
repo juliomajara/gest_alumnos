@@ -833,14 +833,14 @@ $active_page = 'empresas';
           <div class="entity-repeatable-item empresa-direccion-item">
             <div class="entity-grid empresa-direccion-grid">
               <div class="entity-grid entity-grid--3">
-                <label>
+                <label class="direccion-etiqueta">
                   Etiqueta
                   <select name="direcciones[__INDEX__][etiqueta]">
                     <option value="Principal">Principal</option>
                     <option value="Centro de Trabajo">Centro de Trabajo</option>
                   </select>
                 </label>
-                <label>
+                <label class="direccion-via">
                   Tipo de vía
                   <select name="direcciones[__INDEX__][id_via]">
                     <option value="">Selecciona</option>
@@ -849,35 +849,35 @@ $active_page = 'empresas';
                     <?php endforeach; ?>
                   </select>
                 </label>
-                <label>
+                <label class="direccion-nombre-via">
                   Nombre de la vía
                   <input type="text" name="direcciones[__INDEX__][nombre_via]">
                 </label>
               </div>
               <div class="entity-grid empresa-direccion-grid-row--5">
-                <label>
+                <label class="direccion-numero">
                   Número
                   <input type="text" name="direcciones[__INDEX__][numero]">
                 </label>
-                <label>
+                <label class="direccion-bloque">
                   Bloque
                   <input type="text" name="direcciones[__INDEX__][bloque]">
                 </label>
-                <label>
+                <label class="direccion-escalera">
                   Escalera
                   <input type="text" name="direcciones[__INDEX__][escalera]">
                 </label>
-                <label>
+                <label class="direccion-puerta">
                   Puerta
                   <input type="text" name="direcciones[__INDEX__][puerta]">
                 </label>
-                <label>
+                <label class="direccion-planta">
                   Planta
                   <input type="text" name="direcciones[__INDEX__][planta]">
                 </label>
               </div>
               <div class="entity-grid entity-grid--3">
-                <label>
+                <label class="direccion-pais">
                   País
                   <select name="direcciones[__INDEX__][id_pais]">
                     <option value="">Selecciona</option>
@@ -887,13 +887,13 @@ $active_page = 'empresas';
                     <?php endforeach; ?>
                   </select>
                 </label>
-                <label>
+                <label class="direccion-cp">
                   Código postal
                   <input type="text" name="direcciones[__INDEX__][cp]">
                 </label>
               </div>
               <div class="entity-grid entity-grid--3">
-                <label>
+                <label class="direccion-provincia">
                   Provincia
                   <select name="direcciones[__INDEX__][id_provincia]">
                     <option value="">Selecciona</option>
@@ -902,14 +902,14 @@ $active_page = 'empresas';
                     <?php endforeach; ?>
                   </select>
                 </label>
-                <label>
+                <label class="direccion-localidad">
                   Localidad
                   <input type="text" name="direcciones[__INDEX__][localidad]" autocomplete="off">
                   <input type="hidden" name="direcciones[__INDEX__][id_localidad]">
                 </label>
               </div>
               <div class="entity-grid entity-grid--full">
-                <label>
+                <label class="direccion-otros">
                   Otros
                   <input type="text" name="direcciones[__INDEX__][otros]">
                 </label>
