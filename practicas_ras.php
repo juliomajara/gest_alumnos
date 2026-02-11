@@ -149,7 +149,6 @@ $filters_ready = $selected_cycle !== '' && (($can_filter_by_select_course && $se
 
 $modules = [];
 $ras_by_module = [];
-$ces_by_ra = [];
 $saved_percentages = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guardar') {
@@ -246,10 +245,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
 
 if ($filters_ready) {
   $modules_stmt = $pdo->prepare(
-    'SELECT m.id_modulo, m.abreviatura, m.materia_general, m.materia_propia
+    'SELECT
+      m.id_modulo,
+      m.abreviatura,
+      m.materia_general,
+      m.materia_propia,
+      COUNT(ra.id_ra) AS total_ras
      FROM modulos m
      INNER JOIN ciclos c ON c.id_ciclo = m.id_ciclo
+     INNER JOIN cursos cu ON cu.id_curso = m.id_curso
+     INNER JOIN resultados_aprendizaje ra ON ra.id_modulo = m.id_modulo
      WHERE c.abreviatura = :ciclo
+       AND cu.curso = 2
+     GROUP BY m.id_modulo, m.abreviatura, m.materia_general, m.materia_propia
      ORDER BY m.abreviatura, m.materia_propia, m.materia_general, m.id_modulo'
   );
   $modules_stmt->execute(['ciclo' => $selected_cycle]);
@@ -268,33 +276,12 @@ if ($filters_ready) {
     $ras_stmt->execute($module_ids);
     $ras = $ras_stmt->fetchAll();
 
-    $ra_ids = [];
     foreach ($ras as $ra) {
       $module_id = (int) $ra['id_modulo'];
       if (!isset($ras_by_module[$module_id])) {
         $ras_by_module[$module_id] = [];
       }
       $ras_by_module[$module_id][] = $ra;
-      $ra_ids[] = (int) $ra['id_ra'];
-    }
-
-    if ($ra_ids) {
-      $ce_placeholders = implode(',', array_fill(0, count($ra_ids), '?'));
-      $ces_stmt = $pdo->prepare(
-        'SELECT id_ce, id_ra, codigo, descripcion
-         FROM criterios_evaluacion
-         WHERE id_ra IN (' . $ce_placeholders . ')
-         ORDER BY id_ra, codigo, id_ce'
-      );
-      $ces_stmt->execute($ra_ids);
-
-      foreach ($ces_stmt->fetchAll() as $ce) {
-        $ra_id = (int) $ce['id_ra'];
-        if (!isset($ces_by_ra[$ra_id])) {
-          $ces_by_ra[$ra_id] = [];
-        }
-        $ces_by_ra[$ra_id][] = $ce;
-      }
     }
 
     if ($practicas_table_ready && $course_storage_value !== '' && $cycle_storage_value !== null) {
@@ -348,7 +335,7 @@ if ($filters_ready) {
       <section class="panel">
         <div class="panel-header">
           <h3>Filtros</h3>
-          <p>Selecciona curso escolar y ciclo para cargar módulos, RA y CE.</p>
+          <p>Selecciona curso escolar y ciclo para cargar módulos y resultados de aprendizaje.</p>
         </div>
 
         <form method="get" class="entity-form panel-grid">
@@ -434,10 +421,9 @@ if ($filters_ready) {
                   $module_id = (int) $module['id_modulo'];
                   $module_ras = $ras_by_module[$module_id] ?? [];
                 ?>
-                <section class="practicas-ras-module panel-grid">
+                <section class="practicas-ras-module panel panel-grid">
                   <div class="panel-header">
-                    <h3><?php echo htmlspecialchars(format_module_name($module), ENT_QUOTES, 'UTF-8'); ?></h3>
-                    <p><?php echo count($module_ras); ?> RA</p>
+                    <h3><?php echo htmlspecialchars(format_module_name($module) . ' (' . count($module_ras) . ' RAs)', ENT_QUOTES, 'UTF-8'); ?></h3>
                   </div>
 
                   <?php if (!$module_ras): ?>
@@ -454,7 +440,6 @@ if ($filters_ready) {
                         <?php foreach ($module_ras as $ra): ?>
                           <?php
                             $ra_id = (int) $ra['id_ra'];
-                            $criteria = $ces_by_ra[$ra_id] ?? [];
                             $ra_number = trim((string) ($ra['numero'] ?? ''));
                             $saved_value = $saved_percentages[$ra_id] ?? '';
                           ?>
@@ -464,20 +449,6 @@ if ($filters_ready) {
                                 <p><strong>RA <?php echo htmlspecialchars($ra_number, ENT_QUOTES, 'UTF-8'); ?></strong></p>
                               <?php endif; ?>
                               <p><?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?></p>
-
-                              <?php if ($criteria): ?>
-                                <details class="practicas-ras-criteria">
-                                  <summary>Ver criterios de evaluación (<?php echo count($criteria); ?>)</summary>
-                                  <ul>
-                                    <?php foreach ($criteria as $criterion): ?>
-                                      <li>
-                                        <strong><?php echo htmlspecialchars((string) ($criterion['codigo'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></strong>
-                                        <?php echo htmlspecialchars((string) ($criterion['descripcion'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
-                                      </li>
-                                    <?php endforeach; ?>
-                                  </ul>
-                                </details>
-                              <?php endif; ?>
                             </td>
                             <td class="practicas-ras-percentage-cell">
                               <label>
