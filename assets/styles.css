@@ -748,7 +748,11 @@ body {
 }
 
 .empresa-direccion-grid {
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: 1fr;
+}
+
+.empresa-direccion-grid-row--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .empresa-direccion-item .ghost-button {
@@ -806,7 +810,8 @@ body {
 @media (max-width: 980px) {
   .entity-grid--3,
   .entity-grid--4,
-  .entity-grid--4-anexo {
+  .entity-grid--4-anexo,
+  .empresa-direccion-grid-row--5 {
     grid-template-columns: 1fr;
   }
 }

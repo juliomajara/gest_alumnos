@@ -364,9 +364,11 @@ $via_options = $pdo->query('SELECT id_via, via FROM vias ORDER BY via')->fetchAl
 $pais_options = $pdo->query('SELECT id_pais, pais, codigo_iso FROM paises ORDER BY pais')->fetchAll();
 $provincia_options = $pdo->query('SELECT id_provincia, nombre FROM provincias ORDER BY nombre')->fetchAll();
 $pais_id_to_code = [];
+$default_spain_country_id = '';
 foreach ($pais_options as $pais) {
   $id = isset($pais['id_pais']) ? (int) $pais['id_pais'] : 0;
   $iso = strtoupper(trim((string) ($pais['codigo_iso'] ?? '')));
+  $country_name = (string) ($pais['pais'] ?? '');
 
   if (!preg_match('/^[A-Z]{2}$/', $iso)) {
     $iso = guess_iso_code_from_country_name((string) ($pais['pais'] ?? ''));
@@ -374,6 +376,13 @@ foreach ($pais_options as $pais) {
 
   if ($id > 0 && $iso !== '') {
     $pais_id_to_code[(string) $id] = strtoupper($iso);
+  }
+
+  if ($default_spain_country_id === '' && $id > 0) {
+    $normalized_country_name = normalize_lookup_value($country_name);
+    if (strtoupper($iso) === 'ES' || $normalized_country_name === 'espana' || $normalized_country_name === 'spain') {
+      $default_spain_country_id = (string) $id;
+    }
   }
 }
 
@@ -420,6 +429,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       'id_provincia' => normalize_text($direccion['id_provincia'] ?? null),
       'localidad' => normalize_text($direccion['localidad'] ?? null),
       'id_localidad' => normalize_text($direccion['id_localidad'] ?? null),
+      'otros' => normalize_text($direccion['otros'] ?? null),
     ];
 
     $has_any_value = false;
@@ -538,10 +548,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $insert_direccion = $pdo->prepare(
         'INSERT INTO direcciones (
           id_empresa, id_pais, id_provincia, id_localidad, id_via, nombre_via, numero, bloque, escalera,
-          planta, puerta, etiqueta, cp, principal
+          planta, puerta, etiqueta, cp, otros, principal
         ) VALUES (
           :id_empresa, :id_pais, :id_provincia, :id_localidad, :id_via, :nombre_via, :numero, :bloque, :escalera,
-          :planta, :puerta, :etiqueta, :cp, :principal
+          :planta, :puerta, :etiqueta, :cp, :otros, :principal
         )'
       );
 
@@ -560,6 +570,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'puerta' => $direccion['puerta'],
           'etiqueta' => $direccion['etiqueta'],
           'cp' => $direccion['cp'],
+          'otros' => $direccion['otros'],
           'principal' => strtolower((string) ($direccion['etiqueta'] ?? '')) === 'principal' ? 1 : 0,
         ]);
       }
@@ -821,73 +832,88 @@ $active_page = 'empresas';
         <template id="direccionTemplate">
           <div class="entity-repeatable-item empresa-direccion-item">
             <div class="entity-grid empresa-direccion-grid">
-              <label>
-                Etiqueta
-                <select name="direcciones[__INDEX__][etiqueta]">
-                  <option value="Principal">Principal</option>
-                  <option value="Centro de Trabajo">Centro de Trabajo</option>
-                </select>
-              </label>
-              <label>
-                Tipo de vía
-                <select name="direcciones[__INDEX__][id_via]">
-                  <option value="">Selecciona</option>
-                  <?php foreach ($via_options as $via): ?>
-                    <option value="<?php echo (int) $via['id_via']; ?>"><?php echo htmlspecialchars($via['via'], ENT_QUOTES, 'UTF-8'); ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </label>
-              <label>
-                Nombre de la vía
-                <input type="text" name="direcciones[__INDEX__][nombre_via]">
-              </label>
-              <label>
-                Número
-                <input type="text" name="direcciones[__INDEX__][numero]">
-              </label>
-              <label>
-                Bloque
-                <input type="text" name="direcciones[__INDEX__][bloque]">
-              </label>
-              <label>
-                Escalera
-                <input type="text" name="direcciones[__INDEX__][escalera]">
-              </label>
-              <label>
-                Planta
-                <input type="text" name="direcciones[__INDEX__][planta]">
-              </label>
-              <label>
-                Puerta
-                <input type="text" name="direcciones[__INDEX__][puerta]">
-              </label>
-              <label>
-                País
-                <select name="direcciones[__INDEX__][id_pais]">
-                  <option value="">Selecciona</option>
-                  <?php foreach ($pais_options as $pais): ?>
-                    <option value="<?php echo (int) $pais['id_pais']; ?>"><?php echo htmlspecialchars($pais['pais'], ENT_QUOTES, 'UTF-8'); ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </label>
-              <label>
-                Código postal
-                <input type="text" name="direcciones[__INDEX__][cp]">
-              </label>
-              <label>
-                Provincia
-                <select name="direcciones[__INDEX__][id_provincia]">
-                  <option value="">Selecciona</option>
-                  <?php foreach ($provincia_options as $provincia): ?>
-                    <option value="<?php echo (int) $provincia['id_provincia']; ?>"><?php echo htmlspecialchars($provincia['nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </label>
-              <label>
-                Localidad
-                <input type="text" name="direcciones[__INDEX__][localidad]" autocomplete="off">
-                <input type="hidden" name="direcciones[__INDEX__][id_localidad]">
-              </label>
+              <div class="entity-grid entity-grid--3">
+                <label>
+                  Etiqueta
+                  <select name="direcciones[__INDEX__][etiqueta]">
+                    <option value="Principal">Principal</option>
+                    <option value="Centro de Trabajo">Centro de Trabajo</option>
+                  </select>
+                </label>
+                <label>
+                  Tipo de vía
+                  <select name="direcciones[__INDEX__][id_via]">
+                    <option value="">Selecciona</option>
+                    <?php foreach ($via_options as $via): ?>
+                      <option value="<?php echo (int) $via['id_via']; ?>"><?php echo htmlspecialchars($via['via'], ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </label>
+                <label>
+                  Nombre de la vía
+                  <input type="text" name="direcciones[__INDEX__][nombre_via]">
+                </label>
+              </div>
+              <div class="entity-grid empresa-direccion-grid-row--5">
+                <label>
+                  Número
+                  <input type="text" name="direcciones[__INDEX__][numero]">
+                </label>
+                <label>
+                  Bloque
+                  <input type="text" name="direcciones[__INDEX__][bloque]">
+                </label>
+                <label>
+                  Escalera
+                  <input type="text" name="direcciones[__INDEX__][escalera]">
+                </label>
+                <label>
+                  Puerta
+                  <input type="text" name="direcciones[__INDEX__][puerta]">
+                </label>
+                <label>
+                  Planta
+                  <input type="text" name="direcciones[__INDEX__][planta]">
+                </label>
+              </div>
+              <div class="entity-grid entity-grid--3">
+                <label>
+                  País
+                  <select name="direcciones[__INDEX__][id_pais]">
+                    <option value="">Selecciona</option>
+                    <?php foreach ($pais_options as $pais): ?>
+                      <?php $country_id = (string) ((int) ($pais['id_pais'] ?? 0)); ?>
+                      <option value="<?php echo (int) $pais['id_pais']; ?>"<?php echo $country_id !== '' && $country_id === $default_spain_country_id ? ' selected' : ''; ?>><?php echo htmlspecialchars($pais['pais'], ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </label>
+                <label>
+                  Código postal
+                  <input type="text" name="direcciones[__INDEX__][cp]">
+                </label>
+              </div>
+              <div class="entity-grid entity-grid--3">
+                <label>
+                  Provincia
+                  <select name="direcciones[__INDEX__][id_provincia]">
+                    <option value="">Selecciona</option>
+                    <?php foreach ($provincia_options as $provincia): ?>
+                      <option value="<?php echo (int) $provincia['id_provincia']; ?>"><?php echo htmlspecialchars($provincia['nombre'], ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </label>
+                <label>
+                  Localidad
+                  <input type="text" name="direcciones[__INDEX__][localidad]" autocomplete="off">
+                  <input type="hidden" name="direcciones[__INDEX__][id_localidad]">
+                </label>
+              </div>
+              <div class="entity-grid entity-grid--full">
+                <label>
+                  Otros
+                  <input type="text" name="direcciones[__INDEX__][otros]">
+                </label>
+              </div>
             </div>
             <button type="button" class="ghost-button" data-remove-item>Eliminar dirección</button>
           </div>
