@@ -1118,6 +1118,9 @@ body {
 
 .practica-horario {
   gap: 6px;
+  width: 50%;
+  max-width: 720px;
+  margin: 0 auto;
 }
 
 .practica-horario-table {
@@ -1162,6 +1165,11 @@ body {
 }
 
 @media (max-width: 720px) {
+  .practica-horario {
+    width: 100%;
+    max-width: none;
+  }
+
   .practica-horario-table {
     table-layout: auto;
   }
