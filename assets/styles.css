@@ -1288,3 +1288,90 @@ body {
     padding: 5px 7px;
   }
 }
+
+.practicas-ras .subheading {
+  white-space: normal;
+}
+
+.practicas-ras-filter-actions {
+  display: flex;
+  align-items: end;
+}
+
+.practicas-ras-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.practicas-ras details {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f9faff;
+}
+
+.practicas-ras details > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.practicas-ras details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.practicas-ras details[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.practicas-ras-module > summary small {
+  color: var(--muted);
+}
+
+.practicas-ras-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.practicas-ras-ra-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 160px);
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+}
+
+.practicas-ras-ra-summary span {
+  color: var(--text);
+}
+
+.practicas-ras-ra-summary label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.practicas-ras-ra-summary input {
+  width: 100%;
+}
+
+.practicas-ras-criteria ul {
+  margin-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media (max-width: 980px) {
+  .practicas-ras-ra-summary {
+    grid-template-columns: 1fr;
+  }
+}

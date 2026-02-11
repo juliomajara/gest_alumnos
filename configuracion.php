@@ -44,6 +44,10 @@ $active_page = 'configuracion';
               <span>Acceso a FFE</span>
               <small>Próximamente (enlace en preparación).</small>
             </a>
+            <a class="panel-link" href="practicas_ras.php">
+              <span>Porcentaje RA/CE en empresa</span>
+              <small>Configura la cesión de evaluación por RA para prácticas en empresa.</small>
+            </a>
           </div>
         </article>
 
