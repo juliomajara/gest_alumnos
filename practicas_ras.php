@@ -264,7 +264,7 @@ try {
     }
   }
 
-  $practicas_course_column = find_column($practicas_columns, ['curso_escolar', 'id_curso_escolar']);
+  $practicas_course_column = find_column($practicas_columns, ['id_curso_escolar', 'curso_escolar']);
   $practicas_cycle_column = find_column($practicas_columns, ['ciclo']);
   $practicas_module_column = find_column($practicas_columns, ['id_modulo']);
 
