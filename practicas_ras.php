@@ -179,6 +179,8 @@ $schema_error_message = null;
 $practicas_course_column = null;
 $practicas_cycle_column = null;
 $practicas_module_column = null;
+$practicas_has_course_id_column = false;
+$practicas_has_course_text_column = false;
 
 try {
   $active_database = $pdo->query('SELECT DATABASE()')->fetchColumn();
@@ -267,6 +269,8 @@ try {
   $practicas_course_column = find_column($practicas_columns, ['id_curso_escolar', 'curso_escolar']);
   $practicas_cycle_column = find_column($practicas_columns, ['ciclo']);
   $practicas_module_column = find_column($practicas_columns, ['id_modulo']);
+  $practicas_has_course_id_column = in_array('id_curso_escolar', $practicas_columns, true);
+  $practicas_has_course_text_column = in_array('curso_escolar', $practicas_columns, true);
 
   $missing_practicas_columns = find_missing_columns($practicas_columns, $required_practicas_columns);
   if ($practicas_course_column === null) {
@@ -339,28 +343,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
       try {
         $pdo->beginTransaction();
 
-        if ($practicas_course_column === 'id_curso_escolar') {
-          $course_storage_value = (int) $selected_course_id;
+        $course_storage_id_value = null;
+        if ($practicas_has_course_id_column) {
+          $course_storage_id_value = (int) $selected_course_id;
+          if ($course_storage_id_value <= 0 || !isset($course_map[(string) $course_storage_id_value])) {
+            throw new RuntimeException('El curso escolar seleccionado no es válido para guardar en practicas_ras.');
+          }
+        }
+        if ($practicas_has_course_text_column && $selected_course_label !== '') {
+          $course_storage_value = $selected_course_label;
+        }
+        if ($practicas_course_column === 'id_curso_escolar' && $course_storage_id_value !== null) {
+          $course_storage_value = $course_storage_id_value;
         }
 
-        $delete_conditions = [$practicas_course_column . ' = :curso'];
+        $delete_conditions = [];
+        if ($practicas_has_course_id_column && $course_storage_id_value !== null) {
+          $delete_conditions[] = 'id_curso_escolar = :curso_id';
+        }
+        if ($practicas_has_course_text_column) {
+          $delete_conditions[] = 'curso_escolar = :curso';
+        }
+        if (!$delete_conditions && $practicas_course_column !== null) {
+          $delete_conditions[] = $practicas_course_column . ' = :curso';
+        }
         if ($practicas_cycle_column !== null) {
           $delete_conditions[] = $practicas_cycle_column . ' = :ciclo';
         }
 
         $delete_sql = 'DELETE FROM practicas_ras WHERE ' . implode(' AND ', $delete_conditions);
         $delete_stmt = $pdo->prepare($delete_sql);
-        $delete_params = [
-          'curso' => $course_storage_value,
-        ];
+        $delete_params = [];
+        if (in_array('id_curso_escolar = :curso_id', $delete_conditions, true)) {
+          $delete_params['curso_id'] = $course_storage_id_value;
+        }
+        if (in_array('curso_escolar = :curso', $delete_conditions, true) || (!$practicas_has_course_id_column && $practicas_course_column !== null)) {
+          $delete_params['curso'] = $course_storage_value;
+        }
         if ($practicas_cycle_column !== null) {
           $delete_params['ciclo'] = $cycle_storage_value;
         }
         $delete_stmt->execute($delete_params);
 
         if ($percentages_to_save) {
-          $insert_columns = [$practicas_course_column];
-          $insert_values = [':curso'];
+          $insert_columns = [];
+          $insert_values = [];
+          if ($practicas_has_course_id_column) {
+            $insert_columns[] = 'id_curso_escolar';
+            $insert_values[] = ':curso_id';
+          }
+          if ($practicas_has_course_text_column) {
+            $insert_columns[] = 'curso_escolar';
+            $insert_values[] = ':curso';
+          }
+          if (!$insert_columns && $practicas_course_column !== null) {
+            $insert_columns[] = $practicas_course_column;
+            $insert_values[] = ':curso';
+          }
           if ($practicas_cycle_column !== null) {
             $insert_columns[] = $practicas_cycle_column;
             $insert_values[] = ':ciclo';
@@ -390,10 +429,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
             }
 
             $insert_params = [
-              'curso' => $course_storage_value,
               'id_ra' => $ra_id,
               'porcentaje' => $percentage,
             ];
+            if ($practicas_has_course_id_column && $course_storage_id_value !== null) {
+              $insert_params['curso_id'] = $course_storage_id_value;
+            }
+            if ($practicas_has_course_text_column || (!$practicas_has_course_id_column && $practicas_course_column !== null)) {
+              $insert_params['curso'] = $course_storage_value;
+            }
             if ($practicas_cycle_column !== null) {
               $insert_params['ciclo'] = $cycle_storage_value;
             }
@@ -465,12 +509,21 @@ if ($filters_ready) {
       $ras_by_module[$module_id][] = $ra;
     }
 
-    if ($practicas_course_column === 'id_curso_escolar') {
+    if ($practicas_has_course_id_column) {
       $course_storage_value = (int) $selected_course_id;
     }
 
     if ($practicas_table_ready && $course_storage_value !== '') {
-      $saved_conditions = [$practicas_course_column . ' = :curso'];
+      $saved_conditions = [];
+      if ($practicas_has_course_id_column) {
+        $saved_conditions[] = 'id_curso_escolar = :curso_id';
+      }
+      if ($practicas_has_course_text_column) {
+        $saved_conditions[] = 'curso_escolar = :curso';
+      }
+      if (!$saved_conditions && $practicas_course_column !== null) {
+        $saved_conditions[] = $practicas_course_column . ' = :curso';
+      }
       if ($practicas_cycle_column !== null) {
         $saved_conditions[] = $practicas_cycle_column . ' = :ciclo';
       }
@@ -485,9 +538,13 @@ if ($filters_ready) {
           implode(' AND ', $saved_conditions)
         )
       );
-      $saved_params = [
-        'curso' => $course_storage_value,
-      ];
+      $saved_params = [];
+      if ($practicas_has_course_id_column) {
+        $saved_params['curso_id'] = (int) $selected_course_id;
+      }
+      if ($practicas_has_course_text_column || !$practicas_has_course_id_column) {
+        $saved_params['curso'] = $selected_course_label;
+      }
       if ($practicas_cycle_column !== null) {
         $saved_params['ciclo'] = $cycle_storage_value;
       }
