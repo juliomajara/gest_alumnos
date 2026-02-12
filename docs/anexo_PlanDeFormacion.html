@@ -57,6 +57,13 @@
     .signTbl td{ height:28mm; vertical-align:bottom; }
 
     .hdrBox, .tbl, .bigBoxTitle, .bigBox, .signTbl { page-break-inside: avoid; }
+  
+    /* FIX impresión: evita que se “coma” el borde derecho (mPDF/print) */
+    .page{ padding: 4mm; box-sizing: border-box; }
+    table{ box-sizing: border-box; }
+    .tbl{ table-layout: fixed; width: 100%; } /* 100% a veces redondea y recorta el borde derecho */
+    .tbl td:last-child, .tbl th:last-child{ border-right: 1px solid #000; }
+
   </style>
 </head>
 
@@ -201,8 +208,6 @@ Varias empresas<span class="checkbox"></span>
 <td class="center" style="width:33%;"><div class="bold">Fdo.: Alumno/a</div></td>
 </tr>
 </table>
-
-<div class="right" style="margin-top:1mm; font-size:9pt;"><span class="bold">Periodo</span></div>
 
 </div>
 </body>
