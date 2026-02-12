@@ -94,7 +94,6 @@ $curso_cache = [];
 $ciclo_cache = [];
 $grupo_cache = [];
 $modulo_cache = [];
-$modulo_candidates_cache = [];
 $student_cache = [];
 $profesor_cache = [];
 
@@ -353,14 +352,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
               $id_ciclo = null;
               if ($modalidad !== '') {
-                if (!array_key_exists($modalidad, $ciclo_cache)) {
-                  $stmt = $pdo->prepare('SELECT id_ciclo FROM ciclos WHERE LOWER(ciclo) = LOWER(:ciclo) LIMIT 1');
-                  $stmt->execute(['ciclo' => $modalidad]);
-                  $ciclo_cache[$modalidad] = $stmt->fetchColumn();
+                $modalidad_key = normalize_mod_text($modalidad);
+                if (!array_key_exists($modalidad_key, $ciclo_cache)) {
+                  $stmt = $pdo->prepare(
+                    "SELECT id_ciclo
+                     FROM ciclos
+                     WHERE TRIM(ciclo) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci
+                        OR TRIM(abreviatura) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci
+                        OR :modalidad COLLATE utf8mb4_general_ci LIKE CONCAT('%', TRIM(abreviatura), '%') COLLATE utf8mb4_general_ci
+                     ORDER BY
+                       CASE
+                         WHEN TRIM(ciclo) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci THEN 1
+                         WHEN TRIM(abreviatura) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci THEN 2
+                         WHEN :modalidad COLLATE utf8mb4_general_ci LIKE CONCAT('%', TRIM(abreviatura), '%') COLLATE utf8mb4_general_ci THEN 3
+                         ELSE 4
+                       END
+                     LIMIT 1"
+                  );
+                  $stmt->execute(['modalidad' => trim($modalidad)]);
+                  $ciclo_cache[$modalidad_key] = $stmt->fetchColumn();
                 }
-                $id_ciclo = $ciclo_cache[$modalidad] ? (int) $ciclo_cache[$modalidad] : null;
+                $id_ciclo = $ciclo_cache[$modalidad_key] ? (int) $ciclo_cache[$modalidad_key] : null;
                 if ($id_ciclo === null) {
-                  $warnings[] = 'No se encontró el ciclo: ' . $modalidad . '.';
+                  $warnings[] = 'No se pudo resolver el ciclo desde CSV: ' . $modalidad . '.';
                 }
               }
 
@@ -400,150 +414,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $modulo_key = $id_ciclo . '|' . $materia_general_normalized . '|' . $materia_propia_normalized;
                 if (!array_key_exists($modulo_key, $modulo_cache)) {
-                  $id_modulo_cache = false;
-
-                  if ($materia_propia !== '') {
-                    $stmt = $pdo->prepare(
-                      'SELECT id_modulo FROM modulos
-                       WHERE id_ciclo = :id_ciclo
-                       AND LOWER(TRIM(materia_general)) = LOWER(:materia_general)
-                       AND LOWER(TRIM(materia_propia)) = LOWER(:materia_propia)
-                       LIMIT 1'
-                    );
-                    $stmt->execute([
-                      'id_ciclo' => $id_ciclo,
-                      'materia_general' => trim($materia_general),
-                      'materia_propia' => trim($materia_propia),
-                    ]);
-                  } else {
-                    $stmt = $pdo->prepare(
-                      'SELECT id_modulo FROM modulos
-                       WHERE id_ciclo = :id_ciclo
-                       AND LOWER(TRIM(materia_general)) = LOWER(:materia_general)
-                       LIMIT 1'
-                    );
-                    $stmt->execute([
-                      'id_ciclo' => $id_ciclo,
-                      'materia_general' => trim($materia_general),
-                    ]);
-                  }
+                  $stmt = $pdo->prepare(
+                    "SELECT id_modulo
+                     FROM modulos
+                     WHERE id_ciclo = :id_ciclo
+                       AND TRIM(materia_general) COLLATE utf8mb4_general_ci LIKE CONCAT(TRIM(:materia_general), '%') COLLATE utf8mb4_general_ci
+                       AND (
+                         :materia_propia_normalized = ''
+                         OR TRIM(
+                           REPLACE(
+                             REPLACE(
+                               REPLACE(
+                                 REPLACE(
+                                   REPLACE(
+                                     REPLACE(
+                                       REPLACE(
+                                         REPLACE(
+                                           REPLACE(
+                                             REPLACE(
+                                               REPLACE(
+                                                 REPLACE(
+                                                   REPLACE(
+                                                     LOWER(COALESCE(materia_propia, '')),
+                                                     CHAR(194,160), ' '
+                                                   ),
+                                                   CHAR(160), ' '
+                                                 ),
+                                                 '|', ' '
+                                               ),
+                                               '.', ' '
+                                             ),
+                                             ',', ' '
+                                           ),
+                                           ';', ' '
+                                         ),
+                                         '·', ' '
+                                       ),
+                                       '-', ' '
+                                     ),
+                                     '_', ' '
+                                   ),
+                                   '(', ' '
+                                 ),
+                                 ')', ' '
+                               ),
+                               '  ', ' '
+                             ),
+                             '  ', ' '
+                           )
+                         ) COLLATE utf8mb4_general_ci = :materia_propia_normalized COLLATE utf8mb4_general_ci
+                       )
+                     LIMIT 1"
+                  );
+                  $stmt->execute([
+                    'id_ciclo' => $id_ciclo,
+                    'materia_general' => trim($materia_general),
+                    'materia_propia_normalized' => $materia_propia_normalized,
+                  ]);
 
                   $id_modulo_cache = $stmt->fetchColumn();
-
                   if (!$id_modulo_cache) {
-                    if ($materia_propia_normalized !== '') {
-                      $stmt = $pdo->prepare(
-                        "SELECT id_modulo FROM modulos
-                         WHERE id_ciclo = :id_ciclo
-                         AND LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(materia_general, '|', ''), '.', ''), '·', ''), '-', ''))) = :materia_general
-                         AND LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(materia_propia, '|', ''), '.', ''), '·', ''), '-', ''))) = :materia_propia
-                         LIMIT 1"
-                      );
-                      $stmt->execute([
-                        'id_ciclo' => $id_ciclo,
-                        'materia_general' => $materia_general_normalized,
-                        'materia_propia' => $materia_propia_normalized,
-                      ]);
-                    } else {
-                      $stmt = $pdo->prepare(
-                        "SELECT id_modulo FROM modulos
-                         WHERE id_ciclo = :id_ciclo
-                         AND LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(materia_general, '|', ''), '.', ''), '·', ''), '-', ''))) = :materia_general
-                         LIMIT 1"
-                      );
-                      $stmt->execute([
-                        'id_ciclo' => $id_ciclo,
-                        'materia_general' => $materia_general_normalized,
-                      ]);
-                    }
-
-                    $id_modulo_cache = $stmt->fetchColumn();
-                  }
-
-                  if (!$id_modulo_cache) {
-                    if (!array_key_exists((string) $id_ciclo, $modulo_candidates_cache)) {
-                      $stmt = $pdo->prepare(
-                        'SELECT id_modulo, materia_general, materia_propia, codigo, abreviatura, tipo
-                         FROM modulos
-                         WHERE id_ciclo = :id_ciclo'
-                      );
-                      $stmt->execute(['id_ciclo' => $id_ciclo]);
-                      $modulo_candidates_cache[(string) $id_ciclo] = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    }
-
-                    $candidates = $modulo_candidates_cache[(string) $id_ciclo] ?? [];
-                    $candidates_debug = [];
-                    $robotica_candidates = [];
-                    $best_similarity = -1.0;
-                    $best_candidate = null;
-                    $best_tie = false;
-
-                    foreach ($candidates as $candidate) {
-                      $candidate_general_normalized = normalize_mod_text((string) ($candidate['materia_general'] ?? ''));
-                      $candidate_propia_normalized = normalize_mod_text((string) ($candidate['materia_propia'] ?? ''));
-
-                      $candidate_for_debug = [
-                        'id_modulo' => (int) ($candidate['id_modulo'] ?? 0),
-                        'materia_general' => (string) ($candidate['materia_general'] ?? ''),
-                        'materia_propia' => (string) ($candidate['materia_propia'] ?? ''),
-                        'codigo' => (string) ($candidate['codigo'] ?? ''),
-                        'abreviatura' => (string) ($candidate['abreviatura'] ?? ''),
-                        'tipo' => (string) ($candidate['tipo'] ?? ''),
-                      ];
-                      $candidates_debug[] = $candidate_for_debug;
-
-                      if (
-                        mb_strpos($materia_general_normalized, 'optativo', 0, 'UTF-8') !== false
-                        && mb_strpos($materia_propia_normalized, 'robotica', 0, 'UTF-8') !== false
-                        && mb_strpos($candidate_propia_normalized, 'robotica', 0, 'UTF-8') !== false
-                      ) {
-                        $robotica_candidates[] = $candidate;
-                      }
-
-                      if ($materia_propia_normalized === '' || $candidate_propia_normalized === '') {
-                        $similarity = 0.0;
-                      } else {
-                        similar_text($materia_propia_normalized, $candidate_propia_normalized, $similarity);
-                      }
-
-                      $general_matches = false;
-                      if (mb_strpos($materia_general_normalized, 'optativo', 0, 'UTF-8') !== false) {
-                        $general_matches = mb_strpos($candidate_general_normalized, 'optativo', 0, 'UTF-8') !== false;
-                      } elseif ($materia_general_normalized !== '' && $candidate_general_normalized !== '') {
-                        $general_matches = (
-                          $materia_general_normalized === $candidate_general_normalized
-                          || mb_strpos($materia_general_normalized, $candidate_general_normalized, 0, 'UTF-8') !== false
-                          || mb_strpos($candidate_general_normalized, $materia_general_normalized, 0, 'UTF-8') !== false
-                        );
-                      }
-
-                      if ($general_matches) {
-                        if ($similarity > $best_similarity) {
-                          $best_similarity = $similarity;
-                          $best_candidate = $candidate;
-                          $best_tie = false;
-                        } elseif ($similarity === $best_similarity) {
-                          $best_tie = true;
-                        }
-                      }
-                    }
-
-                    if (count($robotica_candidates) === 1) {
-                      $id_modulo_cache = $robotica_candidates[0]['id_modulo'];
-                    } elseif ($best_candidate && !$best_tie && $best_similarity >= 85.0) {
-                      $id_modulo_cache = $best_candidate['id_modulo'];
-                    }
-
-                    if (!$id_modulo_cache) {
-                      $warnings[] = 'No se encontró módulo para ' . $materia_general . ' / ' . $materia_propia
-                        . '. [debug id_ciclo=' . $id_ciclo
-                        . '; csv_raw_general=' . json_encode($materia_general, JSON_UNESCAPED_UNICODE)
-                        . '; csv_raw_propia=' . json_encode($materia_propia, JSON_UNESCAPED_UNICODE)
-                        . '; csv_norm_general=' . json_encode($materia_general_normalized, JSON_UNESCAPED_UNICODE)
-                        . '; csv_norm_propia=' . json_encode($materia_propia_normalized, JSON_UNESCAPED_UNICODE)
-                        . '; best_similarity=' . number_format($best_similarity, 2, '.', '')
-                        . '; candidates=' . json_encode($candidates_debug, JSON_UNESCAPED_UNICODE) . ']';
-                    }
+                    $warnings[] = 'No se encontró módulo para ' . $materia_general . ' / ' . $materia_propia . ' (id_ciclo=' . $id_ciclo . ')';
                   }
 
                   $modulo_cache[$modulo_key] = $id_modulo_cache;
