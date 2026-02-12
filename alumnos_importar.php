@@ -56,6 +56,11 @@ function normalize_estado(string $estado): string {
   return mb_strtolower(trim($estado), 'UTF-8');
 }
 
+function is_matriculated_estado(string $estado): bool {
+  $estado_norm = normalize_estado($estado);
+  return in_array($estado_norm, ['matriculada', 'matriculado'], true);
+}
+
 function normalize_email(string $email): string {
   $email = trim($email);
   if ($email === '') {
@@ -651,7 +656,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
               }
 
-              if ($id_ciclo !== null && $materia_propia !== '' && normalize_estado($estado) === 'matriculada') {
+              if ($materia_propia !== '' && is_matriculated_estado($estado)) {
                 $modulo_key = implode('|', [
                   (string) $id_ciclo,
                   norm($materia_general),
@@ -754,17 +759,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $id_profesor = $profesor_cache[$profesor_key];
                   }
 
-                  if ($id_profesor && $id_modulo && $active_course_id_for_module_prof) {
+                  $id_curso_escolar_para_modulo_profesor = $id_curso_escolar ?? $active_course_id_for_module_prof;
+
+                  if ($id_profesor && $id_modulo && $id_curso_escolar_para_modulo_profesor) {
                     $select_modulo_profesor->execute([
                       'id_modulo' => $id_modulo,
                       'id_profesor' => $id_profesor,
-                      'id_curso_escolar' => $active_course_id_for_module_prof,
+                      'id_curso_escolar' => $id_curso_escolar_para_modulo_profesor,
                     ]);
                     if (!$select_modulo_profesor->fetchColumn()) {
                       $insert_modulo_profesor->execute([
                         'id_modulo' => $id_modulo,
                         'id_profesor' => $id_profesor,
-                        'id_curso_escolar' => $active_course_id_for_module_prof,
+                        'id_curso_escolar' => $id_curso_escolar_para_modulo_profesor,
                       ]);
                       $results['professors_linked']++;
                     }
@@ -777,7 +784,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       $profesor_apellido1_clean,
                       $profesor_apellido2_clean,
                       $profesor_nombre_clean,
-                      $active_course_id_for_module_prof !== null ? (string) $active_course_id_for_module_prof : 'null',
+                      $id_curso_escolar_para_modulo_profesor !== null ? (string) $id_curso_escolar_para_modulo_profesor : 'null',
                       $id_modulo === null ? 'módulo no resuelto' : ($id_profesor ? 'curso escolar no resuelto' : 'profesor no resuelto')
                     );
                   }
