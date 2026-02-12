@@ -65,6 +65,19 @@ function normalize_email(string $email): string {
   return mb_strtolower($email, 'UTF-8');
 }
 
+function normalize_mod_text(string $text): string {
+  $text = mb_strtolower(trim($text), 'UTF-8');
+  if ($text === '' || $text === '.') {
+    return '';
+  }
+
+  $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+  $text = preg_replace('/[|\.·\-\s]+$/u', '', $text) ?? $text;
+  $text = preg_replace('/^[|\.·\-\s]+/u', '', $text) ?? $text;
+
+  return trim($text);
+}
+
 $course_year_cache = [];
 $nivel_cache = [];
 $curso_cache = [];
@@ -371,22 +384,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               }
 
               if ($id_ciclo !== null && $materia_general !== '' && normalize_estado($estado) === 'matriculada') {
-                $materia_propia = $materia_propia !== '' ? $materia_propia : '';
-                $modulo_key = $id_ciclo . '|' . mb_strtolower($materia_general, 'UTF-8') . '|' . mb_strtolower($materia_propia, 'UTF-8');
+                $materia_general_normalized = normalize_mod_text($materia_general);
+                $materia_propia_normalized = normalize_mod_text($materia_propia);
+
+                $modulo_key = $id_ciclo . '|' . $materia_general_normalized . '|' . $materia_propia_normalized;
                 if (!array_key_exists($modulo_key, $modulo_cache)) {
-                  $stmt = $pdo->prepare(
-                    'SELECT id_modulo FROM modulos
-                     WHERE id_ciclo = :id_ciclo
-                     AND LOWER(materia_general) = LOWER(:materia_general)
-                     AND LOWER(materia_propia) = LOWER(:materia_propia)
-                     LIMIT 1'
-                  );
-                  $stmt->execute([
-                    'id_ciclo' => $id_ciclo,
-                    'materia_general' => $materia_general,
-                    'materia_propia' => $materia_propia,
-                  ]);
-                  $modulo_cache[$modulo_key] = $stmt->fetchColumn();
+                  $id_modulo_cache = false;
+
+                  if ($materia_propia_normalized !== '') {
+                    $stmt = $pdo->prepare(
+                      'SELECT id_modulo FROM modulos
+                       WHERE id_ciclo = :id_ciclo
+                       AND LOWER(materia_general) = LOWER(:materia_general)
+                       AND LOWER(materia_propia) = LOWER(:materia_propia)
+                       LIMIT 1'
+                    );
+                    $stmt->execute([
+                      'id_ciclo' => $id_ciclo,
+                      'materia_general' => $materia_general_normalized,
+                      'materia_propia' => $materia_propia_normalized,
+                    ]);
+                  } else {
+                    $stmt = $pdo->prepare(
+                      'SELECT id_modulo FROM modulos
+                       WHERE id_ciclo = :id_ciclo
+                       AND LOWER(materia_general) = LOWER(:materia_general)
+                       LIMIT 1'
+                    );
+                    $stmt->execute([
+                      'id_ciclo' => $id_ciclo,
+                      'materia_general' => $materia_general_normalized,
+                    ]);
+                  }
+
+                  $id_modulo_cache = $stmt->fetchColumn();
+
+                  if (!$id_modulo_cache) {
+                    if ($materia_propia_normalized !== '') {
+                      $stmt = $pdo->prepare(
+                        "SELECT id_modulo FROM modulos
+                         WHERE id_ciclo = :id_ciclo
+                         AND LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(materia_general, '|', ''), '.', ''), '·', ''), '-', ''))) = :materia_general
+                         AND LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(materia_propia, '|', ''), '.', ''), '·', ''), '-', ''))) = :materia_propia
+                         LIMIT 1"
+                      );
+                      $stmt->execute([
+                        'id_ciclo' => $id_ciclo,
+                        'materia_general' => $materia_general_normalized,
+                        'materia_propia' => $materia_propia_normalized,
+                      ]);
+                    } else {
+                      $stmt = $pdo->prepare(
+                        "SELECT id_modulo FROM modulos
+                         WHERE id_ciclo = :id_ciclo
+                         AND LOWER(TRIM(REPLACE(REPLACE(REPLACE(REPLACE(materia_general, '|', ''), '.', ''), '·', ''), '-', ''))) = :materia_general
+                         LIMIT 1"
+                      );
+                      $stmt->execute([
+                        'id_ciclo' => $id_ciclo,
+                        'materia_general' => $materia_general_normalized,
+                      ]);
+                    }
+
+                    $id_modulo_cache = $stmt->fetchColumn();
+                  }
+
+                  $modulo_cache[$modulo_key] = $id_modulo_cache;
                 }
 
                 $id_modulo = $modulo_cache[$modulo_key] ? (int) $modulo_cache[$modulo_key] : null;
