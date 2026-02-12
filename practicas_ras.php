@@ -730,7 +730,7 @@ if ($filters_ready) {
           <?php if (!$modules): ?>
             <p>No hay módulos para el ciclo seleccionado.</p>
           <?php else: ?>
-            <div class="practicas-ras-tree">
+            <div class="practicas-ras-modules-grid">
               <?php foreach ($modules as $module): ?>
                 <?php
                   $module_id = (int) $module['id_modulo'];
@@ -778,6 +778,8 @@ if ($filters_ready) {
                               <button
                                 type="button"
                                 class="practicas-ras-ra-trigger"
+                                aria-haspopup="dialog"
+                                aria-expanded="false"
                                 data-ra-label="<?php echo htmlspecialchars($ra_label, ENT_QUOTES, 'UTF-8'); ?>"
                                 data-ra-description="<?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?>"
                                 data-ra-criteria="<?php echo htmlspecialchars(json_encode($criteria_by_ra[$ra_id] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]', ENT_QUOTES, 'UTF-8'); ?>"
@@ -804,32 +806,70 @@ if ($filters_ready) {
     </main>
   </div>
 
-  <div class="practicas-ras-modal" id="ra-detail-modal" hidden>
-    <div class="practicas-ras-modal__backdrop" data-modal-close></div>
-    <div class="practicas-ras-modal__content" role="dialog" aria-modal="true" aria-labelledby="ra-detail-title">
-      <button type="button" class="practicas-ras-modal__close" data-modal-close aria-label="Cerrar detalle del RA">×</button>
-      <h3 id="ra-detail-title" class="practicas-ras-modal__title"></h3>
-      <p class="practicas-ras-modal__description" id="ra-detail-description"></p>
-      <h4>Criterios de evaluación</h4>
-      <ul class="practicas-ras-modal__criteria" id="ra-detail-criteria"></ul>
+  <div class="practicas-ras-popover-layer" id="ra-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover" id="ra-detail-popover" role="dialog" aria-modal="false" aria-labelledby="ra-detail-title" hidden>
+      <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del RA">×</button>
+      <h3 id="ra-detail-title" class="practicas-ras-popover__title"></h3>
+      <p class="practicas-ras-popover__description" id="ra-detail-description"></p>
+      <h4 class="practicas-ras-popover__heading">Criterios de evaluación</h4>
+      <ul class="practicas-ras-popover__criteria" id="ra-detail-criteria"></ul>
     </div>
   </div>
 
   <script>
     (() => {
-      const modal = document.getElementById('ra-detail-modal');
-      if (!modal) return;
+      const modulesRoot = document.querySelector('.practicas-ras-modules-grid');
+      const layer = document.getElementById('ra-detail-layer');
+      const popover = document.getElementById('ra-detail-popover');
+      if (!modulesRoot || !layer || !popover) return;
 
       const title = document.getElementById('ra-detail-title');
       const description = document.getElementById('ra-detail-description');
       const criteriaList = document.getElementById('ra-detail-criteria');
-      const triggers = document.querySelectorAll('.practicas-ras-ra-trigger');
+      let activeTrigger = null;
 
-      const closeModal = () => {
-        modal.hidden = true;
+      const closePopover = () => {
+        popover.hidden = true;
+        layer.hidden = true;
+        if (activeTrigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeTrigger = null;
       };
 
-      const openModal = (trigger) => {
+      const setPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        popover.style.top = `${Math.max(gutter, top)}px`;
+        popover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const openPopover = (trigger) => {
+        if (activeTrigger && activeTrigger !== trigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+
         title.textContent = trigger.dataset.raLabel || '';
         description.textContent = trigger.dataset.raDescription || 'Sin descripción';
         criteriaList.innerHTML = '';
@@ -843,7 +883,7 @@ if ($filters_ready) {
 
         if (!Array.isArray(criteria) || criteria.length === 0) {
           const item = document.createElement('li');
-          item.textContent = 'No hay criterios de evaluación asociados.';
+          item.textContent = 'Sin criterios asociados';
           criteriaList.appendChild(item);
         } else {
           criteria.forEach((criterion) => {
@@ -855,20 +895,46 @@ if ($filters_ready) {
           });
         }
 
-        modal.hidden = false;
+        activeTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        layer.hidden = false;
+        popover.hidden = false;
+        setPopoverPosition(trigger);
       };
 
-      triggers.forEach((trigger) => {
-        trigger.addEventListener('click', () => openModal(trigger));
+      modulesRoot.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.practicas-ras-ra-trigger');
+        if (!trigger || !modulesRoot.contains(trigger)) {
+          return;
+        }
+
+        if (activeTrigger === trigger && !popover.hidden) {
+          closePopover();
+          return;
+        }
+
+        openPopover(trigger);
       });
 
-      modal.querySelectorAll('[data-modal-close]').forEach((element) => {
-        element.addEventListener('click', closeModal);
+      layer.querySelectorAll('[data-popover-close]').forEach((element) => {
+        element.addEventListener('click', closePopover);
       });
+
+      window.addEventListener('resize', () => {
+        if (activeTrigger && !popover.hidden) {
+          setPopoverPosition(activeTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeTrigger && !popover.hidden) {
+          setPopoverPosition(activeTrigger);
+        }
+      }, true);
 
       document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !modal.hidden) {
-          closeModal();
+        if (event.key === 'Escape' && !popover.hidden) {
+          closePopover();
         }
       });
     })();
