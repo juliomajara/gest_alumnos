@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 11-02-2026 a las 21:54:46
+-- Tiempo de generación: 12-02-2026 a las 11:41:51
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1356,7 +1356,9 @@ CREATE TABLE `practicas_pasos` (
 
 CREATE TABLE `practicas_ras` (
   `id_practica_ra` int(10) UNSIGNED NOT NULL,
+  `id_modulo` int(10) UNSIGNED DEFAULT NULL,
   `id_curso_escolar` int(10) UNSIGNED NOT NULL,
+  `id_ciclo` int(10) UNSIGNED NOT NULL,
   `id_ra` int(10) UNSIGNED NOT NULL,
   `porcentaje` decimal(5,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1859,7 +1861,9 @@ ALTER TABLE `practicas_pasos`
 ALTER TABLE `practicas_ras`
   ADD PRIMARY KEY (`id_practica_ra`),
   ADD KEY `fk_pras_curso_escolar` (`id_curso_escolar`),
-  ADD KEY `fk_pras_ra` (`id_ra`);
+  ADD KEY `fk_pras_ra` (`id_ra`),
+  ADD KEY `idx_practicas_ras_id_ra` (`id_ra`),
+  ADD KEY `fk_pras_ciclo` (`id_ciclo`);
 
 --
 -- Indices de la tabla `profesores`
@@ -2213,6 +2217,7 @@ ALTER TABLE `practicas_horario`
 -- Filtros para la tabla `practicas_ras`
 --
 ALTER TABLE `practicas_ras`
+  ADD CONSTRAINT `fk_pras_ciclo` FOREIGN KEY (`id_ciclo`) REFERENCES `ciclos` (`id_ciclo`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_pras_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_pras_ra` FOREIGN KEY (`id_ra`) REFERENCES `resultados_aprendizaje` (`id_ra`) ON DELETE CASCADE ON UPDATE CASCADE;
 
