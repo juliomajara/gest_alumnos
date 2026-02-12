@@ -66,14 +66,24 @@ function normalize_email(string $email): string {
 }
 
 function normalize_mod_text(string $text): string {
+  $text = str_replace("\xc2\xa0", ' ', $text);
   $text = mb_strtolower(trim($text), 'UTF-8');
   if ($text === '' || $text === '.') {
     return '';
   }
 
+  $text = strtr($text, [
+    'á' => 'a', 'à' => 'a', 'ä' => 'a', 'â' => 'a',
+    'é' => 'e', 'è' => 'e', 'ë' => 'e', 'ê' => 'e',
+    'í' => 'i', 'ì' => 'i', 'ï' => 'i', 'î' => 'i',
+    'ó' => 'o', 'ò' => 'o', 'ö' => 'o', 'ô' => 'o',
+    'ú' => 'u', 'ù' => 'u', 'ü' => 'u', 'û' => 'u',
+    'ñ' => 'n', 'ç' => 'c',
+  ]);
+
+  $text = str_replace(['|', '.', ',', ';', '·', '-', '_', '(', ')'], ' ', $text);
+  $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text) ?? $text;
   $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
-  $text = preg_replace('/[|\.·\-\s]+$/u', '', $text) ?? $text;
-  $text = preg_replace('/^[|\.·\-\s]+/u', '', $text) ?? $text;
 
   return trim($text);
 }
@@ -84,6 +94,7 @@ $curso_cache = [];
 $ciclo_cache = [];
 $grupo_cache = [];
 $modulo_cache = [];
+$modulo_candidates_cache = [];
 $student_cache = [];
 $profesor_cache = [];
 
@@ -391,29 +402,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!array_key_exists($modulo_key, $modulo_cache)) {
                   $id_modulo_cache = false;
 
-                  if ($materia_propia_normalized !== '') {
+                  if ($materia_propia !== '') {
                     $stmt = $pdo->prepare(
                       'SELECT id_modulo FROM modulos
                        WHERE id_ciclo = :id_ciclo
-                       AND LOWER(materia_general) = LOWER(:materia_general)
-                       AND LOWER(materia_propia) = LOWER(:materia_propia)
+                       AND LOWER(TRIM(materia_general)) = LOWER(:materia_general)
+                       AND LOWER(TRIM(materia_propia)) = LOWER(:materia_propia)
                        LIMIT 1'
                     );
                     $stmt->execute([
                       'id_ciclo' => $id_ciclo,
-                      'materia_general' => $materia_general_normalized,
-                      'materia_propia' => $materia_propia_normalized,
+                      'materia_general' => trim($materia_general),
+                      'materia_propia' => trim($materia_propia),
                     ]);
                   } else {
                     $stmt = $pdo->prepare(
                       'SELECT id_modulo FROM modulos
                        WHERE id_ciclo = :id_ciclo
-                       AND LOWER(materia_general) = LOWER(:materia_general)
+                       AND LOWER(TRIM(materia_general)) = LOWER(:materia_general)
                        LIMIT 1'
                     );
                     $stmt->execute([
                       'id_ciclo' => $id_ciclo,
-                      'materia_general' => $materia_general_normalized,
+                      'materia_general' => trim($materia_general),
                     ]);
                   }
 
@@ -449,6 +460,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $id_modulo_cache = $stmt->fetchColumn();
                   }
 
+                  if (!$id_modulo_cache) {
+                    if (!array_key_exists((string) $id_ciclo, $modulo_candidates_cache)) {
+                      $stmt = $pdo->prepare(
+                        'SELECT id_modulo, materia_general, materia_propia, codigo, abreviatura, tipo
+                         FROM modulos
+                         WHERE id_ciclo = :id_ciclo'
+                      );
+                      $stmt->execute(['id_ciclo' => $id_ciclo]);
+                      $modulo_candidates_cache[(string) $id_ciclo] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    }
+
+                    $candidates = $modulo_candidates_cache[(string) $id_ciclo] ?? [];
+                    $candidates_debug = [];
+                    $robotica_candidates = [];
+                    $best_similarity = -1.0;
+                    $best_candidate = null;
+                    $best_tie = false;
+
+                    foreach ($candidates as $candidate) {
+                      $candidate_general_normalized = normalize_mod_text((string) ($candidate['materia_general'] ?? ''));
+                      $candidate_propia_normalized = normalize_mod_text((string) ($candidate['materia_propia'] ?? ''));
+
+                      $candidate_for_debug = [
+                        'id_modulo' => (int) ($candidate['id_modulo'] ?? 0),
+                        'materia_general' => (string) ($candidate['materia_general'] ?? ''),
+                        'materia_propia' => (string) ($candidate['materia_propia'] ?? ''),
+                        'codigo' => (string) ($candidate['codigo'] ?? ''),
+                        'abreviatura' => (string) ($candidate['abreviatura'] ?? ''),
+                        'tipo' => (string) ($candidate['tipo'] ?? ''),
+                      ];
+                      $candidates_debug[] = $candidate_for_debug;
+
+                      if (
+                        mb_strpos($materia_general_normalized, 'optativo', 0, 'UTF-8') !== false
+                        && mb_strpos($materia_propia_normalized, 'robotica', 0, 'UTF-8') !== false
+                        && mb_strpos($candidate_propia_normalized, 'robotica', 0, 'UTF-8') !== false
+                      ) {
+                        $robotica_candidates[] = $candidate;
+                      }
+
+                      if ($materia_propia_normalized === '' || $candidate_propia_normalized === '') {
+                        $similarity = 0.0;
+                      } else {
+                        similar_text($materia_propia_normalized, $candidate_propia_normalized, $similarity);
+                      }
+
+                      $general_matches = false;
+                      if (mb_strpos($materia_general_normalized, 'optativo', 0, 'UTF-8') !== false) {
+                        $general_matches = mb_strpos($candidate_general_normalized, 'optativo', 0, 'UTF-8') !== false;
+                      } elseif ($materia_general_normalized !== '' && $candidate_general_normalized !== '') {
+                        $general_matches = (
+                          $materia_general_normalized === $candidate_general_normalized
+                          || mb_strpos($materia_general_normalized, $candidate_general_normalized, 0, 'UTF-8') !== false
+                          || mb_strpos($candidate_general_normalized, $materia_general_normalized, 0, 'UTF-8') !== false
+                        );
+                      }
+
+                      if ($general_matches) {
+                        if ($similarity > $best_similarity) {
+                          $best_similarity = $similarity;
+                          $best_candidate = $candidate;
+                          $best_tie = false;
+                        } elseif ($similarity === $best_similarity) {
+                          $best_tie = true;
+                        }
+                      }
+                    }
+
+                    if (count($robotica_candidates) === 1) {
+                      $id_modulo_cache = $robotica_candidates[0]['id_modulo'];
+                    } elseif ($best_candidate && !$best_tie && $best_similarity >= 85.0) {
+                      $id_modulo_cache = $best_candidate['id_modulo'];
+                    }
+
+                    if (!$id_modulo_cache) {
+                      $warnings[] = 'No se encontró módulo para ' . $materia_general . ' / ' . $materia_propia
+                        . '. [debug id_ciclo=' . $id_ciclo
+                        . '; csv_raw_general=' . json_encode($materia_general, JSON_UNESCAPED_UNICODE)
+                        . '; csv_raw_propia=' . json_encode($materia_propia, JSON_UNESCAPED_UNICODE)
+                        . '; csv_norm_general=' . json_encode($materia_general_normalized, JSON_UNESCAPED_UNICODE)
+                        . '; csv_norm_propia=' . json_encode($materia_propia_normalized, JSON_UNESCAPED_UNICODE)
+                        . '; best_similarity=' . number_format($best_similarity, 2, '.', '')
+                        . '; candidates=' . json_encode($candidates_debug, JSON_UNESCAPED_UNICODE) . ']';
+                    }
+                  }
+
                   $modulo_cache[$modulo_key] = $id_modulo_cache;
                 }
 
@@ -459,8 +556,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $insert_alumno_modulo->execute(['id_alumno' => $id_alumno, 'id_modulo' => $id_modulo]);
                     $results['modules_linked']++;
                   }
-                } else {
-                  $warnings[] = 'No se encontró módulo para ' . $materia_general . ' / ' . $materia_propia . '.';
                 }
 
                 if ($profesores_table_exists && $modulos_profesores_table_exists) {
