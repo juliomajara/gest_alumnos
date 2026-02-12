@@ -65,7 +65,7 @@ function normalize_email(string $email): string {
   return mb_strtolower($email, 'UTF-8');
 }
 
-function normalize_mod_text(string $text): string {
+function norm(string $text): string {
   $text = str_replace("\xc2\xa0", ' ', $text);
   $text = mb_strtolower(trim($text), 'UTF-8');
   if ($text === '' || $text === '.') {
@@ -81,11 +81,189 @@ function normalize_mod_text(string $text): string {
     'ñ' => 'n', 'ç' => 'c',
   ]);
 
-  $text = str_replace(['|', '.', ',', ';', '·', '-', '_', '(', ')'], ' ', $text);
+  $text = str_replace(['|', '.', ',', ';', '·', '_'], ' ', $text);
   $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text) ?? $text;
   $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
 
   return trim($text);
+}
+
+function modulo_lookup_strategy(
+  PDO $pdo,
+  ?int $id_ciclo,
+  string $materia_general_csv,
+  string $materia_propia_csv,
+  string $codigo_csv,
+  string $abreviatura_csv
+): array {
+  static $meta = null;
+  static $cache_by_ciclo = [];
+  static $cache_all = null;
+
+  if ($meta === null) {
+    $columns = [];
+    $stmt_columns = $pdo->query('SHOW COLUMNS FROM modulos');
+    while (($row = $stmt_columns->fetch(PDO::FETCH_ASSOC)) !== false) {
+      $columns[(string) ($row['Field'] ?? '')] = true;
+    }
+    $meta = [
+      'has_codigo' => isset($columns['codigo']),
+      'has_abreviatura' => isset($columns['abreviatura']),
+      'has_tipo' => isset($columns['tipo']),
+    ];
+  }
+
+  $load_rows = static function (?int $ciclo) use ($pdo, &$cache_by_ciclo, &$cache_all, $meta): array {
+    $select_fields = 'id_modulo, id_ciclo, materia_general, materia_propia';
+    if ($meta['has_codigo']) {
+      $select_fields .= ', codigo';
+    }
+    if ($meta['has_abreviatura']) {
+      $select_fields .= ', abreviatura';
+    }
+    if ($meta['has_tipo']) {
+      $select_fields .= ', tipo';
+    }
+
+    if ($ciclo === null) {
+      if ($cache_all === null) {
+        $stmt = $pdo->query('SELECT ' . $select_fields . ' FROM modulos');
+        $cache_all = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      }
+      return $cache_all;
+    }
+
+    if (!array_key_exists($ciclo, $cache_by_ciclo)) {
+      $stmt = $pdo->prepare('SELECT ' . $select_fields . ' FROM modulos WHERE id_ciclo = :id_ciclo');
+      $stmt->execute(['id_ciclo' => $ciclo]);
+      $cache_by_ciclo[$ciclo] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    return $cache_by_ciclo[$ciclo];
+  };
+
+  $norm_general_csv = norm($materia_general_csv);
+  $norm_propia_csv = norm($materia_propia_csv);
+  $norm_codigo_csv = norm($codigo_csv);
+  $norm_abrev_csv = norm($abreviatura_csv);
+  $is_optativo_general = str_starts_with($norm_general_csv, 'modulo profesional optativo');
+  $is_fct_general = str_contains($norm_general_csv, 'formacion en centros de trabajo');
+
+  $filter_general = static function (array $row) use ($norm_general_csv, $is_optativo_general): bool {
+    if ($norm_general_csv === '') {
+      return true;
+    }
+
+    $row_general = norm((string) ($row['materia_general'] ?? ''));
+    if ($row_general === '') {
+      return false;
+    }
+
+    if ($is_optativo_general) {
+      return str_starts_with($row_general, 'modulo profesional optativo');
+    }
+
+    return $row_general === $norm_general_csv;
+  };
+
+  $find_exact_by_propia = static function (array $rows, bool $with_general_filter) use ($norm_propia_csv, $filter_general): array {
+    if ($norm_propia_csv === '') {
+      return [];
+    }
+    $matches = [];
+    foreach ($rows as $row) {
+      if (norm((string) ($row['materia_propia'] ?? '')) !== $norm_propia_csv) {
+        continue;
+      }
+      if ($with_general_filter && !$filter_general($row)) {
+        continue;
+      }
+      $matches[] = $row;
+    }
+    return $matches;
+  };
+
+  $rows_cycle = $load_rows($id_ciclo);
+  $matches = $find_exact_by_propia($rows_cycle, true);
+  if (count($matches) === 1) {
+    return ['id_modulo' => (int) $matches[0]['id_modulo'], 'strategy' => 'A/B'];
+  }
+
+  // Reintento sin id_ciclo cuando no hay match exacto en ciclo esperado.
+  $matches_global = $find_exact_by_propia($load_rows(null), true);
+  if (count($matches_global) === 1) {
+    return ['id_modulo' => (int) $matches_global[0]['id_modulo'], 'strategy' => 'A/B sin id_ciclo'];
+  }
+
+  // C) fallback por código o abreviatura (si se proporcionan en CSV).
+  if ($norm_codigo_csv !== '' || $norm_abrev_csv !== '') {
+    $candidates = [];
+    foreach ($rows_cycle as $row) {
+      if (!$filter_general($row)) {
+        continue;
+      }
+      $ok = false;
+      if ($norm_codigo_csv !== '' && isset($row['codigo']) && norm((string) $row['codigo']) === $norm_codigo_csv) {
+        $ok = true;
+      }
+      if ($norm_abrev_csv !== '' && isset($row['abreviatura']) && norm((string) $row['abreviatura']) === $norm_abrev_csv) {
+        $ok = true;
+      }
+      if ($ok) {
+        $candidates[] = $row;
+      }
+    }
+    if (count($candidates) === 1) {
+      return ['id_modulo' => (int) $candidates[0]['id_modulo'], 'strategy' => 'C'];
+    }
+  }
+
+  // Regla simple para FCT.
+  if ($is_fct_general) {
+    $fct_matches = [];
+    foreach ($load_rows($id_ciclo) as $row) {
+      $row_general = norm((string) ($row['materia_general'] ?? ''));
+      $row_propia = norm((string) ($row['materia_propia'] ?? ''));
+      $row_abrev = isset($row['abreviatura']) ? norm((string) $row['abreviatura']) : '';
+      $row_codigo = isset($row['codigo']) ? norm((string) $row['codigo']) : '';
+      $row_tipo = isset($row['tipo']) ? norm((string) $row['tipo']) : '';
+
+      if (
+        str_contains($row_general, 'formacion en centros de trabajo')
+        || str_contains($row_propia, 'formacion en centros de trabajo')
+        || $row_abrev === 'fct'
+        || $row_codigo === 'fct'
+        || str_contains($row_tipo, 'fct')
+      ) {
+        $fct_matches[] = $row;
+      }
+    }
+    if (count($fct_matches) === 1) {
+      return ['id_modulo' => (int) $fct_matches[0]['id_modulo'], 'strategy' => 'C/FCT'];
+    }
+  }
+
+  // D) fallback suave: LIKE normalizado en candidatos razonables.
+  if ($norm_propia_csv !== '') {
+    $soft = [];
+    foreach ($rows_cycle as $row) {
+      if (!$filter_general($row)) {
+        continue;
+      }
+      $propia = norm((string) ($row['materia_propia'] ?? ''));
+      if ($propia === '') {
+        continue;
+      }
+      if (str_contains($propia, $norm_propia_csv) || str_contains($norm_propia_csv, $propia)) {
+        $soft[] = $row;
+      }
+    }
+    if (count($soft) === 1) {
+      return ['id_modulo' => (int) $soft[0]['id_modulo'], 'strategy' => 'D'];
+    }
+  }
+
+  return ['id_modulo' => null, 'strategy' => 'A/B/C/D'];
 }
 
 $course_year_cache = [];
@@ -96,7 +274,6 @@ $grupo_cache = [];
 $modulo_cache = [];
 $student_cache = [];
 $profesor_cache = [];
-$last_query_debug = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!isset($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
@@ -232,6 +409,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               $estado = get_csv_value($row, $header_map, ['ESTADO']);
               $materia_general = get_csv_value($row, $header_map, ['MATERIA_GENERAL']);
               $materia_propia = get_csv_value($row, $header_map, ['MATERIA_PROPIA_CENTRO']);
+              $materia_codigo = get_csv_value($row, $header_map, ['CODIGO_MODULO', 'COD_MODULO', 'CODIGO']);
+              $materia_abreviatura = get_csv_value($row, $header_map, ['ABREVIATURA_MODULO', 'ABREVIATURA']);
 
               $tutor_dni = get_csv_value($row, $header_map, ['NIF_TUTOR']);
               $tutor_apellido1 = get_csv_value($row, $header_map, ['APE1_TUTOR']);
@@ -353,7 +532,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
               $id_ciclo = null;
               if ($modalidad !== '') {
-                $modalidad_key = normalize_mod_text($modalidad);
+                $modalidad_key = norm($modalidad);
                 if (!array_key_exists($modalidad_key, $ciclo_cache)) {
                   $stmt = $pdo->prepare(
                     "SELECT id_ciclo
@@ -379,7 +558,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'm5' => $modalidad_param,
                     'm6' => $modalidad_param,
                   ];
-                  $last_query_debug = ['sql' => $stmt->queryString, 'params' => $ciclo_params];
                   $stmt->execute($ciclo_params);
                   $ciclo_cache[$modalidad_key] = $stmt->fetchColumn();
                 }
@@ -419,39 +597,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
               }
 
-              if ($id_ciclo !== null && $materia_general !== '' && normalize_estado($estado) === 'matriculada') {
-                $materia_general_normalized = normalize_mod_text($materia_general);
-                $materia_propia_normalized = normalize_mod_text($materia_propia);
+              if ($id_ciclo !== null && $materia_propia !== '' && normalize_estado($estado) === 'matriculada') {
+                $modulo_key = implode('|', [
+                  (string) $id_ciclo,
+                  norm($materia_general),
+                  norm($materia_propia),
+                  norm($materia_codigo),
+                  norm($materia_abreviatura),
+                ]);
 
-                $modulo_key = $id_ciclo . '|' . $materia_general_normalized . '|' . $materia_propia_normalized;
                 if (!array_key_exists($modulo_key, $modulo_cache)) {
-                  $stmt = $pdo->prepare(
-                    "SELECT id_modulo
-                     FROM modulos m
-                     WHERE m.id_ciclo = :id_ciclo
-                       AND m.materia_propia = :materia_propia
-                       AND m.materia_general LIKE CONCAT(:materia_general, '%')
-                     LIMIT 1"
+                  $lookup = modulo_lookup_strategy(
+                    $pdo,
+                    $id_ciclo,
+                    $materia_general,
+                    $materia_propia,
+                    $materia_codigo,
+                    $materia_abreviatura
                   );
-                  $materia_general_param = trim(preg_replace('/\s+/u', ' ', $materia_general) ?? $materia_general);
-                  $materia_propia_param = trim(preg_replace('/\s+/u', ' ', $materia_propia) ?? $materia_propia);
-                  $modulo_params = [
-                    'id_ciclo' => $id_ciclo,
-                    'materia_general' => $materia_general_param,
-                    'materia_propia' => $materia_propia_param,
-                  ];
-                  $last_query_debug = ['sql' => $stmt->queryString, 'params' => $modulo_params];
-                  $stmt->execute($modulo_params);
+                  $modulo_cache[$modulo_key] = $lookup;
 
-                  $id_modulo_cache = $stmt->fetchColumn();
-                  if (!$id_modulo_cache) {
-                    $warnings[] = 'No se encontró módulo para ' . $materia_general . ' / ' . $materia_propia . ' (id_ciclo=' . $id_ciclo . ')';
+                  if (($lookup['id_modulo'] ?? null) === null) {
+                    $warnings[] = sprintf(
+                      'No se encontró módulo (estrategias %s): materia_general_csv="%s", materia_propia_csv="%s", id_ciclo=%d',
+                      (string) ($lookup['strategy'] ?? 'A/B/C/D'),
+                      $materia_general,
+                      $materia_propia,
+                      $id_ciclo
+                    );
                   }
-
-                  $modulo_cache[$modulo_key] = $id_modulo_cache;
                 }
 
-                $id_modulo = $modulo_cache[$modulo_key] ? (int) $modulo_cache[$modulo_key] : null;
+                $id_modulo = isset($modulo_cache[$modulo_key]['id_modulo']) && $modulo_cache[$modulo_key]['id_modulo'] !== null
+                  ? (int) $modulo_cache[$modulo_key]['id_modulo']
+                  : null;
                 if ($id_modulo !== null) {
                   $select_alumno_modulo->execute(['id_alumno' => $id_alumno, 'id_modulo' => $id_modulo]);
                   if (!$select_alumno_modulo->fetchColumn()) {
@@ -581,10 +760,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           } catch (Throwable $exception) {
             $pdo->rollBack();
             $messages[] = 'Se produjo un error al procesar el CSV: ' . $exception->getMessage();
-            if ($last_query_debug !== null) {
-              $messages[] = 'Debug SQL: ' . $last_query_debug['sql'];
-              $messages[] = 'Debug params: ' . json_encode($last_query_debug['params'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            }
           }
         }
       }
