@@ -96,6 +96,7 @@ $grupo_cache = [];
 $modulo_cache = [];
 $student_cache = [];
 $profesor_cache = [];
+$last_query_debug = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!isset($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
@@ -357,19 +358,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   $stmt = $pdo->prepare(
                     "SELECT id_ciclo
                      FROM ciclos
-                     WHERE TRIM(ciclo) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci
-                        OR TRIM(abreviatura) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci
-                        OR :modalidad COLLATE utf8mb4_general_ci LIKE CONCAT('%', TRIM(abreviatura), '%') COLLATE utf8mb4_general_ci
+                     WHERE TRIM(ciclo) = TRIM(:modalidad)
+                        OR TRIM(abreviatura) = TRIM(:modalidad)
+                        OR :modalidad LIKE CONCAT('%', TRIM(abreviatura), '%')
                      ORDER BY
                        CASE
-                         WHEN TRIM(ciclo) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci THEN 1
-                         WHEN TRIM(abreviatura) COLLATE utf8mb4_general_ci = TRIM(:modalidad) COLLATE utf8mb4_general_ci THEN 2
-                         WHEN :modalidad COLLATE utf8mb4_general_ci LIKE CONCAT('%', TRIM(abreviatura), '%') COLLATE utf8mb4_general_ci THEN 3
+                         WHEN TRIM(ciclo) = TRIM(:modalidad) THEN 1
+                         WHEN TRIM(abreviatura) = TRIM(:modalidad) THEN 2
+                         WHEN :modalidad LIKE CONCAT('%', TRIM(abreviatura), '%') THEN 3
                          ELSE 4
                        END
                      LIMIT 1"
                   );
-                  $stmt->execute(['modalidad' => trim($modalidad)]);
+                  $modalidad_param = trim($modalidad);
+                  $ciclo_params = ['modalidad' => $modalidad_param];
+                  $last_query_debug = ['sql' => $stmt->queryString, 'params' => $ciclo_params];
+                  $stmt->execute($ciclo_params);
                   $ciclo_cache[$modalidad_key] = $stmt->fetchColumn();
                 }
                 $id_ciclo = $ciclo_cache[$modalidad_key] ? (int) $ciclo_cache[$modalidad_key] : null;
@@ -416,61 +420,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!array_key_exists($modulo_key, $modulo_cache)) {
                   $stmt = $pdo->prepare(
                     "SELECT id_modulo
-                     FROM modulos
-                     WHERE id_ciclo = :id_ciclo
-                       AND TRIM(materia_general) COLLATE utf8mb4_general_ci LIKE CONCAT(TRIM(:materia_general), '%') COLLATE utf8mb4_general_ci
-                       AND (
-                         :materia_propia_normalized = ''
-                         OR TRIM(
-                           REPLACE(
-                             REPLACE(
-                               REPLACE(
-                                 REPLACE(
-                                   REPLACE(
-                                     REPLACE(
-                                       REPLACE(
-                                         REPLACE(
-                                           REPLACE(
-                                             REPLACE(
-                                               REPLACE(
-                                                 REPLACE(
-                                                   REPLACE(
-                                                     LOWER(COALESCE(materia_propia, '')),
-                                                     CHAR(194,160), ' '
-                                                   ),
-                                                   CHAR(160), ' '
-                                                 ),
-                                                 '|', ' '
-                                               ),
-                                               '.', ' '
-                                             ),
-                                             ',', ' '
-                                           ),
-                                           ';', ' '
-                                         ),
-                                         '·', ' '
-                                       ),
-                                       '-', ' '
-                                     ),
-                                     '_', ' '
-                                   ),
-                                   '(', ' '
-                                 ),
-                                 ')', ' '
-                               ),
-                               '  ', ' '
-                             ),
-                             '  ', ' '
-                           )
-                         ) COLLATE utf8mb4_general_ci = :materia_propia_normalized COLLATE utf8mb4_general_ci
-                       )
+                     FROM modulos m
+                     WHERE m.id_ciclo = :id_ciclo
+                       AND m.materia_propia = :materia_propia
+                       AND m.materia_general LIKE CONCAT(:materia_general, '%')
                      LIMIT 1"
                   );
-                  $stmt->execute([
+                  $materia_general_param = trim(preg_replace('/\s+/u', ' ', $materia_general) ?? $materia_general);
+                  $materia_propia_param = trim(preg_replace('/\s+/u', ' ', $materia_propia) ?? $materia_propia);
+                  $modulo_params = [
                     'id_ciclo' => $id_ciclo,
-                    'materia_general' => trim($materia_general),
-                    'materia_propia_normalized' => $materia_propia_normalized,
-                  ]);
+                    'materia_general' => $materia_general_param,
+                    'materia_propia' => $materia_propia_param,
+                  ];
+                  $last_query_debug = ['sql' => $stmt->queryString, 'params' => $modulo_params];
+                  $stmt->execute($modulo_params);
 
                   $id_modulo_cache = $stmt->fetchColumn();
                   if (!$id_modulo_cache) {
@@ -610,6 +574,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           } catch (Throwable $exception) {
             $pdo->rollBack();
             $messages[] = 'Se produjo un error al procesar el CSV: ' . $exception->getMessage();
+            if ($last_query_debug !== null) {
+              $messages[] = 'Debug SQL: ' . $last_query_debug['sql'];
+              $messages[] = 'Debug params: ' . json_encode($last_query_debug['params'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
           }
         }
       }
