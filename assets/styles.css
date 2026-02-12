@@ -1466,3 +1466,68 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.practicas-ras-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.practicas-ras-popover-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.practicas-ras-popover-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.practicas-ras-popover {
+  position: fixed;
+  width: min(460px, calc(100vw - 24px));
+  max-height: min(72vh, 560px);
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.practicas-ras-popover__close {
+  align-self: flex-end;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.practicas-ras-popover__title,
+.practicas-ras-popover__description,
+.practicas-ras-popover__heading,
+.practicas-ras-popover__criteria {
+  margin: 0;
+}
+
+.practicas-ras-popover__criteria {
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media (max-width: 980px) {
+  .practicas-ras-modules-grid {
+    grid-template-columns: 1fr;
+  }
+}
