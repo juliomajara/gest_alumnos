@@ -358,20 +358,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   $stmt = $pdo->prepare(
                     "SELECT id_ciclo
                      FROM ciclos
-                     WHERE TRIM(ciclo) = TRIM(:modalidad)
-                        OR TRIM(abreviatura) = TRIM(:modalidad)
-                        OR :modalidad LIKE CONCAT('%', TRIM(abreviatura), '%')
+                     WHERE TRIM(ciclo) = TRIM(:modalidad_1)
+                        OR TRIM(abreviatura) = TRIM(:modalidad_2)
+                        OR :modalidad_3 LIKE CONCAT('%', TRIM(abreviatura), '%')
                      ORDER BY
                        CASE
-                         WHEN TRIM(ciclo) = TRIM(:modalidad) THEN 1
-                         WHEN TRIM(abreviatura) = TRIM(:modalidad) THEN 2
-                         WHEN :modalidad LIKE CONCAT('%', TRIM(abreviatura), '%') THEN 3
+                         WHEN TRIM(ciclo) = TRIM(:modalidad_4) THEN 1
+                         WHEN TRIM(abreviatura) = TRIM(:modalidad_5) THEN 2
+                         WHEN :modalidad_3 LIKE CONCAT('%', TRIM(abreviatura), '%') THEN 3
                          ELSE 4
                        END
                      LIMIT 1"
                   );
                   $modalidad_param = trim($modalidad);
-                  $ciclo_params = ['modalidad' => $modalidad_param];
+                  $ciclo_params = [
+                    'modalidad_1' => $modalidad_param,
+                    'modalidad_2' => $modalidad_param,
+                    'modalidad_3' => $modalidad_param,
+                    'modalidad_4' => $modalidad_param,
+                    'modalidad_5' => $modalidad_param,
+                  ];
                   $last_query_debug = ['sql' => $stmt->queryString, 'params' => $ciclo_params];
                   $stmt->execute($ciclo_params);
                   $ciclo_cache[$modalidad_key] = $stmt->fetchColumn();
