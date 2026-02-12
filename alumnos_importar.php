@@ -88,6 +88,24 @@ function norm(string $text): string {
   return trim($text);
 }
 
+function norm_persona(string $text): string {
+  $text = str_replace("\xc2\xa0", ' ', $text);
+  $text = mb_strtolower(trim($text), 'UTF-8');
+  $text = strtr($text, [
+    'á' => 'a', 'à' => 'a', 'ä' => 'a', 'â' => 'a',
+    'é' => 'e', 'è' => 'e', 'ë' => 'e', 'ê' => 'e',
+    'í' => 'i', 'ì' => 'i', 'ï' => 'i', 'î' => 'i',
+    'ó' => 'o', 'ò' => 'o', 'ö' => 'o', 'ô' => 'o',
+    'ú' => 'u', 'ù' => 'u', 'ü' => 'u', 'û' => 'u',
+    'ñ' => 'n', 'ç' => 'c',
+  ]);
+
+  $text = str_replace(['.', ',', ';'], ' ', $text);
+  $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+  return trim($text);
+}
+
 function modulo_lookup_strategy(
   PDO $pdo,
   ?int $id_ciclo,
@@ -354,6 +372,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $select_modulo_profesor = null;
             $insert_modulo_profesor = null;
 
+            $active_course_id_for_module_prof = null;
+            $profesores_by_dni = [];
+            $profesores_by_name_full = [];
+            $profesores_by_name_short = [];
+
             if ($profesores_table_exists) {
               $select_profesor_by_dni = $pdo->prepare('SELECT id_profesor FROM profesores WHERE dni = :dni LIMIT 1');
               $select_profesor_by_name = $pdo->prepare(
@@ -362,6 +385,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               $insert_profesor = $pdo->prepare(
                 'INSERT INTO profesores (apellido1, apellido2, nombre, dni) VALUES (:apellido1, :apellido2, :nombre, :dni)'
               );
+
+              $active_course_id_for_module_prof = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 ORDER BY id_curso_escolar DESC LIMIT 1')->fetchColumn();
+              $active_course_id_for_module_prof = $active_course_id_for_module_prof !== false ? (int) $active_course_id_for_module_prof : null;
+              if ($active_course_id_for_module_prof === null) {
+                $warnings[] = 'No hay curso escolar activo para asignar profesores a módulos.';
+              }
+
+              $stmt_profesores = $pdo->query('SELECT id_profesor, apellido1, apellido2, nombre, dni FROM profesores');
+              foreach ($stmt_profesores->fetchAll(PDO::FETCH_ASSOC) as $profesor_row) {
+                $id_profesor_row = (int) $profesor_row['id_profesor'];
+                $dni_profesor_row = trim((string) ($profesor_row['dni'] ?? ''));
+                if ($dni_profesor_row !== '' && $dni_profesor_row !== '*********') {
+                  $profesores_by_dni[$dni_profesor_row] = $id_profesor_row;
+                }
+
+                $apellido1_norm = norm_persona((string) ($profesor_row['apellido1'] ?? ''));
+                $apellido2_norm = norm_persona((string) ($profesor_row['apellido2'] ?? ''));
+                $nombre_norm = norm_persona((string) ($profesor_row['nombre'] ?? ''));
+
+                if ($apellido1_norm !== '' && $nombre_norm !== '') {
+                  $full_key = $apellido1_norm . '|' . $apellido2_norm . '|' . $nombre_norm;
+                  if (!array_key_exists($full_key, $profesores_by_name_full)) {
+                    $profesores_by_name_full[$full_key] = $id_profesor_row;
+                  }
+
+                  $short_key = $apellido1_norm . '|' . $nombre_norm;
+                  if (!array_key_exists($short_key, $profesores_by_name_short)) {
+                    $profesores_by_name_short[$short_key] = $id_profesor_row;
+                  }
+                }
+              }
             }
 
             if ($grupos_tutores_table_exists) {
@@ -641,35 +695,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($profesores_table_exists && $modulos_profesores_table_exists) {
                   $id_profesor = null;
-                  $profesor_key = '';
-                  if ($profesor_dni !== '' && $profesor_dni !== '*********') {
-                    $profesor_key = 'dni:' . $profesor_dni;
-                  } else {
-                    $profesor_key = 'nombre:' . $profesor_apellido1 . '|' . $profesor_apellido2 . '|' . $profesor_nombre;
-                  }
+                  $profesor_dni_clean = trim($profesor_dni);
+                  $profesor_apellido1_clean = trim($profesor_apellido1);
+                  $profesor_apellido2_clean = trim($profesor_apellido2);
+                  $profesor_nombre_clean = trim($profesor_nombre);
+                  $profesor_apellido1_norm = norm_persona($profesor_apellido1_clean);
+                  $profesor_apellido2_norm = norm_persona($profesor_apellido2_clean);
+                  $profesor_nombre_norm = norm_persona($profesor_nombre_clean);
+                  $profesor_key = $profesor_dni_clean !== '' && $profesor_dni_clean !== '*********'
+                    ? 'dni:' . $profesor_dni_clean
+                    : 'nombre:' . $profesor_apellido1_norm . '|' . $profesor_apellido2_norm . '|' . $profesor_nombre_norm;
 
                   if (!array_key_exists($profesor_key, $profesor_cache)) {
-                    if ($profesor_dni !== '' && $profesor_dni !== '*********') {
-                      $select_profesor_by_dni->execute(['dni' => $profesor_dni]);
-                      $id_profesor = $select_profesor_by_dni->fetchColumn();
+                    if ($profesor_dni_clean !== '' && $profesor_dni_clean !== '*********' && array_key_exists($profesor_dni_clean, $profesores_by_dni)) {
+                      $id_profesor = $profesores_by_dni[$profesor_dni_clean];
                     }
-                    if (!$id_profesor && $profesor_apellido1 !== '' && $profesor_nombre !== '') {
-                      $select_profesor_by_name->execute([
-                        'apellido1' => $profesor_apellido1,
-                        'apellido2' => $profesor_apellido2 !== '' ? $profesor_apellido2 : null,
-                        'nombre' => $profesor_nombre,
-                      ]);
-                      $id_profesor = $select_profesor_by_name->fetchColumn();
+                    if (!$id_profesor && $profesor_apellido1_norm !== '' && $profesor_nombre_norm !== '') {
+                      $full_name_key = $profesor_apellido1_norm . '|' . $profesor_apellido2_norm . '|' . $profesor_nombre_norm;
+                      if (array_key_exists($full_name_key, $profesores_by_name_full)) {
+                        $id_profesor = $profesores_by_name_full[$full_name_key];
+                      }
+                    }
+                    if (!$id_profesor && $profesor_apellido2_norm === '' && $profesor_apellido1_norm !== '' && $profesor_nombre_norm !== '') {
+                      $short_name_key = $profesor_apellido1_norm . '|' . $profesor_nombre_norm;
+                      if (array_key_exists($short_name_key, $profesores_by_name_short)) {
+                        $id_profesor = $profesores_by_name_short[$short_name_key];
+                      }
                     }
 
-                    if (!$id_profesor && $profesor_apellido1 !== '' && $profesor_nombre !== '') {
+                    if (!$id_profesor && $profesor_apellido1_clean !== '' && $profesor_nombre_clean !== '') {
                       $insert_profesor->execute([
-                        'apellido1' => $profesor_apellido1,
-                        'apellido2' => $profesor_apellido2 !== '' ? $profesor_apellido2 : null,
-                        'nombre' => $profesor_nombre,
-                        'dni' => $profesor_dni !== '' && $profesor_dni !== '*********' ? $profesor_dni : null,
+                        'apellido1' => $profesor_apellido1_clean,
+                        'apellido2' => $profesor_apellido2_clean !== '' ? $profesor_apellido2_clean : null,
+                        'nombre' => $profesor_nombre_clean,
+                        'dni' => $profesor_dni_clean !== '' && $profesor_dni_clean !== '*********' ? $profesor_dni_clean : null,
                       ]);
                       $id_profesor = (int) $pdo->lastInsertId();
+
+                      if ($profesor_dni_clean !== '' && $profesor_dni_clean !== '*********') {
+                        $profesores_by_dni[$profesor_dni_clean] = $id_profesor;
+                      }
+                      if ($profesor_apellido1_norm !== '' && $profesor_nombre_norm !== '') {
+                        $full_name_key = $profesor_apellido1_norm . '|' . $profesor_apellido2_norm . '|' . $profesor_nombre_norm;
+                        if (!array_key_exists($full_name_key, $profesores_by_name_full)) {
+                          $profesores_by_name_full[$full_name_key] = $id_profesor;
+                        }
+                        $short_name_key = $profesor_apellido1_norm . '|' . $profesor_nombre_norm;
+                        if (!array_key_exists($short_name_key, $profesores_by_name_short)) {
+                          $profesores_by_name_short[$short_name_key] = $id_profesor;
+                        }
+                      }
                     }
 
                     if ($id_profesor) {
@@ -679,20 +754,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $id_profesor = $profesor_cache[$profesor_key];
                   }
 
-                  if ($id_profesor && $id_modulo && $id_curso_escolar) {
+                  if ($id_profesor && $id_modulo && $active_course_id_for_module_prof) {
                     $select_modulo_profesor->execute([
                       'id_modulo' => $id_modulo,
                       'id_profesor' => $id_profesor,
-                      'id_curso_escolar' => $id_curso_escolar,
+                      'id_curso_escolar' => $active_course_id_for_module_prof,
                     ]);
                     if (!$select_modulo_profesor->fetchColumn()) {
                       $insert_modulo_profesor->execute([
                         'id_modulo' => $id_modulo,
                         'id_profesor' => $id_profesor,
-                        'id_curso_escolar' => $id_curso_escolar,
+                        'id_curso_escolar' => $active_course_id_for_module_prof,
                       ]);
                       $results['professors_linked']++;
                     }
+                  } elseif ($id_modulo === null || !$id_profesor || !$active_course_id_for_module_prof) {
+                    $warnings[] = sprintf(
+                      'Asignación profesor-módulo omitida: módulo=%s/%s (id_modulo=%s), profesor="%s %s, %s", id_curso_escolar=%s, motivo=%s',
+                      $materia_general,
+                      $materia_propia,
+                      $id_modulo !== null ? (string) $id_modulo : 'null',
+                      $profesor_apellido1_clean,
+                      $profesor_apellido2_clean,
+                      $profesor_nombre_clean,
+                      $active_course_id_for_module_prof !== null ? (string) $active_course_id_for_module_prof : 'null',
+                      $id_modulo === null ? 'módulo no resuelto' : ($id_profesor ? 'curso escolar no resuelto' : 'profesor no resuelto')
+                    );
                   }
                 }
               }
