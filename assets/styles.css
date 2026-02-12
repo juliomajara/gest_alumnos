@@ -1387,3 +1387,82 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.practicas-ras-tree {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.practicas-ras-ra-trigger {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.practicas-ras-ra-trigger:hover,
+.practicas-ras-ra-trigger:focus-visible {
+  text-decoration: underline;
+}
+
+.practicas-ras-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.practicas-ras-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.practicas-ras-modal__content {
+  position: relative;
+  margin: 10vh auto 0;
+  width: min(640px, calc(100% - 32px));
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.practicas-ras-modal__close {
+  align-self: flex-end;
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.practicas-ras-modal__title {
+  margin: 0;
+}
+
+.practicas-ras-modal__description {
+  margin: 0;
+}
+
+.practicas-ras-modal__criteria {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media (max-width: 980px) {
+  .practicas-ras-tree {
+    grid-template-columns: 1fr;
+  }
+}
