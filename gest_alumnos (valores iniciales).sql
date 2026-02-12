@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-02-2026 a las 11:58:43
+-- Tiempo de generación: 12-02-2026 a las 14:35:45
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -921,7 +921,7 @@ INSERT INTO `modulos` (`id_modulo`, `id_nivel`, `id_ciclo`, `id_curso`, `codigo`
 (2, 1, 1, 1, '0221', 'MME', 'Comunes', 'Montaje y mantenimiento de equipos', '', 6, 200),
 (3, 1, 1, 1, '0225', 'RL', 'Comunes', 'Redes locales', '', 7, 240),
 (4, 1, 1, 1, '0222', 'SOM', 'Comunes', 'Sistemas operativos monopuesto', '', 5, 175),
-(5, 1, 1, 1, 'CMO-313', 'FP', 'Optativas', 'Módulo profesional optativo I', 'Fundamentos de Programación', 2, 50),
+(5, 1, 1, 1, 'CMO-313', 'FP', 'Optativas', 'Módulo profesional optativo', 'Fundamentos de Programación', 2, 50),
 (6, 1, 1, 1, '1709', 'IPE1', 'Comunes', 'Itinerario personal para la empleabilidad I', '', 3, 100),
 (7, 1, 1, 1, '---', 'FFE1', 'FFE', 'FFE1', '', 0, 130),
 (8, 1, 1, 2, '0228', 'AW', 'Comunes', 'Aplicaciones web', '', 4, 135),
@@ -940,7 +940,7 @@ INSERT INTO `modulos` (`id_modulo`, `id_nivel`, `id_ciclo`, `id_curso`, `codigo`
 (21, 2, 2, 1, '0369', 'ISO', 'Comunes', 'Implantación de sistemas operativos', '', 7, 245),
 (22, 2, 2, 1, '0373', 'LMSGI', 'Comunes', 'Lenguajes de marcas y sistemas de gestión de información', '', 3, 110),
 (23, 2, 2, 1, '0370', 'PAR', 'Comunes', 'Planificación y administración de redes', '', 6, 190),
-(24, 2, 2, 1, 'CMO-1', 'OPT1', 'Optativas', 'Módulo profesional optativo I', '', 2, 50),
+(24, 2, 2, 1, 'CMO-1', 'OPT1', 'Optativas', 'Módulo profesional optativo', '', 2, 50),
 (25, 2, 2, 1, '1709', 'IPE1', 'Comunes', 'Itinerario personal para la empleabilidad I', '', 3, 100),
 (26, 2, 2, 1, '---', 'FFE1', 'FFE', 'FFE1', '', 0, 130),
 (27, 2, 2, 2, '0377', 'ASGBD', 'Comunes', 'Administración de sistemas gestores de bases de datos', '', 3, 110),
@@ -960,7 +960,7 @@ INSERT INTO `modulos` (`id_modulo`, `id_nivel`, `id_ciclo`, `id_curso`, `codigo`
 (41, 2, 3, 1, '0373', 'LMSGI', 'Comunes', 'Lenguajes de marcas y sistemas de gestión de información', '', 3, 110),
 (42, 2, 3, 1, '0485', 'PROG', 'Comunes', 'Programación', '', 8, 270),
 (43, 2, 3, 1, '0483', 'SI', 'Comunes', 'Sistemas informáticos', '', 6, 205),
-(44, 2, 3, 1, 'CMO-1', 'OPT1', 'Optativas', 'Módulo profesional optativo I', '', 2, 50),
+(44, 2, 3, 1, 'CMO-1', 'OPT1', 'Optativas', 'Módulo profesional optativo', '', 2, 50),
 (45, 2, 3, 1, '1709', 'IPE1', 'Comunes', 'Itinerario personal para la empleabilidad I', '', 3, 100),
 (46, 2, 3, 1, '---', 'FFE1', 'FFE', 'FFE1', '', 0, 130),
 (47, 2, 3, 2, '0486', 'AD', 'Comunes', 'Acceso a datos', '', 5, 165),
@@ -980,7 +980,7 @@ INSERT INTO `modulos` (`id_modulo`, `id_nivel`, `id_ciclo`, `id_curso`, `codigo`
 (61, 2, 4, 1, '0373', 'LMSGI', 'Comunes', 'Lenguajes de marcas y sistemas de gestión de información', '', 3, 110),
 (62, 2, 4, 1, '0485', 'PROG', 'Comunes', 'Programación', '', 8, 270),
 (63, 2, 4, 1, '0483', 'SI', 'Comunes', 'Sistemas informáticos', '', 6, 205),
-(64, 2, 4, 1, 'CMO-311', 'ROB', 'Optativas', 'Módulo profesional optativo I', 'Informática aplicada a sistemas electrónicos (Robótica)', 2, 50),
+(64, 2, 4, 1, 'CMO-311', 'ROB', 'Optativas', 'Módulo profesional optativo', 'Informática aplicada a sistemas electrónicos (Robótica)', 2, 50),
 (65, 2, 4, 1, '1709', 'IPE1', 'Comunes', 'Itinerario personal para la empleabilidad I', '', 3, 100),
 (66, 2, 4, 1, '---', 'FFE1', 'FFE', 'FFE1', '', 0, 130),
 (67, 2, 4, 2, '0612', 'DWEC', 'Comunes', 'Desarrollo web en entorno cliente', '', 6, 205),
