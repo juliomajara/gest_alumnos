@@ -172,21 +172,30 @@ function modulo_lookup_strategy(
   $is_optativo_general = str_starts_with($norm_general_csv, 'modulo profesional optativo');
   $is_fct_general = str_contains($norm_general_csv, 'formacion en centros de trabajo');
 
-  $filter_general = static function (array $row) use ($norm_general_csv, $is_optativo_general): bool {
-    if ($norm_general_csv === '') {
+  $general_matches = static function (string $row_general, string $csv_general, bool $is_optativo): bool {
+    if ($csv_general === '') {
       return true;
     }
-
-    $row_general = norm((string) ($row['materia_general'] ?? ''));
     if ($row_general === '') {
       return false;
     }
-
-    if ($is_optativo_general) {
+    if ($is_optativo) {
       return str_starts_with($row_general, 'modulo profesional optativo');
     }
 
-    return $row_general === $norm_general_csv;
+    if ($row_general === $csv_general) {
+      return true;
+    }
+
+    return str_contains($row_general, $csv_general) || str_contains($csv_general, $row_general);
+  };
+
+  $filter_general = static function (array $row) use ($norm_general_csv, $is_optativo_general, $general_matches): bool {
+    return $general_matches(
+      norm((string) ($row['materia_general'] ?? '')),
+      $norm_general_csv,
+      $is_optativo_general
+    );
   };
 
   $find_exact_by_propia = static function (array $rows, bool $with_general_filter) use ($norm_propia_csv, $filter_general): array {
@@ -218,6 +227,35 @@ function modulo_lookup_strategy(
     return ['id_modulo' => (int) $matches_global[0]['id_modulo'], 'strategy' => 'A/B sin id_ciclo'];
   }
 
+  // B2) fallback por materia_general cuando materia_propia viene vacía o no discrimina.
+  if ($norm_general_csv !== '') {
+    $general_cycle = [];
+    foreach ($rows_cycle as $row) {
+      if (!$filter_general($row)) {
+        continue;
+      }
+      $general_cycle[] = $row;
+    }
+
+    if (count($general_cycle) === 1) {
+      return ['id_modulo' => (int) $general_cycle[0]['id_modulo'], 'strategy' => 'B2 materia_general'];
+    }
+
+    if (count($general_cycle) > 1 && ($norm_codigo_csv !== '' || $norm_abrev_csv !== '')) {
+      $general_cycle_code = [];
+      foreach ($general_cycle as $row) {
+        $same_code = $norm_codigo_csv !== '' && isset($row['codigo']) && norm((string) $row['codigo']) === $norm_codigo_csv;
+        $same_abrev = $norm_abrev_csv !== '' && isset($row['abreviatura']) && norm((string) $row['abreviatura']) === $norm_abrev_csv;
+        if ($same_code || $same_abrev) {
+          $general_cycle_code[] = $row;
+        }
+      }
+      if (count($general_cycle_code) === 1) {
+        return ['id_modulo' => (int) $general_cycle_code[0]['id_modulo'], 'strategy' => 'B2 materia_general+codigo'];
+      }
+    }
+  }
+
   // C) fallback por código o abreviatura (si se proporcionan en CSV).
   if ($norm_codigo_csv !== '' || $norm_abrev_csv !== '') {
     $candidates = [];
@@ -238,6 +276,23 @@ function modulo_lookup_strategy(
     }
     if (count($candidates) === 1) {
       return ['id_modulo' => (int) $candidates[0]['id_modulo'], 'strategy' => 'C'];
+    }
+
+    $candidates_no_general = [];
+    foreach ($rows_cycle as $row) {
+      $ok = false;
+      if ($norm_codigo_csv !== '' && isset($row['codigo']) && norm((string) $row['codigo']) === $norm_codigo_csv) {
+        $ok = true;
+      }
+      if ($norm_abrev_csv !== '' && isset($row['abreviatura']) && norm((string) $row['abreviatura']) === $norm_abrev_csv) {
+        $ok = true;
+      }
+      if ($ok) {
+        $candidates_no_general[] = $row;
+      }
+    }
+    if (count($candidates_no_general) === 1) {
+      return ['id_modulo' => (int) $candidates_no_general[0]['id_modulo'], 'strategy' => 'C sin filtro materia_general'];
     }
   }
 
@@ -656,7 +711,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
               }
 
-              if ($materia_propia !== '' && is_matriculated_estado($estado)) {
+              $has_module_hints = $materia_propia !== '' || $materia_general !== '' || $materia_codigo !== '' || $materia_abreviatura !== '';
+              if ($has_module_hints && is_matriculated_estado($estado)) {
                 $modulo_key = implode('|', [
                   (string) $id_ciclo,
                   norm($materia_general),
