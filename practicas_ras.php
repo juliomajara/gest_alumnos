@@ -170,12 +170,15 @@ if ($can_filter_by_select_course) {
   $selected_course_label = $selected_course_text;
 }
 
-$required_practicas_columns = ['curso_escolar', 'ciclo', 'id_modulo', 'id_ra', 'porcentaje'];
+$required_practicas_columns = ['id_ra', 'porcentaje'];
 $practicas_columns = [];
 $practicas_table_ready = false;
 $missing_practicas_columns = [];
 $practicas_table_exists = false;
 $schema_error_message = null;
+$practicas_course_column = null;
+$practicas_cycle_column = null;
+$practicas_module_column = null;
 
 try {
   $active_database = $pdo->query('SELECT DATABASE()')->fetchColumn();
@@ -261,7 +264,15 @@ try {
     }
   }
 
+  $practicas_course_column = find_column($practicas_columns, ['curso_escolar', 'id_curso_escolar']);
+  $practicas_cycle_column = find_column($practicas_columns, ['ciclo']);
+  $practicas_module_column = find_column($practicas_columns, ['id_modulo']);
+
   $missing_practicas_columns = find_missing_columns($practicas_columns, $required_practicas_columns);
+  if ($practicas_course_column === null) {
+    $missing_practicas_columns[] = 'curso_escolar o id_curso_escolar';
+  }
+
   $practicas_table_ready = $practicas_table_exists && !$missing_practicas_columns;
 } catch (Throwable $exception) {
   $practicas_table_ready = false;
@@ -328,25 +339,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
       try {
         $pdo->beginTransaction();
 
-        $delete_sql = sprintf(
-          'DELETE FROM practicas_ras WHERE %s = :curso AND %s = :ciclo',
-          'curso_escolar',
-          'ciclo'
-        );
+        if ($practicas_course_column === 'id_curso_escolar') {
+          $course_storage_value = (int) $selected_course_id;
+        }
+
+        $delete_conditions = [$practicas_course_column . ' = :curso'];
+        if ($practicas_cycle_column !== null) {
+          $delete_conditions[] = $practicas_cycle_column . ' = :ciclo';
+        }
+
+        $delete_sql = 'DELETE FROM practicas_ras WHERE ' . implode(' AND ', $delete_conditions);
         $delete_stmt = $pdo->prepare($delete_sql);
-        $delete_stmt->execute([
+        $delete_params = [
           'curso' => $course_storage_value,
-          'ciclo' => $cycle_storage_value,
-        ]);
+        ];
+        if ($practicas_cycle_column !== null) {
+          $delete_params['ciclo'] = $cycle_storage_value;
+        }
+        $delete_stmt->execute($delete_params);
 
         if ($percentages_to_save) {
+          $insert_columns = [$practicas_course_column];
+          $insert_values = [':curso'];
+          if ($practicas_cycle_column !== null) {
+            $insert_columns[] = $practicas_cycle_column;
+            $insert_values[] = ':ciclo';
+          }
+          if ($practicas_module_column !== null) {
+            $insert_columns[] = $practicas_module_column;
+            $insert_values[] = ':id_modulo';
+          }
+          $insert_columns[] = 'id_ra';
+          $insert_values[] = ':id_ra';
+          $insert_columns[] = 'porcentaje';
+          $insert_values[] = ':porcentaje';
+
           $insert_sql = sprintf(
-            'INSERT INTO practicas_ras (%s, %s, %s, %s, %s) VALUES (:curso, :ciclo, :id_modulo, :id_ra, :porcentaje)',
-            'curso_escolar',
-            'ciclo',
-            'id_modulo',
-            'id_ra',
-            'porcentaje'
+            'INSERT INTO practicas_ras (%s) VALUES (%s)',
+            implode(', ', $insert_columns),
+            implode(', ', $insert_values)
           );
           $insert_stmt = $pdo->prepare($insert_sql);
 
@@ -358,13 +389,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
               continue;
             }
 
-            $insert_stmt->execute([
+            $insert_params = [
               'curso' => $course_storage_value,
-              'ciclo' => $cycle_storage_value,
-              'id_modulo' => (int) $module_id,
               'id_ra' => $ra_id,
               'porcentaje' => $percentage,
-            ]);
+            ];
+            if ($practicas_cycle_column !== null) {
+              $insert_params['ciclo'] = $cycle_storage_value;
+            }
+            if ($practicas_module_column !== null) {
+              $insert_params['id_modulo'] = (int) $module_id;
+            }
+
+            $insert_stmt->execute($insert_params);
           }
         }
 
@@ -428,22 +465,33 @@ if ($filters_ready) {
       $ras_by_module[$module_id][] = $ra;
     }
 
-    if ($practicas_table_ready && $course_storage_value !== '' && $cycle_storage_value !== null) {
+    if ($practicas_course_column === 'id_curso_escolar') {
+      $course_storage_value = (int) $selected_course_id;
+    }
+
+    if ($practicas_table_ready && $course_storage_value !== '') {
+      $saved_conditions = [$practicas_course_column . ' = :curso'];
+      if ($practicas_cycle_column !== null) {
+        $saved_conditions[] = $practicas_cycle_column . ' = :ciclo';
+      }
+
       $saved_stmt = $pdo->prepare(
         sprintf(
           'SELECT %s AS id_ra, %s AS porcentaje
            FROM practicas_ras
-           WHERE %s = :curso AND %s = :ciclo',
+           WHERE %s',
           'id_ra',
           'porcentaje',
-          'curso_escolar',
-          'ciclo'
+          implode(' AND ', $saved_conditions)
         )
       );
-      $saved_stmt->execute([
+      $saved_params = [
         'curso' => $course_storage_value,
-        'ciclo' => $cycle_storage_value,
-      ]);
+      ];
+      if ($practicas_cycle_column !== null) {
+        $saved_params['ciclo'] = $cycle_storage_value;
+      }
+      $saved_stmt->execute($saved_params);
 
       foreach ($saved_stmt->fetchAll() as $saved) {
         $saved_percentages[(int) $saved['id_ra']] = (string) $saved['porcentaje'];
