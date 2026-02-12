@@ -60,14 +60,14 @@ function find_column(array $columns, array $candidates): ?string {
 function format_ra_label(mixed $number, int $raId): string {
   $raw = trim((string) $number);
   if ($raw === '') {
-    return 'RA' . $raId . '.';
+    return 'RA' . $raId;
   }
 
   if (preg_match('/(\d+)/', $raw, $matches)) {
-    return 'RA' . $matches[1] . '.';
+    return 'RA' . $matches[1];
   }
 
-  return 'RA' . $raId . '.';
+  return 'RA' . $raId;
 }
 
 function should_debug_practicas_ras(): bool {
@@ -320,6 +320,7 @@ $filters_ready = $selected_cycle_id !== '' && (($can_filter_by_select_course && 
 
 $modules = [];
 $ras_by_module = [];
+$criteria_by_ra = [];
 $saved_percentages = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guardar') {
@@ -538,6 +539,26 @@ if ($filters_ready) {
       $ras_by_module[$module_id][] = $ra;
     }
 
+    $ra_ids = array_map(static fn (array $row): int => (int) $row['id_ra'], $ras);
+    if ($ra_ids) {
+      $criteria_placeholders = implode(',', array_fill(0, count($ra_ids), '?'));
+      $criteria_stmt = $pdo->prepare(
+        'SELECT ce.id_ra, ce.codigo, ce.descripcion
+         FROM criterios_evaluacion ce
+         WHERE ce.id_ra IN (' . $criteria_placeholders . ')
+         ORDER BY ce.id_ra, ce.codigo, ce.id_ce'
+      );
+      $criteria_stmt->execute($ra_ids);
+
+      foreach ($criteria_stmt->fetchAll() as $criterion) {
+        $ra_id = (int) $criterion['id_ra'];
+        if (!isset($criteria_by_ra[$ra_id])) {
+          $criteria_by_ra[$ra_id] = [];
+        }
+        $criteria_by_ra[$ra_id][] = $criterion;
+      }
+    }
+
     if ($practicas_has_course_id_column) {
       $course_storage_value = (int) $selected_course_id;
     }
@@ -754,7 +775,15 @@ if ($filters_ready) {
                               </label>
                             </td>
                             <td>
-                              <p><strong><?php echo htmlspecialchars($ra_label, ENT_QUOTES, 'UTF-8'); ?></strong> <?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?></p>
+                              <button
+                                type="button"
+                                class="practicas-ras-ra-trigger"
+                                data-ra-label="<?php echo htmlspecialchars($ra_label, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-ra-description="<?php echo htmlspecialchars((string) ($ra['descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?>"
+                                data-ra-criteria="<?php echo htmlspecialchars(json_encode($criteria_by_ra[$ra_id] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '[]', ENT_QUOTES, 'UTF-8'); ?>"
+                              >
+                                <strong><?php echo htmlspecialchars($ra_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                              </button>
                             </td>
                           </tr>
                         <?php endforeach; ?>
@@ -774,5 +803,75 @@ if ($filters_ready) {
       <?php endif; ?>
     </main>
   </div>
+
+  <div class="practicas-ras-modal" id="ra-detail-modal" hidden>
+    <div class="practicas-ras-modal__backdrop" data-modal-close></div>
+    <div class="practicas-ras-modal__content" role="dialog" aria-modal="true" aria-labelledby="ra-detail-title">
+      <button type="button" class="practicas-ras-modal__close" data-modal-close aria-label="Cerrar detalle del RA">×</button>
+      <h3 id="ra-detail-title" class="practicas-ras-modal__title"></h3>
+      <p class="practicas-ras-modal__description" id="ra-detail-description"></p>
+      <h4>Criterios de evaluación</h4>
+      <ul class="practicas-ras-modal__criteria" id="ra-detail-criteria"></ul>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const modal = document.getElementById('ra-detail-modal');
+      if (!modal) return;
+
+      const title = document.getElementById('ra-detail-title');
+      const description = document.getElementById('ra-detail-description');
+      const criteriaList = document.getElementById('ra-detail-criteria');
+      const triggers = document.querySelectorAll('.practicas-ras-ra-trigger');
+
+      const closeModal = () => {
+        modal.hidden = true;
+      };
+
+      const openModal = (trigger) => {
+        title.textContent = trigger.dataset.raLabel || '';
+        description.textContent = trigger.dataset.raDescription || 'Sin descripción';
+        criteriaList.innerHTML = '';
+
+        let criteria = [];
+        try {
+          criteria = JSON.parse(trigger.dataset.raCriteria || '[]');
+        } catch (error) {
+          criteria = [];
+        }
+
+        if (!Array.isArray(criteria) || criteria.length === 0) {
+          const item = document.createElement('li');
+          item.textContent = 'No hay criterios de evaluación asociados.';
+          criteriaList.appendChild(item);
+        } else {
+          criteria.forEach((criterion) => {
+            const item = document.createElement('li');
+            const code = (criterion.codigo || '').toString().trim();
+            const descriptionText = (criterion.descripcion || '').toString().trim();
+            item.textContent = code !== '' ? `${code}: ${descriptionText}` : descriptionText;
+            criteriaList.appendChild(item);
+          });
+        }
+
+        modal.hidden = false;
+      };
+
+      triggers.forEach((trigger) => {
+        trigger.addEventListener('click', () => openModal(trigger));
+      });
+
+      modal.querySelectorAll('[data-modal-close]').forEach((element) => {
+        element.addEventListener('click', closeModal);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modal.hidden) {
+          closeModal();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
