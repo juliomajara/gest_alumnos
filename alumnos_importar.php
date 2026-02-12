@@ -90,7 +90,7 @@ function norm_persona(string $text): string {
   return trim($text);
 }
 
-function clean_module_text(string $s): string {
+function normalize_module_text(string $s): string {
   $s = str_replace(["\xc2\xa0", "\t", "\r", "\n"], ' ', $s);
   $s = preg_replace('/\s+/u', ' ', trim($s)) ?? trim($s);
   if ($s === '' || $s === '.') {
@@ -99,8 +99,6 @@ function clean_module_text(string $s): string {
 
   do {
     $previous = $s;
-    $s = preg_replace('/^\s*[\[(][^\])]{1,50}[\])]\s*/u', '', $s) ?? $s;
-    $s = preg_replace('/\s*[\[(][^\])]{1,50}[\])]\s*$/u', '', $s) ?? $s;
     $s = preg_replace('/\s*[-–—]{2,}\s*/u', ' ', $s) ?? $s;
     $s = preg_replace('/[\s\.,;:·]+$/u', '', $s) ?? $s;
     $s = preg_replace('/\s+/u', ' ', trim($s)) ?? trim($s);
@@ -111,6 +109,62 @@ function clean_module_text(string $s): string {
   $s = preg_replace('/\s+curso\s*$/ui', '', $s) ?? $s;
 
   return trim($s);
+}
+
+function is_module_metadata_chunk(string $chunk): bool {
+  $chunk = mb_strtolower(trim($chunk), 'UTF-8');
+  $chunk = preg_replace('/[\.,;:]+$/u', '', $chunk) ?? $chunk;
+  if ($chunk === '') {
+    return false;
+  }
+
+  if (preg_match('/^\d+\s*(?:h|horas?)$/u', $chunk)) {
+    return true;
+  }
+  if (preg_match('/^(?:1º|2º|primer\s+curso|segundo\s+curso)$/u', $chunk)) {
+    return true;
+  }
+  if (preg_match('/^mp\s*\d{3,5}$/u', $chunk)) {
+    return true;
+  }
+
+  return in_array($chunk, ['horas', 'loe', 'logse', 'dual', 'presencial'], true);
+}
+
+function strip_module_metadata_brackets(string $s): string {
+  $s = normalize_module_text($s);
+  if ($s === '') {
+    return '';
+  }
+
+  do {
+    $previous = $s;
+
+    if (preg_match('/^\s*\(([^()\[\]]{1,80})\)\s*(.*)$/u', $s, $m) && is_module_metadata_chunk($m[1])) {
+      $s = trim((string) $m[2]);
+    }
+    if (preg_match('/^\s*\[([^\[\]()]{1,80})\]\s*(.*)$/u', $s, $m) && is_module_metadata_chunk($m[1])) {
+      $s = trim((string) $m[2]);
+    }
+    if (preg_match('/^(.*)\s*\(([^()\[\]]{1,80})\)\s*$/u', $s, $m) && is_module_metadata_chunk($m[2])) {
+      $s = trim((string) $m[1]);
+    }
+    if (preg_match('/^(.*)\s*\[([^\[\]()]{1,80})\]\s*$/u', $s, $m) && is_module_metadata_chunk($m[2])) {
+      $s = trim((string) $m[1]);
+    }
+
+    $s = normalize_module_text($s);
+  } while ($s !== '' && $previous !== $s);
+
+  return $s;
+}
+
+function clean_module_text(string $s, bool $strip_metadata_brackets = false): string {
+  if ($strip_metadata_brackets) {
+    return strip_module_metadata_brackets($s);
+  }
+
+  return normalize_module_text($s);
 }
 
 function module_key(?int $id_ciclo, string $general_clean, string $propia_clean): string {
@@ -287,6 +341,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'clean' => [
                   'general' => clean_module_text($raw['materia_general']),
                   'propia' => clean_module_text($raw['materia_propia']),
+                  'general_metadata' => clean_module_text($raw['materia_general'], true),
+                  'propia_metadata' => clean_module_text($raw['materia_propia'], true),
                 ],
                 'ids' => [
                   'id_alumno' => null,
@@ -410,18 +466,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $module_index = [];
             $module_collision_ids = [];
+            $module_index_metadata = [];
+            $module_collision_ids_metadata = [];
             $stmt_modulos = $pdo->query('SELECT id_modulo, id_ciclo, materia_general, materia_propia FROM modulos');
             foreach ($stmt_modulos->fetchAll(PDO::FETCH_ASSOC) as $modulo_row) {
               $id_ciclo = isset($modulo_row['id_ciclo']) ? (int) $modulo_row['id_ciclo'] : null;
               $general_clean = clean_module_text((string) ($modulo_row['materia_general'] ?? ''));
               $propia_clean = clean_module_text((string) ($modulo_row['materia_propia'] ?? ''));
               $key = module_key($id_ciclo, $general_clean, $propia_clean);
+              $general_clean_metadata = clean_module_text((string) ($modulo_row['materia_general'] ?? ''), true);
+              $propia_clean_metadata = clean_module_text((string) ($modulo_row['materia_propia'] ?? ''), true);
+              $metadata_key = module_key($id_ciclo, $general_clean_metadata, $propia_clean_metadata);
               $id_modulo = (int) $modulo_row['id_modulo'];
 
               if (!isset($module_index[$key])) {
                 $module_index[$key] = [$id_modulo];
               } else {
                 $module_index[$key][] = $id_modulo;
+              }
+
+              if (!isset($module_index_metadata[$metadata_key])) {
+                $module_index_metadata[$metadata_key] = [$id_modulo];
+              } else {
+                $module_index_metadata[$metadata_key][] = $id_modulo;
               }
             }
 
@@ -434,6 +501,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   'module_collision:' . $key,
                   'Colisión en índice de módulos para la clave exacta ' . $key . ' con id_modulo=[' . implode(', ', $ids) . ']. No se asignará automáticamente en casos ambiguos.'
                 );
+              }
+            }
+
+            foreach ($module_index_metadata as $key => $ids) {
+              if (count($ids) > 1) {
+                $module_collision_ids_metadata[$key] = $ids;
               }
             }
 
@@ -642,7 +715,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               $id_ciclo = $row_data['ids']['id_ciclo'];
               $general_clean = $row_data['clean']['general'];
               $propia_clean = $row_data['clean']['propia'];
+              $general_clean_metadata = $row_data['clean']['general_metadata'];
+              $propia_clean_metadata = $row_data['clean']['propia_metadata'];
               $key = module_key($id_ciclo, $general_clean, $propia_clean);
+              $metadata_key = module_key($id_ciclo, $general_clean_metadata, $propia_clean_metadata);
 
               $candidates = $module_index[$key] ?? [];
               if (isset($module_collision_ids[$key])) {
@@ -650,6 +726,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               }
 
               $candidate_count = count($candidates);
+              $metadata_candidates = [];
+              $metadata_candidate_count = 0;
+              if ($candidate_count === 0) {
+                $metadata_candidates = $module_index_metadata[$metadata_key] ?? [];
+                if (isset($module_collision_ids_metadata[$metadata_key])) {
+                  $metadata_candidates = $module_collision_ids_metadata[$metadata_key];
+                }
+                $metadata_candidate_count = count($metadata_candidates);
+                if ($metadata_candidate_count === 1) {
+                  $candidates = $metadata_candidates;
+                  $candidate_count = 1;
+                }
+              }
+
               if ($candidate_count === 1) {
                 $id_modulo = (int) $candidates[0];
                 $row_data['ids']['id_modulo'] = $id_modulo;
@@ -661,18 +751,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
               } else {
                 $warn_key = 'exact_module:' . $key . '|csv:' . md5($raw['materia_general'] . '|' . $raw['materia_propia'] . '|' . (string) $id_ciclo);
+                if ($candidate_count === 0 && $metadata_candidate_count > 0) {
+                  $warn_key .= '|meta:' . $metadata_key;
+                }
                 add_warning(
                   $warnings,
                   $warning_keys,
                   $warn_key,
                   sprintf(
-                    'No match exacto de módulo: csv_general="%s", csv_propia="%s", limpio_general="%s", limpio_propia="%s", id_ciclo=%s, candidatos_exactos=%d.',
+                    'No match exacto de módulo: csv_general="%s", csv_propia="%s", limpio_general="%s", limpio_propia="%s", limpio_general_meta="%s", limpio_propia_meta="%s", id_ciclo=%s, candidatos_exactos=%d, candidatos_meta=%d.',
                     $raw['materia_general'],
                     $raw['materia_propia'],
                     $general_clean,
                     $propia_clean,
+                    $general_clean_metadata,
+                    $propia_clean_metadata,
                     $id_ciclo !== null ? (string) $id_ciclo : 'null',
-                    $candidate_count
+                    $candidate_count,
+                    $metadata_candidate_count
                   )
                 );
                 $results['module_exact_no_match_warnings']++;
