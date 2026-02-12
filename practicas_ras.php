@@ -107,6 +107,17 @@ function has_index(PDO $pdo, string $table, string $index): bool {
   return (int) $stmt->fetchColumn() > 0;
 }
 
+function course_exists(PDO $pdo, int $courseId): bool {
+  if ($courseId <= 0) {
+    return false;
+  }
+
+  $stmt = $pdo->prepare('SELECT 1 FROM cursos_escolares WHERE id_curso_escolar = :id_curso_escolar LIMIT 1');
+  $stmt->execute(['id_curso_escolar' => $courseId]);
+
+  return $stmt->fetchColumn() !== false;
+}
+
 function find_missing_columns(array $columns, array $required): array {
   $missing = [];
   foreach ($required as $required_column) {
@@ -143,7 +154,7 @@ $debug_mode = should_debug_practicas_ras();
 $debug_details = [];
 $active_database = null;
 
-$selected_course_id = trim((string) ($_GET['curso'] ?? $_POST['curso'] ?? ''));
+$selected_course_id = trim((string) ($_GET['curso'] ?? $_POST['curso'] ?? $_GET['id_curso_escolar'] ?? $_POST['id_curso_escolar'] ?? ''));
 $selected_course_text = trim((string) ($_GET['curso_texto'] ?? $_POST['curso_texto'] ?? ''));
 $selected_cycle = trim((string) ($_GET['ciclo'] ?? $_POST['ciclo'] ?? ''));
 if (!in_array($selected_cycle, $available_cycles, true)) {
@@ -346,8 +357,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
         $course_storage_id_value = null;
         if ($practicas_has_course_id_column) {
           $course_storage_id_value = (int) $selected_course_id;
-          if ($course_storage_id_value <= 0 || !isset($course_map[(string) $course_storage_id_value])) {
-            throw new RuntimeException('El curso escolar seleccionado no es válido para guardar en practicas_ras.');
+          if ($course_storage_id_value <= 0) {
+            throw new RuntimeException('Debes seleccionar un curso escolar válido antes de guardar.');
+          }
+
+          if (!course_exists($pdo, $course_storage_id_value)) {
+            throw new RuntimeException('El curso escolar seleccionado no existe en cursos_escolares.');
           }
         }
         if ($practicas_has_course_text_column && $selected_course_label !== '') {
