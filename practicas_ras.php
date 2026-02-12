@@ -107,17 +107,6 @@ function has_index(PDO $pdo, string $table, string $index): bool {
   return (int) $stmt->fetchColumn() > 0;
 }
 
-function course_exists(PDO $pdo, int $courseId): bool {
-  if ($courseId <= 0) {
-    return false;
-  }
-
-  $stmt = $pdo->prepare('SELECT 1 FROM cursos_escolares WHERE id_curso_escolar = :id_curso_escolar LIMIT 1');
-  $stmt->execute(['id_curso_escolar' => $courseId]);
-
-  return $stmt->fetchColumn() !== false;
-}
-
 function find_missing_columns(array $columns, array $required): array {
   $missing = [];
   foreach ($required as $required_column) {
@@ -149,16 +138,39 @@ try {
   $can_filter_by_select_course = false;
 }
 
-$available_cycles = ['SMR', 'ASIR', 'DAW', 'DAM'];
+$cycles = [];
+$cycle_map = [];
+try {
+  $cycles_stmt = $pdo->query('SELECT id_ciclo, abreviatura, ciclo FROM ciclos ORDER BY abreviatura, ciclo, id_ciclo');
+  $cycles = $cycles_stmt->fetchAll();
+
+  foreach ($cycles as $cycle) {
+    $id = (string) (int) $cycle['id_ciclo'];
+    $cycle_map[$id] = [
+      'abreviatura' => (string) ($cycle['abreviatura'] ?? ''),
+      'ciclo' => (string) ($cycle['ciclo'] ?? ''),
+    ];
+  }
+
+} catch (Throwable $exception) {
+  $cycles = [];
+  $cycle_map = [];
+}
+
 $debug_mode = should_debug_practicas_ras();
 $debug_details = [];
 $active_database = null;
 
 $selected_course_id = trim((string) ($_GET['curso'] ?? $_POST['curso'] ?? $_GET['id_curso_escolar'] ?? $_POST['id_curso_escolar'] ?? ''));
 $selected_course_text = trim((string) ($_GET['curso_texto'] ?? $_POST['curso_texto'] ?? ''));
-$selected_cycle = trim((string) ($_GET['ciclo'] ?? $_POST['ciclo'] ?? ''));
-if (!in_array($selected_cycle, $available_cycles, true)) {
-  $selected_cycle = '';
+$selected_cycle_id = trim((string) ($_GET['ciclo'] ?? $_POST['ciclo'] ?? ''));
+if ($selected_cycle_id !== '' && !isset($cycle_map[$selected_cycle_id])) {
+  $selected_cycle_id = '';
+}
+
+$selected_cycle_label = '';
+if ($selected_cycle_id !== '' && isset($cycle_map[$selected_cycle_id])) {
+  $selected_cycle_label = trim($cycle_map[$selected_cycle_id]['abreviatura']);
 }
 
 $selected_course_label = '';
@@ -278,7 +290,7 @@ try {
   }
 
   $practicas_course_column = find_column($practicas_columns, ['id_curso_escolar', 'curso_escolar']);
-  $practicas_cycle_column = find_column($practicas_columns, ['ciclo']);
+$practicas_cycle_column = find_column($practicas_columns, ['id_ciclo', 'ciclo']);
   $practicas_module_column = find_column($practicas_columns, ['id_modulo']);
   $practicas_has_course_id_column = in_array('id_curso_escolar', $practicas_columns, true);
   $practicas_has_course_text_column = in_array('curso_escolar', $practicas_columns, true);
@@ -299,12 +311,12 @@ try {
 }
 
 $course_storage_value = $selected_course_label;
-$cycle_storage_value = $selected_cycle;
+$cycle_storage_value = $selected_cycle_id;
 
 $messages = [];
 $errors = [];
 
-$filters_ready = $selected_cycle !== '' && (($can_filter_by_select_course && $selected_course_id !== '' && $selected_course_label !== '') || (!$can_filter_by_select_course && $selected_course_label !== ''));
+$filters_ready = $selected_cycle_id !== '' && (($can_filter_by_select_course && $selected_course_id !== '' && $selected_course_label !== '') || (!$can_filter_by_select_course && $selected_course_label !== ''));
 
 $modules = [];
 $ras_by_module = [];
@@ -361,9 +373,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
             throw new RuntimeException('Debes seleccionar un curso escolar válido antes de guardar.');
           }
 
-          if (!course_exists($pdo, $course_storage_id_value)) {
-            throw new RuntimeException('El curso escolar seleccionado no existe en cursos_escolares.');
-          }
         }
         if ($practicas_has_course_text_column && $selected_course_label !== '') {
           $course_storage_value = $selected_course_label;
@@ -383,6 +392,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
           $delete_conditions[] = $practicas_course_column . ' = :curso';
         }
         if ($practicas_cycle_column !== null) {
+          if ($practicas_cycle_column === 'id_ciclo') {
+            $cycle_storage_value = (int) $selected_cycle_id;
+          } elseif ($selected_cycle_label !== '') {
+            $cycle_storage_value = $selected_cycle_label;
+          }
           $delete_conditions[] = $practicas_cycle_column . ' = :ciclo';
         }
 
@@ -495,12 +509,12 @@ if ($filters_ready) {
      INNER JOIN ciclos c ON c.id_ciclo = m.id_ciclo
      INNER JOIN cursos cu ON cu.id_curso = m.id_curso
      INNER JOIN resultados_aprendizaje ra ON ra.id_modulo = m.id_modulo
-     WHERE c.abreviatura = :ciclo
+     WHERE c.id_ciclo = :id_ciclo
        AND cu.curso = 2
      GROUP BY m.id_modulo, m.abreviatura, m.materia_general, m.materia_propia
      ORDER BY m.abreviatura, m.materia_propia, m.materia_general, m.id_modulo'
   );
-  $modules_stmt->execute(['ciclo' => $selected_cycle]);
+  $modules_stmt->execute(['id_ciclo' => (int) $selected_cycle_id]);
   $modules = $modules_stmt->fetchAll();
 
   if ($modules) {
@@ -561,7 +575,11 @@ if ($filters_ready) {
         $saved_params['curso'] = $selected_course_label;
       }
       if ($practicas_cycle_column !== null) {
-        $saved_params['ciclo'] = $cycle_storage_value;
+        if ($practicas_cycle_column === 'id_ciclo') {
+          $saved_params['ciclo'] = (int) $selected_cycle_id;
+        } else {
+          $saved_params['ciclo'] = $selected_cycle_label;
+        }
       }
       $saved_stmt->execute($saved_params);
 
@@ -627,8 +645,14 @@ if ($filters_ready) {
               Ciclo
               <select name="ciclo" required>
                 <option value="">Selecciona ciclo</option>
-                <?php foreach ($available_cycles as $cycle): ?>
-                  <option value="<?php echo htmlspecialchars($cycle, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_cycle === $cycle ? 'selected' : ''; ?>><?php echo htmlspecialchars($cycle, ENT_QUOTES, 'UTF-8'); ?></option>
+                <?php foreach ($cycles as $cycle): ?>
+                  <?php
+                    $cycle_value = (string) (int) ($cycle['id_ciclo'] ?? 0);
+                    $cycle_short = trim((string) ($cycle['abreviatura'] ?? ''));
+                    $cycle_name = trim((string) ($cycle['ciclo'] ?? ''));
+                    $cycle_text = $cycle_short !== '' ? $cycle_short : $cycle_name;
+                  ?>
+                  <option value="<?php echo htmlspecialchars($cycle_value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_cycle_id === $cycle_value ? 'selected' : ''; ?>><?php echo htmlspecialchars($cycle_text, ENT_QUOTES, 'UTF-8'); ?></option>
                 <?php endforeach; ?>
               </select>
             </label>
@@ -675,7 +699,7 @@ if ($filters_ready) {
           </div>
 
           <input type="hidden" name="action" value="guardar">
-          <input type="hidden" name="ciclo" value="<?php echo htmlspecialchars($selected_cycle, ENT_QUOTES, 'UTF-8'); ?>">
+          <input type="hidden" name="ciclo" value="<?php echo htmlspecialchars($selected_cycle_id, ENT_QUOTES, 'UTF-8'); ?>">
           <?php if ($can_filter_by_select_course): ?>
             <input type="hidden" name="curso" value="<?php echo htmlspecialchars($selected_course_id, ENT_QUOTES, 'UTF-8'); ?>">
           <?php else: ?>
