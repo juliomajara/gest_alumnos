@@ -346,12 +346,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $confirm_circ_excep = ($_POST['confirm_circ_excep'] ?? '') === '1';
 
   if ($dias_extra_raw !== null) {
-    if (!ctype_digit($dias_extra_raw)) {
+    if (!preg_match('/^-?\d+$/', $dias_extra_raw)) {
       $errors[] = 'Los días extra deben ser un número entero.';
     } else {
       $dias_extra = (int) $dias_extra_raw;
     }
   }
+
+  $dias_extra = max(0, min(20, $dias_extra));
+  $form_values['dias_extra'] = (string) $dias_extra;
 
   if ($curso_escolar_id <= 0) {
     $errors[] = 'No hay un curso escolar activo disponible.';
@@ -374,10 +377,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($horas < 0) {
     $errors[] = 'Las horas a realizar no pueden ser negativas.';
   }
-  if ($dias_extra < 0 || $dias_extra > 20) {
-    $errors[] = 'Los días extra deben estar entre 0 y 20.';
-  }
-
   $schedule_analysis = analyze_schedule($horario);
   foreach ($schedule_analysis['errors'] as $schedule_error) {
     $errors[] = $schedule_error;
@@ -682,6 +681,8 @@ $dias_semana = [
                 <?php endforeach; ?>
               </select>
             </label>
+          </div>
+          <div class="entity-grid entity-grid--2">
             <label class="practica-alumno">
               Alumno
               <select name="id_alumno" id="id_alumno" <?php echo $selected_group > 0 ? '' : 'disabled'; ?> required>
@@ -692,6 +693,10 @@ $dias_semana = [
                   </option>
                 <?php endforeach; ?>
               </select>
+            </label>
+            <label>
+              Horas a realizar
+              <input type="number" name="horas" id="horas" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['horas'] ?? '500'), ENT_QUOTES, 'UTF-8'); ?>" required>
             </label>
           </div>
           <div class="entity-grid entity-grid--3">
@@ -780,20 +785,20 @@ $dias_semana = [
                   <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo htmlspecialchars((string) ($form_values['fecha_inicio'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                 </label>
                 <label>
-                  Horas a realizar
-                  <input type="number" name="horas" id="horas" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['horas'] ?? '500'), ENT_QUOTES, 'UTF-8'); ?>" required>
+                  Días extra
+                  <input type="number" name="dias_extra" id="dias_extra" min="0" max="20" step="1" value="<?php echo htmlspecialchars((string) ($form_values['dias_extra'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                 </label>
                 <label>
-                  Fecha de finalización
+                  Fecha fin calculada
                   <input type="date" name="fecha_fin" id="fecha_fin" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly required>
                 </label>
                 <label>
-                  Días computados
-                  <input type="text" id="dias_computados" value="" readonly>
+                  Fecha fin real
+                  <input type="date" id="fecha_fin_real" value="" readonly>
                 </label>
                 <label>
-                  Días extra
-                  <input type="number" name="dias_extra" id="dias_extra" min="0" max="20" step="1" value="<?php echo htmlspecialchars((string) ($form_values['dias_extra'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+                  Días
+                  <input type="text" id="dias_computados" value="" readonly>
                 </label>
                 <label>
                   Horas último día
@@ -835,6 +840,8 @@ $dias_semana = [
     const hoursInput = document.getElementById('horas');
     const startDateInput = document.getElementById('fecha_inicio');
     const endDateInput = document.getElementById('fecha_fin');
+    const realEndDateInput = document.getElementById('fecha_fin_real');
+    const extraDaysInput = document.getElementById('dias_extra');
     const computedDaysInput = document.getElementById('dias_computados');
     const lastDayHoursInput = document.getElementById('horas_ultimo_dia');
     const scheduleContainer = document.querySelector('[data-schedule-container]');
@@ -903,11 +910,46 @@ $dias_semana = [
       }
     };
 
+    const parseIsoDateUTC = (value) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) {
+        return null;
+      }
+      const [year, month, day] = value.split('-').map(Number);
+      const date = new Date(Date.UTC(year, month - 1, day));
+      if (
+        date.getUTCFullYear() !== year
+        || (date.getUTCMonth() + 1) !== month
+        || date.getUTCDate() !== day
+      ) {
+        return null;
+      }
+      return date;
+    };
+
     const toIsoDate = (date) => {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
+      const y = date.getUTCFullYear();
+      const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(date.getUTCDate()).padStart(2, '0');
       return `${y}-${m}-${d}`;
+    };
+
+    const updateRealEndDate = () => {
+      if (!realEndDateInput) {
+        return;
+      }
+
+      const calculatedEndValue = endDateInput.value;
+      const calculatedEndDate = parseIsoDateUTC(calculatedEndValue);
+      if (!calculatedEndDate) {
+        realEndDateInput.value = '';
+        return;
+      }
+
+      const parsedExtraDays = Number.parseInt(extraDaysInput?.value || '0', 10);
+      const safeExtraDays = Number.isNaN(parsedExtraDays) ? 0 : Math.max(0, Math.min(20, parsedExtraDays));
+      const realEndDate = new Date(calculatedEndDate);
+      realEndDate.setUTCDate(realEndDate.getUTCDate() + safeExtraDays);
+      realEndDateInput.value = toIsoDate(realEndDate);
     };
 
     const getWeeklyTeachingHours = () => {
@@ -935,6 +977,7 @@ $dias_semana = [
         endDateInput.value = '';
         computedDaysInput.value = '';
         lastDayHoursInput.value = '';
+        updateRealEndDate();
       };
 
       if (!startValue || targetHours <= 0 || weeklyTotal <= 0) {
@@ -942,8 +985,8 @@ $dias_semana = [
         return;
       }
 
-      const startDate = new Date(`${startValue}T00:00:00`);
-      if (Number.isNaN(startDate.getTime())) {
+      const startDate = parseIsoDateUTC(startValue);
+      if (!startDate) {
         resetPlanning();
         return;
       }
@@ -956,7 +999,7 @@ $dias_semana = [
 
       while (guard < 4000) {
         guard += 1;
-        const dayOfWeek = current.getDay();
+        const dayOfWeek = current.getUTCDay();
         const mappedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
         const dateKey = toIsoDate(current);
 
@@ -973,11 +1016,12 @@ $dias_semana = [
             endDateInput.value = dateKey;
             computedDaysInput.value = String(computedDays);
             lastDayHoursInput.value = formatHours(lastDayHours);
+            updateRealEndDate();
             return;
           }
         }
 
-        current.setDate(current.getDate() + 1);
+        current.setUTCDate(current.getUTCDate() + 1);
       }
 
       resetPlanning();
@@ -1098,9 +1142,17 @@ $dias_semana = [
 
     startDateInput.addEventListener('change', calculatePlanning);
     hoursInput.addEventListener('input', calculatePlanning);
+    extraDaysInput?.addEventListener('input', () => {
+      const parsedValue = Number.parseInt(extraDaysInput.value || '0', 10);
+      if (!Number.isNaN(parsedValue)) {
+        extraDaysInput.value = String(Math.max(0, Math.min(20, parsedValue)));
+      }
+      updateRealEndDate();
+    });
 
     updateDayTotals();
     calculatePlanning();
+    updateRealEndDate();
   </script>
 </body>
 </html>
