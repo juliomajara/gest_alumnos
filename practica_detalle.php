@@ -9,7 +9,7 @@ use Mpdf\Mpdf;
 const CALENDAR_COLOR_HEADER = '#d9d9d9';
 const CALENDAR_COLOR_ATTENDANCE = '#cce5ff';
 const CALENDAR_COLOR_START = '#4a90e2';
-const CALENDAR_COLOR_END = '#a6d8ff';
+const CALENDAR_COLOR_END = '#ccffcc';
 const CALENDAR_COLOR_NO_ATTENDANCE = '#ffcccc';
 
 function format_value($value, string $fallback = 'No disponible'): string {
@@ -258,6 +258,8 @@ function is_no_attendance_day(DateTimeImmutable $date, array $nonSchoolDays, arr
 }
 
 function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): string {
+  $startKey = $startDate->format('Y-m-d');
+  $endKey = $endDate->format('Y-m-d');
   $monthHtmlChunks = [];
   $firstMonth = new DateTimeImmutable($startDate->format('Y-m-01'));
   $lastMonth = new DateTimeImmutable($endDate->format('Y-m-01'));
@@ -283,13 +285,14 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
     $column = $startOffset;
     for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
       $currentDate = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
+      $curKey = $currentDate->format('Y-m-d');
 
       $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt; border:1px solid #333333;';
-      if ($currentDate < $startDate || $currentDate > $endDate) {
+      if ($curKey < $startKey || $curKey > $endKey) {
         // Fuera de rango: sin color.
-      } elseif ($currentDate == $startDate) {
+      } elseif ($curKey === $startKey) {
         $style .= ' background-color:' . CALENDAR_COLOR_START . '; color:#ffffff; font-weight:bold;';
-      } elseif ($currentDate == $endDate) {
+      } elseif ($curKey === $endKey) {
         $style .= ' background-color:' . CALENDAR_COLOR_END . '; font-weight:bold;';
       } elseif (is_no_attendance_day($currentDate, $nonSchoolDays, $scheduleByDay)) {
         $style .= ' background-color:' . CALENDAR_COLOR_NO_ATTENDANCE . ';';
@@ -478,8 +481,10 @@ if ($id_practica === false || $id_practica === null) {
       }
 
       if ($action === 'generar_calendario') {
-        $startDate = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
-        $endDate = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin'] ?? ''));
+        $startDateRaw = (string) ($practice['fecha_inicio'] ?? '');
+        $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
+        $startDate = $startDateRaw !== '' ? (new DateTimeImmutable($startDateRaw))->setTime(0, 0, 0) : false;
+        $endDate = $endDateRaw !== '' ? (new DateTimeImmutable($endDateRaw))->setTime(0, 0, 0) : false;
 
         if (!$startDate || !$endDate || $startDate > $endDate) {
           $calendar_error = 'No se puede generar el calendario porque las fechas de inicio/fin son inválidas.';
@@ -517,7 +522,7 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Horario semanal</h3>';
           $pdfHtml .= build_weekly_schedule_pdf_table($schedule_by_day, $dias_semana);
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Calendario mensual</h3>';
-          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul oscuro (inicio), azul claro de fin (fin), azul claro (asistencia a empresa) y rojo claro (no asistencia a empresa).</p>';
+          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul oscuro (inicio), verde (fin), azul claro (asistencia a empresa) y rojo claro (no asistencia a empresa).</p>';
           if ($nonSchoolSourceNote !== '') {
             $pdfHtml .= '<p style="font-size:10pt;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
           }
