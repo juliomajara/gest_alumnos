@@ -251,7 +251,7 @@ function is_red_day(DateTimeImmutable $date, array $nonSchoolDays, bool $hasSatu
 }
 
 function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, bool $hasSaturdaySchedule, bool $hasSundaySchedule): string {
-  $html = '';
+  $monthHtmlChunks = [];
   $firstMonth = new DateTimeImmutable($startDate->format('Y-m-01'));
   $lastMonth = new DateTimeImmutable($endDate->format('Y-m-01'));
 
@@ -261,54 +261,60 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
     $daysInMonth = (int) $month->format('t');
     $startOffset = (int) $month->format('N');
 
-    $html .= '<h3 style="text-align:center; margin: 10px 0 6px 0;">' . strtoupper(month_name_es($monthNum)) . ' ' . $yearNum . '</h3>';
-    $html .= '<table width="100%" border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; table-layout: fixed; margin-bottom: 14px;">';
-    $html .= '<thead><tr>';
+    $monthHtml = '<h3 style="text-align:center; margin: 10px 0 6px 0;">' . strtoupper(month_name_es($monthNum)) . ' ' . $yearNum . '</h3>';
+    $monthHtml .= '<table width="100%" border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; table-layout: fixed; margin-bottom: 14px;">';
+    $monthHtml .= '<thead><tr>';
     foreach (['L', 'M', 'X', 'J', 'V', 'S', 'D'] as $dayLabel) {
-      $html .= '<th style="background-color:#d9d9d9; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
+      $monthHtml .= '<th style="background-color:#d9d9d9; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
     }
-    $html .= '</tr></thead><tbody><tr>';
+    $monthHtml .= '</tr></thead><tbody><tr>';
 
     for ($blank = 1; $blank < $startOffset; $blank++) {
-      $html .= '<td>&nbsp;</td>';
+      $monthHtml .= '<td>&nbsp;</td>';
     }
 
     $column = $startOffset;
     for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
       $current = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
-      $currentIso = $current->format('Y-m-d');
-      $isStart = $currentIso === $startDate->format('Y-m-d');
-      $isEnd = $currentIso === $endDate->format('Y-m-d');
-      $isRed = is_red_day($current, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule);
-
-      $cellColor = '';
-      if ($isStart) {
-        $cellColor = '#cce5ff';
-      } elseif ($isEnd) {
-        $cellColor = '#ccffcc';
-      } elseif ($isRed) {
-        $cellColor = '#ffcccc';
-      }
+      $isAttendanceDay = !is_red_day($current, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule);
 
       $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt;';
-      if ($cellColor !== '') {
-        $style .= ' background-color:' . $cellColor . ';';
+      if ($isAttendanceDay) {
+        $style .= ' background-color:#d9ecff;';
       }
 
-      $html .= '<td style="' . $style . '">' . $day . '</td>';
+      $monthHtml .= '<td style="' . $style . '">' . $day . '</td>';
 
       if ($column % 7 === 0 && $day < $daysInMonth) {
-        $html .= '</tr><tr>';
+        $monthHtml .= '</tr><tr>';
       }
     }
 
     while ($column % 7 !== 1) {
-      $html .= '<td>&nbsp;</td>';
+      $monthHtml .= '<td>&nbsp;</td>';
       $column++;
     }
 
-    $html .= '</tr></tbody></table>';
+    $monthHtml .= '</tr></tbody></table>';
+    $monthHtmlChunks[] = $monthHtml;
   }
+
+  $html = '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">';
+
+  for ($index = 0; $index < count($monthHtmlChunks); $index += 2) {
+    $html .= '<tr>';
+    $html .= '<td width="50%" style="vertical-align:top; padding-right:8px;">' . $monthHtmlChunks[$index] . '</td>';
+
+    if (isset($monthHtmlChunks[$index + 1])) {
+      $html .= '<td width="50%" style="vertical-align:top; padding-left:8px;">' . $monthHtmlChunks[$index + 1] . '</td>';
+    } else {
+      $html .= '<td width="50%" style="vertical-align:top; padding-left:8px;">&nbsp;</td>';
+    }
+
+    $html .= '</tr>';
+  }
+
+  $html .= '</table>';
 
   return $html;
 }
@@ -510,7 +516,7 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Horario semanal</h3>';
           $pdfHtml .= build_weekly_schedule_pdf_table($schedule_by_day, $dias_semana);
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Calendario mensual</h3>';
-          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul (inicio), verde (fin), rojo (no asistencia/no lectivo).</p>';
+          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul claro (asistencia a empresa).</p>';
           if ($nonSchoolSourceNote !== '') {
             $pdfHtml .= '<p style="font-size:10pt;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
           }
