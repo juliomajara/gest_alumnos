@@ -6,6 +6,12 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Mpdf\Mpdf;
 
+const CALENDAR_COLOR_HEADER = '#d9d9d9';
+const CALENDAR_COLOR_ATTENDANCE = '#cce5ff';
+const CALENDAR_COLOR_START = '#4a90e2';
+const CALENDAR_COLOR_END = '#a6d8ff';
+const CALENDAR_COLOR_NO_ATTENDANCE = '#ffcccc';
+
 function format_value($value, string $fallback = 'No disponible'): string {
   if ($value === null || $value === '') {
     return $fallback;
@@ -242,12 +248,13 @@ function build_weekly_schedule_pdf_table(array $scheduleByDay, array $diasSemana
   return $html;
 }
 
-function is_red_day(DateTimeImmutable $date, array $nonSchoolDays, array $scheduleByDay): bool {
+function is_no_attendance_day(DateTimeImmutable $date, array $nonSchoolDays, array $scheduleByDay): bool {
   $currentIso = $date->format('Y-m-d');
   $dayOfWeek = (int) $date->format('N');
+  $isWeekend = $dayOfWeek >= 6;
   $hasScheduleForDay = !empty($scheduleByDay[$dayOfWeek]);
 
-  return isset($nonSchoolDays[$currentIso]) || !$hasScheduleForDay;
+  return isset($nonSchoolDays[$currentIso]) || ($isWeekend && !$hasScheduleForDay);
 }
 
 function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): string {
@@ -265,7 +272,7 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
     $monthHtml .= '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; table-layout: fixed; margin-bottom: 14px;">';
     $monthHtml .= '<thead><tr>';
     foreach (['L', 'M', 'X', 'J', 'V', 'S', 'D'] as $dayLabel) {
-      $monthHtml .= '<th style="background-color:#d9d9d9; border:1px solid #333333; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
+      $monthHtml .= '<th style="background-color:' . CALENDAR_COLOR_HEADER . '; border:1px solid #333333; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
     }
     $monthHtml .= '</tr></thead><tbody><tr>';
 
@@ -275,14 +282,19 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
 
     $column = $startOffset;
     for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
-      $current = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
-      $isAttendanceDay = !is_red_day($current, $nonSchoolDays, $scheduleByDay);
+      $currentDate = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
 
       $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt; border:1px solid #333333;';
-      if ($isAttendanceDay) {
-        $style .= ' background-color:#d9ecff;';
+      if ($currentDate < $startDate || $currentDate > $endDate) {
+        // Fuera de rango: sin color.
+      } elseif ($currentDate == $startDate) {
+        $style .= ' background-color:' . CALENDAR_COLOR_START . '; color:#ffffff; font-weight:bold;';
+      } elseif ($currentDate == $endDate) {
+        $style .= ' background-color:' . CALENDAR_COLOR_END . '; font-weight:bold;';
+      } elseif (is_no_attendance_day($currentDate, $nonSchoolDays, $scheduleByDay)) {
+        $style .= ' background-color:' . CALENDAR_COLOR_NO_ATTENDANCE . ';';
       } else {
-        $style .= ' background-color:#ffd6d6;';
+        $style .= ' background-color:' . CALENDAR_COLOR_ATTENDANCE . ';';
       }
 
       $monthHtml .= '<td style="' . $style . '">' . $day . '</td>';
@@ -325,7 +337,7 @@ function count_attendance_days(DateTimeImmutable $startDate, DateTimeImmutable $
   $count = 0;
 
   for ($current = $startDate; $current <= $endDate; $current = $current->modify('+1 day')) {
-    if (!is_red_day($current, $nonSchoolDays, $scheduleByDay)) {
+    if (!is_no_attendance_day($current, $nonSchoolDays, $scheduleByDay)) {
       $count++;
     }
   }
@@ -505,7 +517,7 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Horario semanal</h3>';
           $pdfHtml .= build_weekly_schedule_pdf_table($schedule_by_day, $dias_semana);
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Calendario mensual</h3>';
-          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul claro (asistencia a empresa) y rojo claro (no asistencia a empresa).</p>';
+          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul oscuro (inicio), azul claro de fin (fin), azul claro (asistencia a empresa) y rojo claro (no asistencia a empresa).</p>';
           if ($nonSchoolSourceNote !== '') {
             $pdfHtml .= '<p style="font-size:10pt;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
           }
