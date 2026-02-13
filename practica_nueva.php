@@ -339,9 +339,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $fecha_inicio = normalize_text($_POST['fecha_inicio'] ?? null);
   $fecha_fin = normalize_text($_POST['fecha_fin'] ?? null);
   $horas = isset($_POST['horas']) ? (int) $_POST['horas'] : 0;
+  $dias_extra_raw = normalize_text($_POST['dias_extra'] ?? null);
+  $dias_extra = 0;
   $observaciones = normalize_text($_POST['observaciones'] ?? null);
   $horario = is_array($_POST['horario'] ?? null) ? $_POST['horario'] : [];
   $confirm_circ_excep = ($_POST['confirm_circ_excep'] ?? '') === '1';
+
+  if ($dias_extra_raw !== null) {
+    if (!ctype_digit($dias_extra_raw)) {
+      $errors[] = 'Los días extra deben ser un número entero.';
+    } else {
+      $dias_extra = (int) $dias_extra_raw;
+    }
+  }
 
   if ($curso_escolar_id <= 0) {
     $errors[] = 'No hay un curso escolar activo disponible.';
@@ -363,6 +373,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   if ($horas < 0) {
     $errors[] = 'Las horas a realizar no pueden ser negativas.';
+  }
+  if ($dias_extra < 0 || $dias_extra > 20) {
+    $errors[] = 'Los días extra deben estar entre 0 y 20.';
   }
 
   $schedule_analysis = analyze_schedule($horario);
@@ -412,10 +425,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
             id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
-            fecha_inicio, fecha_fin, horas, observaciones, circ_excep
+            fecha_inicio, fecha_fin, horas, dias_extra, observaciones, circ_excep
           ) VALUES (
             :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
-            :fecha_inicio, :fecha_fin, :horas, :observaciones, :circ_excep
+            :fecha_inicio, :fecha_fin, :horas, :dias_extra, :observaciones, :circ_excep
           )'
         );
 
@@ -429,6 +442,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'fecha_inicio' => $fecha_inicio,
           'fecha_fin' => $fecha_fin,
           'horas' => $horas,
+          'dias_extra' => $dias_extra,
           'observaciones' => $observaciones,
           'circ_excep' => $requires_circ_excep ? 1 : 0,
         ]);
@@ -776,6 +790,10 @@ $dias_semana = [
                 <label>
                   Días computados
                   <input type="text" id="dias_computados" value="" readonly>
+                </label>
+                <label>
+                  Días extra
+                  <input type="number" name="dias_extra" id="dias_extra" min="0" max="20" step="1" value="<?php echo htmlspecialchars((string) ($form_values['dias_extra'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
                 </label>
                 <label>
                   Horas último día
