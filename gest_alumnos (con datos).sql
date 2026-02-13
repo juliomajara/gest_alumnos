@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 22:59:53
+-- Tiempo de generación: 13-02-2026 a las 23:07:22
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -2122,6 +2122,7 @@ CREATE TABLE `practicas` (
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
+  `fecha_fin_real` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
@@ -2131,8 +2132,8 @@ CREATE TABLE `practicas` (
 -- Volcado de datos para la tabla `practicas`
 --
 
-INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `horas`, `circ_excep`, `observaciones`) VALUES
-(1, 44, 1, 1, 1, 143, 1, '2026-02-23', '2026-06-03', 0, 500, 0, NULL);
+INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `fecha_fin_real`, `horas`, `circ_excep`, `observaciones`) VALUES
+(1, 44, 1, 1, 1, 143, 1, '2026-02-23', '2026-06-03', 0, NULL, 500, 0, NULL);
 
 -- --------------------------------------------------------
 

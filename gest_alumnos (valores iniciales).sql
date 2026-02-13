@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 23:00:52
+-- Tiempo de generación: 13-02-2026 a las 23:08:27
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1322,6 +1322,7 @@ CREATE TABLE `practicas` (
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
+  `fecha_fin_real` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
