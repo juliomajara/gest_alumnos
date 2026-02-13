@@ -229,57 +229,6 @@ if (isset($_GET['action'])) {
       exit;
     }
 
-    if ($action === 'lookup_provincia') {
-      $name = trim((string) ($_GET['name'] ?? ''));
-      $id_pais = isset($_GET['id_pais']) ? (int) $_GET['id_pais'] : 0;
-
-      if ($name === '') {
-        echo json_encode(['ok' => true, 'id_provincia' => null], JSON_UNESCAPED_UNICODE);
-        exit;
-      }
-
-      if ($id_pais > 0) {
-        $stmt = $pdo->prepare('SELECT id_provincia, nombre FROM provincias WHERE id_pais = :id_pais ORDER BY nombre');
-        $stmt->execute(['id_pais' => $id_pais]);
-      } else {
-        $stmt = $pdo->query('SELECT id_provincia, nombre FROM provincias ORDER BY nombre');
-      }
-
-      $match = pick_best_lookup_match($name, $stmt->fetchAll(), 'nombre');
-      echo json_encode(['ok' => true, 'id_provincia' => $match !== null ? (int) $match['id_provincia'] : null, 'nombre' => $match['nombre'] ?? null], JSON_UNESCAPED_UNICODE);
-      exit;
-    }
-
-    if ($action === 'lookup_localidad') {
-      $name = trim((string) ($_GET['name'] ?? ''));
-      $id_provincia = isset($_GET['id_provincia']) ? (int) $_GET['id_provincia'] : 0;
-      $id_pais = isset($_GET['id_pais']) ? (int) $_GET['id_pais'] : 0;
-
-      if ($name === '') {
-        echo json_encode(['ok' => true, 'id_localidad' => null], JSON_UNESCAPED_UNICODE);
-        exit;
-      }
-
-      $sql = 'SELECT l.id_localidad, l.nombre FROM localidades l INNER JOIN provincias p ON p.id_provincia = l.id_provincia WHERE 1=1';
-      $params = [];
-      if ($id_provincia > 0) {
-        $sql .= ' AND l.id_provincia = :id_provincia';
-        $params['id_provincia'] = $id_provincia;
-      }
-      if ($id_pais > 0) {
-        $sql .= ' AND p.id_pais = :id_pais';
-        $params['id_pais'] = $id_pais;
-      }
-      $sql .= ' ORDER BY l.nombre';
-
-      $stmt = $pdo->prepare($sql);
-      $stmt->execute($params);
-
-      $match = pick_best_lookup_match($name, $stmt->fetchAll(), 'nombre');
-      echo json_encode(['ok' => true, 'id_localidad' => $match !== null ? (int) $match['id_localidad'] : null, 'nombre' => $match['nombre'] ?? null], JSON_UNESCAPED_UNICODE);
-      exit;
-    }
-
     if ($action === 'provincia_por_cp_prefix') {
       $prefixRaw = trim((string) ($_GET['prefix'] ?? ''));
       $prefix = preg_replace('/\D+/', '', $prefixRaw) ?? '';
