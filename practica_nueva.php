@@ -470,11 +470,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $pdo->commit();
-        $success_message = 'Práctica creada correctamente.';
-        if ($requires_circ_excep) {
-          $success_message .= ' Recuerda gestionar la Solicitud de autorización (Anexo 4, id_practicas_anexo=4).';
-        }
-        $form_values = [];
+        header('Location: practica_detalle.php?id_practica=' . $practice_id);
+        exit;
       } catch (Throwable $error) {
         if ($pdo->inTransaction()) {
           $pdo->rollBack();
