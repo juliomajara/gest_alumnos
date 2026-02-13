@@ -296,8 +296,18 @@ $active_page = 'practicas';
                   <tr><th>ID curso escolar</th><td><?php echo htmlspecialchars(format_value($practice['id_curso_escolar']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
                   <tr><th>ID grupo</th><td><?php echo htmlspecialchars(format_value($practice['id_grupo']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
                   <tr><th>Anexo</th><td><?php echo htmlspecialchars(format_value($practice['anexo']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
-                  <tr><th>Requiere anexo 5</th><td><?php echo htmlspecialchars(format_bool_value($practice['requiere_anexo_5']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
-                  <tr><th>Requiere anexo 6</th><td><?php echo htmlspecialchars(format_bool_value($practice['requiere_anexo_6']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <tr>
+                    <th>Circunstancias excepcionales</th>
+                    <td>
+                      <?php
+                        $circ_excep = isset($practice['circ_excep']) ? (int) $practice['circ_excep'] : null;
+                        $circ_excep_label = $circ_excep === 1
+                          ? 'Requiere solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional.'
+                          : 'No';
+                        echo htmlspecialchars($circ_excep_label, ENT_QUOTES, 'UTF-8');
+                      ?>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
