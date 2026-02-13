@@ -105,7 +105,11 @@ function render_practice_rows(array $practices): string
         $estado = $practice['estado_practica'] ?: 'No disponible';
       ?>
       <tr>
-        <td><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) $practice['id_practica']); ?>">
+            <?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?>
+          </a>
+        </td>
         <td><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_inicio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>

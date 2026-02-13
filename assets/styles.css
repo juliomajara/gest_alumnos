@@ -1531,3 +1531,30 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+.practice-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.practice-link:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+.practica-horario-detalle-table {
+  table-layout: fixed;
+}
+
+.practica-observaciones {
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.practica-observaciones-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
