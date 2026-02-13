@@ -379,6 +379,9 @@ if ($id_practica === false || $id_practica === null) {
     $practice_stmt = $pdo->prepare(
       'SELECT
         p.*,
+        p.fecha_fin,
+        p.fecha_fin_real,
+        p.dias_extra,
         pe.estado AS estado_practica,
         a.nia AS alumno_nia,
         a.dni AS alumno_dni,
@@ -482,7 +485,10 @@ if ($id_practica === false || $id_practica === null) {
 
       if ($action === 'generar_calendario') {
         $startDateRaw = (string) ($practice['fecha_inicio'] ?? '');
-        $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
+        $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
+        if ($endDateRaw === '') {
+          $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
+        }
         $startDate = $startDateRaw !== '' ? (new DateTimeImmutable($startDateRaw))->setTime(0, 0, 0) : false;
         $endDate = $endDateRaw !== '' ? (new DateTimeImmutable($endDateRaw))->setTime(0, 0, 0) : false;
 
@@ -518,7 +524,7 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml .= '<p><strong>Alumno:</strong> ' . htmlspecialchars(full_name($practice, 'alumno'), ENT_QUOTES, 'UTF-8') . '</p>';
           $pdfHtml .= '<p><strong>Empresa:</strong> ' . htmlspecialchars((string) ($practice['empresa_nombre'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
           $pdfHtml .= '<p><strong>Dirección Centro de Trabajo:</strong> ' . htmlspecialchars(build_address($practice), ENT_QUOTES, 'UTF-8') . '</p>';
-          $pdfHtml .= '<p><strong>Fecha inicio:</strong> ' . htmlspecialchars(format_date((string) ($practice['fecha_inicio'] ?? '')), ENT_QUOTES, 'UTF-8') . ' &nbsp;&nbsp; <strong>Fecha fin:</strong> ' . htmlspecialchars(format_date((string) ($practice['fecha_fin'] ?? '')), ENT_QUOTES, 'UTF-8') . '</p>';
+          $pdfHtml .= '<p><strong>Fecha inicio:</strong> ' . htmlspecialchars(format_date((string) ($practice['fecha_inicio'] ?? '')), ENT_QUOTES, 'UTF-8') . ' &nbsp;&nbsp; <strong>Fecha fin:</strong> ' . htmlspecialchars(format_date($endDateRaw), ENT_QUOTES, 'UTF-8') . '</p>';
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Horario semanal</h3>';
           $pdfHtml .= build_weekly_schedule_pdf_table($schedule_by_day, $dias_semana);
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Calendario mensual</h3>';
@@ -648,7 +654,9 @@ $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($c
                   <tr><th>Tutor de empresa</th><td><?php echo htmlspecialchars(full_name($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></td></tr>
                   <tr><th>DNI tutor</th><td><?php echo htmlspecialchars(format_value($practice['tutor_dni']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
                   <tr><th>Fecha inicio</th><td><?php echo htmlspecialchars(format_date($practice['fecha_inicio']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
-                  <tr><th>Fecha fin</th><td><?php echo htmlspecialchars(format_date($practice['fecha_fin']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <tr><th>Fecha fin calculada</th><td><?php echo htmlspecialchars(format_date($practice['fecha_fin']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <tr><th>Días extra</th><td><?php echo htmlspecialchars((string) ((int) ($practice['dias_extra'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <tr><th>Fecha fin real</th><td><?php echo htmlspecialchars(format_date($practice['fecha_fin_real'] ?? null, '—'), ENT_QUOTES, 'UTF-8'); ?></td></tr>
                   <tr><th>Horas totales</th><td><?php echo htmlspecialchars(format_value($practice['horas']), ENT_QUOTES, 'UTF-8'); ?></td></tr>
                 </tbody>
               </table>
