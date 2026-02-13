@@ -325,7 +325,7 @@ $errors = [];
 $success_message = null;
 $anexo4_warning_message = null;
 $anexo4_warning_reasons = [];
-$pending_anexo_4_confirmation = false;
+$pending_circ_excep_confirmation = false;
 $form_values = $_POST;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -341,7 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $horas = isset($_POST['horas']) ? (int) $_POST['horas'] : 0;
   $observaciones = normalize_text($_POST['observaciones'] ?? null);
   $horario = is_array($_POST['horario'] ?? null) ? $_POST['horario'] : [];
-  $confirm_anexo_4 = ($_POST['confirm_anexo_4'] ?? '') === '1';
+  $confirm_circ_excep = ($_POST['confirm_circ_excep'] ?? '') === '1';
 
   if ($curso_escolar_id <= 0) {
     $errors[] = 'No hay un curso escolar activo disponible.';
@@ -395,15 +395,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $anexo4_reasons[] = 'No se pudo resolver la provincia del centro de trabajo; por seguridad se requiere Anexo 4.';
   }
 
-  $requires_anexo_4 = $anexo4_reasons !== [];
+  $requires_circ_excep = $anexo4_reasons !== [];
 
   if (!$errors) {
-    if ($requires_anexo_4 && !$confirm_anexo_4) {
-      $pending_anexo_4_confirmation = true;
-      $anexo4_warning_message = 'Atención: esta práctica requiere rellenar la Solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional (Anexo 4).';
+    if ($requires_circ_excep && !$confirm_circ_excep) {
+      $pending_circ_excep_confirmation = true;
+      $anexo4_warning_message = 'Atención: esta práctica requiere rellenar la Solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional.';
       $anexo4_warning_reasons = $anexo4_reasons;
       if ($unknown_province_by_policy) {
-        $anexo4_warning_reasons[] = 'Política aplicada: al no poder verificar provincia se marca requiere_anexo_4=1 para evitar incumplimientos.';
+        $anexo4_warning_reasons[] = 'Política aplicada: al no poder verificar provincia se marca circ_excep=1 para evitar incumplimientos.';
       }
     } else {
       try {
@@ -412,10 +412,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
             id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
-            fecha_inicio, fecha_fin, horas, observaciones, requiere_anexo_4
+            fecha_inicio, fecha_fin, horas, observaciones, circ_excep
           ) VALUES (
             :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
-            :fecha_inicio, :fecha_fin, :horas, :observaciones, :requiere_anexo_4
+            :fecha_inicio, :fecha_fin, :horas, :observaciones, :circ_excep
           )'
         );
 
@@ -430,7 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'fecha_fin' => $fecha_fin,
           'horas' => $horas,
           'observaciones' => $observaciones,
-          'requiere_anexo_4' => $requires_anexo_4 ? 1 : 0,
+          'circ_excep' => $requires_circ_excep ? 1 : 0,
         ]);
 
         $practice_id = (int) $pdo->lastInsertId();
@@ -471,7 +471,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdo->commit();
         $success_message = 'Práctica creada correctamente.';
-        if ($requires_anexo_4) {
+        if ($requires_circ_excep) {
           $success_message .= ' Recuerda gestionar la Solicitud de autorización (Anexo 4, id_practicas_anexo=4).';
         }
         $form_values = [];
@@ -624,7 +624,7 @@ $dias_semana = [
         </section>
       <?php endif; ?>
 
-      <?php if ($pending_anexo_4_confirmation): ?>
+      <?php if ($pending_circ_excep_confirmation): ?>
         <section class="panel">
           <div class="panel-header">
             <h3><?php echo htmlspecialchars($anexo4_warning_message ?? '', ENT_QUOTES, 'UTF-8'); ?></h3>
@@ -642,8 +642,8 @@ $dias_semana = [
 
       <form method="post" class="panel entity-form practica-nueva-form">
         <input type="hidden" name="id_curso_escolar" value="<?php echo $active_course_id; ?>">
-        <?php if ($pending_anexo_4_confirmation): ?>
-          <input type="hidden" name="confirm_anexo_4" value="1">
+        <?php if ($pending_circ_excep_confirmation): ?>
+          <input type="hidden" name="confirm_circ_excep" value="1">
         <?php endif; ?>
 
         <section class="entity-section">
@@ -799,7 +799,7 @@ $dias_semana = [
         </section>
 
         <div class="form-actions">
-          <?php if ($pending_anexo_4_confirmation): ?>
+          <?php if ($pending_circ_excep_confirmation): ?>
             <button type="submit" class="edit-toggle">Guardar igualmente</button>
             <a href="practica_nueva.php" class="ghost-button">Volver y revisar</a>
           <?php else: ?>
