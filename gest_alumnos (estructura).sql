@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 14:24:02
+-- Tiempo de generación: 13-02-2026 a las 18:14:00
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -267,8 +267,7 @@ CREATE TABLE `grupos_tutores` (
 CREATE TABLE `localidades` (
   `id_localidad` int(10) UNSIGNED NOT NULL,
   `id_provincia` int(10) UNSIGNED NOT NULL,
-  `nombre` varchar(60) NOT NULL,
-  `cp` varchar(10) DEFAULT NULL
+  `nombre` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -367,6 +366,7 @@ CREATE TABLE `practicas` (
   `id_practicas_estado` int(10) UNSIGNED DEFAULT NULL,
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
+  `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 13:56:59
+-- Tiempo de generación: 13-02-2026 a las 18:13:44
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -102,7 +102,7 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (41, '10256695', '55004421J', '281677982021', 'Santamera', 'Gallego', 'Marcos', '2008-06-09', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'joseluissantamera@gmail.com', NULL, NULL, 'piluchigallego@gmail.com', NULL, 0, NULL, 0, NULL),
 (42, '10602065', '02783538D', '281632217017', 'Serrano', 'Domínguez', 'Alejandro', '2006-05-25', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'lolidomna@gmail.com', NULL, NULL, 'serrano.ema@gmail.com', NULL, 0, NULL, 0, NULL),
 (43, '5136117', '55006498C', '281581105996', 'Tello', 'Horcajo', 'Sergio', '2007-05-20', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'dtellosanchez@yahoo.com', NULL, NULL, 'rosahorcajo@yahoo.es', NULL, 0, NULL, 0, NULL),
-(44, '12003501', '07137486B', '281524199433', 'Torre', 'Sánchez', 'Adrián de la', '2008-09-26', 0, NULL, NULL, NULL, 0, NULL, NULL, 'm.carmensanchez.s@hotmail.es', NULL, NULL, 'franciscotorrecasado@hotmail.es', NULL, 0, NULL, 0, NULL),
+(44, '12003501', '07137486B', '281524199433', 'Torre', 'Sánchez', 'Adrián de la', '2008-09-26', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'm.carmensanchez.s@hotmail.es', NULL, NULL, 'franciscotorrecasado@hotmail.es', NULL, 0, NULL, 0, NULL),
 (45, '5630950', '53720005D', '281439037372', 'Tul', 'Tabango', 'Anderson Joel', '2004-10-21', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'germaniatabango@gmail.com', NULL, 0, NULL, 0, NULL),
 (46, '10408261', '02560357C', '281618790395', 'Vega', 'Sánchez', 'Adrián', '2006-01-24', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'rvhrvhrvh@gmail.com', NULL, NULL, 'monicascla@gmail.com', NULL, 0, NULL, 0, NULL),
 (47, '9495357', '55139932P', '281572846650', 'Velázquez', 'Orgaz', 'Francisco', '2005-08-04', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'velazquezdavid11@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
@@ -864,9 +864,11 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (132, 'alumno', 133, 'carlosutreroduran@gmail.com', 'Personal'),
 (133, 'alumno', 134, 'yaizav210907@gmail.com', 'Personal'),
 (134, 'alumno', 135, 'zhoujj.081@gmail.com', 'Personal'),
-(137, 'empresa_contacto', 3, 'irene.soto@elecnor.com', 'Trabajo'),
-(138, 'empresa_contacto', 4, 'aycalero@elecnor.es', 'Trabajo'),
-(139, 'empresa_tutor', 2, 'gzubia@elecnor.com', 'Trabajo');
+(135, 'empresa_contacto', 1, 'irene.soto@elecnor.com', 'Trabajo'),
+(136, 'empresa_contacto', 2, 'aycalero@elecnor.es', 'Trabajo'),
+(137, 'empresa_tutor', 1, 'gzubia@elecnor.com', 'Trabajo'),
+(138, 'empresa_contacto', 3, 'info@institutoidem.es', 'Trabajo'),
+(139, 'empresa_tutor', 2, 'info@institutoidem.es', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -1489,7 +1491,8 @@ CREATE TABLE `direcciones` (
 --
 
 INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provincia`, `id_localidad`, `id_via`, `nombre_via`, `numero`, `bloque`, `escalera`, `planta`, `puerta`, `otros`, `etiqueta`, `cp`, `principal`) VALUES
-(2, 1, 1, 28, 4, 10, 'Marqués de Mondéjar', '33', NULL, NULL, NULL, NULL, NULL, 'Principal', '28028', 1);
+(1, 1, 1, 28, 4, 10, 'Marqués de Mondéjar', '33', NULL, NULL, NULL, NULL, NULL, 'Principal', '28028', 1),
+(2, 2, 1, 28, 4, 10, 'de la Luna', '19', NULL, NULL, NULL, NULL, 'Local 2', 'Principal', '28004', 1);
 
 -- --------------------------------------------------------
 
@@ -1512,7 +1515,8 @@ CREATE TABLE `empresas` (
 --
 
 INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `convenio`, `notas`) VALUES
-(1, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, 916, NULL);
+(1, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, 916, NULL),
+(2, 'B85224376', 'Instituto de Diseño, Estilismo y Moda S.L.', NULL, NULL, 1560, NULL);
 
 -- --------------------------------------------------------
 
@@ -1535,8 +1539,9 @@ CREATE TABLE `empresas_contactos` (
 --
 
 INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `cargo`, `comentarios`) VALUES
-(3, 1, 'Soto', 'García', 'Irene', NULL, NULL),
-(4, 1, 'Calero', NULL, 'Alejandra', NULL, NULL);
+(1, 1, 'Soto', 'García', 'Irene', NULL, NULL),
+(2, 1, 'Calero', 'Romero', 'Alejandra', NULL, NULL),
+(3, 2, 'Pérez', 'Lara', 'Erik', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1559,7 +1564,8 @@ CREATE TABLE `empresas_tutores` (
 --
 
 INSERT INTO `empresas_tutores` (`id_empresas_tutor`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `dni`, `comentarios`) VALUES
-(2, 1, 'Zubia', 'Saez', 'Gonzalo Miguel', '16076514C', NULL);
+(1, 1, 'Zubia', 'Saez', 'Gonzalo Miguel', '16076514C', NULL),
+(2, 2, 'Pérez', 'Lara', 'Erik', '72097911H', NULL);
 
 -- --------------------------------------------------------
 
@@ -1624,19 +1630,18 @@ INSERT INTO `grupos_tutores` (`id_grupo_tutor`, `id_grupo`, `id_profesor`, `id_c
 CREATE TABLE `localidades` (
   `id_localidad` int(10) UNSIGNED NOT NULL,
   `id_provincia` int(10) UNSIGNED NOT NULL,
-  `nombre` varchar(60) NOT NULL,
-  `cp` varchar(10) DEFAULT NULL
+  `nombre` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `localidades`
 --
 
-INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`, `cp`) VALUES
-(1, 28, 'Getafe', '28905'),
-(2, 8, 'Barcelona', '08080'),
-(3, 45, 'Talavera De La Reina', '45600'),
-(4, 28, 'Madrid', '28028');
+INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`) VALUES
+(2, 8, 'Barcelona'),
+(1, 28, 'Getafe'),
+(4, 28, 'Madrid'),
+(3, 45, 'Talavera De La Reina');
 
 -- --------------------------------------------------------
 
@@ -2116,8 +2121,9 @@ CREATE TABLE `practicas` (
   `id_practicas_estado` int(10) UNSIGNED DEFAULT NULL,
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
+  `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
-  `requiere_anexo_4` tinyint(1) NOT NULL DEFAULT 0,
+  `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -2125,8 +2131,8 @@ CREATE TABLE `practicas` (
 -- Volcado de datos para la tabla `practicas`
 --
 
-INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `horas`, `requiere_anexo_4`, `observaciones`) VALUES
-(3, 44, 1, 2, 2, 143, 1, '2026-02-23', '2026-06-03', 500, 0, NULL);
+INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `horas`, `circ_excep`, `observaciones`) VALUES
+(1, 44, 1, 1, 1, 143, 1, '2026-02-23', '2026-06-03', 0, 500, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2219,16 +2225,16 @@ CREATE TABLE `practicas_horario` (
 --
 
 INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_semana`, `hora_entrada`, `hora_salida`) VALUES
-(1, 3, 1, '08:30:00', '14:00:00'),
-(2, 3, 1, '15:00:00', '17:30:00'),
-(3, 3, 2, '08:30:00', '14:00:00'),
-(4, 3, 2, '15:00:00', '17:30:00'),
-(5, 3, 3, '08:30:00', '14:00:00'),
-(6, 3, 3, '15:00:00', '17:30:00'),
-(7, 3, 4, '08:30:00', '14:00:00'),
-(8, 3, 4, '15:00:00', '17:30:00'),
-(9, 3, 5, '08:30:00', '14:00:00'),
-(10, 3, 5, '15:00:00', '17:30:00');
+(1, 1, 1, '08:30:00', '14:00:00'),
+(2, 1, 1, '15:00:00', '17:30:00'),
+(3, 1, 2, '08:30:00', '14:00:00'),
+(4, 1, 2, '15:00:00', '17:30:00'),
+(5, 1, 3, '08:30:00', '14:00:00'),
+(6, 1, 3, '15:00:00', '17:30:00'),
+(7, 1, 4, '08:30:00', '14:00:00'),
+(8, 1, 4, '15:00:00', '17:30:00'),
+(9, 1, 5, '08:30:00', '14:00:00'),
+(10, 1, 5, '15:00:00', '17:30:00');
 
 -- --------------------------------------------------------
 
@@ -2263,19 +2269,19 @@ CREATE TABLE `practicas_ras` (
 --
 
 INSERT INTO `practicas_ras` (`id_practica_ra`, `curso_escolar`, `ciclo`, `id_curso_escolar`, `id_ciclo`, `id_modulo`, `id_ra`, `porcentaje`) VALUES
-(1, '1', NULL, 1, 1, 8, 137, 10.00),
-(2, '1', NULL, 1, 1, 14, 139, 10.00),
-(3, '1', NULL, 1, 1, 15, 149, 10.00),
-(4, '1', NULL, 1, 1, 9, 121, 10.00),
-(5, '1', NULL, 1, 1, 9, 122, 10.00),
-(6, '1', NULL, 1, 1, 9, 123, 10.00),
-(7, '1', NULL, 1, 1, 9, 124, 10.00),
-(8, '1', NULL, 1, 1, 11, 154, 10.00),
-(9, '1', NULL, 1, 1, 11, 155, 10.00),
-(10, '1', NULL, 1, 1, 11, 156, 10.00),
-(11, '1', NULL, 1, 1, 11, 157, 10.00),
-(12, '1', NULL, 1, 1, 11, 159, 10.00),
-(13, '1', NULL, 1, 1, 10, 131, 10.00);
+(1, '1', 'SMR', 1, 1, 8, 137, 10.00),
+(2, '1', 'SMR', 1, 1, 14, 139, 10.00),
+(3, '1', 'SMR', 1, 1, 15, 149, 10.00),
+(4, '1', 'SMR', 1, 1, 9, 121, 10.00),
+(5, '1', 'SMR', 1, 1, 9, 122, 10.00),
+(6, '1', 'SMR', 1, 1, 9, 123, 10.00),
+(7, '1', 'SMR', 1, 1, 9, 124, 10.00),
+(8, '1', 'SMR', 1, 1, 11, 154, 10.00),
+(9, '1', 'SMR', 1, 1, 11, 155, 10.00),
+(10, '1', 'SMR', 1, 1, 11, 156, 10.00),
+(11, '1', 'SMR', 1, 1, 11, 157, 10.00),
+(12, '1', 'SMR', 1, 1, 11, 159, 10.00),
+(13, '1', 'SMR', 1, 1, 10, 131, 10.00);
 
 -- --------------------------------------------------------
 
@@ -2624,8 +2630,10 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (132, 'alumno', 133, '630416206', 'Personal'),
 (133, 'alumno', 134, '647727693', 'Personal'),
 (134, 'alumno', 135, '624890110', 'Personal'),
-(136, 'empresa_contacto', 3, '660780366', 'Trabajo'),
-(137, 'empresa_tutor', 2, '917251004', 'Trabajo');
+(135, 'empresa_contacto', 1, '660780366', 'Trabajo'),
+(136, 'empresa_tutor', 1, '917251004', 'Trabajo'),
+(137, 'empresa_contacto', 3, '646917725', 'Trabajo'),
+(138, 'empresa_tutor', 2, '646917725', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -3030,13 +3038,13 @@ ALTER TABLE `direcciones`
 -- AUTO_INCREMENT de la tabla `empresas`
 --
 ALTER TABLE `empresas`
-  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
@@ -3102,7 +3110,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -3162,7 +3170,7 @@ ALTER TABLE `resultados_aprendizaje`
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=138;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=139;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 14:25:00
+-- Tiempo de generación: 13-02-2026 a las 18:14:55
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -848,19 +848,18 @@ CREATE TABLE `grupos_tutores` (
 CREATE TABLE `localidades` (
   `id_localidad` int(10) UNSIGNED NOT NULL,
   `id_provincia` int(10) UNSIGNED NOT NULL,
-  `nombre` varchar(60) NOT NULL,
-  `cp` varchar(10) DEFAULT NULL
+  `nombre` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `localidades`
 --
 
-INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`, `cp`) VALUES
-(1, 28, 'Getafe', '28905'),
-(2, 8, 'Barcelona', '08080'),
-(3, 45, 'Talavera De La Reina', '45600'),
-(4, 28, 'Madrid', '28028');
+INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`) VALUES
+(2, 8, 'Barcelona'),
+(1, 28, 'Getafe'),
+(4, 28, 'Madrid'),
+(3, 45, 'Talavera De La Reina');
 
 -- --------------------------------------------------------
 
@@ -1322,6 +1321,7 @@ CREATE TABLE `practicas` (
   `id_practicas_estado` int(10) UNSIGNED DEFAULT NULL,
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
+  `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
