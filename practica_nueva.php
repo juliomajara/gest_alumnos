@@ -23,6 +23,121 @@ function valid_date(?string $value): bool {
   return $date !== false && $date->format('Y-m-d') === $value;
 }
 
+function valid_time(?string $value): bool {
+  if ($value === null) {
+    return false;
+  }
+
+  if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $value)) {
+    return false;
+  }
+
+  return true;
+}
+
+function time_to_minutes(string $value): int {
+  [$hours, $minutes] = array_map('intval', explode(':', $value));
+  return ($hours * 60) + $minutes;
+}
+
+/**
+ * @return array{errors: array<int, string>, day_totals: array<int, float>, weekly_total: float, has_weekend_schedule: bool, has_weekday_over_8: bool}
+ */
+function analyze_schedule(array $horario): array {
+  $errors = [];
+  $day_totals = [];
+  $weekly_total = 0.0;
+  $has_weekend_schedule = false;
+  $has_weekday_over_8 = false;
+  $day_labels = [
+    1 => 'lunes',
+    2 => 'martes',
+    3 => 'miércoles',
+    4 => 'jueves',
+    5 => 'viernes',
+    6 => 'sábado',
+    7 => 'domingo',
+  ];
+
+  for ($day = 1; $day <= 7; $day++) {
+    $day_data = is_array($horario[$day] ?? null) ? $horario[$day] : [];
+    $segments = [
+      'mañana' => [
+        'entrada' => normalize_text($day_data['manana_entrada'] ?? null),
+        'salida' => normalize_text($day_data['manana_salida'] ?? null),
+      ],
+      'tarde' => [
+        'entrada' => normalize_text($day_data['tarde_entrada'] ?? null),
+        'salida' => normalize_text($day_data['tarde_salida'] ?? null),
+      ],
+    ];
+
+    $day_total = 0.0;
+    $has_any_segment = false;
+
+    foreach ($segments as $segment_name => $segment) {
+      $entrada = $segment['entrada'];
+      $salida = $segment['salida'];
+
+      if ($entrada === null && $salida === null) {
+        continue;
+      }
+
+      if ($entrada === null || $salida === null) {
+        $errors[] = sprintf('El tramo de %s del %s debe tener hora de entrada y salida.', $segment_name, $day_labels[$day]);
+        continue;
+      }
+
+      if (!valid_time($entrada) || !valid_time($salida)) {
+        $errors[] = sprintf('El tramo de %s del %s tiene un formato de hora no válido.', $segment_name, $day_labels[$day]);
+        continue;
+      }
+
+      $entrada_minutes = time_to_minutes($entrada);
+      $salida_minutes = time_to_minutes($salida);
+      if ($salida_minutes <= $entrada_minutes) {
+        $errors[] = sprintf('La salida debe ser posterior a la entrada en el tramo de %s del %s.', $segment_name, $day_labels[$day]);
+        continue;
+      }
+
+      $has_any_segment = true;
+      $day_total += ($salida_minutes - $entrada_minutes) / 60;
+    }
+
+    $day_totals[$day] = $day_total;
+    $weekly_total += $day_total;
+
+    if ($day <= 5 && $day_total > 8) {
+      $has_weekday_over_8 = true;
+    }
+    if ($day >= 6 && $has_any_segment) {
+      $has_weekend_schedule = true;
+    }
+  }
+
+  return [
+    'errors' => $errors,
+    'day_totals' => $day_totals,
+    'weekly_total' => $weekly_total,
+    'has_weekend_schedule' => $has_weekend_schedule,
+    'has_weekday_over_8' => $has_weekday_over_8,
+  ];
+}
+
+function resolve_address_province_id(PDO $pdo, int $direccion_id, int $empresa_id): ?int {
+  if ($direccion_id > 0) {
+    $stmt = $pdo->prepare('SELECT id_provincia FROM direcciones WHERE id_direccion = :id_direccion AND id_empresa = :id_empresa LIMIT 1');
+    $stmt->execute([
+      'id_direccion' => $direccion_id,
+      'id_empresa' => $empresa_id,
+    ]);
+    $value = $stmt->fetchColumn();
+    return $value !== false && $value !== null ? (int) $value : null;
+  }
+
+  return null;
+}
+
 function practice_full_name(array $row, string $nameKey = 'nombre'): string {
   $parts = array_filter([
     trim((string) ($row['apellido1'] ?? '')),
@@ -208,6 +323,9 @@ if (($_GET['action'] ?? '') !== '') {
 
 $errors = [];
 $success_message = null;
+$anexo4_warning_message = null;
+$anexo4_warning_reasons = [];
+$pending_anexo_4_confirmation = false;
 $form_values = $_POST;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -223,6 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $horas = isset($_POST['horas']) ? (int) $_POST['horas'] : 0;
   $observaciones = normalize_text($_POST['observaciones'] ?? null);
   $horario = is_array($_POST['horario'] ?? null) ? $_POST['horario'] : [];
+  $confirm_anexo_4 = ($_POST['confirm_anexo_4'] ?? '') === '1';
 
   if ($curso_escolar_id <= 0) {
     $errors[] = 'No hay un curso escolar activo disponible.';
@@ -246,77 +365,122 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors[] = 'Las horas a realizar no pueden ser negativas.';
   }
 
+  $schedule_analysis = analyze_schedule($horario);
+  foreach ($schedule_analysis['errors'] as $schedule_error) {
+    $errors[] = $schedule_error;
+  }
+
+  $province_id = null;
+  if ($empresa_id > 0) {
+    $province_id = resolve_address_province_id($pdo, $direccion_id, $empresa_id);
+  }
+
+  $anexo4_reasons = [];
+  if ($schedule_analysis['has_weekday_over_8']) {
+    $anexo4_reasons[] = 'Hay al menos un día laborable con más de 8 horas.';
+  }
+  if ($schedule_analysis['has_weekend_schedule']) {
+    $anexo4_reasons[] = 'Hay horario informado en sábado y/o domingo.';
+  }
+  if ($schedule_analysis['weekly_total'] > 40) {
+    $anexo4_reasons[] = 'La suma de horas semanales es mayor de 40.';
+  }
+  if ($province_id !== null && $province_id !== 28) {
+    $anexo4_reasons[] = 'El centro de trabajo está fuera de la provincia de Madrid.';
+  }
+
+  $unknown_province_by_policy = false;
+  if ($empresa_id > 0 && $province_id === null) {
+    $unknown_province_by_policy = true;
+    $anexo4_reasons[] = 'No se pudo resolver la provincia del centro de trabajo; por seguridad se requiere Anexo 4.';
+  }
+
+  $requires_anexo_4 = $anexo4_reasons !== [];
+
   if (!$errors) {
-    try {
-      $pdo->beginTransaction();
+    if ($requires_anexo_4 && !$confirm_anexo_4) {
+      $pending_anexo_4_confirmation = true;
+      $anexo4_warning_message = 'Atención: esta práctica requiere rellenar la Solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional (Anexo 4).';
+      $anexo4_warning_reasons = $anexo4_reasons;
+      if ($unknown_province_by_policy) {
+        $anexo4_warning_reasons[] = 'Política aplicada: al no poder verificar provincia se marca requiere_anexo_4=1 para evitar incumplimientos.';
+      }
+    } else {
+      try {
+        $pdo->beginTransaction();
 
-      $insert_practice_stmt = $pdo->prepare(
-        'INSERT INTO practicas (
-          id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
-          fecha_inicio, fecha_fin, horas, observaciones
-        ) VALUES (
-          :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
-          :fecha_inicio, :fecha_fin, :horas, :observaciones
-        )'
-      );
+        $insert_practice_stmt = $pdo->prepare(
+          'INSERT INTO practicas (
+            id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
+            fecha_inicio, fecha_fin, horas, observaciones, requiere_anexo_4
+          ) VALUES (
+            :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
+            :fecha_inicio, :fecha_fin, :horas, :observaciones, :requiere_anexo_4
+          )'
+        );
 
-      $insert_practice_stmt->execute([
-        'id_alumno' => $alumno_id,
-        'id_empresa' => $empresa_id,
-        'id_direccion' => $direccion_id > 0 ? $direccion_id : null,
-        'id_empresa_tutor' => $tutor_id > 0 ? $tutor_id : null,
-        'anexo' => $anexo !== null && ctype_digit($anexo) ? (int) $anexo : null,
-        'id_practicas_estado' => 1,
-        'fecha_inicio' => $fecha_inicio,
-        'fecha_fin' => $fecha_fin,
-        'horas' => $horas,
-        'observaciones' => $observaciones,
-      ]);
+        $insert_practice_stmt->execute([
+          'id_alumno' => $alumno_id,
+          'id_empresa' => $empresa_id,
+          'id_direccion' => $direccion_id > 0 ? $direccion_id : null,
+          'id_empresa_tutor' => $tutor_id > 0 ? $tutor_id : null,
+          'anexo' => $anexo !== null && ctype_digit($anexo) ? (int) $anexo : null,
+          'id_practicas_estado' => 1,
+          'fecha_inicio' => $fecha_inicio,
+          'fecha_fin' => $fecha_fin,
+          'horas' => $horas,
+          'observaciones' => $observaciones,
+          'requiere_anexo_4' => $requires_anexo_4 ? 1 : 0,
+        ]);
 
-      $practice_id = (int) $pdo->lastInsertId();
-      $insert_schedule_stmt = $pdo->prepare(
-        'INSERT INTO practicas_horario (id_practica, dia_semana, hora_entrada, hora_salida)
-         VALUES (:id_practica, :dia_semana, :hora_entrada, :hora_salida)'
-      );
+        $practice_id = (int) $pdo->lastInsertId();
+        $insert_schedule_stmt = $pdo->prepare(
+          'INSERT INTO practicas_horario (id_practica, dia_semana, hora_entrada, hora_salida)
+           VALUES (:id_practica, :dia_semana, :hora_entrada, :hora_salida)'
+        );
 
-      for ($day = 1; $day <= 7; $day++) {
-        $day_data = is_array($horario[$day] ?? null) ? $horario[$day] : [];
-        $segments = [
-          [
-            'entrada' => normalize_text($day_data['manana_entrada'] ?? null),
-            'salida' => normalize_text($day_data['manana_salida'] ?? null),
-          ],
-          [
-            'entrada' => normalize_text($day_data['tarde_entrada'] ?? null),
-            'salida' => normalize_text($day_data['tarde_salida'] ?? null),
-          ],
-        ];
+        for ($day = 1; $day <= 7; $day++) {
+          $day_data = is_array($horario[$day] ?? null) ? $horario[$day] : [];
+          $segments = [
+            [
+              'entrada' => normalize_text($day_data['manana_entrada'] ?? null),
+              'salida' => normalize_text($day_data['manana_salida'] ?? null),
+            ],
+            [
+              'entrada' => normalize_text($day_data['tarde_entrada'] ?? null),
+              'salida' => normalize_text($day_data['tarde_salida'] ?? null),
+            ],
+          ];
 
-        foreach ($segments as $segment) {
-          if ($segment['entrada'] === null || $segment['salida'] === null) {
-            continue;
+          foreach ($segments as $segment) {
+            if ($segment['entrada'] === null || $segment['salida'] === null) {
+              continue;
+            }
+            if ($segment['salida'] <= $segment['entrada']) {
+              continue;
+            }
+
+            $insert_schedule_stmt->execute([
+              'id_practica' => $practice_id,
+              'dia_semana' => $day,
+              'hora_entrada' => $segment['entrada'] . ':00',
+              'hora_salida' => $segment['salida'] . ':00',
+            ]);
           }
-          if ($segment['salida'] <= $segment['entrada']) {
-            continue;
-          }
-
-          $insert_schedule_stmt->execute([
-            'id_practica' => $practice_id,
-            'dia_semana' => $day,
-            'hora_entrada' => $segment['entrada'] . ':00',
-            'hora_salida' => $segment['salida'] . ':00',
-          ]);
         }
-      }
 
-      $pdo->commit();
-      $success_message = 'Práctica creada correctamente.';
-      $form_values = [];
-    } catch (Throwable $error) {
-      if ($pdo->inTransaction()) {
-        $pdo->rollBack();
+        $pdo->commit();
+        $success_message = 'Práctica creada correctamente.';
+        if ($requires_anexo_4) {
+          $success_message .= ' Recuerda gestionar la Solicitud de autorización (Anexo 4, id_practicas_anexo=4).';
+        }
+        $form_values = [];
+      } catch (Throwable $error) {
+        if ($pdo->inTransaction()) {
+          $pdo->rollBack();
+        }
+        $errors[] = 'No se pudo guardar la práctica.';
       }
-      $errors[] = 'No se pudo guardar la práctica.';
     }
   }
 }
@@ -460,8 +624,27 @@ $dias_semana = [
         </section>
       <?php endif; ?>
 
+      <?php if ($pending_anexo_4_confirmation): ?>
+        <section class="panel">
+          <div class="panel-header">
+            <h3><?php echo htmlspecialchars($anexo4_warning_message ?? '', ENT_QUOTES, 'UTF-8'); ?></h3>
+            <p>Antes de guardar, confirma que deseas continuar con esta práctica.</p>
+          </div>
+          <?php if ($anexo4_warning_reasons): ?>
+            <ul class="form-errors">
+              <?php foreach ($anexo4_warning_reasons as $reason): ?>
+                <li><?php echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+        </section>
+      <?php endif; ?>
+
       <form method="post" class="panel entity-form practica-nueva-form">
         <input type="hidden" name="id_curso_escolar" value="<?php echo $active_course_id; ?>">
+        <?php if ($pending_anexo_4_confirmation): ?>
+          <input type="hidden" name="confirm_anexo_4" value="1">
+        <?php endif; ?>
 
         <section class="entity-section">
           <div class="panel-header">
@@ -616,8 +799,13 @@ $dias_semana = [
         </section>
 
         <div class="form-actions">
-          <button type="submit" class="edit-toggle">Guardar práctica</button>
-          <a href="practicas.php" class="ghost-button">Cancelar</a>
+          <?php if ($pending_anexo_4_confirmation): ?>
+            <button type="submit" class="edit-toggle">Guardar igualmente</button>
+            <a href="practica_nueva.php" class="ghost-button">Volver y revisar</a>
+          <?php else: ?>
+            <button type="submit" class="edit-toggle">Guardar práctica</button>
+            <a href="practicas.php" class="ghost-button">Cancelar</a>
+          <?php endif; ?>
         </div>
       </form>
     </main>
