@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-02-2026 a las 14:35:45
+-- Tiempo de generación: 12-02-2026 a las 16:58:17
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -980,7 +980,7 @@ INSERT INTO `modulos` (`id_modulo`, `id_nivel`, `id_ciclo`, `id_curso`, `codigo`
 (61, 2, 4, 1, '0373', 'LMSGI', 'Comunes', 'Lenguajes de marcas y sistemas de gestión de información', '', 3, 110),
 (62, 2, 4, 1, '0485', 'PROG', 'Comunes', 'Programación', '', 8, 270),
 (63, 2, 4, 1, '0483', 'SI', 'Comunes', 'Sistemas informáticos', '', 6, 205),
-(64, 2, 4, 1, 'CMO-311', 'ROB', 'Optativas', 'Módulo profesional optativo', 'Informática aplicada a sistemas electrónicos (Robótica)', 2, 50),
+(64, 2, 3, 1, 'CMO-311', 'ROB', 'Optativas', 'Módulo profesional optativo', 'Informática aplicada a sistemas electrónicos (Robótica)', 2, 50),
 (65, 2, 4, 1, '1709', 'IPE1', 'Comunes', 'Itinerario personal para la empleabilidad I', '', 3, 100),
 (66, 2, 4, 1, '---', 'FFE1', 'FFE', 'FFE1', '', 0, 130),
 (67, 2, 4, 2, '0612', 'DWEC', 'Comunes', 'Desarrollo web en entorno cliente', '', 6, 205),
