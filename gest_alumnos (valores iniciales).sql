@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 13:58:41
+-- Tiempo de generación: 13-02-2026 a las 14:25:00
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1323,7 +1323,7 @@ CREATE TABLE `practicas` (
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
-  `requiere_anexo_4` tinyint(1) NOT NULL DEFAULT 0,
+  `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -1446,19 +1446,19 @@ CREATE TABLE `practicas_ras` (
 --
 
 INSERT INTO `practicas_ras` (`id_practica_ra`, `curso_escolar`, `ciclo`, `id_curso_escolar`, `id_ciclo`, `id_modulo`, `id_ra`, `porcentaje`) VALUES
-(1, '1', NULL, 1, 1, 8, 137, 10.00),
-(2, '1', NULL, 1, 1, 14, 139, 10.00),
-(3, '1', NULL, 1, 1, 15, 149, 10.00),
-(4, '1', NULL, 1, 1, 9, 121, 10.00),
-(5, '1', NULL, 1, 1, 9, 122, 10.00),
-(6, '1', NULL, 1, 1, 9, 123, 10.00),
-(7, '1', NULL, 1, 1, 9, 124, 10.00),
-(8, '1', NULL, 1, 1, 11, 154, 10.00),
-(9, '1', NULL, 1, 1, 11, 155, 10.00),
-(10, '1', NULL, 1, 1, 11, 156, 10.00),
-(11, '1', NULL, 1, 1, 11, 157, 10.00),
-(12, '1', NULL, 1, 1, 11, 159, 10.00),
-(13, '1', NULL, 1, 1, 10, 131, 10.00);
+(1, '1', 'SMR', 1, 1, 8, 137, 10.00),
+(2, '1', 'SMR', 1, 1, 14, 139, 10.00),
+(3, '1', 'SMR', 1, 1, 15, 149, 10.00),
+(4, '1', 'SMR', 1, 1, 9, 121, 10.00),
+(5, '1', 'SMR', 1, 1, 9, 122, 10.00),
+(6, '1', 'SMR', 1, 1, 9, 123, 10.00),
+(7, '1', 'SMR', 1, 1, 9, 124, 10.00),
+(8, '1', 'SMR', 1, 1, 11, 154, 10.00),
+(9, '1', 'SMR', 1, 1, 11, 155, 10.00),
+(10, '1', 'SMR', 1, 1, 11, 156, 10.00),
+(11, '1', 'SMR', 1, 1, 11, 157, 10.00),
+(12, '1', 'SMR', 1, 1, 11, 159, 10.00),
+(13, '1', 'SMR', 1, 1, 10, 131, 10.00);
 
 -- --------------------------------------------------------
 
