@@ -158,7 +158,6 @@ if ($company) {
             pr.fecha_inicio,
             pr.fecha_fin,
             pr.horas,
-            pr.requiere_anexo_5,
             pr.requiere_anexo_6,
             pr.observaciones,
             pe.estado AS practicas_estado,
@@ -649,9 +648,6 @@ $dias_semana = [
                       $anexos = [];
                       if ($practica['anexo']) {
                         $anexos[] = 'Anexo ' . $practica['anexo'];
-                      }
-                      if ((int) $practica['requiere_anexo_5'] === 1) {
-                        $anexos[] = 'Requiere Anexo 5';
                       }
                       if ((int) $practica['requiere_anexo_6'] === 1) {
                         $anexos[] = 'Requiere Anexo 6';
