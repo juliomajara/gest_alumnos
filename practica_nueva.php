@@ -138,6 +138,92 @@ function resolve_address_province_id(PDO $pdo, int $direccion_id, int $empresa_i
   return null;
 }
 
+/**
+ * @return array{dates: array<string, bool>, configured: bool}
+ */
+function load_non_teaching_days(PDO $pdo): array {
+  try {
+    $rows = $pdo->query('SELECT fecha FROM no_lectivos')->fetchAll(PDO::FETCH_COLUMN);
+  } catch (Throwable $error) {
+    return [
+      'dates' => [],
+      'configured' => false,
+    ];
+  }
+
+  $dates = [];
+  foreach ($rows as $date) {
+    $date_value = is_string($date) ? trim($date) : '';
+    if (valid_date($date_value)) {
+      $dates[$date_value] = true;
+    }
+  }
+
+  return [
+    'dates' => $dates,
+    'configured' => true,
+  ];
+}
+
+function has_schedule_for_day(array $horario, int $day): bool {
+  $day_data = is_array($horario[$day] ?? null) ? $horario[$day] : [];
+  $segments = [
+    ['entrada' => normalize_text($day_data['manana_entrada'] ?? null), 'salida' => normalize_text($day_data['manana_salida'] ?? null)],
+    ['entrada' => normalize_text($day_data['tarde_entrada'] ?? null), 'salida' => normalize_text($day_data['tarde_salida'] ?? null)],
+  ];
+
+  foreach ($segments as $segment) {
+    if ($segment['entrada'] === null || $segment['salida'] === null) {
+      continue;
+    }
+    if (!valid_time($segment['entrada']) || !valid_time($segment['salida'])) {
+      continue;
+    }
+    if (time_to_minutes($segment['salida']) <= time_to_minutes($segment['entrada'])) {
+      continue;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+function calculate_real_end_date(string $fecha_fin, int $dias_extra, array $non_teaching_lookup, bool $allow_saturday, bool $allow_sunday): string {
+  if ($dias_extra <= 0) {
+    return $fecha_fin;
+  }
+
+  $current = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_fin, new DateTimeZone('UTC'));
+  if (!$current) {
+    return $fecha_fin;
+  }
+
+  $counted_days = 0;
+  $guard = 0;
+
+  while ($counted_days < $dias_extra && $guard < 4000) {
+    $guard += 1;
+    $current = $current->modify('+1 day');
+    $date_key = $current->format('Y-m-d');
+
+    if (isset($non_teaching_lookup[$date_key])) {
+      continue;
+    }
+
+    $day_of_week = (int) $current->format('N');
+    if ($day_of_week === 6 && !$allow_saturday) {
+      continue;
+    }
+    if ($day_of_week === 7 && !$allow_sunday) {
+      continue;
+    }
+
+    $counted_days += 1;
+  }
+
+  return $current->format('Y-m-d');
+}
+
 function practice_full_name(array $row, string $nameKey = 'nombre'): string {
   $parts = array_filter([
     trim((string) ($row['apellido1'] ?? '')),
@@ -327,6 +413,10 @@ $anexo4_warning_message = null;
 $anexo4_warning_reasons = [];
 $pending_circ_excep_confirmation = false;
 $form_values = $_POST;
+$non_teaching_data = load_non_teaching_days($pdo);
+$non_teaching_lookup = $non_teaching_data['dates'];
+$non_teaching_configured = $non_teaching_data['configured'];
+$non_teaching_warning = !$non_teaching_configured;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $curso_escolar_id = isset($_POST['id_curso_escolar']) ? (int) $_POST['id_curso_escolar'] : 0;
@@ -409,6 +499,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $requires_circ_excep = $anexo4_reasons !== [];
 
+  $allow_saturday = has_schedule_for_day($horario, 6);
+  $allow_sunday = has_schedule_for_day($horario, 7);
+  $fecha_fin_real = null;
+  if ($fecha_fin !== null && valid_date($fecha_fin)) {
+    $fecha_fin_real = calculate_real_end_date($fecha_fin, $dias_extra, $non_teaching_lookup, $allow_saturday, $allow_sunday);
+    $form_values['fecha_fin_real'] = $fecha_fin_real;
+  }
+
   if (!$errors) {
     if ($requires_circ_excep && !$confirm_circ_excep) {
       $pending_circ_excep_confirmation = true;
@@ -424,10 +522,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
             id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
-            fecha_inicio, fecha_fin, horas, dias_extra, observaciones, circ_excep
+            fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, circ_excep
           ) VALUES (
             :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
-            :fecha_inicio, :fecha_fin, :horas, :dias_extra, :observaciones, :circ_excep
+            :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :circ_excep
           )'
         );
 
@@ -440,6 +538,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'id_practicas_estado' => 1,
           'fecha_inicio' => $fecha_inicio,
           'fecha_fin' => $fecha_fin,
+          'fecha_fin_real' => $fecha_fin_real,
           'horas' => $horas,
           'dias_extra' => $dias_extra,
           'observaciones' => $observaciones,
@@ -513,7 +612,7 @@ if (!$groups) {
 }
 
 $companies = $pdo->query('SELECT id_empresa, nombre, apellido1, apellido2 FROM empresas ORDER BY nombre, apellido1, apellido2')->fetchAll();
-$no_lectivos = $pdo->query('SELECT fecha FROM no_lectivos')->fetchAll(PDO::FETCH_COLUMN);
+$no_lectivos = array_keys($non_teaching_lookup);
 
 $selected_group = isset($form_values['id_grupo']) ? (int) $form_values['id_grupo'] : 0;
 $selected_student = isset($form_values['id_alumno']) ? (int) $form_values['id_alumno'] : 0;
@@ -661,7 +760,7 @@ $dias_semana = [
             <h3>Datos generales</h3>
             <p>Selecciona curso, alumno y empresa.</p>
           </div>
-          <div class="entity-grid entity-grid--4 practica-nueva-datos-grid">
+          <div class="entity-grid">
             <label class="practica-curso">
               Curso escolar
               <input type="text" value="<?php echo htmlspecialchars((string) ($active_course['curso_escolar'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?>" readonly>
@@ -681,8 +780,6 @@ $dias_semana = [
                 <?php endforeach; ?>
               </select>
             </label>
-          </div>
-          <div class="entity-grid entity-grid--2">
             <label class="practica-alumno">
               Alumno
               <select name="id_alumno" id="id_alumno" <?php echo $selected_group > 0 ? '' : 'disabled'; ?> required>
@@ -695,7 +792,7 @@ $dias_semana = [
               </select>
             </label>
             <label>
-              Horas a realizar
+              Horas
               <input type="number" name="horas" id="horas" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['horas'] ?? '500'), ENT_QUOTES, 'UTF-8'); ?>" required>
             </label>
           </div>
@@ -723,7 +820,7 @@ $dias_semana = [
               </select>
             </label>
             <label>
-              Tutor de la empresa
+              Tutor
               <select name="id_empresa_tutor" id="id_empresa_tutor" <?php echo $selected_company > 0 ? '' : 'disabled'; ?>>
                 <option value=""><?php echo $selected_company > 0 ? 'Selecciona un tutor' : 'Selecciona primero una empresa'; ?></option>
                 <?php foreach ($company_tutors as $tutor): ?>
@@ -734,6 +831,10 @@ $dias_semana = [
               </select>
             </label>
           </div>
+
+          <?php if ($non_teaching_warning): ?>
+            <p class="subheading">Aviso: no lectivos no están configurados; los días extra se calcularán solo con restricción de sábado/domingo según horario.</p>
+          <?php endif; ?>
 
           <div class="practica-nueva-layout">
             <div class="practica-nueva-block practica-nueva-block--horario">
@@ -794,7 +895,7 @@ $dias_semana = [
                 </label>
                 <label>
                   Fecha fin real
-                  <input type="date" id="fecha_fin_real" value="" readonly>
+                  <input type="date" name="fecha_fin_real" id="fecha_fin_real" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin_real'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly>
                 </label>
                 <label>
                   Días
@@ -846,6 +947,7 @@ $dias_semana = [
     const lastDayHoursInput = document.getElementById('horas_ultimo_dia');
     const scheduleContainer = document.querySelector('[data-schedule-container]');
     const nonTeachingDays = new Set(<?php echo json_encode(array_values($no_lectivos), JSON_UNESCAPED_UNICODE); ?>);
+    const nonTeachingConfigured = <?php echo $non_teaching_configured ? 'true' : 'false'; ?>;
 
 
     const copyMondayFieldToWeekdays = (sourceInput) => {
@@ -933,6 +1035,18 @@ $dias_semana = [
       return `${y}-${m}-${d}`;
     };
 
+    const hasScheduleOnDay = (day) => {
+      const segments = ['manana', 'tarde'];
+      for (const segment of segments) {
+        const inValue = document.querySelector(`input[data-day="${day}"][data-segment="${segment}_entrada"]`)?.value || '';
+        const outValue = document.querySelector(`input[data-day="${day}"][data-segment="${segment}_salida"]`)?.value || '';
+        if (segmentHours(inValue, outValue) > 0) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const updateRealEndDate = () => {
       if (!realEndDateInput) {
         return;
@@ -947,9 +1061,37 @@ $dias_semana = [
 
       const parsedExtraDays = Number.parseInt(extraDaysInput?.value || '0', 10);
       const safeExtraDays = Number.isNaN(parsedExtraDays) ? 0 : Math.max(0, Math.min(20, parsedExtraDays));
-      const realEndDate = new Date(calculatedEndDate);
-      realEndDate.setUTCDate(realEndDate.getUTCDate() + safeExtraDays);
-      realEndDateInput.value = toIsoDate(realEndDate);
+      if (safeExtraDays === 0) {
+        realEndDateInput.value = toIsoDate(calculatedEndDate);
+        return;
+      }
+
+      const allowSaturday = hasScheduleOnDay(6);
+      const allowSunday = hasScheduleOnDay(7);
+      let current = new Date(calculatedEndDate);
+      let counted = 0;
+      let guard = 0;
+
+      while (counted < safeExtraDays && guard < 4000) {
+        guard += 1;
+        current.setUTCDate(current.getUTCDate() + 1);
+        const currentIso = toIsoDate(current);
+        const dayOfWeek = current.getUTCDay();
+
+        if (nonTeachingConfigured && nonTeachingDays.has(currentIso)) {
+          continue;
+        }
+        if (dayOfWeek === 6 && !allowSaturday) {
+          continue;
+        }
+        if (dayOfWeek === 0 && !allowSunday) {
+          continue;
+        }
+
+        counted += 1;
+      }
+
+      realEndDateInput.value = toIsoDate(current);
     };
 
     const getWeeklyTeachingHours = () => {
