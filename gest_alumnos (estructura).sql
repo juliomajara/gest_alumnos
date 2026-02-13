@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-02-2026 a las 16:58:41
+-- Tiempo de generación: 13-02-2026 a las 13:57:13
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -368,8 +368,7 @@ CREATE TABLE `practicas` (
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
-  `requiere_anexo_5` tinyint(1) NOT NULL DEFAULT 0,
-  `requiere_anexo_6` tinyint(1) NOT NULL DEFAULT 0,
+  `requiere_anexo_4` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -441,6 +440,8 @@ CREATE TABLE `practicas_pasos` (
 
 CREATE TABLE `practicas_ras` (
   `id_practica_ra` int(10) UNSIGNED NOT NULL,
+  `curso_escolar` varchar(20) DEFAULT NULL,
+  `ciclo` varchar(20) DEFAULT NULL,
   `id_curso_escolar` int(10) UNSIGNED NOT NULL,
   `id_ciclo` int(10) UNSIGNED NOT NULL,
   `id_modulo` int(10) UNSIGNED DEFAULT NULL,
@@ -732,9 +733,12 @@ ALTER TABLE `practicas_pasos`
 --
 ALTER TABLE `practicas_ras`
   ADD PRIMARY KEY (`id_practica_ra`),
+  ADD UNIQUE KEY `uq_practicas_ras_context` (`curso_escolar`,`ciclo`,`id_modulo`,`id_ra`),
   ADD KEY `fk_pras_curso_escolar` (`id_curso_escolar`),
   ADD KEY `fk_pras_ra` (`id_ra`),
-  ADD KEY `fk_pras_ciclo` (`id_ciclo`);
+  ADD KEY `fk_pras_ciclo` (`id_ciclo`),
+  ADD KEY `idx_practicas_ras_curso_ciclo` (`curso_escolar`,`ciclo`),
+  ADD KEY `idx_practicas_ras_id_ra` (`id_ra`);
 
 --
 -- Indices de la tabla `profesores`

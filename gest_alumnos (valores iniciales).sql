@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 12-02-2026 a las 16:58:17
+-- Tiempo de generación: 13-02-2026 a las 13:58:41
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1038,6 +1038,46 @@ CREATE TABLE `no_lectivos` (
   `fecha` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `no_lectivos`
+--
+
+INSERT INTO `no_lectivos` (`id`, `fecha`) VALUES
+(1, '2025-10-13'),
+(2, '2025-11-03'),
+(3, '2025-12-08'),
+(4, '2025-12-22'),
+(5, '2025-12-23'),
+(6, '2025-12-24'),
+(7, '2025-12-25'),
+(8, '2025-12-26'),
+(9, '2025-12-29'),
+(10, '2025-12-30'),
+(11, '2025-12-31'),
+(12, '2026-01-01'),
+(13, '2026-01-02'),
+(14, '2026-01-07'),
+(15, '2026-01-06'),
+(16, '2026-01-05'),
+(17, '2026-03-27'),
+(18, '2026-03-30'),
+(19, '2026-03-31'),
+(20, '2026-04-01'),
+(21, '2026-04-02'),
+(22, '2026-04-03'),
+(23, '2026-04-06'),
+(24, '2026-05-01'),
+(25, '2026-05-14'),
+(26, '2026-05-25'),
+(27, '2026-06-19'),
+(28, '2026-06-22'),
+(29, '2026-06-29'),
+(30, '2026-06-30'),
+(31, '2026-06-23'),
+(32, '2026-06-24'),
+(33, '2026-06-25'),
+(34, '2026-06-26');
+
 -- --------------------------------------------------------
 
 --
@@ -1283,8 +1323,7 @@ CREATE TABLE `practicas` (
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
-  `requiere_anexo_5` tinyint(1) NOT NULL DEFAULT 0,
-  `requiere_anexo_6` tinyint(1) NOT NULL DEFAULT 0,
+  `requiere_anexo_4` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -1301,6 +1340,18 @@ CREATE TABLE `practicas_anexos` (
   `resumen` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `practicas_anexos`
+--
+
+INSERT INTO `practicas_anexos` (`id_practicas_anexo`, `anexo`, `descripcion`, `resumen`) VALUES
+(1, 'anexo 2.1', 'Relación de alumnos', NULL),
+(2, 'anexo 2.2', 'Comunicación a la DAT de la relación de alumnos', NULL),
+(3, 'anexo 3', 'Plan de formación', NULL),
+(4, 'anexo 4', 'Autorización por circunstancias excepcionales', NULL),
+(5, 'anexo 7', 'Ficha de seguimiento periódico', NULL),
+(6, 'anexo 8', 'Informe de valoración final del tutor', NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -1312,6 +1363,21 @@ CREATE TABLE `practicas_anexos_estados` (
   `estado` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `practicas_anexos_estados`
+--
+
+INSERT INTO `practicas_anexos_estados` (`id_practicas_anexo_estado`, `estado`) VALUES
+(1, 'Sin iniciar'),
+(2, 'Datos solicitados'),
+(3, 'Enviado a firmar por la empresa'),
+(4, 'Firmado por la empresa'),
+(5, 'Enviado a firmar por el director'),
+(6, 'Firmado por el director'),
+(7, 'Completado'),
+(8, 'Enviado al alumno'),
+(9, 'Devuelto a la empresa');
+
 -- --------------------------------------------------------
 
 --
@@ -1322,6 +1388,16 @@ CREATE TABLE `practicas_estados` (
   `id_practicas_estado` int(10) UNSIGNED NOT NULL,
   `estado` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `practicas_estados`
+--
+
+INSERT INTO `practicas_estados` (`id_practicas_estado`, `estado`) VALUES
+(1, 'En espera'),
+(2, 'En curso'),
+(3, 'Finalizada'),
+(4, 'Cancelada');
 
 -- --------------------------------------------------------
 
@@ -1356,12 +1432,33 @@ CREATE TABLE `practicas_pasos` (
 
 CREATE TABLE `practicas_ras` (
   `id_practica_ra` int(10) UNSIGNED NOT NULL,
+  `curso_escolar` varchar(20) DEFAULT NULL,
+  `ciclo` varchar(20) DEFAULT NULL,
   `id_curso_escolar` int(10) UNSIGNED NOT NULL,
   `id_ciclo` int(10) UNSIGNED NOT NULL,
   `id_modulo` int(10) UNSIGNED DEFAULT NULL,
   `id_ra` int(10) UNSIGNED NOT NULL,
   `porcentaje` decimal(5,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `practicas_ras`
+--
+
+INSERT INTO `practicas_ras` (`id_practica_ra`, `curso_escolar`, `ciclo`, `id_curso_escolar`, `id_ciclo`, `id_modulo`, `id_ra`, `porcentaje`) VALUES
+(1, '1', NULL, 1, 1, 8, 137, 10.00),
+(2, '1', NULL, 1, 1, 14, 139, 10.00),
+(3, '1', NULL, 1, 1, 15, 149, 10.00),
+(4, '1', NULL, 1, 1, 9, 121, 10.00),
+(5, '1', NULL, 1, 1, 9, 122, 10.00),
+(6, '1', NULL, 1, 1, 9, 123, 10.00),
+(7, '1', NULL, 1, 1, 9, 124, 10.00),
+(8, '1', NULL, 1, 1, 11, 154, 10.00),
+(9, '1', NULL, 1, 1, 11, 155, 10.00),
+(10, '1', NULL, 1, 1, 11, 156, 10.00),
+(11, '1', NULL, 1, 1, 11, 157, 10.00),
+(12, '1', NULL, 1, 1, 11, 159, 10.00),
+(13, '1', NULL, 1, 1, 10, 131, 10.00);
 
 -- --------------------------------------------------------
 
@@ -1860,9 +1957,12 @@ ALTER TABLE `practicas_pasos`
 --
 ALTER TABLE `practicas_ras`
   ADD PRIMARY KEY (`id_practica_ra`),
+  ADD UNIQUE KEY `uq_practicas_ras_context` (`curso_escolar`,`ciclo`,`id_modulo`,`id_ra`),
   ADD KEY `fk_pras_curso_escolar` (`id_curso_escolar`),
   ADD KEY `fk_pras_ra` (`id_ra`),
-  ADD KEY `fk_pras_ciclo` (`id_ciclo`);
+  ADD KEY `fk_pras_ciclo` (`id_ciclo`),
+  ADD KEY `idx_practicas_ras_curso_ciclo` (`curso_escolar`,`ciclo`),
+  ADD KEY `idx_practicas_ras_id_ra` (`id_ra`);
 
 --
 -- Indices de la tabla `profesores`
@@ -2013,7 +2113,7 @@ ALTER TABLE `niveles`
 -- AUTO_INCREMENT de la tabla `no_lectivos`
 --
 ALTER TABLE `no_lectivos`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT de la tabla `paises`
@@ -2031,19 +2131,19 @@ ALTER TABLE `practicas`
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
 --
 ALTER TABLE `practicas_anexos`
-  MODIFY `id_practicas_anexo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_practicas_anexo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos_estados`
 --
 ALTER TABLE `practicas_anexos_estados`
-  MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_estados`
 --
 ALTER TABLE `practicas_estados`
-  MODIFY `id_practicas_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_practicas_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_horario`
@@ -2061,7 +2161,7 @@ ALTER TABLE `practicas_pasos`
 -- AUTO_INCREMENT de la tabla `practicas_ras`
 --
 ALTER TABLE `practicas_ras`
-  MODIFY `id_practica_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_practica_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de la tabla `profesores`
