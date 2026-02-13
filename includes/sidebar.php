@@ -26,6 +26,11 @@ $nav_items = [
     'label' => 'Prácticas',
     'href' => 'practicas.php',
   ],
+   [
+    'key' => 'profesores',
+    'label' => 'Profesores',
+    'href' => 'profesores.php',
+  ],
   [
     'key' => 'calendario',
     'label' => 'Calendario',
