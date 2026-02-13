@@ -242,15 +242,15 @@ function build_weekly_schedule_pdf_table(array $scheduleByDay, array $diasSemana
   return $html;
 }
 
-function is_red_day(DateTimeImmutable $date, array $nonSchoolDays, bool $hasSaturdaySchedule, bool $hasSundaySchedule): bool {
+function is_red_day(DateTimeImmutable $date, array $nonSchoolDays, array $scheduleByDay): bool {
   $currentIso = $date->format('Y-m-d');
   $dayOfWeek = (int) $date->format('N');
-  $isWeekendWithoutSchedule = ($dayOfWeek === 6 && !$hasSaturdaySchedule) || ($dayOfWeek === 7 && !$hasSundaySchedule);
+  $hasScheduleForDay = !empty($scheduleByDay[$dayOfWeek]);
 
-  return isset($nonSchoolDays[$currentIso]) || $isWeekendWithoutSchedule;
+  return isset($nonSchoolDays[$currentIso]) || !$hasScheduleForDay;
 }
 
-function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, bool $hasSaturdaySchedule, bool $hasSundaySchedule): string {
+function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): string {
   $monthHtmlChunks = [];
   $firstMonth = new DateTimeImmutable($startDate->format('Y-m-01'));
   $lastMonth = new DateTimeImmutable($endDate->format('Y-m-01'));
@@ -262,25 +262,27 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
     $startOffset = (int) $month->format('N');
 
     $monthHtml = '<h3 style="text-align:center; margin: 10px 0 6px 0;">' . strtoupper(month_name_es($monthNum)) . ' ' . $yearNum . '</h3>';
-    $monthHtml .= '<table width="100%" border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse; table-layout: fixed; margin-bottom: 14px;">';
+    $monthHtml .= '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; table-layout: fixed; margin-bottom: 14px;">';
     $monthHtml .= '<thead><tr>';
     foreach (['L', 'M', 'X', 'J', 'V', 'S', 'D'] as $dayLabel) {
-      $monthHtml .= '<th style="background-color:#d9d9d9; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
+      $monthHtml .= '<th style="background-color:#d9d9d9; border:1px solid #333333; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
     }
     $monthHtml .= '</tr></thead><tbody><tr>';
 
     for ($blank = 1; $blank < $startOffset; $blank++) {
-      $monthHtml .= '<td>&nbsp;</td>';
+      $monthHtml .= '<td style="border:1px solid #333333; height:28px;">&nbsp;</td>';
     }
 
     $column = $startOffset;
     for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
       $current = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
-      $isAttendanceDay = !is_red_day($current, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule);
+      $isAttendanceDay = !is_red_day($current, $nonSchoolDays, $scheduleByDay);
 
-      $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt;';
+      $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt; border:1px solid #333333;';
       if ($isAttendanceDay) {
         $style .= ' background-color:#d9ecff;';
+      } else {
+        $style .= ' background-color:#ffd6d6;';
       }
 
       $monthHtml .= '<td style="' . $style . '">' . $day . '</td>';
@@ -291,7 +293,7 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
     }
 
     while ($column % 7 !== 1) {
-      $monthHtml .= '<td>&nbsp;</td>';
+      $monthHtml .= '<td style="border:1px solid #333333; height:28px;">&nbsp;</td>';
       $column++;
     }
 
@@ -319,22 +321,11 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
   return $html;
 }
 
-function count_attendance_days(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, bool $hasSaturdaySchedule, bool $hasSundaySchedule): int {
+function count_attendance_days(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): int {
   $count = 0;
-  $startIso = $startDate->format('Y-m-d');
-  $endIso = $endDate->format('Y-m-d');
 
   for ($current = $startDate; $current <= $endDate; $current = $current->modify('+1 day')) {
-    $currentIso = $current->format('Y-m-d');
-    $isStart = $currentIso === $startIso;
-    $isEnd = $currentIso === $endIso;
-
-    if ($isStart || $isEnd) {
-      $count++;
-      continue;
-    }
-
-    if (!is_red_day($current, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule)) {
+    if (!is_red_day($current, $nonSchoolDays, $scheduleByDay)) {
       $count++;
     }
   }
@@ -504,9 +495,7 @@ if ($id_practica === false || $id_practica === null) {
             $nonSchoolSourceNote = 'Nota: no hay no lectivos configurados en el sistema para esta instalación.';
           }
 
-          $hasSaturdaySchedule = !empty($schedule_by_day[6]);
-          $hasSundaySchedule = !empty($schedule_by_day[7]);
-          $attendanceDays = count_attendance_days($startDate, $endDate, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule);
+          $attendanceDays = count_attendance_days($startDate, $endDate, $nonSchoolDays, $schedule_by_day);
 
           $pdfHtml = '<h1 style="margin-bottom:8px;">Calendario de prácticas</h1>';
           $pdfHtml .= '<p><strong>Alumno:</strong> ' . htmlspecialchars(full_name($practice, 'alumno'), ENT_QUOTES, 'UTF-8') . '</p>';
@@ -516,11 +505,11 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Horario semanal</h3>';
           $pdfHtml .= build_weekly_schedule_pdf_table($schedule_by_day, $dias_semana);
           $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Calendario mensual</h3>';
-          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul claro (asistencia a empresa).</p>';
+          $pdfHtml .= '<p style="font-size:10pt;">Leyenda de colores: azul claro (asistencia a empresa) y rojo claro (no asistencia a empresa).</p>';
           if ($nonSchoolSourceNote !== '') {
             $pdfHtml .= '<p style="font-size:10pt;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
           }
-          $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule);
+          $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $schedule_by_day);
           $pdfHtml .= '<p style="margin-top:8px;"><strong>Total de horas de prácticas: ' . htmlspecialchars(format_value($practice['horas'], '0'), ENT_QUOTES, 'UTF-8') . ' horas</strong></p>';
           $pdfHtml .= '<p><strong>Total de días que asistirá a la empresa: ' . $attendanceDays . ' días</strong></p>';
 
