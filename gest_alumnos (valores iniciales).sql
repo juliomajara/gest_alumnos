@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-02-2026 a las 23:08:27
+-- Tiempo de generación: 14-02-2026 a las 00:04:32
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1083,91 +1083,87 @@ INSERT INTO `no_lectivos` (`id`, `fecha`) VALUES
 -- Estructura de tabla para la tabla `paises`
 --
 
-CREATE TABLE paises (
-  id_pais INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-  codigo_iso CHAR(2) NOT NULL,
-  nombre VARCHAR(60) NOT NULL,
-  PRIMARY KEY (id_pais),
-  UNIQUE KEY uk_paises_codigo_iso (codigo_iso),
-  KEY idx_paises_nombre (nombre)
+CREATE TABLE `paises` (
+  `id_pais` int(10) UNSIGNED NOT NULL,
+  `codigo_iso` char(2) NOT NULL,
+  `pais` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 --
 -- Volcado de datos para la tabla `paises`
 --
 
-INSERT INTO paises (codigo_iso, nombre) VALUES
-('ES','España'),
-('AD','Andorra'),
-('AR','Argentina'),
-('AS','Samoa Americana'),
-('AT','Austria'),
-('AU','Australia'),
-('BD','Bangladés'),
-('BE','Bélgica'),
-('BG','Bulgaria'),
-('BR','Brasil'),
-('CA','Canadá'),
-('CH','Suiza'),
-('CZ','República Checa'),
-('DE','Alemania'),
-('DK','Dinamarca'),
-('DO','República Dominicana'),
-('FI','Finlandia'),
-('FO','Islas Feroe'),
-('FR','Francia'),
-('GB','Reino Unido'),
-('GF','Guayana Francesa'),
-('GG','Guernsey'),
-('GL','Groenlandia'),
-('GP','Guadalupe'),
-('GT','Guatemala'),
-('GU','Guam'),
-('GY','Guyana'),
-('HR','Croacia'),
-('HU','Hungría'),
-('IM','Isla de Man'),
-('IN','India'),
-('IS','Islandia'),
-('IT','Italia'),
-('JE','Jersey'),
-('JP','Japón'),
-('LI','Liechtenstein'),
-('LK','Sri Lanka'),
-('LT','Lituania'),
-('LU','Luxemburgo'),
-('MC','Mónaco'),
-('MD','Moldavia'),
-('MH','Islas Marshall'),
-('MK','Macedonia del Norte'),
-('MP','Islas Marianas del Norte'),
-('MQ','Martinica'),
-('MX','México'),
-('MY','Malasia'),
-('NL','Países Bajos'),
-('NO','Noruega'),
-('NZ','Nueva Zelanda'),
-('PH','Filipinas'),
-('PK','Pakistán'),
-('PL','Polonia'),
-('PM','San Pedro y Miquelón'),
-('PR','Puerto Rico'),
-('PT','Portugal'),
-('RE','Reunión'),
-('RU','Rusia'),
-('SE','Suecia'),
-('SI','Eslovenia'),
-('SJ','Svalbard y Jan Mayen'),
-('SK','Eslovaquia'),
-('SM','San Marino'),
-('TH','Tailandia'),
-('TR','Turquía'),
-('US','Estados Unidos'),
-('VA','Vaticano'),
-('VI','Islas Vírgenes de EE.UU.'),
-('YT','Mayotte'),
-('ZA','Sudáfrica');
+INSERT INTO `paises` (`id_pais`, `codigo_iso`, `pais`) VALUES
+(1, 'ES', 'España'),
+(2, 'AD', 'Andorra'),
+(3, 'AR', 'Argentina'),
+(4, 'AS', 'Samoa Americana'),
+(5, 'AT', 'Austria'),
+(6, 'AU', 'Australia'),
+(7, 'BD', 'Bangladés'),
+(8, 'BE', 'Bélgica'),
+(9, 'BG', 'Bulgaria'),
+(10, 'BR', 'Brasil'),
+(11, 'CA', 'Canadá'),
+(12, 'CH', 'Suiza'),
+(13, 'CZ', 'República Checa'),
+(14, 'DE', 'Alemania'),
+(15, 'DK', 'Dinamarca'),
+(16, 'DO', 'República Dominicana'),
+(17, 'FI', 'Finlandia'),
+(18, 'FO', 'Islas Feroe'),
+(19, 'FR', 'Francia'),
+(20, 'GB', 'Reino Unido'),
+(21, 'GF', 'Guayana Francesa'),
+(22, 'GG', 'Guernsey'),
+(23, 'GL', 'Groenlandia'),
+(24, 'GP', 'Guadalupe'),
+(25, 'GT', 'Guatemala'),
+(26, 'GU', 'Guam'),
+(27, 'GY', 'Guyana'),
+(28, 'HR', 'Croacia'),
+(29, 'HU', 'Hungría'),
+(30, 'IM', 'Isla de Man'),
+(31, 'IN', 'India'),
+(32, 'IS', 'Islandia'),
+(33, 'IT', 'Italia'),
+(34, 'JE', 'Jersey'),
+(35, 'JP', 'Japón'),
+(36, 'LI', 'Liechtenstein'),
+(37, 'LK', 'Sri Lanka'),
+(38, 'LT', 'Lituania'),
+(39, 'LU', 'Luxemburgo'),
+(40, 'MC', 'Mónaco'),
+(41, 'MD', 'Moldavia'),
+(42, 'MH', 'Islas Marshall'),
+(43, 'MK', 'Macedonia del Norte'),
+(44, 'MP', 'Islas Marianas del Norte'),
+(45, 'MQ', 'Martinica'),
+(46, 'MX', 'México'),
+(47, 'MY', 'Malasia'),
+(48, 'NL', 'Países Bajos'),
+(49, 'NO', 'Noruega'),
+(50, 'NZ', 'Nueva Zelanda'),
+(51, 'PH', 'Filipinas'),
+(52, 'PK', 'Pakistán'),
+(53, 'PL', 'Polonia'),
+(54, 'PM', 'San Pedro y Miquelón'),
+(55, 'PR', 'Puerto Rico'),
+(56, 'PT', 'Portugal'),
+(57, 'RE', 'Reunión'),
+(58, 'RU', 'Rusia'),
+(59, 'SE', 'Suecia'),
+(60, 'SI', 'Eslovenia'),
+(61, 'SJ', 'Svalbard y Jan Mayen'),
+(62, 'SK', 'Eslovaquia'),
+(63, 'SM', 'San Marino'),
+(64, 'TH', 'Tailandia'),
+(65, 'TR', 'Turquía'),
+(66, 'US', 'Estados Unidos'),
+(67, 'VA', 'Vaticano'),
+(68, 'VI', 'Islas Vírgenes de EE.UU.'),
+(69, 'YT', 'Mayotte'),
+(70, 'ZA', 'Sudáfrica');
 
 -- --------------------------------------------------------
 
@@ -1773,7 +1769,9 @@ ALTER TABLE `no_lectivos`
 -- Indices de la tabla `paises`
 --
 ALTER TABLE `paises`
-  ADD PRIMARY KEY (`id_pais`);
+  ADD PRIMARY KEY (`id_pais`),
+  ADD UNIQUE KEY `uk_paises_codigo_iso` (`codigo_iso`),
+  ADD KEY `idx_paises_nombre` (`pais`);
 
 --
 -- Indices de la tabla `practicas`
