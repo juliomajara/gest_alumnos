@@ -2,6 +2,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Mpdf\Mpdf;
 
 function format_value($value, string $fallback = 'No disponible'): string {
   if ($value === null || $value === '') {
@@ -93,6 +96,157 @@ function build_address(array $practice): string {
   return $parts ? implode(', ', $parts) : 'No disponible';
 }
 
+function sanitize_filename_component(?string $value, int $maxLength = 60): string {
+  $value = trim((string) $value);
+  if ($value === '') {
+    return 'NA';
+  }
+
+  $value = preg_replace('/[\\\\\/:*?"<>|]+/u', '', $value) ?? '';
+  $value = preg_replace('/\s+/u', '_', $value) ?? '';
+  $value = preg_replace('/_+/u', '_', $value) ?? '';
+  $value = trim($value, '._-');
+
+  if ($value === '') {
+    return 'NA';
+  }
+
+  if (function_exists('mb_substr')) {
+    return mb_substr($value, 0, $maxLength);
+  }
+
+  return substr($value, 0, $maxLength);
+}
+
+function build_calendar_pdf_filename(array $practice): string {
+  $parts = [
+    sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
+    sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+    sanitize_filename_component((string) ($practice['alumno_nombre'] ?? ''), 40),
+    sanitize_filename_component((string) ($practice['alumno_apellido1'] ?? ''), 40),
+    sanitize_filename_component((string) ($practice['empresa_nombre'] ?? ''), 70),
+  ];
+
+  $baseName = implode('_', $parts);
+  if (function_exists('mb_substr')) {
+    $baseName = mb_substr($baseName, 0, 200);
+  } else {
+    $baseName = substr($baseName, 0, 200);
+  }
+
+  return $baseName . '.pdf';
+}
+
+function month_name_es(int $month): string {
+  $names = [
+    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
+    7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
+  ];
+  return $names[$month] ?? '';
+}
+
+function build_schedule_summary(array $scheduleByDay): array {
+  $labels = [1 => 'L', 2 => 'M', 3 => 'X', 4 => 'J', 5 => 'V', 6 => 'S', 7 => 'D'];
+  $summary = [];
+
+  foreach ($labels as $dayNumber => $label) {
+    $segments = $scheduleByDay[$dayNumber] ?? [];
+    $ranges = [];
+
+    foreach ($segments as $segment) {
+      $entrada = format_time($segment['hora_entrada'] ?? null, '');
+      $salida = format_time($segment['hora_salida'] ?? null, '');
+      if ($entrada !== '' && $salida !== '') {
+        $ranges[] = $entrada . '-' . $salida;
+      }
+    }
+
+    $summary[$dayNumber] = $ranges === [] ? $label . ': —' : $label . ': ' . implode(' / ', $ranges);
+  }
+
+  return $summary;
+}
+
+function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, bool $hasSaturdaySchedule, bool $hasSundaySchedule): string {
+  $html = '';
+  $firstMonth = new DateTimeImmutable($startDate->format('Y-m-01'));
+  $lastMonth = new DateTimeImmutable($endDate->format('Y-m-01'));
+
+  for ($month = $firstMonth; $month <= $lastMonth; $month = $month->modify('+1 month')) {
+    $monthNum = (int) $month->format('n');
+    $yearNum = (int) $month->format('Y');
+    $daysInMonth = (int) $month->format('t');
+    $startOffset = (int) $month->format('N');
+
+    $html .= '<h3>' . month_name_es($monthNum) . ' ' . $yearNum . '</h3>';
+    $html .= '<table width="100%" border="1" cellpadding="4" cellspacing="0">';
+    $html .= '<thead><tr>';
+    foreach (['L', 'M', 'X', 'J', 'V', 'S', 'D'] as $dayLabel) {
+      $html .= '<th bgcolor="#f3f6fc">' . $dayLabel . '</th>';
+    }
+    $html .= '</tr></thead><tbody><tr>';
+
+    for ($blank = 1; $blank < $startOffset; $blank++) {
+      $html .= '<td>&nbsp;</td>';
+    }
+
+    $column = $startOffset;
+    for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
+      $current = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
+      $currentIso = $current->format('Y-m-d');
+      $dayOfWeek = (int) $current->format('N');
+
+      $isWeekendWithoutSchedule = ($dayOfWeek === 6 && !$hasSaturdaySchedule) || ($dayOfWeek === 7 && !$hasSundaySchedule);
+      $isNonSchool = isset($nonSchoolDays[$currentIso]);
+      $isRed = $isNonSchool || $isWeekendWithoutSchedule;
+      $isStart = $currentIso === $startDate->format('Y-m-d');
+      $isEnd = $currentIso === $endDate->format('Y-m-d');
+
+      $open = '<td align="center">';
+      if ($isStart || $isEnd) {
+        $open = '<td align="center"><b>';
+      }
+
+      $marker = '';
+      if ($isStart) {
+        $marker .= ' (I)';
+      }
+      if ($isEnd) {
+        $marker .= ' (F)';
+      }
+
+      if ($isRed) {
+        $open .= '<font color="#b42318">';
+      }
+
+      $html .= $open . $day . $marker;
+
+      if ($isRed) {
+        $html .= '</font>';
+      }
+
+      if ($isStart || $isEnd) {
+        $html .= '</b>';
+      }
+
+      $html .= '</td>';
+
+      if ($column % 7 === 0 && $day < $daysInMonth) {
+        $html .= '</tr><tr>';
+      }
+    }
+
+    while ($column % 7 !== 1) {
+      $html .= '<td>&nbsp;</td>';
+      $column++;
+    }
+
+    $html .= '</tr></tbody></table>';
+  }
+
+  return $html;
+}
+
 $dias_semana = [
   1 => 'Lunes',
   2 => 'Martes',
@@ -103,12 +257,17 @@ $dias_semana = [
   7 => 'Domingo',
 ];
 
-$id_practica_raw = $_GET['id_practica'] ?? null;
+$id_practica_raw = $_GET['id_practica'] ?? ($_GET['id'] ?? null);
 $id_practica = filter_var($id_practica_raw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+$action = isset($_GET['action']) ? (string) $_GET['action'] : '';
 
 $load_error = null;
 $practice = null;
 $schedule_by_day = [];
+$calendar_status = null;
+$calendar_error = null;
+$calendar_file_path = null;
+$calendar_file_name = null;
 
 if ($id_practica === false || $id_practica === null) {
   $load_error = 'No se ha indicado un identificador de práctica válido.';
@@ -195,6 +354,94 @@ if ($id_practica === false || $id_practica === null) {
         }
         $schedule_by_day[$day][] = $row;
       }
+
+      $calendarDirectory = __DIR__ . '/docs/practicas_info';
+      if (!is_dir($calendarDirectory) && !mkdir($calendarDirectory, 0755, true) && !is_dir($calendarDirectory)) {
+        throw new RuntimeException('No se pudo crear el directorio de calendarios.');
+      }
+
+      $calendar_file_name = build_calendar_pdf_filename($practice);
+      $calendar_file_path = $calendarDirectory . '/' . $calendar_file_name;
+
+      if ($action === 'descargar_calendario') {
+        $realBase = realpath($calendarDirectory);
+        $realFile = $calendar_file_path !== null && file_exists($calendar_file_path) ? realpath($calendar_file_path) : false;
+
+        if ($realBase !== false && $realFile !== false && str_starts_with($realFile, $realBase . DIRECTORY_SEPARATOR) && is_readable($realFile)) {
+          header('Content-Type: application/pdf');
+          header('Content-Disposition: attachment; filename="calendario_practicas.pdf"; filename*=UTF-8\'\'' . rawurlencode($calendar_file_name));
+          header('Content-Length: ' . (string) filesize($realFile));
+          header('X-Content-Type-Options: nosniff');
+          readfile($realFile);
+          exit;
+        }
+
+        $calendar_error = 'El calendario no existe o no está disponible para descarga.';
+      }
+
+      if ($action === 'generar_calendario') {
+        $startDate = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
+        $endDate = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin'] ?? ''));
+
+        if (!$startDate || !$endDate || $startDate > $endDate) {
+          $calendar_error = 'No se puede generar el calendario porque las fechas de inicio/fin son inválidas.';
+        } else {
+          $nonSchoolDays = [];
+          $nonSchoolSourceNote = '';
+
+          try {
+            $festivosStmt = $pdo->prepare(
+              'SELECT fecha
+               FROM no_lectivos
+               WHERE fecha BETWEEN :fecha_inicio AND :fecha_fin'
+            );
+            $festivosStmt->execute([
+              'fecha_inicio' => $startDate->format('Y-m-d'),
+              'fecha_fin' => $endDate->format('Y-m-d'),
+            ]);
+
+            foreach ($festivosStmt->fetchAll(PDO::FETCH_ASSOC) as $festivo) {
+              if (!empty($festivo['fecha'])) {
+                $nonSchoolDays[(string) $festivo['fecha']] = true;
+              }
+            }
+          } catch (Throwable $nonSchoolError) {
+            $nonSchoolSourceNote = 'Nota: no hay no lectivos configurados en el sistema para esta instalación.';
+          }
+
+          $hasSaturdaySchedule = !empty($schedule_by_day[6]);
+          $hasSundaySchedule = !empty($schedule_by_day[7]);
+          $scheduleSummary = build_schedule_summary($schedule_by_day);
+
+          $pdfHtml = '<h1>Calendario de prácticas</h1>';
+          $pdfHtml .= '<p><strong>Alumno:</strong> ' . htmlspecialchars(full_name($practice, 'alumno'), ENT_QUOTES, 'UTF-8') . '</p>';
+          $pdfHtml .= '<p><strong>Empresa:</strong> ' . htmlspecialchars((string) ($practice['empresa_nombre'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
+          $pdfHtml .= '<p><strong>Dirección empresa:</strong> ' . htmlspecialchars(build_address($practice), ENT_QUOTES, 'UTF-8') . '</p>';
+          $pdfHtml .= '<p><strong>Fecha inicio:</strong> ' . htmlspecialchars(format_date((string) ($practice['fecha_inicio'] ?? '')), ENT_QUOTES, 'UTF-8') . ' &nbsp;&nbsp; <strong>Fecha fin:</strong> ' . htmlspecialchars(format_date((string) ($practice['fecha_fin'] ?? '')), ENT_QUOTES, 'UTF-8') . '</p>';
+          $pdfHtml .= '<p><strong>Horario semanal:</strong> ' . htmlspecialchars(implode(' | ', $scheduleSummary), ENT_QUOTES, 'UTF-8') . '</p>';
+          $pdfHtml .= '<p>Leyenda: <strong>(I)</strong> inicio, <strong>(F)</strong> fin. En <font color="#b42318">rojo</font> los días no lectivos y fines de semana sin horario.</p>';
+          if ($nonSchoolSourceNote !== '') {
+            $pdfHtml .= '<p>' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
+          }
+          $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $hasSaturdaySchedule, $hasSundaySchedule);
+
+          try {
+            $mpdf = new Mpdf([
+              'mode' => 'utf-8',
+              'format' => 'A4',
+              'margin_left' => 12,
+              'margin_right' => 12,
+              'margin_top' => 12,
+              'margin_bottom' => 12,
+            ]);
+            $mpdf->WriteHTML($pdfHtml);
+            $mpdf->Output($calendar_file_path, \Mpdf\Output\Destination::FILE);
+            $calendar_status = 'Calendario generado correctamente.';
+          } catch (Throwable $pdfError) {
+            $calendar_error = 'No se pudo generar el PDF del calendario en este momento.';
+          }
+        }
+      }
     }
   } catch (Throwable $error) {
     $load_error = 'No se ha podido cargar el detalle de la práctica en este momento.';
@@ -208,6 +455,8 @@ $page_title = $practice_found
   ? 'Detalle de práctica #' . (int) $practice['id_practica'] . ' | Gestor de Alumnos'
   : 'Práctica no encontrada | Gestor de Alumnos';
 $active_page = 'practicas';
+$calendar_exists = $practice_found && $calendar_file_path !== null && is_file($calendar_file_path);
+$calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($calendar_file_path)) : null;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -232,6 +481,12 @@ $active_page = 'practicas';
           <p class="subheading">Consulta la información completa de la práctica y su horario asociado.</p>
         </div>
         <div class="header-actions">
+          <?php if ($practice_found): ?>
+            <a class="primary-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=generar_calendario">Generar calendario</a>
+            <?php if ($calendar_exists && $calendar_file_name !== null): ?>
+              <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_calendario">Descargar calendario</a>
+            <?php endif; ?>
+          <?php endif; ?>
           <a class="ghost-button" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
@@ -251,6 +506,22 @@ $active_page = 'practicas';
           </div>
         </section>
       <?php else: ?>
+        <?php if ($calendar_status !== null || $calendar_error !== null || $calendar_generated_at !== null): ?>
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Calendario de prácticas</h3>
+              <?php if ($calendar_status !== null): ?>
+                <p><?php echo htmlspecialchars($calendar_status, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($calendar_error !== null): ?>
+                <p><?php echo htmlspecialchars($calendar_error, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($calendar_generated_at !== null): ?>
+                <p>PDF generado el <?php echo htmlspecialchars($calendar_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
+              <?php endif; ?>
+            </div>
+          </section>
+        <?php endif; ?>
         <div class="grid">
           <section class="panel">
             <div class="panel-header">
