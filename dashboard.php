@@ -17,7 +17,13 @@ function table_exists(?PDO $pdo, string $table): bool
   }
 
   try {
-    $stmt = $pdo->prepare('SHOW TABLES LIKE :table_name');
+    $stmt = $pdo->prepare(
+      'SELECT 1
+       FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = :table_name
+       LIMIT 1'
+    );
     $stmt->execute(['table_name' => $table]);
     return (bool) $stmt->fetchColumn();
   } catch (Throwable $exception) {
