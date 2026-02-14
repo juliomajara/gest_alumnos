@@ -70,6 +70,11 @@ function format_ra_label(mixed $number, int $raId): string {
   return 'RA' . $raId;
 }
 
+function build_saved_percentage_key(?int $moduleId, int $raId): string {
+  $normalized_module_id = $moduleId ?? 0;
+  return $normalized_module_id . ':' . $raId;
+}
+
 function should_debug_practicas_ras(): bool {
   if (PRACTICAS_RAS_DEBUG) {
     return true;
@@ -580,10 +585,11 @@ if ($filters_ready) {
 
       $saved_stmt = $pdo->prepare(
         sprintf(
-          'SELECT %s AS id_ra, %s AS porcentaje
+          'SELECT %s AS id_ra, %s AS id_modulo, %s AS porcentaje
            FROM practicas_ras
            WHERE %s',
           'id_ra',
+          $practicas_module_column !== null ? $practicas_module_column : 'NULL',
           'porcentaje',
           implode(' AND ', $saved_conditions)
         )
@@ -605,7 +611,16 @@ if ($filters_ready) {
       $saved_stmt->execute($saved_params);
 
       foreach ($saved_stmt->fetchAll() as $saved) {
-        $saved_percentages[(int) $saved['id_ra']] = (string) $saved['porcentaje'];
+        $saved_ra_id = (int) ($saved['id_ra'] ?? 0);
+        if ($saved_ra_id <= 0) {
+          continue;
+        }
+
+        $saved_module_id = isset($saved['id_modulo']) && $saved['id_modulo'] !== null
+          ? (int) $saved['id_modulo']
+          : 0;
+        $saved_key = build_saved_percentage_key($saved_module_id, $saved_ra_id);
+        $saved_percentages[$saved_key] = (string) ($saved['porcentaje'] ?? '');
       }
     }
   }
@@ -757,7 +772,8 @@ if ($filters_ready) {
                             $ra_id = (int) $ra['id_ra'];
                             $ra_number = trim((string) ($ra['numero'] ?? ''));
                             $ra_label = format_ra_label($ra['numero'] ?? '', $ra_id);
-                            $saved_value = $saved_percentages[$ra_id] ?? '';
+                            $saved_key = build_saved_percentage_key($module_id, $ra_id);
+                            $saved_value = $saved_percentages[$saved_key] ?? '';
                           ?>
                           <tr>
                             <td class="practicas-ras-percentage-cell">
