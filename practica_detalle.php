@@ -143,6 +143,126 @@ function build_calendar_pdf_filename(array $practice): string {
   return $baseName . '.pdf';
 }
 
+function build_plan_pdf_filename(array $practice): string {
+  $parts = [
+    sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
+    sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+    sanitize_filename_component((string) ($practice['alumno_nombre'] ?? ''), 40),
+    sanitize_filename_component((string) ($practice['alumno_apellido1'] ?? ''), 40),
+    sanitize_filename_component((string) ($practice['empresa_nombre'] ?? ''), 70),
+  ];
+
+  $baseName = implode('_', $parts);
+  if (function_exists('mb_substr')) {
+    $baseName = mb_substr($baseName, 0, 195);
+  } else {
+    $baseName = substr($baseName, 0, 195);
+  }
+
+  return $baseName . '_PLAN.pdf';
+}
+
+function redirect_to_practice(int $practiceId, ?string $documentStatus = null, ?string $documentError = null): void {
+  $params = ['id_practica=' . $practiceId];
+  if ($documentStatus !== null) {
+    $params[] = 'doc_status=' . rawurlencode($documentStatus);
+  }
+  if ($documentError !== null) {
+    $params[] = 'doc_error=' . rawurlencode($documentError);
+  }
+
+  header('Location: practica_detalle.php?' . implode('&', $params));
+  exit;
+}
+
+function build_plan_formacion_html(array $practice, array $scheduleByDay): string {
+  $templatePath = __DIR__ . '/docs/anexo_PlanDeFormacion.html';
+  $html = file_get_contents($templatePath);
+  if ($html === false) {
+    throw new RuntimeException('No se pudo leer la plantilla del plan de formación.');
+  }
+
+  $html = str_replace('src="bandera_CM.png"', 'src="' . htmlspecialchars(__DIR__ . '/docs/bandera_CM.png', ENT_QUOTES, 'UTF-8') . '"', $html);
+
+  $dom = new DOMDocument();
+  libxml_use_internal_errors(true);
+  $dom->loadHTML($html);
+  libxml_clear_errors();
+
+  $xpath = new DOMXPath($dom);
+  $rows = $xpath->query('//table[contains(@class, "data")]/tr');
+  if (!$rows instanceof DOMNodeList || $rows->length === 0) {
+    throw new RuntimeException('La plantilla del plan de formación no tiene la estructura esperada.');
+  }
+
+  $setCellValue = static function (DOMNodeList $rowNodes, int $rowIndex, int $cellIndex, string $value): void {
+    $row = $rowNodes->item($rowIndex);
+    if (!$row instanceof DOMElement) {
+      return;
+    }
+
+    $cells = $row->getElementsByTagName('td');
+    $cell = $cells->item($cellIndex);
+    if ($cell instanceof DOMElement) {
+      $cell->textContent = $value;
+    }
+  };
+
+  $studentName = full_name($practice, 'alumno');
+  $companyName = format_value($practice['empresa_nombre']);
+  $companyCif = format_value($practice['empresa_cif']);
+  $companyTutor = full_name($practice, 'tutor');
+  $courseName = format_value($practice['grupo']);
+  $cycleName = format_value($practice['curso_escolar']);
+
+  $setCellValue($rows, 0, 1, $cycleName);
+  $setCellValue($rows, 1, 1, format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']));
+  $setCellValue($rows, 1, 3, $courseName);
+  $setCellValue($rows, 2, 1, $studentName);
+  $setCellValue($rows, 8, 1, $companyName);
+  $setCellValue($rows, 8, 2, 'N.I.F.: ' . $companyCif);
+  $setCellValue($rows, 10, 1, $companyTutor);
+  $setCellValue($rows, 15, 1, format_value($practice['observaciones'], 'Sin observaciones'));
+
+  $periodRows = $xpath->query('//table[contains(@class, "periodos")]/tbody/tr');
+  if ($periodRows instanceof DOMNodeList && $periodRows->length > 0) {
+    $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
+    if ($endDateRaw === '') {
+      $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
+    }
+
+    $scheduleSummary = implode(' · ', build_schedule_summary($scheduleByDay));
+    $firstPeriod = $periodRows->item(0);
+    if ($firstPeriod instanceof DOMElement) {
+      $periodCells = $firstPeriod->getElementsByTagName('td');
+      if ($periodCells->item(0) instanceof DOMElement) {
+        $periodCells->item(0)->textContent = '1';
+      }
+      if ($periodCells->item(1) instanceof DOMElement) {
+        $periodCells->item(1)->textContent = format_date((string) ($practice['fecha_inicio'] ?? '')) . ' - ' . format_date($endDateRaw);
+      }
+      if ($periodCells->item(2) instanceof DOMElement) {
+        $periodCells->item(2)->textContent = $scheduleSummary;
+      }
+    }
+
+    $totalRow = $periodRows->item($periodRows->length - 1);
+    if ($totalRow instanceof DOMElement) {
+      $totalCells = $totalRow->getElementsByTagName('td');
+      if ($totalCells->item(2) instanceof DOMElement) {
+        $totalCells->item(2)->textContent = format_value($practice['horas'], '0') . ' horas';
+      }
+    }
+  }
+
+  $rendered = $dom->saveHTML();
+  if (!is_string($rendered) || trim($rendered) === '') {
+    throw new RuntimeException('No se pudo renderizar la plantilla del plan de formación.');
+  }
+
+  return $rendered;
+}
+
 function month_name_es(int $month): string {
   $names = [
     1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
@@ -361,6 +481,7 @@ $dias_semana = [
 $id_practica_raw = $_GET['id_practica'] ?? ($_GET['id'] ?? null);
 $id_practica = filter_var($id_practica_raw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 $action = isset($_GET['action']) ? (string) $_GET['action'] : '';
+$post_action = isset($_POST['action']) ? (string) $_POST['action'] : '';
 
 $load_error = null;
 $practice = null;
@@ -369,6 +490,26 @@ $calendar_status = null;
 $calendar_error = null;
 $calendar_file_path = null;
 $calendar_file_name = null;
+$plan_status = null;
+$plan_error = null;
+$plan_file_path = null;
+$plan_file_name = null;
+
+$document_status_code = isset($_GET['doc_status']) ? (string) $_GET['doc_status'] : '';
+if ($document_status_code === 'calendar_generated') {
+  $calendar_status = 'Calendario generado correctamente.';
+} elseif ($document_status_code === 'plan_generated') {
+  $plan_status = 'Plan de formación generado correctamente.';
+}
+
+$document_error_message = isset($_GET['doc_error']) ? trim((string) $_GET['doc_error']) : '';
+if ($document_error_message !== '') {
+  if (str_starts_with($document_error_message, 'Calendario:')) {
+    $calendar_error = trim(substr($document_error_message, strlen('Calendario:')));
+  } elseif (str_starts_with($document_error_message, 'Plan:')) {
+    $plan_error = trim(substr($document_error_message, strlen('Plan:')));
+  }
+}
 
 if ($id_practica === false || $id_practica === null) {
   $load_error = 'No se ha indicado un identificador de práctica válido.';
@@ -467,6 +608,14 @@ if ($id_practica === false || $id_practica === null) {
       $calendar_file_name = build_calendar_pdf_filename($practice);
       $calendar_file_path = $calendarDirectory . '/' . $calendar_file_name;
 
+      $planDirectory = __DIR__ . '/docs/practicas_plan_formacion';
+      if (!is_dir($planDirectory) && !mkdir($planDirectory, 0755, true) && !is_dir($planDirectory)) {
+        throw new RuntimeException('No se pudo crear el directorio de planes de formación.');
+      }
+
+      $plan_file_name = build_plan_pdf_filename($practice);
+      $plan_file_path = $planDirectory . '/' . $plan_file_name;
+
       if ($action === 'descargar_calendario') {
         $realBase = realpath($calendarDirectory);
         $realFile = $calendar_file_path !== null && file_exists($calendar_file_path) ? realpath($calendar_file_path) : false;
@@ -553,6 +702,71 @@ if ($id_practica === false || $id_practica === null) {
           }
         }
       }
+
+      if ($action === 'descargar_plan_formacion') {
+        $realBase = realpath($planDirectory);
+        $realFile = $plan_file_path !== null && file_exists($plan_file_path) ? realpath($plan_file_path) : false;
+
+        if ($realBase !== false && $realFile !== false && str_starts_with($realFile, $realBase . DIRECTORY_SEPARATOR) && is_readable($realFile)) {
+          header('Content-Type: application/pdf');
+          header('Content-Disposition: attachment; filename="plan_formacion.pdf"; filename*=UTF-8\'\'' . rawurlencode($plan_file_name));
+          header('Content-Length: ' . (string) filesize($realFile));
+          header('X-Content-Type-Options: nosniff');
+          readfile($realFile);
+          exit;
+        }
+
+        $plan_error = 'El plan de formación no existe o no está disponible para descarga.';
+      }
+
+      if ($post_action === 'generar_plan_formacion') {
+        $requiredFields = [
+          'alumno_nombre' => 'nombre del alumno',
+          'alumno_apellido1' => 'primer apellido del alumno',
+          'empresa_nombre' => 'nombre de la empresa',
+          'empresa_convenio' => 'número de convenio',
+          'anexo' => 'número de anexo',
+          'fecha_inicio' => 'fecha de inicio',
+        ];
+
+        $missing = [];
+        foreach ($requiredFields as $field => $label) {
+          if (trim((string) ($practice[$field] ?? '')) === '') {
+            $missing[] = $label;
+          }
+        }
+
+        $endDateRaw = trim((string) ($practice['fecha_fin_real'] ?? ''));
+        if ($endDateRaw === '') {
+          $endDateRaw = trim((string) ($practice['fecha_fin'] ?? ''));
+        }
+        if ($endDateRaw === '') {
+          $missing[] = 'fecha de fin';
+        }
+
+        if ($missing !== []) {
+          redirect_to_practice((int) $id_practica, null, 'Plan: Faltan datos esenciales para generar el PDF: ' . implode(', ', $missing) . '.');
+        }
+
+        try {
+          $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day);
+
+          $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'margin_left' => 10,
+            'margin_right' => 10,
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+          ]);
+          $mpdf->WriteHTML($pdfHtml);
+          $mpdf->Output($plan_file_path, \Mpdf\Output\Destination::FILE);
+
+          redirect_to_practice((int) $id_practica, 'plan_generated', null);
+        } catch (Throwable $planPdfError) {
+          redirect_to_practice((int) $id_practica, null, 'Plan: No se pudo generar el PDF del plan de formación en este momento.');
+        }
+      }
     }
   } catch (Throwable $error) {
     $load_error = 'No se ha podido cargar el detalle de la práctica en este momento.';
@@ -568,6 +782,8 @@ $page_title = $practice_found
 $active_page = 'practicas';
 $calendar_exists = $practice_found && $calendar_file_path !== null && is_file($calendar_file_path);
 $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($calendar_file_path)) : null;
+$plan_exists = $practice_found && $plan_file_path !== null && is_file($plan_file_path);
+$plan_generated_at = $plan_exists ? date('d/m/Y H:i', (int) filemtime($plan_file_path)) : null;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -592,12 +808,6 @@ $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($c
           <p class="subheading">Consulta la información completa de la práctica y su horario asociado.</p>
         </div>
         <div class="header-actions">
-          <?php if ($practice_found): ?>
-            <a class="primary-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=generar_calendario">Generar calendario</a>
-            <?php if ($calendar_exists && $calendar_file_name !== null): ?>
-              <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_calendario">Descargar calendario</a>
-            <?php endif; ?>
-          <?php endif; ?>
           <a class="ghost-button" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
@@ -617,18 +827,27 @@ $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($c
           </div>
         </section>
       <?php else: ?>
-        <?php if ($calendar_status !== null || $calendar_error !== null || $calendar_generated_at !== null): ?>
-          <section class="panel">
-            <div class="panel-header">
-              <h3>Calendario de prácticas</h3>
+        <?php if ($calendar_status !== null || $calendar_error !== null || $plan_status !== null || $plan_error !== null || $calendar_generated_at !== null || $plan_generated_at !== null): ?>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Estado de documentos</h3>
               <?php if ($calendar_status !== null): ?>
                 <p><?php echo htmlspecialchars($calendar_status, ENT_QUOTES, 'UTF-8'); ?></p>
               <?php endif; ?>
               <?php if ($calendar_error !== null): ?>
                 <p><?php echo htmlspecialchars($calendar_error, ENT_QUOTES, 'UTF-8'); ?></p>
               <?php endif; ?>
+              <?php if ($plan_status !== null): ?>
+                <p><?php echo htmlspecialchars($plan_status, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($plan_error !== null): ?>
+                <p><?php echo htmlspecialchars($plan_error, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
               <?php if ($calendar_generated_at !== null): ?>
-                <p>PDF generado el <?php echo htmlspecialchars($calendar_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
+                <p>Calendario generado el <?php echo htmlspecialchars($calendar_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
+              <?php endif; ?>
+              <?php if ($plan_generated_at !== null): ?>
+                <p>Plan de formación generado el <?php echo htmlspecialchars($plan_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
               <?php endif; ?>
             </div>
           </section>
@@ -756,6 +975,33 @@ $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($c
             <?php if (!empty($practice['tutor_comentarios'])): ?>
               <p class="practica-observaciones-meta"><strong>Comentarios tutor empresa:</strong> <?php echo nl2br(htmlspecialchars((string) $practice['tutor_comentarios'], ENT_QUOTES, 'UTF-8')); ?></p>
             <?php endif; ?>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Documentos</h3>
+            <p>Generación y descarga de calendario y plan de formación.</p>
+          </div>
+          <div class="panel-grid">
+            <p><strong>Calendario</strong></p>
+            <div class="header-actions">
+              <a class="primary-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=generar_calendario">Generar calendario</a>
+              <?php if ($calendar_exists && $calendar_file_name !== null): ?>
+                <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_calendario">Descargar calendario</a>
+              <?php endif; ?>
+            </div>
+
+            <p><strong>Plan de formación</strong></p>
+            <div class="header-actions">
+              <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+                <input type="hidden" name="action" value="generar_plan_formacion">
+                <button type="submit" class="primary-button">Generar Plan Formación</button>
+              </form>
+              <?php if ($plan_exists && $plan_file_name !== null): ?>
+                <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
+              <?php endif; ?>
+            </div>
           </div>
         </section>
 
