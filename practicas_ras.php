@@ -75,6 +75,18 @@ function build_saved_percentage_key(?int $moduleId, int $raId): string {
   return $normalized_module_id . ':' . $raId;
 }
 
+function build_course_filter_sql(array $conditions): string {
+  if (!$conditions) {
+    return '';
+  }
+
+  if (count($conditions) === 1) {
+    return $conditions[0];
+  }
+
+  return '(' . implode(' OR ', $conditions) . ')';
+}
+
 function should_debug_practicas_ras(): bool {
   if (PRACTICAS_RAS_DEBUG) {
     return true;
@@ -387,15 +399,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
           $course_storage_value = $course_storage_id_value;
         }
 
+        $course_delete_conditions = [];
         $delete_conditions = [];
         if ($practicas_has_course_id_column && $course_storage_id_value !== null) {
-          $delete_conditions[] = 'id_curso_escolar = :curso_id';
+          $course_delete_conditions[] = 'id_curso_escolar = :curso_id';
         }
         if ($practicas_has_course_text_column) {
-          $delete_conditions[] = 'curso_escolar = :curso';
+          $course_delete_conditions[] = 'curso_escolar = :curso';
         }
-        if (!$delete_conditions && $practicas_course_column !== null) {
-          $delete_conditions[] = $practicas_course_column . ' = :curso';
+        if (!$course_delete_conditions && $practicas_course_column !== null) {
+          $course_delete_conditions[] = $practicas_course_column . ' = :curso';
+        }
+        $course_delete_filter = build_course_filter_sql($course_delete_conditions);
+        if ($course_delete_filter !== '') {
+          $delete_conditions[] = $course_delete_filter;
         }
         if ($practicas_cycle_column !== null) {
           if ($practicas_cycle_column === 'id_ciclo') {
@@ -409,10 +426,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guard
         $delete_sql = 'DELETE FROM practicas_ras WHERE ' . implode(' AND ', $delete_conditions);
         $delete_stmt = $pdo->prepare($delete_sql);
         $delete_params = [];
-        if (in_array('id_curso_escolar = :curso_id', $delete_conditions, true)) {
+        if (in_array('id_curso_escolar = :curso_id', $course_delete_conditions, true)) {
           $delete_params['curso_id'] = $course_storage_id_value;
         }
-        if (in_array('curso_escolar = :curso', $delete_conditions, true) || (!$practicas_has_course_id_column && $practicas_course_column !== null)) {
+        if (in_array('curso_escolar = :curso', $course_delete_conditions, true) || (!$practicas_has_course_id_column && $practicas_course_column !== null)) {
           $delete_params['curso'] = $course_storage_value;
         }
         if ($practicas_cycle_column !== null) {
@@ -569,15 +586,20 @@ if ($filters_ready) {
     }
 
     if ($practicas_table_ready && $course_storage_value !== '') {
+      $course_saved_conditions = [];
       $saved_conditions = [];
       if ($practicas_has_course_id_column) {
-        $saved_conditions[] = 'id_curso_escolar = :curso_id';
+        $course_saved_conditions[] = 'id_curso_escolar = :curso_id';
       }
       if ($practicas_has_course_text_column) {
-        $saved_conditions[] = 'curso_escolar = :curso';
+        $course_saved_conditions[] = 'curso_escolar = :curso';
       }
-      if (!$saved_conditions && $practicas_course_column !== null) {
-        $saved_conditions[] = $practicas_course_column . ' = :curso';
+      if (!$course_saved_conditions && $practicas_course_column !== null) {
+        $course_saved_conditions[] = $practicas_course_column . ' = :curso';
+      }
+      $course_saved_filter = build_course_filter_sql($course_saved_conditions);
+      if ($course_saved_filter !== '') {
+        $saved_conditions[] = $course_saved_filter;
       }
       if ($practicas_cycle_column !== null) {
         $saved_conditions[] = $practicas_cycle_column . ' = :ciclo';
@@ -621,6 +643,11 @@ if ($filters_ready) {
           : 0;
         $saved_key = build_saved_percentage_key($saved_module_id, $saved_ra_id);
         $saved_percentages[$saved_key] = (string) ($saved['porcentaje'] ?? '');
+
+        if ($saved_module_id === 0) {
+          $legacy_saved_key = build_saved_percentage_key(null, $saved_ra_id);
+          $saved_percentages[$legacy_saved_key] = (string) ($saved['porcentaje'] ?? '');
+        }
       }
     }
   }
