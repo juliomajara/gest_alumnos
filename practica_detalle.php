@@ -1160,13 +1160,14 @@ if ($id_practica === false || $id_practica === null) {
             'tempDir' => $mpdfTempDir,
           ]);
 
-          // Forzamos tamaño de página y tipografía base antes de renderizar el contenido.
-          $mpdf->WriteHTML('@page { size: A4; margin: 10mm; } body { font-family: Arial, sans-serif; font-size: 12pt; }', \Mpdf\HTMLParserMode::HEADER_CSS);
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;
 
-          // El HTML del plan incluye <style> y tablas complejas; se procesa como cuerpo del documento.
-          $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
+          // CSS de página base (solo @page)
+          $mpdf->WriteHTML('@page { size: A4; margin: 10mm; }', \Mpdf\HTMLParserMode::HEADER_CSS);
+
+          // Procesar HTML completo con <style> y contenido SIN especificar modo
+          $mpdf->WriteHTML($pdfHtml);
           $mpdf->Output($plan_file_path, \Mpdf\Output\Destination::FILE);
 
           redirect_to_practice((int) $id_practica, 'plan_generated', null);
