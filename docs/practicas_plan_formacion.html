@@ -14,8 +14,7 @@
             font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.25;
-            padding: 0;
-            background: white;
+            background: #fff;
         }
 
         table {
@@ -26,21 +25,21 @@
 
         td,
         th {
-            box-sizing: border-box;
             vertical-align: middle;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
         }
 
         .container {
             width: 100%;
-            max-width: 100%;
             margin: 0 auto;
-            background: white;
+            background: #fff;
         }
 
         .title-section {
             text-align: center;
             margin-bottom: 10px;
-            margin-left: 0;
         }
 
         .title-section h1 {
@@ -54,316 +53,99 @@
             font-weight: bold;
         }
 
-        .form-container {
+        .page1-table {
             border: 2px solid black;
-            padding: 0;
+            text-align: left;
         }
 
-        .header-row {
-            border-bottom: 2px solid black;
-            background: white;
+        .page1-table td,
+        .page1-table th {
+            border: 1px solid black;
+            padding: 4px 5px;
+            font-size: 12px;
         }
 
-        .header-row table {
-            width: 100%;
-            table-layout: fixed;
-        }
-
-        .header-row td {
-            padding: 10px;
-            vertical-align: middle;
-        }
-
-        .header-row img {
-            width: 80px;
-            height: auto;
-            display: block;
-        }
-
-        .header-text {
-            width: 100%;
+        .logo-cell {
+            width: 16%;
             text-align: center;
         }
 
-        .header-text h3 {
+        .header-cell {
+            width: 84%;
+            text-align: center;
+        }
+
+        .header-cell h3 {
             font-size: 13px;
             font-weight: bold;
             margin-bottom: 4px;
         }
 
-        .header-text p {
-            font-size: 12px;
+        .header-cell p {
             margin: 2px 0;
         }
 
-        /* Form Table Styles */
-        .form-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            border: 2px solid black;
-            text-align: left;
-        }
-
-        .form-table th,
-        .form-table td {
-            border: 1px solid black;
-        }
-
-        .form-table > tbody > tr > td {
-            padding: 4px 5px;
-            font-size: 12px;
-            vertical-align: middle;
-            word-break: break-word;
-            overflow-wrap: break-word;
-        }
-
-        .form-table > tbody > tr.row-thick > td,
-        .form-table > tbody > tr.row-thick0 > td {
-            border-bottom: 2px solid black;
-        }
-
-
-        .form-table .form-cell-full {
-            width: 100%;
-        }
-
-        .form-table .form-cell-half {
-            width: 48%;
-        }
-
-        .form-table .form-cell-left {
-            width: 75%;
-        }
-
-        .form-table .form-cell-right {
-            width: 20%;
-        }
-
-        .form-table .indent {
-            padding-left: 30px;
-        }
-
-        .form-field {
-            padding: 5px 8px;
-            font-size: 12px;
+        .logo {
+            width: 80px;
+            height: auto;
             display: block;
+            margin: 0 auto;
         }
 
-        .form-field-full {
-            width: 100%;
-            border-right: none;
-        }
-
-        .form-field-half {
-            width: 50%;
-            border-right: 1px solid black;
-        }
-
-        .left {
-            width: 80%;
-        }
-
-        .right {
-            width: 20%;
-        }
-
-        .form-field-half:last-child {
-            border-right: none;
-        }
-
-        .form-field-third {
-            width: 33.33%;
-            border-right: 1px solid black;
-        }
-
-        .form-field-third:last-child {
-            border-right: none;
-        }
-
-        .form-field-quarter {
-            width: 25%;
-            border-right: 1px solid black;
-        }
-
-        .form-field-quarter:last-child {
-            border-right: none;
-        }
-
-        .form-field-label {
+        .field-label {
             font-weight: bold;
         }
 
-        .checkbox-group {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            font-size: 12px;
+        .row-thick td,
+        .row-thick {
+            border-bottom: 2px solid black !important;
         }
 
-        .checkbox-group td {
-            padding: 0;
-            vertical-align: middle;
-            border: none;
-            white-space: normal;
+        .indent {
+            padding-left: 20px !important;
         }
 
-        .checkbox-group .checkbox-label {
-            width: 70%;
-            white-space: normal;
-        }
-
-        .checkbox-group .checkbox-item {
-            width: 15%;
-            text-align: center;
+        .choice-block {
+            display: inline-block;
+            margin-left: 8px;
         }
 
         .checkbox-option {
             display: inline-block;
-            width: 100%;
-            text-align: center;
+            margin-right: 14px;
             white-space: normal;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-        }
-
-        .checkbox-option-label {
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 4px;
         }
 
         .checkbox-option-box {
             display: inline-block;
             width: 13px;
             height: 13px;
-            border: 1px solid #000;
-            text-align: center;
-            line-height: 13px;
-            font-size: 12px;
-            font-weight: bold;
-            vertical-align: middle;
-            margin: 0;
-            padding: 0;
-        }
-
-        .checkbox-group-yn .checkbox-label {
-            width: 65%;
-        }
-
-        .checkbox-group-yn .checkbox-item {
-            width: 15%;
-            text-align: center;
-        }
-
-        .checkbox-group-interval .checkbox-label {
-            width: 25%;
-        }
-
-        .checkbox-group-interval .checkbox-item {
-            width: 13%;
-            text-align: center;
-        }
-
-        .checkbox {
-            width: 13px;
-            height: 13px;
-            border: 1px solid black;
-            display: inline-block;
             line-height: 13px;
             text-align: center;
+            border: 1px solid black;
             vertical-align: middle;
             font-size: 12px;
             font-weight: bold;
-            margin: 0;
+            margin-left: 4px;
         }
 
-        .checkbox-filled {
-            display: inline-block;
-        }
-
-        .underline-field {
-            border-bottom: 1px solid black;
-            display: inline-block;
-            min-width: 150px;
-            padding: 0 5px;
-        }
-
-        .indent {
-            padding-left: 30px;
-        }
-
-        .periods-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            margin-top: 0;
-            font-size: 12px;
-        }
-
-        .periods-table th,
-        .periods-table td {
-            padding: 5px 8px;
-            border: 1px solid black;
+        .period-header {
             text-align: center;
-            font-size: 12px;
-            min-height: 30px;
-        }
-
-        .periods-table th {
             font-weight: bold;
-            background: white;
         }
 
-        .periods-table td {
-            vertical-align: middle;
-            white-space: normal;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-
-        .table-cell-narrow {
-            width: 10%;
-        }
-
-        .table-cell-medium {
-            width: 45%;
-        }
-
-        .table-cell-wide {
-            width: 45%;
-        }
-
-        .observations-row {
-            min-height: 80px;
-            padding: 5px 8px;
-            font-size: 12px;
-            border-bottom: none;
-        }
-
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            border: 1px solid black;
-        }
-
-        .header-table td {
-            border: 1px solid black;
-            padding: 6px;
-            vertical-align: middle;
-        }
-
-        .header-table .header-logo-cell {
-            width: 15%;
+        .period-cell {
             text-align: center;
+            min-height: 24px;
         }
 
-        .header-table .header-content-cell {
-            width: 80%;
-            text-align: center;
-            word-break: break-word;
-            overflow-wrap: break-word;
+        .total-hours {
+            text-align: right;
+        }
+
+        .observations {
+            height: 80px;
+            vertical-align: top !important;
         }
 
         /* Page 2 styles */
@@ -404,6 +186,23 @@
             text-align: center;
         }
 
+        .checkbox {
+            width: 13px;
+            height: 13px;
+            border: 1px solid black;
+            display: inline-block;
+            line-height: 13px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .checkbox-filled {
+            display: inline-block;
+        }
+
         .signature-section {
             width: 100%;
             margin-top: 30px;
@@ -435,9 +234,8 @@
         .formations-section {
             margin-top: 20px;
             padding: 10px;
-            border: 1px solid black;
-            min-height: 80px;
             border: 2px solid black;
+            min-height: 80px;
         }
 
         .formations-section h4 {
@@ -450,250 +248,180 @@
 <body>
     <div class="container">
         <!-- PAGE 1 -->
-        <div class="title-section" style="text-align: center;">
+        <div class="title-section">
             <h1>Anexo</h1>
             <h2>Plan de formación en empresa u organismo equiparado</h2>
         </div>
-        <div class="form-container" style="text-align:center; border: 2px solid black !important;">
-            <!-- Header Table -->
-            <table class="header-table" style="width:100%; border-collapse:collapse; table-layout:fixed;">
-                <tbody>
-                    <tr>
-                        <td class="header-logo-cell">
-                            <img src="bandera_CM.png" alt="Comunidad de Madrid" style="width: 80px; height: auto; display: block;">
-                        </td>
-                        <td class="header-content-cell">
-                            <div class="header-text">
-                                <h3>PLAN DE FORMACIÓN</h3>
-                                <p>Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado</p>
-                                <p>Régimen General</p>
-                                <p>Fecha: <span id="date">02/02/2026</span> - Curso: <span id="course">20205/2026</span></p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
 
-            <!-- Main Form Table -->
-            <table class="form-table">
+        <table class="page1-table">
+            <colgroup>
+                <col style="width: 17%;">
+                <col style="width: 17%;">
+                <col style="width: 17%;">
+                <col style="width: 17%;">
+                <col style="width: 16%;">
+                <col style="width: 16%;">
+            </colgroup>
             <tbody>
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <span class="form-field-label">Ciclo Formativo:&nbsp;</span><span id="ciclo-formativo">Sistemas Microinformáticos y Redes</span>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="1" class="logo-cell">
+                        <img src="bandera_CM.png" alt="Comunidad de Madrid" class="logo">
+                    </td>
+                    <td colspan="5" class="header-cell">
+                        <h3>PLAN DE FORMACIÓN</h3>
+                        <p>Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado</p>
+                        <p>Régimen General</p>
+                        <p>Fecha: <span id="date">02/02/2026</span> - Curso: <span id="course">20205/2026</span></p>
+                    </td>
+                </tr>
 
-                    <tr class="row-thick0" >
-                        <td class="form-cell-half">
-                            <span class="form-field-label">Código:&nbsp;</span><span id="codigo">IFCM01</span>
-                        </td>
-                        <td class="form-cell-half">
-                            Curso: <span id="curso">2º</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6"><span class="field-label">Ciclo Formativo:&nbsp;</span><span id="ciclo-formativo">Sistemas Microinformáticos y Redes</span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <span class="form-field-label">Alumno/a:&nbsp;</span><span id="alumno">Adrián Sánchez Torres</span>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="3"><span class="field-label">Código:&nbsp;</span><span id="codigo">IFCM01</span></td>
+                    <td colspan="3">Curso: <span id="curso">2º</span></td>
+                </tr>
 
-                    <tr class="row-thick" >
-                        <td class="form-cell-left">
-                            Correo electrónico: <span id="correo_alumno">correo@correo.com</span>
-                        </td>
-                        <td class="form-cell-right">
-                            Teléfono: <span id="telefono_alumno">600123456</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6"><span class="field-label">Alumno/a:&nbsp;</span><span id="alumno">Adrián Sánchez Torres</span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <span class="form-field-label">Centro docente:&nbsp;</span><span id="centro_docente">IES Laguna de Joatzel</span>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="4">Correo electrónico: <span id="correo_alumno">correo@correo.com</span></td>
+                    <td colspan="2">Teléfono: <span id="telefono_alumno">600123456</span></td>
+                </tr>
 
-                    <tr class="row-thick" >
-                        <td class="form-cell-left">
-                            Correo electrónico: <span id="correo_centro">correo@correo.com</span>
-                        </td>
-                        <td class="form-cell-right">
-                            Teléfono: <span id="telefono_centro">916837197</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6"><span class="field-label">Centro docente:&nbsp;</span><span id="centro_docente">IES Laguna de Joatzel</span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <span class="form-field-label">Tutor/a del centro de formación:&nbsp;</span><span id="tutor_centro">Julio Sánchez Fernández</span>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="4">Correo electrónico: <span id="correo_centro">correo@correo.com</span></td>
+                    <td colspan="2">Teléfono: <span id="telefono_centro">916837197</span></td>
+                </tr>
 
-                    <tr class="row-thick" >
-                        <td class="form-cell-left">
-                            Correo electrónico: <span id="correo_tutor_centro">correo@correo.com</span>
-                        </td>
-                        <td class="form-cell-right">
-                            Teléfono: <span id="telefono_tutor_centro">649496323</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6"><span class="field-label">Tutor/a del centro de formación:&nbsp;</span><span id="tutor_centro">Julio Sánchez Fernández</span></td>
+                </tr>
 
-                    <tr>
-                        <td class="form-cell-left">
-                            <span class="form-field-label">Empresa u organismo equiparado:&nbsp;</span><span id="empresa">Elecnor Sistemas Informáticos, S.A.</span>
-                        </td>
-                        <td class="form-cell-right">
-                            NIF: <span id="nif_empresa">B78858966</span>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="4">Correo electrónico: <span id="correo_tutor_centro">correo@correo.com</span></td>
+                    <td colspan="2">Teléfono: <span id="telefono_tutor_centro">649496323</span></td>
+                </tr>
 
-                    <tr class="row-thick" style="border-bottom: 2px solid black">
-                        <td class="form-cell-left">
-                            Correo electrónico: <span id="correo_empresa">correo@correo.com</span>
-                        </td>
-                        <td class="form-cell-right">
-                            Teléfono: <span id="telefono_empresa">915687452</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="4"><span class="field-label">Empresa u organismo equiparado:&nbsp;</span><span id="empresa">Elecnor Sistemas Informáticos, S.A.</span></td>
+                    <td colspan="2">NIF: <span id="nif_empresa">B78858966</span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <span class="form-field-label">Tutor/a de empresa u organismo equiparado:&nbsp;</span><span id="tutor_empresa">María López García</span>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="4">Correo electrónico: <span id="correo_empresa">correo@correo.com</span></td>
+                    <td colspan="2">Teléfono: <span id="telefono_empresa">915687452</span></td>
+                </tr>
 
-                    <tr class="row-thick" style="border-bottom: 2px solid black">
-                        <td class="form-cell-left">
-                            Correo electrónico: <span id="correo_tutor_empresa">correo@correo.com</span>
-                        </td>
-                        <td class="form-cell-right">
-                            Teléfono: <span id="telefono_tutor_empresa">698765432</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6"><span class="field-label">Tutor/a de empresa u organismo equiparado:&nbsp;</span><span id="tutor_empresa">María López García</span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <table class="checkbox-group checkbox-group-yn">
-                                <tr>
-                                    <td class="checkbox-label"><span>Requiere medidas/adaptaciones extraordinarias por discapacidad:</span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">SÍ</span><span class="checkbox-option-box"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">NO</span><span class="checkbox-option-box">X</span></span></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="4">Correo electrónico: <span id="correo_tutor_empresa">correo@correo.com</span></td>
+                    <td colspan="2">Teléfono: <span id="telefono_tutor_empresa">698765432</span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full indent" style="border-bottom: none;">
-                            ▪ En caso afirmativo, especificar medidas/adaptaciones:
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6">
+                        Requiere medidas/adaptaciones extraordinarias por discapacidad:
+                        <span class="choice-block">
+                            <span class="checkbox-option">SÍ<span class="checkbox-option-box"></span></span>
+                            <span class="checkbox-option">NO<span class="checkbox-option-box">X</span></span>
+                        </span>
+                    </td>
+                </tr>
 
-                    <tr class="row-thick" style="height: 50px; border-bottom: 2px solid black;">
-                        <td colspan="2" class="form-cell-full">
-                            <span id="medidas_adaptaciones"></span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6" class="indent">▪ En caso afirmativo, especificar medidas/adaptaciones:</td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <table class="checkbox-group checkbox-group-yn">
-                                <tr>
-                                    <td class="checkbox-label"><span>Requiere autorización extraordinaria:</span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">SÍ</span><span class="checkbox-option-box"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">NO</span><span class="checkbox-option-box">X</span></span></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="6" style="height: 50px;"><span id="medidas_adaptaciones"></span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full indent" style="border-bottom: none;">
-                            ▪ Indicar causa/s:
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6">
+                        Requiere autorización extraordinaria:
+                        <span class="choice-block">
+                            <span class="checkbox-option">SÍ<span class="checkbox-option-box"></span></span>
+                            <span class="checkbox-option">NO<span class="checkbox-option-box">X</span></span>
+                        </span>
+                    </td>
+                </tr>
 
-                    <tr class="row-thick" style="height: 50px; border-bottom: 2px solid black;">
-                        <td colspan="2" class="form-cell-full">
-                            <span id="causas_autorizacion"></span>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6" class="indent">▪ Indicar causa/s:</td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            <table class="checkbox-group checkbox-group-interval">
-                                <tr>
-                                    <td class="checkbox-label"><span>Intervalo de formación:</span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Diario</span><span class="checkbox-option-box">X</span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Semanal</span><span class="checkbox-option-box"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Mensual</span><span class="checkbox-option-box"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Otros</span><span class="checkbox-option-box"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Varias empresas</span><span class="checkbox-option-box"></span></span></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
+                <tr class="row-thick">
+                    <td colspan="6" style="height: 50px;"><span id="causas_autorizacion"></span></td>
+                </tr>
 
-                    <tr>
-                        <td colspan="2" class="form-cell-full">
-                            Periodos de formación en empresa u organismo equiparado:
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6">
+                        Intervalo de formación:
+                        <span class="choice-block">
+                            <span class="checkbox-option">Diario<span class="checkbox-option-box">X</span></span>
+                            <span class="checkbox-option">Semanal<span class="checkbox-option-box"></span></span>
+                            <span class="checkbox-option">Mensual<span class="checkbox-option-box"></span></span>
+                            <span class="checkbox-option">Otros<span class="checkbox-option-box"></span></span>
+                            <span class="checkbox-option">Varias empresas<span class="checkbox-option-box"></span></span>
+                        </span>
+                    </td>
+                </tr>
 
-                    <!-- Tabla única de periodos -->
-                    <tr>
-                        <td colspan="2" class="form-cell-full" style="padding: 0; border-bottom: none;">
-                            <table class="periods-table">
-                                <thead>
-                                    <tr>
-                                        <th class="table-cell-narrow">Nº periodo</th>
-                                        <th class="table-cell-medium">Calendario</th>
-                                        <th class="table-cell-wide">Horario</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr style="height: 24px;">
-                                        <td><span id="periodo_1_numero">1</span></td>
-                                        <td><span id="periodo_1_calendario">02/03/2026 - 10/06/2026</span></td>
-                                        <td><span id="periodo_1_horario">L: 08:00-16:00 / M: 08:00-14:00 y 15:00-17:00 / X: 08:00-14:00 y 15:00-17:00 / J: 08:00-16:00 / V: 08:00-14:00</span></td>
-                                    </tr>
-                                    <tr style="height: 24px;">
-                                        <td><span id="periodo_2_numero"></span></td>
-                                        <td><span id="periodo_2_calendario"></span></td>
-                                        <td><span id="periodo_2_horario"></span></td>
-                                    </tr>
-                                    <tr style="height: 24px;">
-                                        <td><span id="periodo_3_numero"></span></td>
-                                        <td><span id="periodo_3_calendario"></span></td>
-                                        <td><span id="periodo_3_horario"></span></td>
-                                    </tr>
-                                    <tr style="height: 24px;">
-                                        <td><span id="periodo_4_numero"></span></td>
-                                        <td><span id="periodo_4_calendario"></span></td>
-                                        <td><span id="periodo_4_horario"></span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
+                <tr>
+                    <td colspan="6">Periodos de formación en empresa u organismo equiparado:</td>
+                </tr>
 
-                    <!-- Total horas -->
-                    <tr style="border-bottom: 2px solid black;">
-                        <td colspan="2" class="form-cell-full" style="text-align: right;">
-                            <span>Total horas:</span>
-                            <span id="total_horas" style="margin-left: 20px; font-weight: bold;">500</span>
-                        </td>
-                    </tr>
+                <tr>
+                    <th colspan="1" class="period-header">Nº periodo</th>
+                    <th colspan="2" class="period-header">Calendario</th>
+                    <th colspan="3" class="period-header">Horario</th>
+                </tr>
 
-                    <!-- Observaciones -->
-                    <tr style="height: 80px;">
-                        <td colspan="2" class="form-cell-full" style="vertical-align: top;">
-                            <span class="form-field-label">Observaciones:</span>
-                            <span id="observaciones"></span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                <tr>
+                    <td colspan="1" class="period-cell"><span id="periodo_1_numero">1</span></td>
+                    <td colspan="2" class="period-cell"><span id="periodo_1_calendario">02/03/2026 - 10/06/2026</span></td>
+                    <td colspan="3" class="period-cell"><span id="periodo_1_horario">L: 08:00-16:00 / M: 08:00-14:00 y 15:00-17:00 / X: 08:00-14:00 y 15:00-17:00 / J: 08:00-16:00 / V: 08:00-14:00</span></td>
+                </tr>
+
+                <tr>
+                    <td colspan="1" class="period-cell"><span id="periodo_2_numero"></span></td>
+                    <td colspan="2" class="period-cell"><span id="periodo_2_calendario"></span></td>
+                    <td colspan="3" class="period-cell"><span id="periodo_2_horario"></span></td>
+                </tr>
+
+                <tr>
+                    <td colspan="1" class="period-cell"><span id="periodo_3_numero"></span></td>
+                    <td colspan="2" class="period-cell"><span id="periodo_3_calendario"></span></td>
+                    <td colspan="3" class="period-cell"><span id="periodo_3_horario"></span></td>
+                </tr>
+
+                <tr>
+                    <td colspan="1" class="period-cell"><span id="periodo_4_numero"></span></td>
+                    <td colspan="2" class="period-cell"><span id="periodo_4_calendario"></span></td>
+                    <td colspan="3" class="period-cell"><span id="periodo_4_horario"></span></td>
+                </tr>
+
+                <tr class="row-thick">
+                    <td colspan="6" class="total-hours">Total horas: <span id="total_horas"><strong>500</strong></span></td>
+                </tr>
+
+                <tr>
+                    <td colspan="6" class="observations"><span class="field-label">Observaciones:</span> <span id="observaciones"></span></td>
+                </tr>
+            </tbody>
+        </table>
 
         <!-- PAGE 2 -->
         <div style="page-break-before: always; margin-top: 40px;">
