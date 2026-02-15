@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anexo - Plan de formación en empresa u organismo equiparado</title>
     <style>
         * {
@@ -14,6 +13,7 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
+            line-height: 1.25;
             padding: 0;
             background: white;
         }
@@ -109,22 +109,23 @@
         /* Form Table Styles */
         .form-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
+            table-layout: fixed;
             border: 2px solid black;
             text-align: left;
         }
 
-        .form-table tr {
-            border-bottom: 1px solid black;
+        .form-table th,
+        .form-table td {
+            border: 1px solid black;
         }
 
         .form-table > tbody > tr > td {
             padding: 5px 8px;
             font-size: 12px;
             vertical-align: middle;
-            border-right: 1px solid black;
-            border-bottom: 1px solid black;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
 
         .form-table > tbody > tr.row-thick > td,
@@ -132,13 +133,6 @@
             border-bottom: 2px solid black;
         }
 
-        .form-table > tbody > tr > td:last-child {
-            border-right: none;
-        }
-
-        .form-table > tbody > tr:last-child > td {
-            border-bottom: none;
-        }
 
         .form-table .form-cell-full {
             width: 100%;
@@ -221,7 +215,7 @@
             padding: 0;
             vertical-align: middle;
             border: none;
-            white-space: nowrap;
+            white-space: normal;
         }
 
         .checkbox-group .checkbox-label {
@@ -281,6 +275,7 @@
             border-collapse: collapse;
             table-layout: fixed;
             margin-top: 0;
+            font-size: 12px;
         }
 
         .periods-table th,
@@ -451,13 +446,13 @@
         </div>
         <div class="form-container" style="text-align:center; border: 2px solid black !important;">
             <!-- Header Table -->
-            <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid black;">
                 <tbody>
                     <tr>
-                        <td style="width: 20%; padding: 10px; vertical-align: middle; border: none;">
+                        <td style="width: 20%; padding: 10px; vertical-align: middle; border: 1px solid black;">
                             <img src="bandera_CM.png" alt="Comunidad de Madrid" style="width: 80px; height: auto; display: block;">
                         </td>
-                        <td style="width: 80%; padding: 10px; vertical-align: middle; border: none;">
+                        <td style="width: 80%; padding: 10px; vertical-align: middle; border: 1px solid black;">
                             <div class="header-text">
                                 <h3>PLAN DE FORMACIÓN</h3>
                                 <p>Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado</p>

@@ -1096,8 +1096,10 @@ if ($id_practica === false || $id_practica === null) {
             'margin_bottom' => 10,
             'default_font_size' => 12,
             'shrink_tables_to_fit' => 0,
+            'keep_table_proportions' => false,
             'tempDir' => $mpdfTempDir,
           ]);
+          $mpdf->shrink_tables_to_fit = 0;
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;
           $mpdf->WriteHTML($pdfHtml);
