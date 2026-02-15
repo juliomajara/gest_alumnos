@@ -224,6 +224,16 @@ function prepare_related_rows(array $postedRows): array {
   return is_array($postedRows) ? $postedRows : [];
 }
 
+function find_first_existing_column(array $columns, array $candidates): ?string {
+  foreach ($candidates as $candidate) {
+    if (find_column($columns, $candidate) !== null) {
+      return $candidate;
+    }
+  }
+
+  return null;
+}
+
 if (isset($_GET['action'])) {
   header('Content-Type: application/json; charset=utf-8');
 
@@ -316,6 +326,9 @@ $correoColumns = table_columns($pdo, 'correos');
 
 $telefonoPrimaryKey = find_primary_key($telefonoColumns) ?? 'id_telefono';
 $correoPrimaryKey = find_primary_key($correoColumns) ?? 'id_correo';
+
+$telefonoTypeField = find_first_existing_column($telefonoColumns, ['tipo', 'etiqueta']);
+$correoTypeField = find_first_existing_column($correoColumns, ['tipo', 'etiqueta']);
 
 $provinciaOptions = $pdo->query('SELECT id_provincia, nombre FROM provincias ORDER BY nombre')->fetchAll();
 $madridProvinciaId = null;
@@ -753,6 +766,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 }
 
+$alumnoFieldLabels = [
+  'nia' => 'NIA',
+  'dni' => 'DNI',
+  'seg_soc' => 'Seguridad Social',
+  'apellido1' => 'Apellido 1',
+  'apellido2' => 'Apellido 2',
+  'nombre' => 'Nombre',
+  'fecha_nacimiento' => 'Fecha nacimiento',
+  'nombre_tutor1' => 'Nombre tutor 1',
+  'telefono_tutor1' => 'Teléfono tutor 1',
+  'correo_tutor1' => 'Correo tutor 1',
+  'nombre_tutor2' => 'Nombre tutor 2',
+  'telefono_tutor2' => 'Teléfono tutor 2',
+  'correo_tutor2' => 'Correo tutor 2',
+  'repite_curso' => 'Repite curso',
+  'horas_ffe_aprobadas' => 'Horas FFE aprobadas',
+  'faltas_10_dia' => 'Faltas 10% día',
+  'faltas_10_cantidad' => 'Faltas 10% cantidad',
+  'faltas_15_dia' => 'Faltas 15% día',
+  'faltas_15_cantidad' => 'Faltas 15% cantidad',
+  'comentarios' => 'Comentarios',
+];
+
+$blockAlumnoFields = ['nia', 'dni', 'seg_soc', 'apellido1', 'apellido2', 'nombre', 'fecha_nacimiento', 'cp', 'id_provincia'];
+$blockTutorFields = ['nombre_tutor1', 'telefono_tutor1', 'correo_tutor1', 'nombre_tutor2', 'telefono_tutor2', 'correo_tutor2'];
+$blockAcademicoFields = ['repite_curso', 'horas_ffe_aprobadas', 'faltas_10_dia', 'faltas_10_cantidad', 'faltas_15_dia', 'faltas_15_cantidad', 'comentarios'];
+
+$alumnoColumnsByName = [];
+foreach ($alumnoColumns as $column) {
+  $alumnoColumnsByName[$column['name']] = $column;
+}
+
 $page_title = 'Editar alumno | Gestor de Alumnos';
 $active_page = 'alumnos';
 ?>
@@ -821,78 +866,126 @@ $active_page = 'alumnos';
           <?php endif; ?>
 
           <div class="empresa-form-grid">
+            <?php
+              $cpValue = $formAlumnoData['cp'] ?? '';
+              $provinciaSeleccionada = isset($formAlumnoData['id_provincia']) && (int) $formAlumnoData['id_provincia'] > 0
+                ? (int) $formAlumnoData['id_provincia']
+                : ($madridProvinciaId ?? 0);
+              $localidadValue = $formAlumnoData['localidad_nombre'] ?? ($student['localidad_nombre'] ?? '');
+            ?>
+
             <section class="panel empresa-block empresa-block-main">
               <div class="panel-header">
                 <h3>Datos del alumno</h3>
-                <p>Se incluyen todas las columnas de la tabla <strong>alumnos</strong>.</p>
               </div>
               <div class="entity-grid empresa-datos-grid">
-              <?php
-                $cpValue = $formAlumnoData['cp'] ?? '';
-                $provinciaSeleccionada = isset($formAlumnoData['id_provincia']) && (int) $formAlumnoData['id_provincia'] > 0
-                  ? (int) $formAlumnoData['id_provincia']
-                  : ($madridProvinciaId ?? 0);
-                $localidadValue = $formAlumnoData['localidad_nombre'] ?? ($student['localidad_nombre'] ?? '');
-              ?>
-              <label for="alumno_cp_lookup">
-                Código postal
-                <input id="alumno_cp_lookup" type="text" name="alumno[cp]" value="<?php echo h((string) $cpValue); ?>">
-              </label>
-              <label for="alumno_provincia_lookup">
-                Provincia
-                <select id="alumno_provincia_lookup" name="alumno[id_provincia]">
-                  <option value="">Seleccionar</option>
-                  <?php foreach ($provinciaOptions as $provincia): ?>
-                    <?php $idProvinciaOption = (int) $provincia['id_provincia']; ?>
-                    <option value="<?php echo $idProvinciaOption; ?>" <?php echo $idProvinciaOption === (int) $provinciaSeleccionada ? 'selected' : ''; ?>><?php echo h($provincia['nombre']); ?></option>
-                  <?php endforeach; ?>
-                </select>
-              </label>
-              <label for="alumno_localidad_lookup">
-                Localidad
-                <input id="alumno_localidad_lookup" type="text" name="alumno_localidad_nombre" value="<?php echo h((string) $localidadValue); ?>">
-              </label>
-              <p class="subheading" id="cpLookupStatus" hidden></p>
-              <?php foreach ($alumnoColumns as $column): ?>
-                <?php
-                  $columnName = $column['name'];
-                  if (in_array($columnName, ['id_alumno', 'cp', 'id_provincia', 'id_localidad'], true)) {
-                    continue;
-                  }
-                  $fieldId = 'alumno_' . $columnName;
-                  $label = build_field_label($columnName);
-                  $value = $formAlumnoData[$columnName] ?? null;
-                  $inputType = input_type_for_column($column);
-                  $isBoolean = $column['base_type'] === 'tinyint' && str_contains(strtolower($column['type']), 'tinyint(1)');
-                  $isReadOnly = false;
-                ?>
-                <label for="<?php echo h($fieldId); ?>">
-                  <?php echo h($label); ?><?php echo !$column['nullable'] && !$isReadOnly ? ' *' : ''; ?>
-                  <?php if ($isBoolean): ?>
-                    <select id="<?php echo h($fieldId); ?>" name="alumno[<?php echo h($columnName); ?>]" <?php echo $isReadOnly ? 'disabled' : ''; ?>>
-                      <option value="">Seleccionar</option>
-                      <option value="1" <?php echo (string) $value === '1' ? 'selected' : ''; ?>>Sí</option>
-                      <option value="0" <?php echo (string) $value === '0' ? 'selected' : ''; ?>>No</option>
-                    </select>
-                  <?php elseif ($inputType === 'textarea'): ?>
-                    <textarea id="<?php echo h($fieldId); ?>" name="alumno[<?php echo h($columnName); ?>]" <?php echo $isReadOnly ? 'readonly' : ''; ?>><?php echo h((string) ($value ?? '')); ?></textarea>
-                  <?php else: ?>
-                    <input
-                      id="<?php echo h($fieldId); ?>"
-                      type="<?php echo h($inputType); ?>"
-                      name="alumno[<?php echo h($columnName); ?>]"
-                      value="<?php echo h((string) ($value ?? '')); ?>"
-                      <?php echo $isReadOnly ? 'readonly' : ''; ?>
-                    >
-                  <?php endif; ?>
-                </label>
-              <?php endforeach; ?>
+                <?php foreach ($blockAlumnoFields as $columnName): ?>
+                  <?php if (!isset($alumnoColumnsByName[$columnName])) { continue; } ?>
+                  <?php
+                    $column = $alumnoColumnsByName[$columnName];
+                    $fieldId = 'alumno_' . $columnName;
+                    $label = $alumnoFieldLabels[$columnName] ?? build_field_label($columnName);
+                    $value = $formAlumnoData[$columnName] ?? null;
+                    $inputType = input_type_for_column($column);
+                    $isBoolean = $column['base_type'] === 'tinyint' && str_contains(strtolower($column['type']), 'tinyint(1)');
+                  ?>
+                  <label for="<?php echo h($fieldId); ?>">
+                    <?php echo h($label); ?><?php echo !$column['nullable'] ? ' *' : ''; ?>
+                    <?php if ($isBoolean): ?>
+                      <select id="<?php echo h($fieldId); ?>" name="alumno[<?php echo h($columnName); ?>]">
+                        <option value="">Seleccionar</option>
+                        <option value="1" <?php echo (string) $value === '1' ? 'selected' : ''; ?>>Sí</option>
+                        <option value="0" <?php echo (string) $value === '0' ? 'selected' : ''; ?>>No</option>
+                      </select>
+                    <?php elseif ($inputType === 'textarea'): ?>
+                      <textarea id="<?php echo h($fieldId); ?>" name="alumno[<?php echo h($columnName); ?>]"><?php echo h((string) ($value ?? '')); ?></textarea>
+                    <?php else: ?>
+                      <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="alumno[<?php echo h($columnName); ?>]" value="<?php echo h((string) ($value ?? '')); ?>">
+                    <?php endif; ?>
+                  </label>
+                <?php endforeach; ?>
               </div>
+            </section>
 
+            <section class="panel empresa-block empresa-block-direcciones">
+              <div class="panel-header">
+                <h3>Datos tutores</h3>
+              </div>
+              <div class="entity-grid empresa-datos-grid">
+                <?php foreach ($blockTutorFields as $columnName): ?>
+                  <?php if (!isset($alumnoColumnsByName[$columnName])) { continue; } ?>
+                  <?php
+                    $column = $alumnoColumnsByName[$columnName];
+                    $fieldId = 'alumno_' . $columnName;
+                    $label = $alumnoFieldLabels[$columnName] ?? build_field_label($columnName);
+                    $value = $formAlumnoData[$columnName] ?? null;
+                    $inputType = input_type_for_column($column);
+                  ?>
+                  <label for="<?php echo h($fieldId); ?>">
+                    <?php echo h($label); ?><?php echo !$column['nullable'] ? ' *' : ''; ?>
+                    <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="alumno[<?php echo h($columnName); ?>]" value="<?php echo h((string) ($value ?? '')); ?>">
+                  </label>
+                <?php endforeach; ?>
+              </div>
+            </section>
+
+            <section class="panel empresa-block empresa-block-contactos">
+              <div class="panel-header">
+                <h3>Datos académicos</h3>
+              </div>
+              <div class="entity-grid empresa-datos-grid">
+                <?php foreach ($blockAcademicoFields as $columnName): ?>
+                  <?php if (!isset($alumnoColumnsByName[$columnName])) { continue; } ?>
+                  <?php
+                    $column = $alumnoColumnsByName[$columnName];
+                    $fieldId = 'alumno_' . $columnName;
+                    $label = $alumnoFieldLabels[$columnName] ?? build_field_label($columnName);
+                    $value = $formAlumnoData[$columnName] ?? null;
+                    $inputType = input_type_for_column($column);
+                    $isBoolean = $column['base_type'] === 'tinyint' && str_contains(strtolower($column['type']), 'tinyint(1)');
+                  ?>
+                  <label for="<?php echo h($fieldId); ?>">
+                    <?php echo h($label); ?><?php echo !$column['nullable'] ? ' *' : ''; ?>
+                    <?php if ($isBoolean): ?>
+                      <select id="<?php echo h($fieldId); ?>" name="alumno[<?php echo h($columnName); ?>]">
+                        <option value="">Seleccionar</option>
+                        <option value="1" <?php echo (string) $value === '1' ? 'selected' : ''; ?>>Sí</option>
+                        <option value="0" <?php echo (string) $value === '0' ? 'selected' : ''; ?>>No</option>
+                      </select>
+                    <?php elseif ($inputType === 'textarea'): ?>
+                      <textarea id="<?php echo h($fieldId); ?>" name="alumno[<?php echo h($columnName); ?>]"><?php echo h((string) ($value ?? '')); ?></textarea>
+                    <?php else: ?>
+                      <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="alumno[<?php echo h($columnName); ?>]" value="<?php echo h((string) ($value ?? '')); ?>">
+                    <?php endif; ?>
+                  </label>
+                <?php endforeach; ?>
+                <label for="alumno_cp_lookup">
+                  Código postal
+                  <input id="alumno_cp_lookup" type="text" name="alumno[cp]" value="<?php echo h((string) $cpValue); ?>">
+                </label>
+                <label for="alumno_provincia_lookup">
+                  Provincia
+                  <select id="alumno_provincia_lookup" name="alumno[id_provincia]">
+                    <option value="">Seleccionar</option>
+                    <?php foreach ($provinciaOptions as $provincia): ?>
+                      <?php $idProvinciaOption = (int) $provincia['id_provincia']; ?>
+                      <option value="<?php echo $idProvinciaOption; ?>" <?php echo $idProvinciaOption === (int) $provinciaSeleccionada ? 'selected' : ''; ?>><?php echo h($provincia['nombre']); ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </label>
+                <label for="alumno_localidad_lookup">
+                  Localidad
+                  <input id="alumno_localidad_lookup" type="text" name="alumno_localidad_nombre" value="<?php echo h((string) $localidadValue); ?>">
+                </label>
+                <p class="subheading" id="cpLookupStatus" hidden></p>
+              </div>
+            </section>
+
+            <section class="panel empresa-block empresa-block-tutores">
+              <div class="panel-header">
+                <h3>Medios de contacto</h3>
+              </div>
               <section class="entity-section empresa-subsection" id="mediosContactoSection">
-                <div class="entity-section-header">
-                  <h3>Medios de contacto</h3>
-                </div>
                 <div class="grid empresa-medios-grid">
                   <section class="entity-nested-section" id="telefonosAlumnoSection">
                     <div class="entity-section-header">
@@ -905,36 +998,21 @@ $active_page = 'alumnos';
                           <input type="hidden" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($telefonoPrimaryKey); ?>]" value="<?php echo (int) ($telefono[$telefonoPrimaryKey] ?? 0); ?>">
                           <input type="hidden" name="telefonos[existing][<?php echo (int) $index; ?>][_delete]" value="0" data-delete-field>
                           <div class="entity-inline-grid empresa-contact-item-grid">
-                            <?php foreach ($telefonoColumns as $column): ?>
-                              <?php
-                                $name = $column['name'];
-                                if ($name === $telefonoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-                                  continue;
-                                }
-                                $fieldId = 'tel_existing_' . $index . '_' . $name;
-                                $value = $telefono[$name] ?? '';
-                              ?>
-                              <?php if ($name === 'telefono'): ?>
-                                <label for="<?php echo h($fieldId); ?>">
-                                  Número
-                                  <input id="<?php echo h($fieldId); ?>" type="text" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]" value="<?php echo h((string) $value); ?>">
-                                </label>
-                              <?php elseif ($name === 'etiqueta'): ?>
-                                <label for="<?php echo h($fieldId); ?>">
-                                  Etiqueta
-                                  <select id="<?php echo h($fieldId); ?>" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]">
-                                    <option value="">Selecciona</option>
-                                    <option value="Principal" <?php echo (string) $value === 'Principal' ? 'selected' : ''; ?>>Principal</option>
-                                    <option value="Móvil" <?php echo (string) $value === 'Móvil' ? 'selected' : ''; ?>>Móvil</option>
-                                    <option value="Secundario" <?php echo (string) $value === 'Secundario' ? 'selected' : ''; ?>>Secundario</option>
-                                    <option value="Trabajo" <?php echo (string) $value === 'Trabajo' ? 'selected' : ''; ?>>Trabajo</option>
-                                    <option value="Casa" <?php echo (string) $value === 'Casa' ? 'selected' : ''; ?>>Casa</option>
-                                    <option value="Personal" <?php echo (string) $value === 'Personal' ? 'selected' : ''; ?>>Personal</option>
-                                    <option value="Otro" <?php echo (string) $value === 'Otro' ? 'selected' : ''; ?>>Otro</option>
-                                  </select>
-                                </label>
-                              <?php endif; ?>
-                            <?php endforeach; ?>
+                            <label for="tel_existing_<?php echo (int) $index; ?>_telefono">
+                              Número
+                              <input id="tel_existing_<?php echo (int) $index; ?>_telefono" type="text" name="telefonos[existing][<?php echo (int) $index; ?>][telefono]" value="<?php echo h((string) ($telefono['telefono'] ?? '')); ?>">
+                            </label>
+                            <?php if ($telefonoTypeField !== null): ?>
+                              <?php $telefonoTypeValue = (string) ($telefono[$telefonoTypeField] ?? ''); ?>
+                              <label for="tel_existing_<?php echo (int) $index; ?>_tipo">
+                                Tipo
+                                <select id="tel_existing_<?php echo (int) $index; ?>_tipo" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($telefonoTypeField); ?>]">
+                                  <option value="">Selecciona</option>
+                                  <option value="Personal" <?php echo $telefonoTypeValue === 'Personal' ? 'selected' : ''; ?>>Personal</option>
+                                  <option value="Otro" <?php echo $telefonoTypeValue === 'Otro' ? 'selected' : ''; ?>>Otro</option>
+                                </select>
+                              </label>
+                            <?php endif; ?>
                             <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
                           </div>
                         </div>
@@ -953,34 +1031,21 @@ $active_page = 'alumnos';
                           <input type="hidden" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($correoPrimaryKey); ?>]" value="<?php echo (int) ($correo[$correoPrimaryKey] ?? 0); ?>">
                           <input type="hidden" name="correos[existing][<?php echo (int) $index; ?>][_delete]" value="0" data-delete-field>
                           <div class="entity-inline-grid empresa-contact-item-grid">
-                            <?php foreach ($correoColumns as $column): ?>
-                              <?php
-                                $name = $column['name'];
-                                if ($name === $correoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-                                  continue;
-                                }
-                                $fieldId = 'correo_existing_' . $index . '_' . $name;
-                                $value = $correo[$name] ?? '';
-                              ?>
-                              <?php if ($name === 'direccion_correo'): ?>
-                                <label for="<?php echo h($fieldId); ?>">
-                                  Correo electrónico
-                                  <input id="<?php echo h($fieldId); ?>" type="email" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]" value="<?php echo h((string) $value); ?>">
-                                </label>
-                              <?php elseif ($name === 'etiqueta'): ?>
-                                <label for="<?php echo h($fieldId); ?>">
-                                  Etiqueta
-                                  <select id="<?php echo h($fieldId); ?>" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]">
-                                    <option value="">Selecciona</option>
-                                    <option value="Principal" <?php echo (string) $value === 'Principal' ? 'selected' : ''; ?>>Principal</option>
-                                    <option value="Trabajo" <?php echo (string) $value === 'Trabajo' ? 'selected' : ''; ?>>Trabajo</option>
-                                    <option value="Facturación" <?php echo (string) $value === 'Facturación' ? 'selected' : ''; ?>>Facturación</option>
-                                    <option value="Personal" <?php echo (string) $value === 'Personal' ? 'selected' : ''; ?>>Personal</option>
-                                    <option value="Otro" <?php echo (string) $value === 'Otro' ? 'selected' : ''; ?>>Otro</option>
-                                  </select>
-                                </label>
-                              <?php endif; ?>
-                            <?php endforeach; ?>
+                            <label for="correo_existing_<?php echo (int) $index; ?>_direccion_correo">
+                              Correo electrónico
+                              <input id="correo_existing_<?php echo (int) $index; ?>_direccion_correo" type="email" name="correos[existing][<?php echo (int) $index; ?>][direccion_correo]" value="<?php echo h((string) ($correo['direccion_correo'] ?? '')); ?>">
+                            </label>
+                            <?php if ($correoTypeField !== null): ?>
+                              <?php $correoTypeValue = (string) ($correo[$correoTypeField] ?? ''); ?>
+                              <label for="correo_existing_<?php echo (int) $index; ?>_tipo">
+                                Tipo
+                                <select id="correo_existing_<?php echo (int) $index; ?>_tipo" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($correoTypeField); ?>]">
+                                  <option value="">Selecciona</option>
+                                  <option value="Personal" <?php echo $correoTypeValue === 'Personal' ? 'selected' : ''; ?>>Personal</option>
+                                  <option value="EducaMadrid" <?php echo $correoTypeValue === 'EducaMadrid' ? 'selected' : ''; ?>>EducaMadrid</option>
+                                </select>
+                              </label>
+                            <?php endif; ?>
                             <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
                           </div>
                         </div>
@@ -1014,19 +1079,16 @@ $active_page = 'alumnos';
           Número
           <input type="text" name="telefonos[new][__INDEX__][telefono]">
         </label>
-        <label>
-          Etiqueta
-          <select name="telefonos[new][__INDEX__][etiqueta]">
-            <option value="">Selecciona</option>
-            <option value="Principal">Principal</option>
-            <option value="Móvil">Móvil</option>
-            <option value="Secundario">Secundario</option>
-            <option value="Trabajo">Trabajo</option>
-            <option value="Casa">Casa</option>
-            <option value="Personal">Personal</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </label>
+        <?php if ($telefonoTypeField !== null): ?>
+          <label>
+            Tipo
+            <select name="telefonos[new][__INDEX__][<?php echo h($telefonoTypeField); ?>]">
+              <option value="">Selecciona</option>
+              <option value="Personal">Personal</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </label>
+        <?php endif; ?>
         <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
       </div>
     </div>
@@ -1039,17 +1101,16 @@ $active_page = 'alumnos';
           Correo electrónico
           <input type="email" name="correos[new][__INDEX__][direccion_correo]">
         </label>
-        <label>
-          Etiqueta
-          <select name="correos[new][__INDEX__][etiqueta]">
-            <option value="">Selecciona</option>
-            <option value="Principal">Principal</option>
-            <option value="Trabajo">Trabajo</option>
-            <option value="Facturación">Facturación</option>
-            <option value="Personal">Personal</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </label>
+        <?php if ($correoTypeField !== null): ?>
+          <label>
+            Tipo
+            <select name="correos[new][__INDEX__][<?php echo h($correoTypeField); ?>]">
+              <option value="">Selecciona</option>
+              <option value="Personal">Personal</option>
+              <option value="EducaMadrid">EducaMadrid</option>
+            </select>
+          </label>
+        <?php endif; ?>
         <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
       </div>
     </div>
