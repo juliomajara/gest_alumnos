@@ -24,6 +24,12 @@
             table-layout: fixed;
         }
 
+        td,
+        th {
+            box-sizing: border-box;
+            vertical-align: middle;
+        }
+
         .container {
             width: 100%;
             max-width: 100%;
@@ -368,8 +374,7 @@
         .table-cell {
             padding: 5px 8px;
             border-right: 1px solid black;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
         }
 
         .table-cell:last-child {
@@ -427,6 +432,7 @@
         .module-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             margin-top: 20px;
             font-size: 12px;
         }
