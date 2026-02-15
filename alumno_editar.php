@@ -789,7 +789,7 @@ $alumnoFieldLabels = [
   'comentarios' => 'Comentarios',
 ];
 
-$blockAlumnoFields = ['nia', 'dni', 'seg_soc', 'apellido1', 'apellido2', 'nombre', 'fecha_nacimiento', 'cp', 'id_provincia'];
+$blockAlumnoFields = ['nia', 'dni', 'seg_soc', 'apellido1', 'apellido2', 'nombre', 'fecha_nacimiento'];
 $blockTutorFields = ['nombre_tutor1', 'telefono_tutor1', 'correo_tutor1', 'nombre_tutor2', 'telefono_tutor2', 'correo_tutor2'];
 $blockAcademicoFields = ['repite_curso', 'horas_ffe_aprobadas', 'faltas_10_dia', 'faltas_10_cantidad', 'faltas_15_dia', 'faltas_15_cantidad', 'comentarios'];
 
