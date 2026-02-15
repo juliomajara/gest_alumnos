@@ -381,7 +381,10 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     throw new RuntimeException('No se pudo leer la plantilla del plan de formación.');
   }
 
-  $html = str_replace('src="bandera_CM.png"', 'src="' . htmlspecialchars(__DIR__ . '/docs/bandera_CM.png', ENT_QUOTES, 'UTF-8') . '"', $html);
+  $flagImagePath = realpath(__DIR__ . '/docs/bandera_CM.png');
+  if ($flagImagePath !== false) {
+    $html = str_replace('src="bandera_CM.png"', 'src="file://' . htmlspecialchars($flagImagePath, ENT_QUOTES, 'UTF-8') . '"', $html);
+  }
 
   $dom = new DOMDocument();
   libxml_use_internal_errors(true);
@@ -560,6 +563,19 @@ function fetch_plan_formacion_rows(PDO $pdo, array $practice): array {
   }
 
   return $rows;
+}
+
+function ensure_mpdf_temp_dir(): string {
+  $tmpDir = __DIR__ . '/docs/.mpdf_tmp';
+  if (!is_dir($tmpDir) && !mkdir($tmpDir, 0755, true) && !is_dir($tmpDir)) {
+    throw new RuntimeException('No se pudo crear el directorio temporal para PDFs.');
+  }
+
+  if (!is_writable($tmpDir)) {
+    throw new RuntimeException('El directorio temporal para PDFs no tiene permisos de escritura.');
+  }
+
+  return $tmpDir;
 }
 
 function month_name_es(int $month): string {
@@ -993,6 +1009,7 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml .= '<p><strong>Total de días que asistirá a la empresa: ' . $attendanceDays . ' días</strong></p>';
 
           try {
+            $mpdfTempDir = ensure_mpdf_temp_dir();
             $mpdf = new Mpdf([
               'mode' => 'utf-8',
               'format' => 'A4',
@@ -1000,6 +1017,7 @@ if ($id_practica === false || $id_practica === null) {
               'margin_right' => 12,
               'margin_top' => 12,
               'margin_bottom' => 12,
+              'tempDir' => $mpdfTempDir,
             ]);
             $mpdf->WriteHTML($pdfHtml);
             $mpdf->Output($calendar_file_path, \Mpdf\Output\Destination::FILE);
@@ -1058,6 +1076,7 @@ if ($id_practica === false || $id_practica === null) {
         try {
           $plan_rows = fetch_plan_formacion_rows($pdo, $practice);
           $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows);
+          $mpdfTempDir = ensure_mpdf_temp_dir();
 
           $mpdf = new Mpdf([
             'mode' => 'utf-8',
@@ -1067,6 +1086,7 @@ if ($id_practica === false || $id_practica === null) {
             'margin_top' => 10,
             'margin_bottom' => 10,
             'shrink_tables_to_fit' => 0,
+            'tempDir' => $mpdfTempDir,
           ]);
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;
@@ -1075,9 +1095,10 @@ if ($id_practica === false || $id_practica === null) {
 
           redirect_to_practice((int) $id_practica, 'plan_generated', null);
         } catch (Throwable $planPdfError) {
-          $errorMessage = $planPdfError instanceof RuntimeException
-            ? $planPdfError->getMessage()
-            : 'No se pudo generar el PDF del plan de formación en este momento.';
+          $errorMessage = $planPdfError->getMessage();
+          if ($errorMessage === '') {
+            $errorMessage = 'No se pudo generar el PDF del plan de formación en este momento.';
+          }
           redirect_to_practice((int) $id_practica, null, 'Plan: ' . $errorMessage);
         }
       }
