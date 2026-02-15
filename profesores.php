@@ -58,7 +58,7 @@ $teachers_stmt = $pdo->prepare(
   LEFT JOIN (
     SELECT
       id_entidad,
-      GROUP_CONCAT(DISTINCT telefono ORDER BY telefono SEPARATOR ', ') AS telefonos
+      GROUP_CONCAT(DISTINCT telefono ORDER BY telefono SEPARATOR ", ") AS telefonos
     FROM telefonos
     WHERE entidad_tipo = \'profesor\'
     GROUP BY id_entidad
@@ -66,7 +66,7 @@ $teachers_stmt = $pdo->prepare(
   LEFT JOIN (
     SELECT
       id_entidad,
-      GROUP_CONCAT(DISTINCT direccion_correo ORDER BY direccion_correo SEPARATOR ', ') AS correos
+      GROUP_CONCAT(DISTINCT direccion_correo ORDER BY direccion_correo SEPARATOR ", ") AS correos
     FROM correos
     WHERE entidad_tipo = \'profesor\'
     GROUP BY id_entidad
