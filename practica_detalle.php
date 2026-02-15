@@ -1094,6 +1094,7 @@ if ($id_practica === false || $id_practica === null) {
             'margin_right' => 10,
             'margin_top' => 10,
             'margin_bottom' => 10,
+            'default_font_size' => 12,
             'shrink_tables_to_fit' => 0,
             'tempDir' => $mpdfTempDir,
           ]);
