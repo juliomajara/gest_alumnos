@@ -300,6 +300,62 @@ function set_multiline_content_by_id(DOMXPath $xpath, string $id, array $lines):
   }
 }
 
+function set_span_by_text(DOMXPath $xpath, string $currentText, string $value): void {
+  $nodes = $xpath->query('//span[normalize-space(text()) = ' . xpath_literal($currentText) . ']');
+  if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
+    return;
+  }
+
+  $node = $nodes->item(0);
+  if ($node instanceof DOMElement) {
+    $node->textContent = $value;
+  }
+}
+
+function set_observaciones_text(DOMXPath $xpath, string $value): void {
+  $nodes = $xpath->query('//table[.//strong[contains(normalize-space(.), "Observaciones:")]]/tr[2]/td');
+  if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
+    return;
+  }
+
+  $node = $nodes->item(0);
+  if (!($node instanceof DOMElement)) {
+    return;
+  }
+
+  while ($node->firstChild !== null) {
+    $node->removeChild($node->firstChild);
+  }
+
+  $node->textContent = $value;
+}
+
+function set_checkbox_in_table_by_title(DOMXPath $xpath, string $title, int $index, bool $checked): void {
+  $nodes = $xpath->query('//table[.//strong[contains(normalize-space(.), ' . xpath_literal($title) . ')]]//span[contains(concat(" ", normalize-space(@class), " "), " checkbox ")]');
+  if (!($nodes instanceof DOMNodeList) || $nodes->length <= $index) {
+    return;
+  }
+
+  $checkbox = $nodes->item($index);
+  if (!($checkbox instanceof DOMElement)) {
+    return;
+  }
+
+  $classes = preg_split('/\s+/', trim($checkbox->getAttribute('class'))) ?: [];
+  $classes = array_values(array_filter($classes, static fn (string $class): bool => $class !== ''));
+  $hasChecked = in_array('checked', $classes, true);
+
+  if ($checked && !$hasChecked) {
+    $classes[] = 'checked';
+  }
+
+  if (!$checked && $hasChecked) {
+    $classes = array_values(array_filter($classes, static fn (string $class): bool => $class !== 'checked'));
+  }
+
+  $checkbox->setAttribute('class', implode(' ', array_unique($classes)));
+}
+
 function calculate_schedule_metrics(array $scheduleByDay): array {
   $hasWeekend = false;
   $maxDayHours = 0.0;
@@ -390,16 +446,6 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   libxml_clear_errors();
 
   $xpath = new DOMXPath($dom);
-  $setById = static function (DOMXPath $xpath, string $id, string $value): void {
-    $nodes = $xpath->query('//*[@id="' . $id . '"]');
-    if ($nodes instanceof DOMNodeList && $nodes->length > 0) {
-      $node = $nodes->item(0);
-      if ($node instanceof DOMElement) {
-        $node->textContent = $value;
-      }
-    }
-  };
-
   $studentName = blank_if_unavailable(full_name($practice, 'alumno'));
   $companyName = v($practice['empresa_nombre'] ?? null);
   $companyCif = v($practice['empresa_cif'] ?? null);
@@ -419,96 +465,74 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $circExcep = (int) ($practice['circ_excep'] ?? 0);
   $causes = $circExcep === 1 ? build_extraordinary_authorization_causes($practice, $scheduleByDay) : [];
 
-  $values = [
-    'date' => date('d/m/Y'),
-    'course' => $courseName,
-    'ciclo-formativo' => $cycleName,
-    'codigo' => v($practice['ciclo_codigo'] ?? null),
-    'curso' => v($practice['curso_ordinal'] ?? null),
-    'alumno' => $studentName,
-    'correo_alumno' => v($practice['alumno_email'] ?? null),
-    'telefono_alumno' => v($practice['alumno_telefono'] ?? null),
-    'centro_docente' => 'IES Laguna de Joatzel',
-    'correo_centro' => 'ies.lagunadejoatzel.getafe@educa.madrid.org',
-    'telefono_centro' => '916837197',
-    'tutor_centro' => v($practice['tutor_centro'] ?? null),
-    'correo_tutor_centro' => v($practice['tutor_centro_email'] ?? null),
-    'telefono_tutor_centro' => v($practice['tutor_centro_telefono'] ?? null),
-    'empresa' => $companyName,
-    'nif_empresa' => $companyCif,
-    'correo_empresa' => v($practice['empresa_email'] ?? null),
-    'telefono_empresa' => v($practice['empresa_telefono'] ?? null),
-    'tutor_empresa' => $companyTutor,
-    'correo_tutor_empresa' => v($practice['tutor_empresa_email'] ?? null),
-    'telefono_tutor_empresa' => v($practice['tutor_empresa_telefono'] ?? null),
-    'periodo_1_numero' => '1',
-    'periodo_1_calendario' => trim(implode(' - ', array_values(array_filter([
+  $valuesByPlaceholder = [
+    '02/03/2026' => date('d/m/Y'),
+    '2025 - 2026' => $courseName,
+    'Técnico Superior en Desarrollo de Aplicaciones Multiplataforma' => $cycleName,
+    'IFCS03' => v($practice['ciclo_codigo'] ?? null),
+    '2º' => v($practice['curso_ordinal'] ?? null),
+    'Nombre del Alumno' => $studentName,
+    'correo del alumno' => v($practice['alumno_email'] ?? null),
+    'Teléfono del alumno' => v($practice['alumno_telefono'] ?? null),
+    'Nombre del tutor' => v($practice['tutor_centro'] ?? null),
+    'correo del tutor' => v($practice['tutor_centro_email'] ?? null),
+    'teléfono del tutor' => v($practice['tutor_centro_telefono'] ?? null),
+    'Nombre de la empresa' => $companyName,
+    'NIF de la empresa' => $companyCif,
+    'correo de la empresa' => v($practice['empresa_email'] ?? null),
+    'Teléfono de la empresa' => v($practice['empresa_telefono'] ?? null),
+    'Nombre del tutor de empresa' => $companyTutor,
+    'correo del tutor de empresa' => v($practice['tutor_empresa_email'] ?? null),
+    'teléfono del tutor de empresa' => v($practice['tutor_empresa_telefono'] ?? null),
+    'periodo' => '1',
+    'fecha incio - fecha fin' => trim(implode(' - ', array_values(array_filter([
       format_date((string) ($practice['fecha_inicio'] ?? ''), ''),
       format_date($endDateRaw, ''),
     ], static fn (string $item): bool => $item !== '')))),
-    'periodo_1_horario' => $scheduleSummary,
-    'total_horas' => $totalHours,
-    'observaciones' => v($practice['observaciones'] ?? null),
-    'causas_autorizacion' => '',
+    'horario' => $scheduleSummary,
+    'horas' => $totalHours,
   ];
 
-  foreach ($values as $id => $value) {
-    $setById($xpath, $id, $value);
+  foreach ($valuesByPlaceholder as $placeholder => $value) {
+    set_span_by_text($xpath, $placeholder, $value);
   }
 
-  set_multiline_content_by_id($xpath, 'causas_autorizacion', $causes);
-  mark_checkbox_group_option($xpath, 'Requiere medidas/adaptaciones extraordinarias por discapacidad:', 'NO');
-  mark_checkbox_group_option($xpath, 'Requiere autorización extraordinaria:', $circExcep === 1 ? 'SÍ' : 'NO');
-  mark_checkbox_group_option($xpath, 'Intervalo de formación:', 'Diario');
-
-  $moduleTableBodies = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " module-table ")]/tbody');
-  if ($moduleTableBodies instanceof DOMNodeList && $moduleTableBodies->length > 0) {
-    $tbody = $moduleTableBodies->item(0);
-
-    if ($tbody instanceof DOMElement) {
-      while ($tbody->firstChild !== null) {
-        $tbody->removeChild($tbody->firstChild);
-      }
-
-      foreach ($planRows as $row) {
-        $tr = $dom->createElement('tr');
-
-        $moduleCell = $dom->createElement('td');
-        $moduleCell->textContent = v($row['modulo'] ?? '');
-        $tr->appendChild($moduleCell);
-
-        $codeCell = $dom->createElement('td');
-        $codeCell->setAttribute('style', 'text-align: center;');
-        $codeCell->textContent = v($row['codigo'] ?? '');
-        $tr->appendChild($codeCell);
-
-        $raCell = $dom->createElement('td');
-        $raCell->setAttribute('style', 'text-align: center;');
-        $raCell->textContent = v($row['resultado'] ?? '');
-        $tr->appendChild($raCell);
-
-        $companyCell = $dom->createElement('td');
-        $companyCell->setAttribute('style', 'text-align: center;');
-        $companyCell->textContent = v($row['empresa_x'] ?? '');
-        $tr->appendChild($companyCell);
-
-        $sharedCell = $dom->createElement('td');
-        $sharedCell->setAttribute('style', 'text-align: center;');
-        $sharedCell->textContent = v($row['compartida_x'] ?? '');
-        $tr->appendChild($sharedCell);
-
-        $tbody->appendChild($tr);
+  $causasText = implode(' ', $causes);
+  if ($causasText !== '') {
+    $causeNodes = $xpath->query('//table[.//strong[contains(normalize-space(.), "Requiere autorización extraordinaria:")]]/tr[3]/td');
+    if ($causeNodes instanceof DOMNodeList && $causeNodes->length > 0) {
+      $causeNode = $causeNodes->item(0);
+      if ($causeNode instanceof DOMElement) {
+        $causeNode->textContent = $causasText;
       }
     }
+  }
+
+  set_observaciones_text($xpath, v($practice['observaciones'] ?? null));
+
+  set_checkbox_in_table_by_title($xpath, 'Requiere medidas/adaptaciones extraordinarias por discapacidad:', 0, false);
+  set_checkbox_in_table_by_title($xpath, 'Requiere medidas/adaptaciones extraordinarias por discapacidad:', 1, true);
+  set_checkbox_in_table_by_title($xpath, 'Requiere autorización extraordinaria:', 0, $circExcep === 1);
+  set_checkbox_in_table_by_title($xpath, 'Requiere autorización extraordinaria:', 1, $circExcep !== 1);
+  set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 0, true);
+  set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 1, false);
+  set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 2, false);
+  set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 3, false);
+  set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 4, false);
+
+  for ($index = 1; $index <= 17; $index++) {
+    $row = $planRows[$index - 1] ?? [];
+    set_span_by_text($xpath, 'modulo' . $index, v($row['modulo'] ?? null));
+    set_span_by_text($xpath, 'codigo' . $index, v($row['codigo'] ?? null));
+    set_span_by_text($xpath, 'RA' . $index, v($row['resultado'] ?? null));
+    set_span_by_text($xpath, 'integro' . $index, v($row['empresa_x'] ?? null));
+    set_span_by_text($xpath, 'compartido' . $index, v($row['compartida_x'] ?? null));
   }
 
   $rendered = $dom->saveHTML();
   if (trim($rendered) === '') {
     throw new RuntimeException('El contenido renderizado del plan de formación está vacío.');
   }
-
-  // Debug para ver el HTML generado (activar si necesitas diagnosticar).
-  // file_put_contents(__DIR__ . '/docs/debug_rendered_html.txt', $rendered);
 
   return $rendered;
 }
@@ -875,7 +899,64 @@ if ($id_practica === false || $id_practica === null) {
         g.id_ciclo,
         g.grupo,
         ci.ciclo AS ciclo_nombre,
-        ci.codigo AS ciclo_codigo
+        ci.codigo AS ciclo_codigo,
+        CONCAT_WS(\' \' , pc.apellido1, pc.apellido2, pc.nombre) AS tutor_centro,
+        (
+          SELECT c1.direccion_correo
+          FROM correos c1
+          WHERE c1.entidad_tipo = \'alumno\' AND c1.id_entidad = a.id_alumno
+          ORDER BY c1.id_correo ASC
+          LIMIT 1
+        ) AS alumno_email,
+        (
+          SELECT t1.telefono
+          FROM telefonos t1
+          WHERE t1.entidad_tipo = \'alumno\' AND t1.id_entidad = a.id_alumno
+          ORDER BY t1.id_telefono ASC
+          LIMIT 1
+        ) AS alumno_telefono,
+        (
+          SELECT c2.direccion_correo
+          FROM correos c2
+          WHERE c2.entidad_tipo = \'empresa\' AND c2.id_entidad = e.id_empresa
+          ORDER BY c2.id_correo ASC
+          LIMIT 1
+        ) AS empresa_email,
+        (
+          SELECT t2.telefono
+          FROM telefonos t2
+          WHERE t2.entidad_tipo = \'empresa\' AND t2.id_entidad = e.id_empresa
+          ORDER BY t2.id_telefono ASC
+          LIMIT 1
+        ) AS empresa_telefono,
+        (
+          SELECT c3.direccion_correo
+          FROM correos c3
+          WHERE c3.entidad_tipo = \'empresa_tutor\' AND c3.id_entidad = et.id_empresas_tutor
+          ORDER BY c3.id_correo ASC
+          LIMIT 1
+        ) AS tutor_empresa_email,
+        (
+          SELECT t3.telefono
+          FROM telefonos t3
+          WHERE t3.entidad_tipo = \'empresa_tutor\' AND t3.id_entidad = et.id_empresas_tutor
+          ORDER BY t3.id_telefono ASC
+          LIMIT 1
+        ) AS tutor_empresa_telefono,
+        (
+          SELECT c4.direccion_correo
+          FROM correos c4
+          WHERE c4.entidad_tipo = \'profesor\' AND c4.id_entidad = pc.id_profesor
+          ORDER BY c4.id_correo ASC
+          LIMIT 1
+        ) AS tutor_centro_email,
+        (
+          SELECT t4.telefono
+          FROM telefonos t4
+          WHERE t4.entidad_tipo = \'profesor\' AND t4.id_entidad = pc.id_profesor
+          ORDER BY t4.id_telefono ASC
+          LIMIT 1
+        ) AS tutor_centro_telefono
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
@@ -897,6 +978,8 @@ if ($id_practica === false || $id_practica === null) {
       LEFT JOIN cursos c ON c.id_curso = ac.id_curso
       LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
       LEFT JOIN ciclos ci ON ci.id_ciclo = g.id_ciclo
+      LEFT JOIN grupos_tutores gt ON gt.id_grupo = ac.id_grupo AND gt.id_curso_escolar = ac.id_curso_escolar
+      LEFT JOIN profesores pc ON pc.id_profesor = gt.id_profesor
       WHERE p.id_practica = :id_practica
       LIMIT 1'
     );
@@ -1099,6 +1182,10 @@ $mpdf->WriteHTML($html, \Mpdf\HTMLParserMode::HTML_BODY);
         try {
           $plan_rows = fetch_plan_formacion_rows($pdo, $practice);
           $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows);
+          $plan_html_path = $planDirectory . '/' . pathinfo($plan_file_name, PATHINFO_FILENAME) . '.html';
+          if (file_put_contents($plan_html_path, $pdfHtml) === false) {
+            throw new RuntimeException('No se pudo guardar el HTML generado del plan de formación.');
+          }
           $mpdfTempDir = ensure_mpdf_temp_dir();
 
           $mpdf = new Mpdf([
