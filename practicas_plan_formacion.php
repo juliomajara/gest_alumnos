@@ -269,6 +269,15 @@ if ($html === false) {
   fail('No se pudo leer la plantilla del Plan de formación.', 500);
 }
 
+$flagImagePath = realpath(__DIR__ . '/docs/bandera_CM.png');
+if (is_string($flagImagePath) && $flagImagePath !== '') {
+  $flagUri = 'file://' . str_replace(DIRECTORY_SEPARATOR, '/', $flagImagePath);
+  if (DIRECTORY_SEPARATOR === '\\') {
+    $flagUri = preg_replace('/^file:\/\//', 'file:///', $flagUri) ?? $flagUri;
+  }
+  $html = str_replace('src="bandera_CM.png"', 'src="' . htmlspecialchars($flagUri, ENT_QUOTES, 'UTF-8') . '"', $html);
+}
+
 $dom = new DOMDocument();
 libxml_use_internal_errors(true);
 $domHtml = function_exists('mb_convert_encoding') ? mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8') : $html;
