@@ -516,6 +516,7 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     }
   }
 
+  // Extraer todos los <style> del <head>
   $stylesContent = '';
   $styleNodes = $xpath->query('//head/style');
   if ($styleNodes instanceof DOMNodeList) {
@@ -527,6 +528,7 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     }
   }
 
+  // Extraer todo el contenido del <body> (sin las etiquetas <body> mismas)
   $bodyContent = '';
   $bodyNodes = $xpath->query('//body');
   if ($bodyNodes instanceof DOMNodeList && $bodyNodes->length > 0) {
@@ -539,22 +541,44 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
         }
       }
     }
+  } else {
+    // El body no existe en el DOM - esto es un error grave
+    throw new RuntimeException(
+      'No se encontró el elemento <body> en la plantilla HTML. ' .
+      'Verifica que docs/practicas_plan_formacion.html tenga estructura válida.'
+    );
   }
 
-  // Fallback defensivo por si la plantilla no tiene <body> válido: extraemos todo el documento.
+  // Validar que se extrajo contenido real del body.
   if (trim($bodyContent) === '') {
-    $fallback = $dom->saveHTML();
-    if (!is_string($fallback) || trim($fallback) === '') {
-      throw new RuntimeException('No se pudo renderizar la plantilla del plan de formación.');
-    }
+    throw new RuntimeException(
+      'El contenido del <body> está vacío después de la extracción. ' .
+      'Esto puede indicar que la manipulación del DOM falló. ' .
+      'Styles extraídos: ' . (trim($stylesContent) !== '' ? 'SÍ (' . strlen($stylesContent) . ' chars)' : 'NO')
+    );
+  }
 
-    $bodyContent = $fallback;
+  // VALIDACIÓN CRÍTICA: Asegurar que NO hay etiquetas de documento completo.
+  $forbiddenTags = ['<!DOCTYPE', '<html', '<head>', '<body>', '</html>', '</body>'];
+  foreach ($forbiddenTags as $tag) {
+    if (stripos($bodyContent, $tag) !== false) {
+      throw new RuntimeException(
+        'CRÍTICO: El contenido extraído contiene "' . $tag . '". ' .
+        'Esto causará que mPDF genere miles de páginas en blanco. ' .
+        'La extracción del body falló. ' .
+        'Longitud: ' . strlen($bodyContent) . ' chars. ' .
+        'Inicio: ' . substr($bodyContent, 0, 200)
+      );
+    }
   }
 
   $rendered = $stylesContent . $bodyContent;
   if (trim($rendered) === '') {
     throw new RuntimeException('El contenido renderizado del plan de formación está vacío.');
   }
+
+  // Debug opcional para diagnósticos puntuales.
+  // file_put_contents(__DIR__ . '/docs/debug_rendered_html.txt', $rendered);
 
   return $rendered;
 }
