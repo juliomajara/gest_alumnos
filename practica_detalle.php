@@ -144,22 +144,41 @@ function build_calendar_pdf_filename(array $practice): string {
 }
 
 function build_plan_pdf_filename(array $practice): string {
-  $parts = [
-    sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
-    sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
-    sanitize_filename_component((string) ($practice['alumno_nombre'] ?? ''), 40),
-    sanitize_filename_component((string) ($practice['alumno_apellido1'] ?? ''), 40),
-    sanitize_filename_component((string) ($practice['empresa_nombre'] ?? ''), 70),
-  ];
+  $sanitize = static function (?string $value, int $maxLength = 80): string {
+    $value = trim((string) $value);
+    if ($value === '') {
+      return 'NA';
+    }
 
-  $baseName = implode('_', $parts);
-  if (function_exists('mb_substr')) {
-    $baseName = mb_substr($baseName, 0, 195);
-  } else {
-    $baseName = substr($baseName, 0, 195);
-  }
+    if (function_exists('iconv')) {
+      $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+      if (is_string($converted) && $converted !== '') {
+        $value = $converted;
+      }
+    }
 
-  return $baseName . '_PLAN.pdf';
+    $value = preg_replace('/[\\\/\:\*\?"<>\|]+/', '', $value) ?? '';
+    $value = preg_replace('/[^A-Za-z0-9]+/', '_', $value) ?? '';
+    $value = preg_replace('/_+/', '_', $value) ?? '';
+    $value = trim($value, '._-');
+
+    if ($value === '') {
+      return 'NA';
+    }
+
+    return function_exists('mb_substr') ? mb_substr($value, 0, $maxLength) : substr($value, 0, $maxLength);
+  };
+
+  $student = full_name($practice, 'alumno');
+  $company = (string) ($practice['empresa_nombre'] ?? '');
+  $dateForFile = date('Y-m-d');
+
+  return sprintf(
+    'PlanFormación_%s_%s_%s.pdf',
+    $sanitize($student, 80),
+    $sanitize($company, 80),
+    $sanitize($dateForFile, 20)
+  );
 }
 
 function redirect_to_practice(int $practiceId, ?string $documentStatus = null, ?string $documentError = null): void {
@@ -176,7 +195,11 @@ function redirect_to_practice(int $practiceId, ?string $documentStatus = null, ?
 }
 
 function build_plan_formacion_html(array $practice, array $scheduleByDay): string {
-  $templatePath = __DIR__ . '/docs/anexo_PlanDeFormacion.html';
+  $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
+  if (!is_file($templatePath)) {
+    throw new RuntimeException('No se encuentra la plantilla docs/practicas_plan_formacion.html.');
+  }
+
   $html = file_get_contents($templatePath);
   if ($html === false) {
     throw new RuntimeException('No se pudo leer la plantilla del plan de formación.');
@@ -186,25 +209,20 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay): strin
 
   $dom = new DOMDocument();
   libxml_use_internal_errors(true);
-  $dom->loadHTML($html);
+  $htmlForDom = function_exists('mb_convert_encoding')
+    ? mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8')
+    : $html;
+  $dom->loadHTML($htmlForDom);
   libxml_clear_errors();
 
   $xpath = new DOMXPath($dom);
-  $rows = $xpath->query('//table[contains(@class, "data")]/tr');
-  if (!$rows instanceof DOMNodeList || $rows->length === 0) {
-    throw new RuntimeException('La plantilla del plan de formación no tiene la estructura esperada.');
-  }
-
-  $setCellValue = static function (DOMNodeList $rowNodes, int $rowIndex, int $cellIndex, string $value): void {
-    $row = $rowNodes->item($rowIndex);
-    if (!$row instanceof DOMElement) {
-      return;
-    }
-
-    $cells = $row->getElementsByTagName('td');
-    $cell = $cells->item($cellIndex);
-    if ($cell instanceof DOMElement) {
-      $cell->textContent = $value;
+  $setById = static function (DOMXPath $xpath, string $id, string $value): void {
+    $nodes = $xpath->query('//*[@id="' . $id . '"]');
+    if ($nodes instanceof DOMNodeList && $nodes->length > 0) {
+      $node = $nodes->item(0);
+      if ($node instanceof DOMElement) {
+        $node->textContent = $value;
+      }
     }
   };
 
@@ -212,47 +230,49 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay): strin
   $companyName = format_value($practice['empresa_nombre']);
   $companyCif = format_value($practice['empresa_cif']);
   $companyTutor = full_name($practice, 'tutor');
-  $courseName = format_value($practice['grupo']);
-  $cycleName = format_value($practice['curso_escolar']);
+  $courseName = format_value($practice['curso_escolar']);
+  $cycleName = format_value($practice['grupo']);
 
-  $setCellValue($rows, 0, 1, $cycleName);
-  $setCellValue($rows, 1, 1, format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']));
-  $setCellValue($rows, 1, 3, $courseName);
-  $setCellValue($rows, 2, 1, $studentName);
-  $setCellValue($rows, 8, 1, $companyName);
-  $setCellValue($rows, 8, 2, 'N.I.F.: ' . $companyCif);
-  $setCellValue($rows, 10, 1, $companyTutor);
-  $setCellValue($rows, 15, 1, format_value($practice['observaciones'], 'Sin observaciones'));
+  $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
+  if ($endDateRaw === '') {
+    $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
+  }
+  $scheduleSummary = implode(' / ', build_schedule_summary($scheduleByDay));
 
-  $periodRows = $xpath->query('//table[contains(@class, "periodos")]/tbody/tr');
-  if ($periodRows instanceof DOMNodeList && $periodRows->length > 0) {
-    $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
-    if ($endDateRaw === '') {
-      $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
-    }
+  $values = [
+    'date' => date('d/m/Y'),
+    'course' => $courseName,
+    'ciclo-formativo' => $cycleName,
+    'codigo' => format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']),
+    'curso' => format_value($practice['anexo']),
+    'alumno' => $studentName,
+    'correo_alumno' => format_value($practice['alumno_email'] ?? null),
+    'telefono_alumno' => format_value($practice['alumno_telefono'] ?? null),
+    'centro_docente' => 'No disponible',
+    'correo_centro' => format_value($practice['centro_email'] ?? null),
+    'telefono_centro' => format_value($practice['centro_telefono'] ?? null),
+    'tutor_centro' => format_value($practice['tutor_centro'] ?? null),
+    'correo_tutor_centro' => format_value($practice['tutor_centro_email'] ?? null),
+    'telefono_tutor_centro' => format_value($practice['tutor_centro_telefono'] ?? null),
+    'empresa' => $companyName,
+    'nif_empresa' => $companyCif,
+    'correo_empresa' => format_value($practice['empresa_email'] ?? null),
+    'telefono_empresa' => format_value($practice['empresa_telefono'] ?? null),
+    'tutor_empresa' => $companyTutor,
+    'correo_tutor_empresa' => format_value($practice['tutor_empresa_email'] ?? null),
+    'telefono_tutor_empresa' => format_value($practice['tutor_empresa_telefono'] ?? null),
+    'periodo_1_numero' => '1',
+    'periodo_1_calendario' => format_date((string) ($practice['fecha_inicio'] ?? '')) . ' - ' . format_date($endDateRaw),
+    'periodo_1_horario' => $scheduleSummary,
+    'total_horas' => format_value($practice['horas'], '0') . ' horas',
+    'observaciones' => format_value($practice['observaciones'], 'Sin observaciones'),
+    'causas_autorizacion' => (int) ($practice['circ_excep'] ?? 0) === 1
+      ? 'Circunstancias excepcionales informadas en la práctica.'
+      : 'No requiere autorización extraordinaria.',
+  ];
 
-    $scheduleSummary = implode(' · ', build_schedule_summary($scheduleByDay));
-    $firstPeriod = $periodRows->item(0);
-    if ($firstPeriod instanceof DOMElement) {
-      $periodCells = $firstPeriod->getElementsByTagName('td');
-      if ($periodCells->item(0) instanceof DOMElement) {
-        $periodCells->item(0)->textContent = '1';
-      }
-      if ($periodCells->item(1) instanceof DOMElement) {
-        $periodCells->item(1)->textContent = format_date((string) ($practice['fecha_inicio'] ?? '')) . ' - ' . format_date($endDateRaw);
-      }
-      if ($periodCells->item(2) instanceof DOMElement) {
-        $periodCells->item(2)->textContent = $scheduleSummary;
-      }
-    }
-
-    $totalRow = $periodRows->item($periodRows->length - 1);
-    if ($totalRow instanceof DOMElement) {
-      $totalCells = $totalRow->getElementsByTagName('td');
-      if ($totalCells->item(2) instanceof DOMElement) {
-        $totalCells->item(2)->textContent = format_value($practice['horas'], '0') . ' horas';
-      }
-    }
+  foreach ($values as $id => $value) {
+    $setById($xpath, $id, $value);
   }
 
   $rendered = $dom->saveHTML();
@@ -764,7 +784,10 @@ if ($id_practica === false || $id_practica === null) {
 
           redirect_to_practice((int) $id_practica, 'plan_generated', null);
         } catch (Throwable $planPdfError) {
-          redirect_to_practice((int) $id_practica, null, 'Plan: No se pudo generar el PDF del plan de formación en este momento.');
+          $errorMessage = $planPdfError instanceof RuntimeException
+            ? $planPdfError->getMessage()
+            : 'No se pudo generar el PDF del plan de formación en este momento.';
+          redirect_to_practice((int) $id_practica, null, 'Plan: ' . $errorMessage);
         }
       }
     }
