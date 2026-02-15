@@ -370,15 +370,6 @@ function blank_if_unavailable(string $value): string {
   return $value === 'No disponible' ? '' : $value;
 }
 
-function build_file_uri(string $path): string {
-  $normalizedPath = str_replace('\\', '/', $path);
-  if (preg_match('/^[A-Za-z]:\//', $normalizedPath) === 1) {
-    $normalizedPath = '/' . $normalizedPath;
-  }
-
-  return 'file://' . $normalizedPath;
-}
-
 function build_plan_formacion_html(array $practice, array $scheduleByDay, array $planRows): string {
   $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
   if (!is_file($templatePath)) {
@@ -388,11 +379,6 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $html = file_get_contents($templatePath);
   if ($html === false) {
     throw new RuntimeException('No se pudo leer la plantilla del plan de formación.');
-  }
-
-  $flagImagePath = realpath(__DIR__ . '/docs/bandera_CM.png');
-  if ($flagImagePath !== false) {
-    $html = str_replace('src="bandera_CM.png"', 'src="' . htmlspecialchars(build_file_uri($flagImagePath), ENT_QUOTES, 'UTF-8') . '"', $html);
   }
 
   $dom = new DOMDocument();
@@ -516,78 +502,10 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     }
   }
 
-  // Extraer todos los <style> del <head>
-  $stylesContent = '';
-  $styleNodes = $xpath->query('//head/style');
-  if ($styleNodes instanceof DOMNodeList) {
-    foreach ($styleNodes as $styleNode) {
-      $styleHtml = $dom->saveHTML($styleNode);
-      if (is_string($styleHtml)) {
-        $stylesContent .= $styleHtml;
-      }
-    }
-  }
-
-  // Extraer todo el contenido del <body> (sin las etiquetas <body> mismas)
-  $bodyContent = '';
-  $bodyNodes = $xpath->query('//body');
-  if ($bodyNodes instanceof DOMNodeList && $bodyNodes->length > 0) {
-    $bodyNode = $bodyNodes->item(0);
-    if ($bodyNode instanceof DOMElement) {
-      foreach ($bodyNode->childNodes as $childNode) {
-        $childHtml = $dom->saveHTML($childNode);
-        if (is_string($childHtml)) {
-          $bodyContent .= $childHtml;
-        }
-      }
-    }
-  } else {
-    // El body no existe en el DOM - esto es un error grave
-    throw new RuntimeException(
-      'No se encontró el elemento <body> en la plantilla HTML. ' .
-      'Verifica que docs/practicas_plan_formacion.html tenga estructura válida.'
-    );
-  }
-
-  // Validar que se extrajo contenido real del body.
-  if (trim($bodyContent) === '') {
-    throw new RuntimeException(
-      'El contenido del <body> está vacío después de la extracción. ' .
-      'Esto puede indicar que la manipulación del DOM falló. ' .
-      'Styles extraídos: ' . (trim($stylesContent) !== '' ? 'SÍ (' . strlen($stylesContent) . ' chars)' : 'NO')
-    );
-  }
-
-  // VALIDACIÓN CRÍTICA: Asegurar que NO hay etiquetas de documento completo.
-  $forbiddenTags = ['<!DOCTYPE', '<html', '<head>', '<body>', '</html>', '</body>'];
-  foreach ($forbiddenTags as $tag) {
-    if (stripos($bodyContent, $tag) !== false) {
-      throw new RuntimeException(
-        'CRÍTICO: El contenido extraído contiene "' . $tag . '". ' .
-        'Esto causará que mPDF genere miles de páginas en blanco. ' .
-        'La extracción del body falló. ' .
-        'Longitud: ' . strlen($bodyContent) . ' chars. ' .
-        'Inicio: ' . substr($bodyContent, 0, 200)
-      );
-    }
-  }
-
-  $rendered = $stylesContent . $bodyContent;
+  $rendered = $dom->saveHTML();
   if (trim($rendered) === '') {
     throw new RuntimeException('El contenido renderizado del plan de formación está vacío.');
   }
-
-  // CORRECCIÓN CRÍTICA: Eliminar page-break-inside: avoid que causa bucles infinitos.
-  // mPDF entra en bucle cuando una tabla con esta propiedad no cabe en la página.
-  $rendered = preg_replace(
-    '/page-break-inside\s*:\s*avoid\s*;?/i',
-    'page-break-inside: auto;',
-    $rendered
-  );
-
-  // Normalizar espacios en blanco excesivos.
-  $rendered = preg_replace('/\s\s+/', ' ', $rendered);
-  $rendered = preg_replace('/>\s+</', '><', $rendered);
 
   // Debug para ver el HTML generado (activar si necesitas diagnosticar).
   // file_put_contents(__DIR__ . '/docs/debug_rendered_html.txt', $rendered);
@@ -1158,16 +1076,6 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows);
           $mpdfTempDir = ensure_mpdf_temp_dir();
 
-          // PASO 1: Extraer el CSS del HTML
-          if (preg_match('/<style>(.*?)<\/style>/is', $pdfHtml, $matches)) {
-            $css = $matches[1];
-            // Eliminar el tag <style> del HTML
-            $htmlContent = preg_replace('/<style>.*?<\/style>/is', '', $pdfHtml, 1);
-          } else {
-            $css = '';
-            $htmlContent = $pdfHtml;
-          }
-
           $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -1176,19 +1084,14 @@ if ($id_practica === false || $id_practica === null) {
             'margin_top' => 10,
             'margin_bottom' => 10,
             'default_font_size' => 12,
+            'shrink_tables_to_fit' => 0,
             'tempDir' => $mpdfTempDir,
           ]);
 
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;
 
-          // PASO 2: Procesar CSS primero (si existe)
-          if (!empty($css)) {
-            $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-          }
-
-          // PASO 3: Procesar HTML después
-          $mpdf->WriteHTML($htmlContent, \Mpdf\HTMLParserMode::HTML_BODY);
+          $mpdf->WriteHTML($pdfHtml);
           $mpdf->Output($plan_file_path, \Mpdf\Output\Destination::FILE);
 
           redirect_to_practice((int) $id_practica, 'plan_generated', null);
