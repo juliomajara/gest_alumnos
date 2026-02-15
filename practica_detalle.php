@@ -1095,14 +1095,19 @@ if ($id_practica === false || $id_practica === null) {
             'margin_top' => 10,
             'margin_bottom' => 10,
             'default_font_size' => 12,
-            'shrink_tables_to_fit' => 0,
-            'keep_table_proportions' => false,
+            // Mantiene el autoajuste de tablas en un rango seguro para plantillas con width:100%.
+            // 1.4 es el valor recomendado por mPDF para evitar miniaturización global del documento.
+            'shrink_tables_to_fit' => 1.4,
             'tempDir' => $mpdfTempDir,
           ]);
-          $mpdf->shrink_tables_to_fit = 0;
+
+          // Forzamos tamaño de página y tipografía base antes de renderizar el contenido.
+          $mpdf->WriteHTML('@page { size: A4; margin: 10mm; } body { font-family: Arial, sans-serif; font-size: 12pt; }', \Mpdf\HTMLParserMode::HEADER_CSS);
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;
-          $mpdf->WriteHTML($pdfHtml);
+
+          // El HTML del plan incluye <style> y tablas complejas; se procesa como cuerpo del documento.
+          $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
           $mpdf->Output($plan_file_path, \Mpdf\Output\Destination::FILE);
 
           redirect_to_practice((int) $id_practica, 'plan_generated', null);
