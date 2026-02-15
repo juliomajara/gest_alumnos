@@ -237,9 +237,11 @@
 
         .checkbox-option {
             display: inline-block;
-            white-space: nowrap;
             width: 100%;
             text-align: center;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .checkbox-option-label {
@@ -258,6 +260,8 @@
             font-size: 12px;
             font-weight: bold;
             vertical-align: middle;
+            margin: 0;
+            padding: 0;
         }
 
         .checkbox-group-yn .checkbox-label {
@@ -270,11 +274,11 @@
         }
 
         .checkbox-group-interval .checkbox-label {
-            width: 34%;
+            width: 28%;
         }
 
         .checkbox-group-interval .checkbox-item {
-            width: 13.2%;
+            width: 14.4%;
             text-align: center;
         }
 
