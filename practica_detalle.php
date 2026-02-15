@@ -1158,6 +1158,16 @@ if ($id_practica === false || $id_practica === null) {
           $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows);
           $mpdfTempDir = ensure_mpdf_temp_dir();
 
+          // PASO 1: Extraer el CSS del HTML
+          if (preg_match('/<style>(.*?)<\/style>/is', $pdfHtml, $matches)) {
+            $css = $matches[1];
+            // Eliminar el tag <style> del HTML
+            $htmlContent = preg_replace('/<style>.*?<\/style>/is', '', $pdfHtml, 1);
+          } else {
+            $css = '';
+            $htmlContent = $pdfHtml;
+          }
+
           $mpdf = new Mpdf([
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -1166,19 +1176,19 @@ if ($id_practica === false || $id_practica === null) {
             'margin_top' => 10,
             'margin_bottom' => 10,
             'default_font_size' => 12,
-            // Evita que mPDF reduzca globalmente el contenido cuando detecta overflow horizontal.
-            'shrink_tables_to_fit' => 0,
             'tempDir' => $mpdfTempDir,
           ]);
 
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;
 
-          // CSS de página base (solo @page)
-          $mpdf->WriteHTML('@page { size: A4; margin: 10mm; }', \Mpdf\HTMLParserMode::HEADER_CSS);
+          // PASO 2: Procesar CSS primero (si existe)
+          if (!empty($css)) {
+            $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
+          }
 
-          // Procesar HTML completo con <style> y contenido SIN especificar modo
-          $mpdf->WriteHTML($pdfHtml);
+          // PASO 3: Procesar HTML después
+          $mpdf->WriteHTML($htmlContent, \Mpdf\HTMLParserMode::HTML_BODY);
           $mpdf->Output($plan_file_path, \Mpdf\Output\Destination::FILE);
 
           redirect_to_practice((int) $id_practica, 'plan_generated', null);
