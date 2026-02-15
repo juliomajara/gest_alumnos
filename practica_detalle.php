@@ -157,7 +157,7 @@ function build_plan_pdf_filename(array $practice): string {
       }
     }
 
-    $value = preg_replace('/[\\\/\:\*\?"<>\|]+/', '', $value) ?? '';
+    $value = preg_replace('/[\/\\:*?"<>|]+/', '', $value) ?? '';
     $value = preg_replace('/[^A-Za-z0-9]+/', '_', $value) ?? '';
     $value = preg_replace('/_+/', '_', $value) ?? '';
     $value = trim($value, '._-');
