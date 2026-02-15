@@ -13,6 +13,7 @@
 
         body {
             font-family: Arial, sans-serif;
+            font-size: 12px;
             padding: 20px;
             background: white;
         }
@@ -68,6 +69,7 @@
 
         .header-text {
             width: 100%;
+            text-align: center;
         }
 
         .header-text h3 {
@@ -209,37 +211,47 @@
         }
 
         .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
 
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        .checkbox-group td {
+            padding: 0;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .checkbox-group .checkbox-label {
+            width: 70%;
+            white-space: normal;
+        }
+
+        .checkbox-group .checkbox-item {
+            width: auto;
+            padding-left: 8px;
+            text-align: left;
+        }
+
+        .checkbox-inline-group .checkbox-item {
+            padding-left: 10px;
         }
 
         .checkbox {
-            width: 15px;
-            height: 15px;
+            width: 14px;
+            height: 14px;
             border: 1px solid black;
             display: inline-block;
-            margin: auto;
+            line-height: 14px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            font-weight: bold;
+            margin-left: 3px;
         }
 
         .checkbox-filled {
-            position: relative;
-        }
-
-        .checkbox-filled::after {
-            content: "X";
-            color: black;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 12px;
+            display: inline-block;
         }
 
         .underline-field {
@@ -256,6 +268,7 @@
         .periods-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             margin-top: 0;
         }
 
@@ -373,21 +386,25 @@
         }
 
         .signature-section {
-            display: flex;
-            justify-content: space-between;
+            width: 100%;
             margin-top: 30px;
             padding: 20px 0;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .signature-box {
             text-align: center;
             font-size: 12px;
+            width: 33.33%;
+            vertical-align: top;
         }
 
         .signature-line {
             border-top: 1px solid black;
             width: 200px;
             margin: 40px auto 5px;
+            height: 1px;
         }
 
         .note-text {
@@ -426,7 +443,7 @@
                         <td style="width: 20%; padding: 10px; vertical-align: middle; border: none;">
                             <img src="bandera_CM.png" alt="Comunidad de Madrid" style="width: 80px; height: auto; display: block;">
                         </td>
-                        <td style="width: 156%; padding: 10px; vertical-align: middle; border: none;">
+                        <td style="width: 80%; padding: 10px; vertical-align: middle; border: none;">
                             <div class="header-text">
                                 <h3>PLAN DE FORMACIÓN</h3>
                                 <p>Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado</p>
@@ -536,17 +553,13 @@
 
                     <tr>
                         <td colspan="2" class="form-cell-full">
-                            <div class="checkbox-group">
-                                <span>Requiere medidas/adaptaciones extraordinarias por discapacidad:</span>
-                                <div class="checkbox-item">
-                                    <span>SÍ</span>
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <span>NO</span>
-                                    <span class="checkbox checkbox-filled"></span>
-                                </div>
-                            </div>
+                            <table class="checkbox-group">
+                                <tr>
+                                    <td class="checkbox-label"><span>Requiere medidas/adaptaciones extraordinarias por discapacidad:</span></td>
+                                    <td class="checkbox-item"><span>SÍ</span><span class="checkbox"></span></td>
+                                    <td class="checkbox-item"><span>NO</span><span class="checkbox checkbox-filled">X</span></td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
 
@@ -564,17 +577,13 @@
 
                     <tr>
                         <td colspan="2" class="form-cell-full">
-                            <div class="checkbox-group">
-                                <span>Requiere autorización extraordinaria:</span>
-                                <div class="checkbox-item">
-                                    <span>SÍ</span>
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <span>NO</span>
-                                    <span class="checkbox checkbox-filled"></span>
-                                </div>
-                            </div>
+                            <table class="checkbox-group">
+                                <tr>
+                                    <td class="checkbox-label"><span>Requiere autorización extraordinaria:</span></td>
+                                    <td class="checkbox-item"><span>SÍ</span><span class="checkbox"></span></td>
+                                    <td class="checkbox-item"><span>NO</span><span class="checkbox checkbox-filled">X</span></td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
 
@@ -592,29 +601,16 @@
 
                     <tr>
                         <td colspan="2" class="form-cell-full">
-                            <div class="checkbox-group">
-                                <span>Intervalo de formación:</span>
-                                <div class="checkbox-item">
-                                    <span>Diario</span>
-                                    <span class="checkbox checkbox-filled"></span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <span>Semanal</span>
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <span>Mensual</span>
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <span>Otros</span>
-                                    <span class="checkbox"></span>
-                                </div>
-                                <div class="checkbox-item">
-                                    <span>Varias empresas</span>
-                                    <span class="checkbox"></span>
-                                </div>
-                            </div>
+                            <table class="checkbox-group checkbox-inline-group">
+                                <tr>
+                                    <td class="checkbox-label"><span>Intervalo de formación:</span></td>
+                                    <td class="checkbox-item"><span>Diario</span><span class="checkbox checkbox-filled">X</span></td>
+                                    <td class="checkbox-item"><span>Semanal</span><span class="checkbox"></span></td>
+                                    <td class="checkbox-item"><span>Mensual</span><span class="checkbox"></span></td>
+                                    <td class="checkbox-item"><span>Otros</span><span class="checkbox"></span></td>
+                                    <td class="checkbox-item"><span>Varias empresas</span><span class="checkbox"></span></td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
 
@@ -624,64 +620,39 @@
                         </td>
                     </tr>
 
-                    <!-- Encabezados de la tabla de periodos -->
-                    <tr class="periods-header">
-                        <td colspan="2" class="form-cell-full" style="padding: 0; border-bottom: none;">
-                            <table style="width: 100%; border-collapse: collapse; margin: 0; border-bottom: 1px solid black;">
-                                <tr>
-                                    <th style="width: 10%; padding: 5px 8px; font-weight: bold; text-align: center; border-right: 1px solid black; border-bottom: 1px solid black;">Nº periodo</th>
-                                    <th style="width: 45%; padding: 5px 8px; font-weight: bold; text-align: center; border-right: 1px solid black; border-bottom: 1px solid black;">Calendario</th>
-                                    <th style="width: 45%; padding: 5px 8px; font-weight: bold; text-align: center; border-bottom: 1px solid black;">Horario</th>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Filas de datos de periodos -->
+                    <!-- Tabla única de periodos -->
                     <tr>
                         <td colspan="2" class="form-cell-full" style="padding: 0; border-bottom: none;">
-                            <table style="width: 100%; border-collapse: collapse; margin: 0;">
-                                <tr style="height: 24px;">
-                                    <td style="width: 10%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_1_numero">1</span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_1_calendario">02/03/2026 - 10/06/2026</span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_1_horario">L: 08:00-16:00 / M: 08:00-14:00 y 15:00-17:00 / X: 08:00-14:00 y 15:00-17:00 / J: 08:00-16:00 / V: 08:00-14:00</span></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td colspan="2" class="form-cell-full" style="padding: 0; border-bottom: none;">
-                            <table style="width: 100%; border-collapse: collapse; margin: 0;">
-                                <tr style="height: 24px;">
-                                    <td style="width: 10%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_2_numero"></span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_2_calendario"></span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_2_horario"></span></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td colspan="2" class="form-cell-full" style="padding: 0; border-bottom: none;">
-                            <table style="width: 100%; border-collapse: collapse; margin: 0;">
-                                <tr style="height: 24px;">
-                                    <td style="width: 10%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_3_numero"></span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_3_calendario"></span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_3_horario"></span></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td colspan="2" class="form-cell-full" style="padding: 0; border-bottom: none;">
-                            <table style="width: 100%; border-collapse: collapse; margin: 0;">
-                                <tr style="height: 24px;">
-                                    <td style="width: 10%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_4_numero"></span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; border-right: 1px solid black; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_4_calendario"></span></td>
-                                    <td style="width: 45%; padding: 5px 8px; text-align: center; vertical-align: middle; border-bottom: 1px solid black;"><span id="periodo_4_horario"></span></td>
-                                </tr>
+                            <table class="periods-table">
+                                <thead>
+                                    <tr>
+                                        <th class="table-cell-narrow">Nº periodo</th>
+                                        <th class="table-cell-medium">Calendario</th>
+                                        <th class="table-cell-wide">Horario</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="height: 24px;">
+                                        <td><span id="periodo_1_numero">1</span></td>
+                                        <td><span id="periodo_1_calendario">02/03/2026 - 10/06/2026</span></td>
+                                        <td><span id="periodo_1_horario">L: 08:00-16:00 / M: 08:00-14:00 y 15:00-17:00 / X: 08:00-14:00 y 15:00-17:00 / J: 08:00-16:00 / V: 08:00-14:00</span></td>
+                                    </tr>
+                                    <tr style="height: 24px;">
+                                        <td><span id="periodo_2_numero"></span></td>
+                                        <td><span id="periodo_2_calendario"></span></td>
+                                        <td><span id="periodo_2_horario"></span></td>
+                                    </tr>
+                                    <tr style="height: 24px;">
+                                        <td><span id="periodo_3_numero"></span></td>
+                                        <td><span id="periodo_3_calendario"></span></td>
+                                        <td><span id="periodo_3_horario"></span></td>
+                                    </tr>
+                                    <tr style="height: 24px;">
+                                        <td><span id="periodo_4_numero"></span></td>
+                                        <td><span id="periodo_4_calendario"></span></td>
+                                        <td><span id="periodo_4_horario"></span></td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </td>
                     </tr>
@@ -953,20 +924,22 @@
                 <span id="formaciones_especificas"></span>
             </div>
 
-            <div class="signature-section">
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <p>Fdo.: Tutor/a del centro docente</p>
-                </div>
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <p>Fdo.: Tutor/a de la empresa u organismo<br>equiparado</p>
-                </div>
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <p>Fdo.: Alumno/a</p>
-                </div>
-            </div>
+            <table class="signature-section">
+                <tr>
+                    <td class="signature-box">
+                        <div class="signature-line"></div>
+                        <p>Fdo.: Tutor/a del centro docente</p>
+                    </td>
+                    <td class="signature-box">
+                        <div class="signature-line"></div>
+                        <p>Fdo.: Tutor/a de la empresa u organismo<br>equiparado</p>
+                    </td>
+                    <td class="signature-box">
+                        <div class="signature-line"></div>
+                        <p>Fdo.: Alumno/a</p>
+                    </td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>
