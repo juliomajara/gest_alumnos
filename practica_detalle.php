@@ -1166,9 +1166,8 @@ if ($id_practica === false || $id_practica === null) {
             'margin_top' => 10,
             'margin_bottom' => 10,
             'default_font_size' => 12,
-            // Mantiene el autoajuste de tablas en un rango seguro para plantillas con width:100%.
-            // 1.4 es el valor recomendado por mPDF para evitar miniaturización global del documento.
-            'shrink_tables_to_fit' => 1.4,
+            // Evita que mPDF reduzca globalmente el contenido cuando detecta overflow horizontal.
+            'shrink_tables_to_fit' => 0,
             'tempDir' => $mpdfTempDir,
           ]);
 
