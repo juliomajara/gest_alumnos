@@ -85,7 +85,8 @@
         }
 
         .form-row {
-            display: flex;
+            display: table;
+            width: 100%;
             border-bottom: 1px solid black;
             min-height: 30px;
         }
@@ -157,8 +158,7 @@
         .form-field {
             padding: 5px 8px;
             font-size: 12px;
-            display: flex;
-            align-items: center;
+            display: block;
         }
 
         .form-field-full {
@@ -209,6 +209,7 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            font-size: 12px;
         }
 
         .checkbox-group td {
@@ -229,30 +230,55 @@
         }
 
         .checkbox-option {
-            display: inline-block;
-            white-space: nowrap;
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
         }
 
-        .checkbox-inline-group .checkbox-item {
-            width: 12%;
+        .checkbox-option-label {
+            display: table-cell;
+            text-align: right;
+            padding-right: 4px;
+            vertical-align: middle;
+            white-space: normal;
+        }
+
+        .checkbox-option-box {
+            display: table-cell;
+            width: 15px;
+            vertical-align: middle;
+        }
+
+        .checkbox-group-yn .checkbox-label {
+            width: 70%;
+        }
+
+        .checkbox-group-yn .checkbox-item {
+            width: 15%;
             text-align: center;
         }
 
-        .checkbox-inline-group .checkbox-label {
-            width: 40%;
+        .checkbox-group-interval .checkbox-label {
+            width: 34%;
+        }
+
+        .checkbox-group-interval .checkbox-item {
+            width: 13.2%;
+            text-align: center;
         }
 
         .checkbox {
             width: 13px;
             height: 13px;
             border: 1px solid black;
-            display: inline-block;
+            display: block;
             line-height: 13px;
             text-align: center;
             vertical-align: middle;
             font-size: 10px;
             font-weight: bold;
-            margin-left: 4px;
+            margin: 0;
         }
 
         .checkbox-filled {
@@ -317,7 +343,8 @@
         }
 
         .table-header {
-            display: flex;
+            display: table;
+            width: 100%;
             background: white;
             border-bottom: 1px solid black;
             font-weight: bold;
@@ -336,7 +363,8 @@
         }
 
         .table-row {
-            display: flex;
+            display: table;
+            width: 100%;
             border-bottom: 1px solid black;
             min-height: 30px;
             font-size: 12px;
@@ -350,11 +378,35 @@
         }
 
         .total-hours {
-            display: flex;
-            justify-content: flex-end;
+            display: table;
+            width: 100%;
+            text-align: right;
             padding: 5px 8px;
             font-size: 12px;
             border-bottom: 1px solid black;
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 1px solid black;
+        }
+
+        .header-table td {
+            border: 1px solid black;
+            padding: 10px;
+            vertical-align: middle;
+        }
+
+        .header-table .header-logo-cell {
+            width: 20%;
+            text-align: left;
+        }
+
+        .header-table .header-content-cell {
+            width: 80%;
+            text-align: center;
         }
 
         /* Page 2 styles */
@@ -446,13 +498,13 @@
         </div>
         <div class="form-container" style="text-align:center; border: 2px solid black !important;">
             <!-- Header Table -->
-            <table style="width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid black;">
+            <table class="header-table">
                 <tbody>
                     <tr>
-                        <td style="width: 20%; padding: 10px; vertical-align: middle; border: 1px solid black;">
+                        <td class="header-logo-cell">
                             <img src="bandera_CM.png" alt="Comunidad de Madrid" style="width: 80px; height: auto; display: block;">
                         </td>
-                        <td style="width: 80%; padding: 10px; vertical-align: middle; border: 1px solid black;">
+                        <td class="header-content-cell">
                             <div class="header-text">
                                 <h3>PLAN DE FORMACIÓN</h3>
                                 <p>Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado</p>
@@ -562,11 +614,11 @@
 
                     <tr>
                         <td colspan="2" class="form-cell-full">
-                            <table class="checkbox-group">
+                            <table class="checkbox-group checkbox-group-yn">
                                 <tr>
                                     <td class="checkbox-label"><span>Requiere medidas/adaptaciones extraordinarias por discapacidad:</span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>SÍ</span><span class="checkbox"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>NO</span><span class="checkbox checkbox-filled">X</span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">SÍ</span><span class="checkbox-option-box"><span class="checkbox"></span></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">NO</span><span class="checkbox-option-box"><span class="checkbox checkbox-filled">X</span></span></span></td>
                                 </tr>
                             </table>
                         </td>
@@ -586,11 +638,11 @@
 
                     <tr>
                         <td colspan="2" class="form-cell-full">
-                            <table class="checkbox-group">
+                            <table class="checkbox-group checkbox-group-yn">
                                 <tr>
                                     <td class="checkbox-label"><span>Requiere autorización extraordinaria:</span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>SÍ</span><span class="checkbox"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>NO</span><span class="checkbox checkbox-filled">X</span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">SÍ</span><span class="checkbox-option-box"><span class="checkbox"></span></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">NO</span><span class="checkbox-option-box"><span class="checkbox checkbox-filled">X</span></span></span></td>
                                 </tr>
                             </table>
                         </td>
@@ -610,14 +662,14 @@
 
                     <tr>
                         <td colspan="2" class="form-cell-full">
-                            <table class="checkbox-group checkbox-inline-group">
+                            <table class="checkbox-group checkbox-group-interval">
                                 <tr>
                                     <td class="checkbox-label"><span>Intervalo de formación:</span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>Diario</span><span class="checkbox checkbox-filled">X</span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>Semanal</span><span class="checkbox"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>Mensual</span><span class="checkbox"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>Otros</span><span class="checkbox"></span></span></td>
-                                    <td class="checkbox-item"><span class="checkbox-option"><span>Varias empresas</span><span class="checkbox"></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Diario</span><span class="checkbox-option-box"><span class="checkbox checkbox-filled">X</span></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Semanal</span><span class="checkbox-option-box"><span class="checkbox"></span></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Mensual</span><span class="checkbox-option-box"><span class="checkbox"></span></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Otros</span><span class="checkbox-option-box"><span class="checkbox"></span></span></span></td>
+                                    <td class="checkbox-item"><span class="checkbox-option"><span class="checkbox-option-label">Varias empresas</span><span class="checkbox-option-box"><span class="checkbox"></span></span></span></td>
                                 </tr>
                             </table>
                         </td>
