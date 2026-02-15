@@ -20,6 +20,14 @@ function format_value($value, string $fallback = 'No disponible'): string {
   return (string) $value;
 }
 
+function v($x): string {
+  if ($x === null) {
+    return '';
+  }
+
+  return trim((string) $x) === '' ? '' : (string) $x;
+}
+
 function format_date(?string $value, string $fallback = 'No disponible'): string {
   if ($value === null || $value === '') {
     return $fallback;
@@ -194,7 +202,13 @@ function redirect_to_practice(int $practiceId, ?string $documentStatus = null, ?
   exit;
 }
 
-function build_plan_formacion_html(array $practice, array $scheduleByDay): string {
+
+
+function blank_if_unavailable(string $value): string {
+  return $value === 'No disponible' ? '' : $value;
+}
+
+function build_plan_formacion_html(array $practice, array $scheduleByDay, array $planRows): string {
   $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
   if (!is_file($templatePath)) {
     throw new RuntimeException('No se encuentra la plantilla docs/practicas_plan_formacion.html.');
@@ -226,12 +240,12 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay): strin
     }
   };
 
-  $studentName = full_name($practice, 'alumno');
-  $companyName = format_value($practice['empresa_nombre']);
-  $companyCif = format_value($practice['empresa_cif']);
-  $companyTutor = full_name($practice, 'tutor');
-  $courseName = format_value($practice['curso_escolar']);
-  $cycleName = format_value($practice['grupo']);
+  $studentName = blank_if_unavailable(full_name($practice, 'alumno'));
+  $companyName = v($practice['empresa_nombre'] ?? null);
+  $companyCif = v($practice['empresa_cif'] ?? null);
+  $companyTutor = blank_if_unavailable(full_name($practice, 'tutor'));
+  $courseName = v($practice['curso_escolar'] ?? null);
+  $cycleName = v($practice['grupo'] ?? null);
 
   $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
   if ($endDateRaw === '') {
@@ -239,33 +253,44 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay): strin
   }
   $scheduleSummary = implode(' / ', build_schedule_summary($scheduleByDay));
 
+  $hoursValue = v($practice['horas'] ?? null);
+  $totalHours = $hoursValue === '' ? '' : $hoursValue . ' horas';
+
+  $codigoConvenio = trim(implode(' / ', array_values(array_filter([
+    v($practice['empresa_convenio'] ?? null),
+    v($practice['anexo'] ?? null),
+  ], static fn (string $item): bool => $item !== ''))));
+
   $values = [
     'date' => date('d/m/Y'),
     'course' => $courseName,
     'ciclo-formativo' => $cycleName,
-    'codigo' => format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']),
-    'curso' => format_value($practice['anexo']),
+    'codigo' => $codigoConvenio,
+    'curso' => v($practice['anexo'] ?? null),
     'alumno' => $studentName,
-    'correo_alumno' => format_value($practice['alumno_email'] ?? null),
-    'telefono_alumno' => format_value($practice['alumno_telefono'] ?? null),
-    'centro_docente' => 'No disponible',
-    'correo_centro' => format_value($practice['centro_email'] ?? null),
-    'telefono_centro' => format_value($practice['centro_telefono'] ?? null),
-    'tutor_centro' => format_value($practice['tutor_centro'] ?? null),
-    'correo_tutor_centro' => format_value($practice['tutor_centro_email'] ?? null),
-    'telefono_tutor_centro' => format_value($practice['tutor_centro_telefono'] ?? null),
+    'correo_alumno' => v($practice['alumno_email'] ?? null),
+    'telefono_alumno' => v($practice['alumno_telefono'] ?? null),
+    'centro_docente' => '',
+    'correo_centro' => v($practice['centro_email'] ?? null),
+    'telefono_centro' => v($practice['centro_telefono'] ?? null),
+    'tutor_centro' => v($practice['tutor_centro'] ?? null),
+    'correo_tutor_centro' => v($practice['tutor_centro_email'] ?? null),
+    'telefono_tutor_centro' => v($practice['tutor_centro_telefono'] ?? null),
     'empresa' => $companyName,
     'nif_empresa' => $companyCif,
-    'correo_empresa' => format_value($practice['empresa_email'] ?? null),
-    'telefono_empresa' => format_value($practice['empresa_telefono'] ?? null),
+    'correo_empresa' => v($practice['empresa_email'] ?? null),
+    'telefono_empresa' => v($practice['empresa_telefono'] ?? null),
     'tutor_empresa' => $companyTutor,
-    'correo_tutor_empresa' => format_value($practice['tutor_empresa_email'] ?? null),
-    'telefono_tutor_empresa' => format_value($practice['tutor_empresa_telefono'] ?? null),
+    'correo_tutor_empresa' => v($practice['tutor_empresa_email'] ?? null),
+    'telefono_tutor_empresa' => v($practice['tutor_empresa_telefono'] ?? null),
     'periodo_1_numero' => '1',
-    'periodo_1_calendario' => format_date((string) ($practice['fecha_inicio'] ?? '')) . ' - ' . format_date($endDateRaw),
+    'periodo_1_calendario' => trim(implode(' - ', array_values(array_filter([
+      format_date((string) ($practice['fecha_inicio'] ?? ''), ''),
+      format_date($endDateRaw, ''),
+    ], static fn (string $item): bool => $item !== '')))),
     'periodo_1_horario' => $scheduleSummary,
-    'total_horas' => format_value($practice['horas'], '0') . ' horas',
-    'observaciones' => format_value($practice['observaciones'], 'Sin observaciones'),
+    'total_horas' => $totalHours,
+    'observaciones' => v($practice['observaciones'] ?? null),
     'causas_autorizacion' => (int) ($practice['circ_excep'] ?? 0) === 1
       ? 'Circunstancias excepcionales informadas en la práctica.'
       : 'No requiere autorización extraordinaria.',
@@ -275,12 +300,118 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay): strin
     $setById($xpath, $id, $value);
   }
 
+  $moduleTableBodies = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " module-table ")]/tbody');
+  if ($moduleTableBodies instanceof DOMNodeList && $moduleTableBodies->length > 0) {
+    $tbody = $moduleTableBodies->item(0);
+
+    if ($tbody instanceof DOMElement) {
+      while ($tbody->firstChild !== null) {
+        $tbody->removeChild($tbody->firstChild);
+      }
+
+      foreach ($planRows as $row) {
+        $tr = $dom->createElement('tr');
+
+        $moduleCell = $dom->createElement('td');
+        $moduleCell->textContent = v($row['modulo'] ?? '');
+        $tr->appendChild($moduleCell);
+
+        $codeCell = $dom->createElement('td');
+        $codeCell->setAttribute('style', 'text-align: center;');
+        $codeCell->textContent = v($row['codigo'] ?? '');
+        $tr->appendChild($codeCell);
+
+        $raCell = $dom->createElement('td');
+        $raCell->setAttribute('style', 'text-align: center;');
+        $raCell->textContent = v($row['resultado'] ?? '');
+        $tr->appendChild($raCell);
+
+        $companyCell = $dom->createElement('td');
+        $companyCell->setAttribute('style', 'text-align: center;');
+        $companyCell->textContent = v($row['empresa_x'] ?? '');
+        $tr->appendChild($companyCell);
+
+        $sharedCell = $dom->createElement('td');
+        $sharedCell->setAttribute('style', 'text-align: center;');
+        $sharedCell->textContent = v($row['compartida_x'] ?? '');
+        $tr->appendChild($sharedCell);
+
+        $tbody->appendChild($tr);
+      }
+    }
+  }
+
   $rendered = $dom->saveHTML();
   if (!is_string($rendered) || trim($rendered) === '') {
     throw new RuntimeException('No se pudo renderizar la plantilla del plan de formación.');
   }
 
   return $rendered;
+}
+
+function fetch_plan_formacion_rows(PDO $pdo, array $practice): array {
+  $courseId = isset($practice['id_curso_escolar']) ? (int) $practice['id_curso_escolar'] : 0;
+  $cycleId = isset($practice['id_ciclo']) ? (int) $practice['id_ciclo'] : 0;
+
+  if ($courseId <= 0 || $cycleId <= 0) {
+    return [];
+  }
+
+  $stmt = $pdo->prepare(
+    'SELECT
+      pr.id_practica_ra,
+      pr.porcentaje,
+      m.codigo,
+      m.abreviatura,
+      m.materia_general,
+      m.materia_propia,
+      ra.numero AS ra_numero,
+      ra.descripcion AS ra_descripcion
+     FROM practicas_ras pr
+     LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
+     LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
+     WHERE pr.id_curso_escolar = :id_curso_escolar
+       AND pr.id_ciclo = :id_ciclo
+     ORDER BY m.codigo, m.abreviatura, ra.numero, pr.id_practica_ra'
+  );
+  $stmt->execute([
+    'id_curso_escolar' => $courseId,
+    'id_ciclo' => $cycleId,
+  ]);
+
+  $rows = [];
+  foreach ($stmt->fetchAll() as $row) {
+    $moduleName = trim(implode(' - ', array_values(array_filter([
+      v($row['materia_general'] ?? null),
+      v($row['materia_propia'] ?? null),
+    ], static fn (string $item): bool => $item !== ''))));
+
+    $raNumero = v($row['ra_numero'] ?? null);
+    $raDescripcion = v($row['ra_descripcion'] ?? null);
+    $raLabel = '';
+    if ($raNumero !== '' && $raDescripcion !== '') {
+      $raLabel = 'RA ' . $raNumero . '. ' . $raDescripcion;
+    } elseif ($raNumero !== '') {
+      $raLabel = 'RA ' . $raNumero;
+    } else {
+      $raLabel = $raDescripcion;
+    }
+
+    $percentage = isset($row['porcentaje']) ? (float) $row['porcentaje'] : null;
+    // Criterio acordado para el PDF: 100% = íntegramente empresa; (0,100) = compartida.
+    $markCompany = ($percentage !== null && $percentage >= 100.0) ? 'X' : '';
+    $markShared = ($percentage !== null && $percentage > 0.0 && $percentage < 100.0) ? 'X' : '';
+
+    $rows[] = [
+      'modulo' => $moduleName,
+      'codigo' => v($row['codigo'] ?? null),
+      'resultado' => $raLabel,
+      'empresa_x' => $markCompany,
+      'compartida_x' => $markShared,
+    ];
+  }
+
+  return $rows;
 }
 
 function month_name_es(int $month): string {
@@ -576,6 +707,7 @@ if ($id_practica === false || $id_practica === null) {
         ac.id_curso_escolar,
         ce.curso_escolar,
         ac.id_grupo,
+        g.id_ciclo,
         g.grupo
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
@@ -769,7 +901,8 @@ if ($id_practica === false || $id_practica === null) {
         }
 
         try {
-          $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day);
+          $plan_rows = fetch_plan_formacion_rows($pdo, $practice);
+          $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows);
 
           $mpdf = new Mpdf([
             'mode' => 'utf-8',
