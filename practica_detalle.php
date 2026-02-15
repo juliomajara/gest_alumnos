@@ -516,9 +516,44 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     }
   }
 
-  $rendered = $dom->saveHTML();
-  if (!is_string($rendered) || trim($rendered) === '') {
-    throw new RuntimeException('No se pudo renderizar la plantilla del plan de formación.');
+  $stylesContent = '';
+  $styleNodes = $xpath->query('//head/style');
+  if ($styleNodes instanceof DOMNodeList) {
+    foreach ($styleNodes as $styleNode) {
+      $styleHtml = $dom->saveHTML($styleNode);
+      if (is_string($styleHtml)) {
+        $stylesContent .= $styleHtml;
+      }
+    }
+  }
+
+  $bodyContent = '';
+  $bodyNodes = $xpath->query('//body');
+  if ($bodyNodes instanceof DOMNodeList && $bodyNodes->length > 0) {
+    $bodyNode = $bodyNodes->item(0);
+    if ($bodyNode instanceof DOMElement) {
+      foreach ($bodyNode->childNodes as $childNode) {
+        $childHtml = $dom->saveHTML($childNode);
+        if (is_string($childHtml)) {
+          $bodyContent .= $childHtml;
+        }
+      }
+    }
+  }
+
+  // Fallback defensivo por si la plantilla no tiene <body> válido: extraemos todo el documento.
+  if (trim($bodyContent) === '') {
+    $fallback = $dom->saveHTML();
+    if (!is_string($fallback) || trim($fallback) === '') {
+      throw new RuntimeException('No se pudo renderizar la plantilla del plan de formación.');
+    }
+
+    $bodyContent = $fallback;
+  }
+
+  $rendered = $stylesContent . $bodyContent;
+  if (trim($rendered) === '') {
+    throw new RuntimeException('El contenido renderizado del plan de formación está vacío.');
   }
 
   return $rendered;
