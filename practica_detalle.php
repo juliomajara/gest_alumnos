@@ -207,6 +207,7 @@ function set_checkbox_state(DOMElement $checkbox, bool $checked): void {
   }
 
   $checkbox->setAttribute('class', implode(' ', array_unique($classes)));
+  $checkbox->textContent = $checked ? 'X' : '';
 }
 
 function xpath_literal(string $value): string {
@@ -237,7 +238,7 @@ function normalize_upper(string $value): string {
 }
 
 function mark_checkbox_group_option(DOMXPath $xpath, string $groupLabel, string $optionToMark): void {
-  $groups = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " checkbox-group ")][.//span[contains(normalize-space(.), ' . xpath_literal($groupLabel) . ')]]');
+  $groups = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " checkbox-group ")][.//span[contains(normalize-space(.), ' . xpath_literal($groupLabel) . ')]]');
   if (!($groups instanceof DOMNodeList) || $groups->length === 0) {
     return;
   }
@@ -247,7 +248,7 @@ function mark_checkbox_group_option(DOMXPath $xpath, string $groupLabel, string 
     return;
   }
 
-  $items = $xpath->query('.//div[contains(concat(" ", normalize-space(@class), " "), " checkbox-item ")]', $group);
+  $items = $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " checkbox-item ")]', $group);
   if (!($items instanceof DOMNodeList)) {
     return;
   }
@@ -860,7 +861,7 @@ if ($id_practica === false || $id_practica === null) {
         g.id_ciclo,
         g.grupo,
         ci.ciclo AS ciclo_nombre,
-        ci.abreviatura AS ciclo_codigo
+        ci.`código` AS ciclo_codigo
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
@@ -1065,7 +1066,10 @@ if ($id_practica === false || $id_practica === null) {
             'margin_right' => 10,
             'margin_top' => 10,
             'margin_bottom' => 10,
+            'shrink_tables_to_fit' => 0,
           ]);
+          $mpdf->setBasePath(__DIR__ . '/docs/');
+          $mpdf->showImageErrors = true;
           $mpdf->WriteHTML($pdfHtml);
           $mpdf->Output($plan_file_path, \Mpdf\Output\Destination::FILE);
 
