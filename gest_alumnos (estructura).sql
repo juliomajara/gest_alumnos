@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 14-02-2026 a las 00:04:52
+-- Tiempo de generación: 15-02-2026 a las 19:50:24
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -105,7 +105,8 @@ CREATE TABLE `asistencia_mensual` (
 CREATE TABLE `ciclos` (
   `id_ciclo` int(10) UNSIGNED NOT NULL,
   `ciclo` varchar(60) NOT NULL,
-  `abreviatura` varchar(60) NOT NULL
+  `abreviatura` varchar(60) NOT NULL,
+  `codigo` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

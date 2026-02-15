@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 14-02-2026 a las 00:04:32
+-- Tiempo de generación: 15-02-2026 a las 19:51:16
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -105,18 +105,19 @@ CREATE TABLE `asistencia_mensual` (
 CREATE TABLE `ciclos` (
   `id_ciclo` int(10) UNSIGNED NOT NULL,
   `ciclo` varchar(60) NOT NULL,
-  `abreviatura` varchar(60) NOT NULL
+  `abreviatura` varchar(60) NOT NULL,
+  `codigo` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `ciclos`
 --
 
-INSERT INTO `ciclos` (`id_ciclo`, `ciclo`, `abreviatura`) VALUES
-(1, 'Sistemas Microinformáticos y Redes', 'SMR'),
-(2, 'Administración de Sistemas Informáticos en Red', 'ASIR'),
-(3, 'Desarrollo de Aplicaciones Multiplataforma', 'DAM'),
-(4, 'Desarrollo de Aplicaciones Web', 'DAW');
+INSERT INTO `ciclos` (`id_ciclo`, `ciclo`, `abreviatura`, `codigo`) VALUES
+(1, 'Sistemas Microinformáticos y Redes', 'SMR', 'IFCM01'),
+(2, 'Administración de Sistemas Informáticos en Red', 'ASIR', 'IFCS01'),
+(3, 'Desarrollo de Aplicaciones Multiplataforma', 'DAM', 'IFCS02'),
+(4, 'Desarrollo de Aplicaciones Web', 'DAW', 'IFCS03');
 
 -- --------------------------------------------------------
 
@@ -1307,19 +1308,19 @@ CREATE TABLE `practicas_ras` (
 --
 
 INSERT INTO `practicas_ras` (`id_practica_ra`, `curso_escolar`, `ciclo`, `id_curso_escolar`, `id_ciclo`, `id_modulo`, `id_ra`, `porcentaje`) VALUES
-(1, '1', 'SMR', 1, 1, 8, 137, 10.00),
-(2, '1', 'SMR', 1, 1, 14, 139, 10.00),
-(3, '1', 'SMR', 1, 1, 15, 149, 10.00),
-(4, '1', 'SMR', 1, 1, 9, 121, 10.00),
-(5, '1', 'SMR', 1, 1, 9, 122, 10.00),
-(6, '1', 'SMR', 1, 1, 9, 123, 10.00),
-(7, '1', 'SMR', 1, 1, 9, 124, 10.00),
-(8, '1', 'SMR', 1, 1, 11, 154, 10.00),
-(9, '1', 'SMR', 1, 1, 11, 155, 10.00),
-(10, '1', 'SMR', 1, 1, 11, 156, 10.00),
-(11, '1', 'SMR', 1, 1, 11, 157, 10.00),
-(12, '1', 'SMR', 1, 1, 11, 159, 10.00),
-(13, '1', 'SMR', 1, 1, 10, 131, 10.00);
+(14, '1', 'SMR', 1, 1, 8, 137, 10.00),
+(15, '1', 'SMR', 1, 1, 14, 139, 10.00),
+(16, '1', 'SMR', 1, 1, 15, 149, 10.00),
+(17, '1', 'SMR', 1, 1, 9, 121, 10.00),
+(18, '1', 'SMR', 1, 1, 9, 122, 10.00),
+(19, '1', 'SMR', 1, 1, 9, 123, 10.00),
+(20, '1', 'SMR', 1, 1, 9, 124, 10.00),
+(21, '1', 'SMR', 1, 1, 11, 154, 10.00),
+(22, '1', 'SMR', 1, 1, 11, 155, 10.00),
+(23, '1', 'SMR', 1, 1, 11, 156, 10.00),
+(24, '1', 'SMR', 1, 1, 11, 157, 10.00),
+(25, '1', 'SMR', 1, 1, 11, 159, 10.00),
+(26, '1', 'SMR', 1, 1, 10, 131, 10.00);
 
 -- --------------------------------------------------------
 
@@ -2024,7 +2025,7 @@ ALTER TABLE `practicas_pasos`
 -- AUTO_INCREMENT de la tabla `practicas_ras`
 --
 ALTER TABLE `practicas_ras`
-  MODIFY `id_practica_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_practica_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT de la tabla `profesores`
