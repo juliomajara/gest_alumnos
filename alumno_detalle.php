@@ -297,9 +297,14 @@ $dias_semana = [
           <p class="subheading">Consulta el detalle académico, personal y administrativo asociado al alumno.</p>
         </div>
         <div class="header-actions">
+          <a class="primary-button" href="alumno_editar.php?id=<?php echo (int) $id_alumno; ?>">Editar alumno</a>
           <a class="ghost-button" href="alumnos.php">Volver al listado</a>
         </div>
       </header>
+
+      <?php if ($student && isset($_GET['updated']) && $_GET['updated'] === '1'): ?>
+        <p class="status">Los cambios del alumno se han guardado correctamente.</p>
+      <?php endif; ?>
 
       <?php if (!$student): ?>
         <section class="panel">
