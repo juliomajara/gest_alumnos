@@ -370,6 +370,15 @@ function blank_if_unavailable(string $value): string {
   return $value === 'No disponible' ? '' : $value;
 }
 
+function build_file_uri(string $path): string {
+  $normalizedPath = str_replace('\\', '/', $path);
+  if (preg_match('/^[A-Za-z]:\//', $normalizedPath) === 1) {
+    $normalizedPath = '/' . $normalizedPath;
+  }
+
+  return 'file://' . $normalizedPath;
+}
+
 function build_plan_formacion_html(array $practice, array $scheduleByDay, array $planRows): string {
   $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
   if (!is_file($templatePath)) {
@@ -383,7 +392,7 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
 
   $flagImagePath = realpath(__DIR__ . '/docs/bandera_CM.png');
   if ($flagImagePath !== false) {
-    $html = str_replace('src="bandera_CM.png"', 'src="file://' . htmlspecialchars($flagImagePath, ENT_QUOTES, 'UTF-8') . '"', $html);
+    $html = str_replace('src="bandera_CM.png"', 'src="' . htmlspecialchars(build_file_uri($flagImagePath), ENT_QUOTES, 'UTF-8') . '"', $html);
   }
 
   $dom = new DOMDocument();
