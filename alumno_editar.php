@@ -18,6 +18,21 @@ function normalize_text($value): ?string {
   return $trimmed === '' ? null : $trimmed;
 }
 
+function normalize_localidad_lookup_value(string $value): string {
+  $normalized = trim(mb_strtolower($value, 'UTF-8'));
+  if ($normalized === '') {
+    return '';
+  }
+
+  $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+  if ($ascii !== false) {
+    $normalized = $ascii;
+  }
+
+  $normalized = preg_replace('/[^a-z0-9]+/u', ' ', $normalized) ?? $normalized;
+  return trim(preg_replace('/\s+/u', ' ', $normalized) ?? $normalized);
+}
+
 function parse_base_type(string $type): string {
   if (preg_match('/^([a-zA-Z]+)/', $type, $matches)) {
     return strtolower($matches[1]);
@@ -209,12 +224,107 @@ function prepare_related_rows(array $postedRows): array {
   return is_array($postedRows) ? $postedRows : [];
 }
 
+if (isset($_GET['action'])) {
+  header('Content-Type: application/json; charset=utf-8');
+
+  $action = (string) $_GET['action'];
+
+  try {
+    if ($action === 'provincia_por_cp_prefix') {
+      $prefixRaw = trim((string) ($_GET['prefix'] ?? ''));
+      $prefix = preg_replace('/\D+/', '', $prefixRaw) ?? '';
+
+      if (strlen($prefix) < 2) {
+        echo json_encode(['ok' => true, 'id_provincia' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $prefix = substr($prefix, 0, 2);
+      $stmt = $pdo->prepare('SELECT id_provincia, nombre FROM provincias WHERE cp_prefijo = :prefix LIMIT 1');
+      $stmt->execute(['prefix' => (int) $prefix]);
+      $row = $stmt->fetch();
+
+      echo json_encode([
+        'ok' => true,
+        'id_provincia' => $row ? (int) $row['id_provincia'] : null,
+        'nombre' => $row['nombre'] ?? null,
+      ], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    if ($action === 'localidad_get_or_create') {
+      $idProvinciaRaw = $_POST['id_provincia'] ?? $_GET['id_provincia'] ?? null;
+      $cpRaw = (string) ($_POST['cp'] ?? $_GET['cp'] ?? '');
+      $localidadRaw = (string) ($_POST['nombre_localidad'] ?? $_GET['nombre_localidad'] ?? '');
+
+      $idProvincia = is_numeric((string) $idProvinciaRaw) ? (int) $idProvinciaRaw : 0;
+      $cp = preg_replace('/[\s-]+/', '', trim($cpRaw)) ?? '';
+      $nombreLocalidad = trim($localidadRaw);
+
+      if ($idProvincia <= 0 || $nombreLocalidad === '') {
+        echo json_encode(['ok' => true, 'id_localidad' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $nombreLocalidadLookup = normalize_localidad_lookup_value($nombreLocalidad);
+      if ($nombreLocalidadLookup === '') {
+        echo json_encode(['ok' => true, 'id_localidad' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $stmt = $pdo->prepare('SELECT id_localidad, nombre FROM localidades WHERE id_provincia = :id_provincia ORDER BY nombre');
+      $stmt->execute(['id_provincia' => $idProvincia]);
+
+      foreach ($stmt->fetchAll() as $row) {
+        $dbLookup = normalize_localidad_lookup_value((string) ($row['nombre'] ?? ''));
+        if ($dbLookup !== '' && $dbLookup === $nombreLocalidadLookup) {
+          echo json_encode([
+            'ok' => true,
+            'id_localidad' => (int) $row['id_localidad'],
+            'nombre' => (string) $row['nombre'],
+          ], JSON_UNESCAPED_UNICODE);
+          exit;
+        }
+      }
+
+      $insert = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, cp) VALUES (:id_provincia, :nombre, :cp)');
+      $insert->execute([
+        'id_provincia' => $idProvincia,
+        'nombre' => $nombreLocalidad,
+        'cp' => $cp !== '' ? $cp : null,
+      ]);
+
+      echo json_encode([
+        'ok' => true,
+        'id_localidad' => (int) $pdo->lastInsertId(),
+        'nombre' => $nombreLocalidad,
+      ], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
+    echo json_encode(['ok' => false, 'error' => 'Action no soportada'], JSON_UNESCAPED_UNICODE);
+    exit;
+  } catch (Throwable $exception) {
+    echo json_encode(['ok' => false, 'error' => 'Error interno'], JSON_UNESCAPED_UNICODE);
+    exit;
+  }
+}
+
 $alumnoColumns = table_columns($pdo, 'alumnos');
 $telefonoColumns = table_columns($pdo, 'telefonos');
 $correoColumns = table_columns($pdo, 'correos');
 
 $telefonoPrimaryKey = find_primary_key($telefonoColumns) ?? 'id_telefono';
 $correoPrimaryKey = find_primary_key($correoColumns) ?? 'id_correo';
+
+$provinciaOptions = $pdo->query('SELECT id_provincia, nombre FROM provincias ORDER BY nombre')->fetchAll();
+$madridProvinciaId = null;
+foreach ($provinciaOptions as $provincia) {
+  if (normalize_localidad_lookup_value((string) ($provincia['nombre'] ?? '')) === 'madrid') {
+    $madridProvinciaId = (int) $provincia['id_provincia'];
+    break;
+  }
+}
 
 $idAlumno = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($idAlumno <= 0 && isset($_GET['id_alumno'])) {
@@ -231,13 +341,22 @@ $telefonos = [];
 $correos = [];
 
 if ($idAlumno > 0) {
-  $studentStmt = $pdo->prepare('SELECT * FROM alumnos WHERE id_alumno = :id_alumno');
+  $studentStmt = $pdo->prepare(
+    'SELECT a.*, p.nombre AS provincia_nombre, l.nombre AS localidad_nombre
+     FROM alumnos a
+     LEFT JOIN provincias p ON p.id_provincia = a.id_provincia
+     LEFT JOIN localidades l ON l.id_localidad = a.id_localidad
+     WHERE a.id_alumno = :id_alumno'
+  );
   $studentStmt->execute(['id_alumno' => $idAlumno]);
   $student = $studentStmt->fetch();
 }
 
 if ($student) {
   $formAlumnoData = $student;
+  if (!isset($formAlumnoData['localidad_nombre'])) {
+    $formAlumnoData['localidad_nombre'] = $student['localidad_nombre'] ?? '';
+  }
   $telefonos = fetch_by_student($pdo, 'telefonos', $idAlumno);
   $correos = fetch_by_student($pdo, 'correos', $idAlumno);
 }
@@ -258,6 +377,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         continue;
       }
 
+      if ($columnName === 'id_localidad') {
+        $newAlumnoData[$columnName] = null;
+        continue;
+      }
+
       $rawValue = $postedAlumno[$columnName] ?? null;
       $normalizedValue = normalize_column_value($column, $rawValue, $errors, $label);
 
@@ -268,7 +392,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $newAlumnoData[$columnName] = $normalizedValue;
     }
 
+    $idProvincia = isset($newAlumnoData['id_provincia']) ? (int) $newAlumnoData['id_provincia'] : 0;
+    if ($idProvincia <= 0) {
+      $idProvincia = $madridProvinciaId ?? 0;
+      if ($idProvincia > 0) {
+        $newAlumnoData['id_provincia'] = $idProvincia;
+      }
+    }
+
+    $localidadNombre = normalize_text($_POST['alumno_localidad_nombre'] ?? null);
+    $formAlumnoData['localidad_nombre'] = $localidadNombre ?? '';
+
     $formAlumnoData = $newAlumnoData;
+    $formAlumnoData['localidad_nombre'] = $localidadNombre ?? '';
 
     $telefonoRowsPosted = prepare_related_rows($_POST['telefonos'] ?? []);
     $correoRowsPosted = prepare_related_rows($_POST['correos'] ?? []);
@@ -476,6 +612,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       try {
         $pdo->beginTransaction();
 
+        if ($localidadNombre !== null && $idProvincia > 0) {
+          $stmtLocalidad = $pdo->prepare('SELECT id_localidad, nombre FROM localidades WHERE id_provincia = :id_provincia ORDER BY nombre');
+          $stmtLocalidad->execute(['id_provincia' => $idProvincia]);
+
+          $localidadLookup = normalize_localidad_lookup_value($localidadNombre);
+          foreach ($stmtLocalidad->fetchAll() as $localidadRow) {
+            $dbLookup = normalize_localidad_lookup_value((string) ($localidadRow['nombre'] ?? ''));
+            if ($dbLookup !== '' && $dbLookup === $localidadLookup) {
+              $newAlumnoData['id_localidad'] = (int) $localidadRow['id_localidad'];
+              $formAlumnoData['localidad_nombre'] = (string) $localidadRow['nombre'];
+              break;
+            }
+          }
+
+          if (!isset($newAlumnoData['id_localidad']) || $newAlumnoData['id_localidad'] === null) {
+            $insertLocalidad = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, cp) VALUES (:id_provincia, :nombre, :cp)');
+            $insertLocalidad->execute([
+              'id_provincia' => $idProvincia,
+              'nombre' => $localidadNombre,
+              'cp' => normalize_text($newAlumnoData['cp'] ?? null),
+            ]);
+            $newAlumnoData['id_localidad'] = (int) $pdo->lastInsertId();
+          }
+        }
+
         $alumnoUpdateColumns = array_values(array_filter(array_column($alumnoColumns, 'name'), static fn(string $name): bool => $name !== 'id_alumno'));
         $setAlumno = implode(', ', array_map(static fn(string $name): string => '`' . $name . '` = :' . $name, $alumnoUpdateColumns));
         $sqlAlumnoUpdate = 'UPDATE alumnos SET ' . $setAlumno . ' WHERE id_alumno = :id_alumno';
@@ -665,15 +826,44 @@ $active_page = 'alumnos';
               <p>Se incluyen todas las columnas de la tabla <strong>alumnos</strong>.</p>
             </div>
             <div class="entity-grid">
+              <?php
+                $cpValue = $formAlumnoData['cp'] ?? '';
+                $provinciaSeleccionada = isset($formAlumnoData['id_provincia']) && (int) $formAlumnoData['id_provincia'] > 0
+                  ? (int) $formAlumnoData['id_provincia']
+                  : ($madridProvinciaId ?? 0);
+                $localidadValue = $formAlumnoData['localidad_nombre'] ?? ($student['localidad_nombre'] ?? '');
+              ?>
+              <label for="alumno_cp_lookup">
+                Código postal
+                <input id="alumno_cp_lookup" type="text" name="alumno[cp]" value="<?php echo h((string) $cpValue); ?>">
+              </label>
+              <label for="alumno_provincia_lookup">
+                Provincia
+                <select id="alumno_provincia_lookup" name="alumno[id_provincia]">
+                  <option value="">Seleccionar</option>
+                  <?php foreach ($provinciaOptions as $provincia): ?>
+                    <?php $idProvinciaOption = (int) $provincia['id_provincia']; ?>
+                    <option value="<?php echo $idProvinciaOption; ?>" <?php echo $idProvinciaOption === (int) $provinciaSeleccionada ? 'selected' : ''; ?>><?php echo h($provincia['nombre']); ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </label>
+              <label for="alumno_localidad_lookup">
+                Localidad
+                <input id="alumno_localidad_lookup" type="text" name="alumno_localidad_nombre" value="<?php echo h((string) $localidadValue); ?>">
+              </label>
+              <p class="subheading" id="cpLookupStatus" hidden></p>
               <?php foreach ($alumnoColumns as $column): ?>
                 <?php
                   $columnName = $column['name'];
+                  if (in_array($columnName, ['id_alumno', 'cp', 'id_provincia', 'id_localidad'], true)) {
+                    continue;
+                  }
                   $fieldId = 'alumno_' . $columnName;
                   $label = build_field_label($columnName);
                   $value = $formAlumnoData[$columnName] ?? null;
                   $inputType = input_type_for_column($column);
                   $isBoolean = $column['base_type'] === 'tinyint' && str_contains(strtolower($column['type']), 'tinyint(1)');
-                  $isReadOnly = $columnName === 'id_alumno';
+                  $isReadOnly = false;
                 ?>
                 <label for="<?php echo h($fieldId); ?>">
                   <?php echo h($label); ?><?php echo !$column['nullable'] && !$isReadOnly ? ' *' : ''; ?>
@@ -876,6 +1066,119 @@ $active_page = 'alumnos';
   <script>
     (function () {
       const buildName = (group, index, field) => `${group}[new][${index}][${field}]`;
+      const cpInput = document.querySelector('#alumno_cp_lookup');
+      const provinciaSelect = document.querySelector('#alumno_provincia_lookup');
+      const localidadInput = document.querySelector('#alumno_localidad_lookup');
+      const cpStatus = document.querySelector('#cpLookupStatus');
+
+      const fetchJson = async (url, options = {}) => {
+        const response = await fetch(url, {
+          headers: { Accept: 'application/json', ...(options.headers || {}) },
+          ...options,
+        });
+
+        if (!response.ok) {
+          return null;
+        }
+
+        return response.json();
+      };
+
+      const setCpStatus = (message = '', isVisible = false) => {
+        if (!cpStatus) {
+          return;
+        }
+
+        cpStatus.textContent = isVisible ? message : '';
+        cpStatus.hidden = !isVisible;
+      };
+
+      const normalizePostalCode = (value) => String(value || '').trim().replace(/[\s-]+/g, '');
+
+      const fetchProvinciaPorCpPrefix = async (prefix) => {
+        if (!prefix || prefix.length < 2) {
+          return null;
+        }
+
+        const data = await fetchJson(
+          `alumno_editar.php?action=provincia_por_cp_prefix&prefix=${encodeURIComponent(prefix)}&id=<?php echo (int) $idAlumno; ?>`
+        );
+
+        return data?.ok ? data.id_provincia : null;
+      };
+
+      const getOrCreateLocalidad = async (idProvincia, cp, nombreLocalidad) => {
+        if (!idProvincia || !nombreLocalidad) {
+          return null;
+        }
+
+        const body = new URLSearchParams({
+          id_provincia: String(idProvincia),
+          cp: String(cp || ''),
+          nombre_localidad: String(nombreLocalidad || ''),
+        });
+
+        const data = await fetchJson(`alumno_editar.php?action=localidad_get_or_create&id=<?php echo (int) $idAlumno; ?>`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+          body: body.toString(),
+        });
+
+        return data?.ok ? data : null;
+      };
+
+      const fetchAddressFromPostalCode = async () => {
+        if (!cpInput || !provinciaSelect || !localidadInput) {
+          return;
+        }
+
+        const postalCode = normalizePostalCode(cpInput.value || '');
+        if (!postalCode || postalCode.length < 2) {
+          return;
+        }
+
+        const prefix = postalCode.slice(0, 2);
+        setCpStatus('⏳ Cargando datos de dirección…', true);
+
+        try {
+          const idProvincia = await fetchProvinciaPorCpPrefix(prefix);
+          if (idProvincia && provinciaSelect.value !== String(idProvincia)) {
+            provinciaSelect.value = String(idProvincia);
+          }
+
+          const response = await fetch(`https://api.zippopotam.us/es/${encodeURIComponent(postalCode)}`);
+          if (!response.ok) {
+            setCpStatus('No se han encontrado datos para ese código postal.', true);
+            return;
+          }
+
+          const data = await response.json();
+          const place = Array.isArray(data.places) && data.places.length > 0 ? data.places[0] : null;
+          const localidadName = String(place?.['place name'] || '').trim();
+
+          if (!localidadName) {
+            setCpStatus('No se ha podido obtener la localidad para ese código postal.', true);
+            return;
+          }
+
+          localidadInput.value = localidadName;
+
+          const provinciaParaLocalidad = provinciaSelect.value ? Number(provinciaSelect.value) : 0;
+          if (!provinciaParaLocalidad) {
+            setCpStatus('Selecciona una provincia para asociar la localidad.', true);
+            return;
+          }
+
+          const localidadDb = await getOrCreateLocalidad(provinciaParaLocalidad, postalCode, localidadName);
+          if (localidadDb?.nombre) {
+            localidadInput.value = String(localidadDb.nombre);
+          }
+
+          setCpStatus('', false);
+        } catch (_) {
+          setCpStatus('No se ha podido consultar el código postal en este momento.', true);
+        }
+      };
 
       const addButtons = document.querySelectorAll('[data-add-item][data-template]');
       addButtons.forEach((button) => {
@@ -906,6 +1209,8 @@ $active_page = 'alumnos';
           target.appendChild(fragment);
         });
       });
+
+      cpInput?.addEventListener('blur', fetchAddressFromPostalCode);
     })();
   </script>
 </body>
