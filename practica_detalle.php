@@ -1017,7 +1017,32 @@ if ($id_practica === false || $id_practica === null) {
               'margin_bottom' => 12,
               'tempDir' => $mpdfTempDir,
             ]);
-            $mpdf->WriteHTML($pdfHtml);
+            // 1. Definimos los estilos de corrección de forma ultra-específica
+$css_reparacion = '
+<style>
+    /* Forzar que no haya nada más ancho que el A4 (aprox 190mm quitando márgenes) */
+    html, body, .container { 
+        width: 100% !important; 
+        overflow: hidden;
+    }
+    table { 
+        table-layout: fixed !important; 
+        width: 100% !important; 
+        border-collapse: collapse;
+    }
+    td, th { 
+        word-break: break-all !important; 
+        overflow-wrap: break-word !important; 
+    }
+    /* El logo a veces causa problemas si no tiene tamaño fijo */
+    img { 
+        max-width: 150px !important; 
+    }
+</style>';
+
+// 2. Inyectamos los estilos JUSTO antes del contenido HTML
+$mpdf->WriteHTML($css_reparacion, \Mpdf\HTMLParserMode::HEADER_CSS);
+$mpdf->WriteHTML($html, \Mpdf\HTMLParserMode::HTML_BODY);
             $mpdf->Output($calendar_file_path, \Mpdf\Output\Destination::FILE);
             $calendar_status = 'Calendario generado correctamente.';
           } catch (Throwable $pdfError) {
@@ -1077,16 +1102,18 @@ if ($id_practica === false || $id_practica === null) {
           $mpdfTempDir = ensure_mpdf_temp_dir();
 
           $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'margin_left' => 10,
-            'margin_right' => 10,
-            'margin_top' => 10,
-            'margin_bottom' => 10,
-            'default_font_size' => 12,
-            'shrink_tables_to_fit' => 0,
-            'tempDir' => $mpdfTempDir,
-          ]);
+    'mode' => 'utf-8',
+    'format' => 'A4',
+    'margin_left' => 10,
+    'margin_right' => 10,
+    'margin_top' => 10,
+    'margin_bottom' => 10,
+    'default_font_size' => 12,
+    'shrink_tables_to_fit' => 0,
+    'tempDir' => $mpdfTempDir,
+    'keep_table_proportions' => true, // Añade esto
+    'use_kwt' => true, // Keep-with-table
+]);
 
           $mpdf->setBasePath(__DIR__ . '/docs/');
           $mpdf->showImageErrors = true;

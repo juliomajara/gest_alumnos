@@ -2,692 +2,398 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Anexo - Plan de formación en empresa u organismo equiparado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de Formación en Empresa</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.25;
-            background: #fff;
+            font-size: 10pt;
+            margin: 20px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        td,
-        th {
-            vertical-align: middle;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            word-break: break-all;
-        }
-
-        .container {
-            width: 100%;
-            margin: 0 auto;
-            background: #fff;
-        }
-
-        .title-section {
-            text-align: center;
             margin-bottom: 10px;
         }
-
-        .title-section h1 {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 2px;
-        }
-
-        .title-section h2 {
-            font-size: 15px;
-            font-weight: bold;
-        }
-
-        .page1-table {
-            border: 2px solid black;
-            text-align: left;
-        }
-
-        .page1-table td,
-        .page1-table th {
-            border: 1px solid black;
-            padding: 4px 5px;
-            font-size: 12px;
-        }
-
-        .logo-cell {
-            width: 16%;
-            text-align: center;
-        }
-
-        .header-cell {
-            width: 84%;
-            text-align: center;
-        }
-
-        .header-cell h3 {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .header-cell p {
-            margin: 2px 0;
-        }
-
-        .logo {
-            width: 80px;
-            height: auto;
-            display: block;
-            margin: 0 auto;
-        }
-
-        .field-label {
-            font-weight: bold;
-        }
-
-        .row-thick td,
-        .row-thick {
-            border-bottom: 2px solid black !important;
-        }
-
-        .indent {
-            padding-left: 20px !important;
-        }
-
-        .choice-block {
-            display: inline-block;
-            margin-left: 8px;
-        }
-
-        .checkbox-option {
-            display: inline-block;
-            margin-right: 14px;
-            white-space: normal;
-        }
-
-        .checkbox-option-box {
-            display: inline-block;
-            width: 13px;
-            height: 13px;
-            line-height: 13px;
-            text-align: center;
-            border: 1px solid black;
-            vertical-align: middle;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 4px;
-        }
-
-        .period-header {
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .period-cell {
-            text-align: center;
-            min-height: 24px;
-        }
-
-        .total-hours {
-            text-align: right;
-        }
-
-        .observations {
-            height: 80px;
-            vertical-align: top !important;
-        }
-
-        /* Page 2 styles */
-        .module-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            margin-top: 20px;
-            font-size: 12px;
-        }
-
-        .module-table th,
-        .module-table td {
-            border: 1px solid black;
-            padding: 5px 8px;
-            text-align: left;
-        }
-
-        .module-table th {
-            background: white;
-            font-weight: bold;
-        }
-
-        .module-table .col-module {
-            width: 30%;
-        }
-
-        .module-table .col-codigo {
-            width: 10%;
-        }
-
-        .module-table .col-ra {
-            width: 15%;
-        }
-
-        .module-table .col-checkbox {
-            width: 15%;
-            text-align: center;
-        }
-
-        .checkbox {
-            width: 13px;
-            height: 13px;
-            border: 1px solid black;
-            display: inline-block;
-            line-height: 13px;
-            text-align: center;
-            vertical-align: middle;
-            font-size: 12px;
-            font-weight: bold;
-            margin: 0;
-        }
-
-        .checkbox-filled {
-            display: inline-block;
-        }
-
-        .signature-section {
-            width: 100%;
-            margin-top: 30px;
-            padding: 20px 0;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .signature-box {
-            text-align: center;
-            font-size: 12px;
-            width: 33.33%;
+        td {
+            border: 1px solid #000;
+            padding: 5px;
             vertical-align: top;
         }
-
-        .signature-line {
-            border-top: 1px solid black;
-            width: 200px;
-            margin: 40px auto 5px;
-            height: 1px;
-        }
-
-        .note-text {
-            font-size: 10px;
-            margin-top: 10px;
-            font-style: italic;
-        }
-
-        .formations-section {
-            margin-top: 20px;
-            padding: 10px;
-            border: 2px solid black;
-            min-height: 80px;
-        }
-
-        .formations-section h4 {
-            font-size: 12px;
+        .header {
+            text-align: center;
             font-weight: bold;
-            margin-bottom: 10px;
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+        .logo-cell {
+            width: 80px;
+            text-align: center;
+            background-color: #e30613;
+            color: white;
+            font-weight: bold;
+            font-size: 24pt;
+        }
+        .title-cell {
+            text-align: center;
+            font-weight: bold;
+        }
+        .label {
+            font-weight: bold;
+            width: 40%;
+        }
+        .checkbox {
+            width: 15px;
+            height: 15px;
+            border: 1px solid #000;
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .checkbox.checked::after {
+            content: '●';
+        }
+        .field-row td {
+            padding: 8px 5px;
+        }
+        .small-text {
+            font-size: 8pt;
+        }
+        .signature-cell {
+            text-align: center;
+            padding: 30px 5px 5px 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- PAGE 1 -->
-        <div class="title-section">
-            <h1>Anexo</h1>
-            <h2>Plan de formación en empresa u organismo equiparado</h2>
-        </div>
 
-        <table class="page1-table">
-            <colgroup>
-                <col style="width: 17%;">
-                <col style="width: 17%;">
-                <col style="width: 17%;">
-                <col style="width: 17%;">
-                <col style="width: 16%;">
-                <col style="width: 16%;">
-            </colgroup>
-            <tbody>
-                <tr class="row-thick">
-                    <td colspan="1" class="logo-cell">
-                        <img src="bandera_CM.png" alt="Comunidad de Madrid" class="logo">
-                    </td>
-                    <td colspan="5" class="header-cell">
-                        <h3>PLAN DE FORMACIÓN</h3>
-                        <p>Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado</p>
-                        <p>Régimen General</p>
-                        <p>Fecha: <span id="date">02/02/2026</span> - Curso: <span id="course">20205/2026</span></p>
-                    </td>
-                </tr>
+<!-- Page 1 -->
+<table>
+    <tr>
+        <td colspan="2" class="header">
+            Anexo<br>
+            Plan de formación en empresa u organismo equiparado
+        </td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6"><span class="field-label">Ciclo Formativo:&nbsp;</span><span id="ciclo-formativo">Sistemas Microinformáticos y Redes</span></td>
-                </tr>
+<table>
+    <tr>
+        <td rowspan="3" class="logo-cell">★★★<br>★★★★</td>
+        <td class="title-cell">
+            <strong>PLAN DE FORMACIÓN</strong><br>
+            Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado<br>
+            Régimen: <u>General</u><br>
+            Fecha: <u>02/03/2026</u> / Curso 20<u>25</u> - 20<u>26</u>
+        </td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="3"><span class="field-label">Código:&nbsp;</span><span id="codigo">IFCM01</span></td>
-                    <td colspan="3">Curso: <span id="curso">2º</span></td>
-                </tr>
+<table>
+    <tr>
+        <td colspan="2"><strong>Ciclo Formativo/Curso de especialización/ Programa de especialización:</strong><br>
+        Técnico Superior en Desarrollo de Aplicaciones Multiplataforma</td>
+    </tr>
+    <tr>
+        <td><strong>Código:</strong> IFCS03</td>
+        <td><strong>Curso:</strong> 2º</td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6"><span class="field-label">Alumno/a:&nbsp;</span><span id="alumno">Adrián Sánchez Torres</span></td>
-                </tr>
+<table class="field-row">
+    <tr>
+        <td colspan="2"><strong>Alumno/a:</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Correo electrónico:</strong></td>
+        <td><strong>Teléfono:</strong></td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="4">Correo electrónico: <span id="correo_alumno">correo@correo.com</span></td>
-                    <td colspan="2">Teléfono: <span id="telefono_alumno">600123456</span></td>
-                </tr>
+<table class="field-row">
+    <tr>
+        <td colspan="2"><strong>Centro docente:</strong><br>
+        IES Laguna de Joatzel</td>
+    </tr>
+    <tr>
+        <td><strong>Correo electrónico:</strong> ies.lagunadejoatzel.getafe@educa.madrid.org</td>
+        <td><strong>Teléfono:</strong> 916837197</td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6"><span class="field-label">Centro docente:&nbsp;</span><span id="centro_docente">IES Laguna de Joatzel</span></td>
-                </tr>
+<table class="field-row">
+    <tr>
+        <td colspan="2"><strong>Tutor/a del centro de formación:</strong><br>
+        Cristina Villoria Valiente</td>
+    </tr>
+    <tr>
+        <td><strong>Correo electrónico:</strong> cristina.villoria@educa.madrid.org</td>
+        <td><strong>Teléfono:</strong> 916837197</td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="4">Correo electrónico: <span id="correo_centro">correo@correo.com</span></td>
-                    <td colspan="2">Teléfono: <span id="telefono_centro">916837197</span></td>
-                </tr>
+<table class="field-row">
+    <tr>
+        <td><strong>Empresa u organismo equiparado:</strong></td>
+        <td><strong>N.I.F.:</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Correo electrónico:</strong></td>
+        <td><strong>Teléfono:</strong></td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6"><span class="field-label">Tutor/a del centro de formación:&nbsp;</span><span id="tutor_centro">Julio Sánchez Fernández</span></td>
-                </tr>
+<table class="field-row">
+    <tr>
+        <td colspan="2"><strong>Tutor/a de empresa u organismo equiparado:</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Correo electrónico:</strong></td>
+        <td><strong>Teléfono:</strong></td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="4">Correo electrónico: <span id="correo_tutor_centro">correo@correo.com</span></td>
-                    <td colspan="2">Teléfono: <span id="telefono_tutor_centro">649496323</span></td>
-                </tr>
+<table>
+    <tr>
+        <td><strong>Requiere medidas/adaptaciones extraordinarias por discapacidad:</strong> 
+            SÍ <span class="checkbox"></span> &nbsp;&nbsp; NO <span class="checkbox checked"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>▪ En caso afirmativo, especificar medidas/adaptaciones:</td>
+    </tr>
+    <tr>
+        <td style="height: 30px;"></td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="4"><span class="field-label">Empresa u organismo equiparado:&nbsp;</span><span id="empresa">Elecnor Sistemas Informáticos, S.A.</span></td>
-                    <td colspan="2">NIF: <span id="nif_empresa">B78858966</span></td>
-                </tr>
+<table>
+    <tr>
+        <td><strong>Requiere autorización extraordinaria:</strong> 
+            SÍ <span class="checkbox"></span> &nbsp;&nbsp; NO <span class="checkbox checked"></span>
+        </td>
+    </tr>
+    <tr>
+        <td>▪ Indicar causa/s:</td>
+    </tr>
+    <tr>
+        <td style="height: 30px;"></td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="4">Correo electrónico: <span id="correo_empresa">correo@correo.com</span></td>
-                    <td colspan="2">Teléfono: <span id="telefono_empresa">915687452</span></td>
-                </tr>
+<table>
+    <tr>
+        <td>
+            <strong>Intervalo de formación:</strong> &nbsp;
+            Diario <span class="checkbox checked"></span> &nbsp;
+            Semanal <span class="checkbox"></span> &nbsp;
+            Mensual <span class="checkbox"></span> &nbsp;
+            Otros <span class="checkbox"></span> &nbsp;
+            Varias empresas <span class="checkbox"></span>
+        </td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6"><span class="field-label">Tutor/a de empresa u organismo equiparado:&nbsp;</span><span id="tutor_empresa">María López García</span></td>
-                </tr>
+<table>
+    <tr>
+        <td colspan="3"><strong>Periodos de formación en empresa u organismo equiparado:</strong></td>
+    </tr>
+    <tr>
+        <td style="width: 15%; text-align: center;"><strong>Nº periodo</strong></td>
+        <td style="width: 42.5%; text-align: center;"><strong>Calendario</strong></td>
+        <td style="width: 42.5%; text-align: center;"><strong>Horario</strong></td>
+    </tr>
+    <tr>
+        <td style="text-align: center;">1</td>
+        <td style="text-align: center;">02/03/2026-10/06/2026</td>
+        <td style="text-align: center;">08:00-16:00 / 17:00-19:00</td>
+    </tr>
+    <tr>
+        <td style="height: 25px;"></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td style="height: 25px;"></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td style="height: 25px;"></td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: right; padding-right: 20px;"><strong>Total horas:</strong></td>
+        <td style="text-align: center;"><strong>500</strong></td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="4">Correo electrónico: <span id="correo_tutor_empresa">correo@correo.com</span></td>
-                    <td colspan="2">Teléfono: <span id="telefono_tutor_empresa">698765432</span></td>
-                </tr>
+<table>
+    <tr>
+        <td><strong>Observaciones:</strong></td>
+    </tr>
+    <tr>
+        <td style="height: 60px;"></td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6">
-                        Requiere medidas/adaptaciones extraordinarias por discapacidad:
-                        <span class="choice-block">
-                            <span class="checkbox-option">SÍ<span class="checkbox-option-box"></span></span>
-                            <span class="checkbox-option">NO<span class="checkbox-option-box">X</span></span>
-                        </span>
-                    </td>
-                </tr>
+<div style="page-break-after: always;"></div>
 
-                <tr>
-                    <td colspan="6" class="indent">▪ En caso afirmativo, especificar medidas/adaptaciones:</td>
-                </tr>
+<!-- Page 2 -->
+<table>
+    <tr>
+        <td style="width: 35%; text-align: center;"><strong>Módulo profesional<br>(Denominación)</strong></td>
+        <td style="width: 15%; text-align: center;"><strong>Código</strong></td>
+        <td style="width: 15%; text-align: center;"><strong>Resultados de<br>Aprendizaje<br>(*)</strong></td>
+        <td style="width: 17.5%; text-align: center;"><strong>Impartido<br>íntegramente<br>en la empresa<br>(marcar con una x)</strong></td>
+        <td style="width: 17.5%; text-align: center;"><strong>Impartición<br>compartida con<br>el centro<br>docente<br>(marcar con una x)</strong></td>
+    </tr>
+    <tr>
+        <td>ACCESO A DATOS</td>
+        <td style="text-align: center;">0486</td>
+        <td style="text-align: center;">RA: 1</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>ACCESO A DATOS</td>
+        <td style="text-align: center;">0486</td>
+        <td style="text-align: center;">RA: 2</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>ACCESO A DATOS</td>
+        <td style="text-align: center;">0486</td>
+        <td style="text-align: center;">RA: 3</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>PROGRAMACION DE SERVICIOS Y PROCESOS</td>
+        <td style="text-align: center;">0490</td>
+        <td style="text-align: center;">RA: 2</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>PROGRAMACION DE SERVICIOS Y PROCESOS</td>
+        <td style="text-align: center;">0490</td>
+        <td style="text-align: center;">RA: 5</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>PROGRAMACION MULTIMEDIA Y DISPOSITIVOS MO</td>
+        <td style="text-align: center;">0489</td>
+        <td style="text-align: center;">RA: 2</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>PROGRAMACION MULTIMEDIA Y DISPOSITIVOS MO</td>
+        <td style="text-align: center;">0489</td>
+        <td style="text-align: center;">RA: 3</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>DESARROLLO DE INTERFACES</td>
+        <td style="text-align: center;">0488</td>
+        <td style="text-align: center;">RA: 1</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>DESARROLLO DE INTERFACES</td>
+        <td style="text-align: center;">0488</td>
+        <td style="text-align: center;">RA: 3</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>DESARROLLO DE INTERFACES</td>
+        <td style="text-align: center;">0488</td>
+        <td style="text-align: center;">RA: 4</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>DESARROLLO DE INTERFACES</td>
+        <td style="text-align: center;">0488</td>
+        <td style="text-align: center;">RA: 5</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>DESARROLLO DE INTERFACES</td>
+        <td style="text-align: center;">0488</td>
+        <td style="text-align: center;">RA: 8</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>SISTEMAS DE GESTIÓN EMPRESARIAL</td>
+        <td style="text-align: center;">0491</td>
+        <td style="text-align: center;">RA: 2</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>SISTEMAS DE GESTIÓN EMPRESARIAL</td>
+        <td style="text-align: center;">0491</td>
+        <td style="text-align: center;">RA: 4</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>SISTEMAS DE GESTIÓN EMPRESARIAL</td>
+        <td style="text-align: center;">0491</td>
+        <td style="text-align: center;">RA: 5</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>PROGRAMACION DE VIDEOJUEGOS</td>
+        <td style="text-align: center;">CMO-318</td>
+        <td style="text-align: center;">RA: 1</td>
+        <td></td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>PROGRAMACION DE VIDEOJUEGOS</td>
+        <td style="text-align: center;">CMO-318</td>
+        <td style="text-align: center;">RA: 2</td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="6" style="height: 50px;"><span id="medidas_adaptaciones"></span></td>
-                </tr>
+<p class="small-text">(*) Indicar el número que corresponde al resultado de aprendizaje según lo establecido en el real decreto que establece el título correspondiente.</p>
 
-                <tr>
-                    <td colspan="6">
-                        Requiere autorización extraordinaria:
-                        <span class="choice-block">
-                            <span class="checkbox-option">SÍ<span class="checkbox-option-box"></span></span>
-                            <span class="checkbox-option">NO<span class="checkbox-option-box">X</span></span>
-                        </span>
-                    </td>
-                </tr>
+<table>
+    <tr>
+        <td><strong>Formaciones específicas y no vinculadas al currículo de Ciclo Formativo / Curso de Especialización/ Programa de especialización:</strong></td>
+    </tr>
+    <tr>
+        <td style="height: 80px;"></td>
+    </tr>
+</table>
 
-                <tr>
-                    <td colspan="6" class="indent">▪ Indicar causa/s:</td>
-                </tr>
+<table>
+    <tr>
+        <td class="signature-cell" style="width: 33.33%;">
+            Fdo.: Tutor/a del centro docente
+        </td>
+        <td class="signature-cell" style="width: 33.33%;">
+            Fdo.: Tutor/a de la empresa u organismo equiparado
+        </td>
+        <td class="signature-cell" style="width: 33.33%;">
+            Fdo.: Alumno/a
+        </td>
+    </tr>
+</table>
 
-                <tr class="row-thick">
-                    <td colspan="6" style="height: 50px;"><span id="causas_autorizacion"></span></td>
-                </tr>
-
-                <tr>
-                    <td colspan="6">
-                        Intervalo de formación:
-                        <span class="choice-block">
-                            <span class="checkbox-option">Diario<span class="checkbox-option-box">X</span></span>
-                            <span class="checkbox-option">Semanal<span class="checkbox-option-box"></span></span>
-                            <span class="checkbox-option">Mensual<span class="checkbox-option-box"></span></span>
-                            <span class="checkbox-option">Otros<span class="checkbox-option-box"></span></span>
-                            <span class="checkbox-option">Varias empresas<span class="checkbox-option-box"></span></span>
-                        </span>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td colspan="6">Periodos de formación en empresa u organismo equiparado:</td>
-                </tr>
-
-                <tr>
-                    <th colspan="1" class="period-header">Nº periodo</th>
-                    <th colspan="2" class="period-header">Calendario</th>
-                    <th colspan="3" class="period-header">Horario</th>
-                </tr>
-
-                <tr>
-                    <td colspan="1" class="period-cell"><span id="periodo_1_numero">1</span></td>
-                    <td colspan="2" class="period-cell"><span id="periodo_1_calendario">02/03/2026 - 10/06/2026</span></td>
-                    <td colspan="3" class="period-cell"><span id="periodo_1_horario">L: 08:00-16:00 / M: 08:00-14:00 y 15:00-17:00 / X: 08:00-14:00 y 15:00-17:00 / J: 08:00-16:00 / V: 08:00-14:00</span></td>
-                </tr>
-
-                <tr>
-                    <td colspan="1" class="period-cell"><span id="periodo_2_numero"></span></td>
-                    <td colspan="2" class="period-cell"><span id="periodo_2_calendario"></span></td>
-                    <td colspan="3" class="period-cell"><span id="periodo_2_horario"></span></td>
-                </tr>
-
-                <tr>
-                    <td colspan="1" class="period-cell"><span id="periodo_3_numero"></span></td>
-                    <td colspan="2" class="period-cell"><span id="periodo_3_calendario"></span></td>
-                    <td colspan="3" class="period-cell"><span id="periodo_3_horario"></span></td>
-                </tr>
-
-                <tr>
-                    <td colspan="1" class="period-cell"><span id="periodo_4_numero"></span></td>
-                    <td colspan="2" class="period-cell"><span id="periodo_4_calendario"></span></td>
-                    <td colspan="3" class="period-cell"><span id="periodo_4_horario"></span></td>
-                </tr>
-
-                <tr class="row-thick">
-                    <td colspan="6" class="total-hours">Total horas: <span id="total_horas"><strong>500</strong></span></td>
-                </tr>
-
-                <tr>
-                    <td colspan="6" class="observations"><span class="field-label">Observaciones:</span> <span id="observaciones"></span></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- PAGE 2 -->
-        <div style="page-break-before: always; margin-top: 40px;">
-            <table class="module-table" style="border: 2px solid black;">
-                <thead>
-                    <tr style="border-bottom: 2px solid black;">
-                        <th class="col-module" style="text-align: center;">Módulo profesional (Denominación)</th>
-                        <th class="col-codigo" style="text-align: center;">Código</th>
-                        <th class="col-ra" style="text-align: center;">Resultados de Aprendizaje (*)</th>
-                        <th class="col-checkbox" style="text-align: center;">Impartido íntegramente en la empresa (marcar con una X)</th>
-                        <th class="col-checkbox" style="text-align: center;">Impartición compartida con el centro docente (marcar con una X)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span id="modulo_1">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_1">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_1">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_1"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_1"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_2">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_2">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_2">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_2"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_2"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_3">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_3">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_3">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_3"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_3"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_4">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_4">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_4">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_4"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_4"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_5">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_5">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_5">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_5"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_5"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_6">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_6">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_6">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_6"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_6"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_7">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_7">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_7">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_7"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_7"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_8">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_8">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_8">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_8"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_8"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_9">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_9">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_9">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_9"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_9"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_10">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_10">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_10">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_10"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_10"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_11">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_11">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_11">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_11"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_11"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_12">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_12">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_12">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_12"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_12"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_13">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_13">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_13">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_13"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_13"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_14">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_14">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_14">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_14"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_14"></span>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><span id="modulo_15">Aplicaciones Web</span></td>
-                        <td style="text-align: center;"><span id="codigo_modulo_15">0228</span></td>
-                        <td style="text-align: center;"><span id="ra_15">RA: 4</span></td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox" id="impartido_empresa_15"></span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="checkbox-item">
-                                <span class="checkbox checkbox-filled" id="impartido_compartido_15"></span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <p class="note-text">(*) Indicar el número que corresponde al resultado de aprendizaje según lo establecido en el real decreto que establece el título correspondiente.</p>
-
-            <div class="formations-section">
-                <h4>Formaciones específicas y no vinculadas al currículo de Ciclo Formativo / Curso de Especialización/ Programa de especialización:</h4>
-                <span id="formaciones_especificas"></span>
-            </div>
-
-            <table class="signature-section">
-                <tr>
-                    <td class="signature-box">
-                        <div class="signature-line"></div>
-                        <p>Fdo.: Tutor/a del centro docente</p>
-                    </td>
-                    <td class="signature-box">
-                        <div class="signature-line"></div>
-                        <p>Fdo.: Tutor/a de la empresa u organismo<br>equiparado</p>
-                    </td>
-                    <td class="signature-box">
-                        <div class="signature-line"></div>
-                        <p>Fdo.: Alumno/a</p>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </div>
 </body>
 </html>
