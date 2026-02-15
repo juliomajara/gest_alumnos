@@ -577,7 +577,19 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     throw new RuntimeException('El contenido renderizado del plan de formación está vacío.');
   }
 
-  // Debug opcional para diagnósticos puntuales.
+  // CORRECCIÓN CRÍTICA: Eliminar page-break-inside: avoid que causa bucles infinitos.
+  // mPDF entra en bucle cuando una tabla con esta propiedad no cabe en la página.
+  $rendered = preg_replace(
+    '/page-break-inside\s*:\s*avoid\s*;?/i',
+    'page-break-inside: auto;',
+    $rendered
+  );
+
+  // Normalizar espacios en blanco excesivos.
+  $rendered = preg_replace('/\s\s+/', ' ', $rendered);
+  $rendered = preg_replace('/>\s+</', '><', $rendered);
+
+  // Debug para ver el HTML generado (activar si necesitas diagnosticar).
   // file_put_contents(__DIR__ . '/docs/debug_rendered_html.txt', $rendered);
 
   return $rendered;
