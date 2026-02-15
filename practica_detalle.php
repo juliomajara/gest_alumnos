@@ -861,7 +861,7 @@ if ($id_practica === false || $id_practica === null) {
         g.id_ciclo,
         g.grupo,
         ci.ciclo AS ciclo_nombre,
-        ci.`código` AS ciclo_codigo
+        ci.codigo AS ciclo_codigo
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
