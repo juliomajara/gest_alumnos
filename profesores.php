@@ -44,6 +44,8 @@ $teachers_stmt = $pdo->prepare(
       ORDER BY m.abreviatura
       SEPARATOR ", "
     ) AS modulos
+    ,t.telefonos
+    ,c.correos
   FROM profesores p
   LEFT JOIN grupos_tutores gt
     ON gt.id_profesor = p.id_profesor
@@ -53,6 +55,22 @@ $teachers_stmt = $pdo->prepare(
     ON mp.id_profesor = p.id_profesor
     AND mp.id_curso_escolar = :active_course_id_modulos
   LEFT JOIN modulos m ON m.id_modulo = mp.id_modulo
+  LEFT JOIN (
+    SELECT
+      id_entidad,
+      GROUP_CONCAT(DISTINCT telefono ORDER BY telefono SEPARATOR ', ') AS telefonos
+    FROM telefonos
+    WHERE entidad_tipo = \'profesor\'
+    GROUP BY id_entidad
+  ) t ON t.id_entidad = p.id_profesor
+  LEFT JOIN (
+    SELECT
+      id_entidad,
+      GROUP_CONCAT(DISTINCT direccion_correo ORDER BY direccion_correo SEPARATOR ', ') AS correos
+    FROM correos
+    WHERE entidad_tipo = \'profesor\'
+    GROUP BY id_entidad
+  ) c ON c.id_entidad = p.id_profesor
   ' . $where_clause . '
   GROUP BY p.id_profesor, p.apellido1, p.apellido2, p.nombre, p.dni
   ORDER BY p.apellido1, p.apellido2, p.nombre'
@@ -66,7 +84,7 @@ function render_teacher_rows(array $teachers): string
   ob_start();
   if (!$teachers): ?>
     <tr>
-      <td colspan="7">No hay profesores para los filtros seleccionados.</td>
+      <td colspan="10">No hay profesores para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($teachers as $teacher): ?>
@@ -78,6 +96,9 @@ function render_teacher_rows(array $teachers): string
         $dni = $teacher['dni'] ?: 'No disponible';
         $grupos_tutor = $teacher['grupos_tutor'] ?: 'Sin tutoría';
         $modulos = $teacher['modulos'] ?: 'Sin módulos';
+        $telefonos = $teacher['telefonos'] ?: 'No disponible';
+        $correos = $teacher['correos'] ?: 'No disponible';
+        $editarUrl = 'profesor_editar.php?id=' . (int) $teacher['id_profesor'];
       ?>
       <tr>
         <td><?php echo htmlspecialchars($id_profesor, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -87,6 +108,9 @@ function render_teacher_rows(array $teachers): string
         <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($grupos_tutor, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($modulos, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($telefonos, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($correos, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><a href="<?php echo htmlspecialchars($editarUrl, ENT_QUOTES, 'UTF-8'); ?>">Editar</a></td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -164,6 +188,9 @@ $active_page = 'profesores';
                 <th>DNI</th>
                 <th>Grupo tutor</th>
                 <th>Módulos</th>
+                <th>Teléfonos</th>
+                <th>Correos</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
