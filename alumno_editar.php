@@ -804,7 +804,7 @@ $active_page = 'alumnos';
           </div>
         </section>
       <?php else: ?>
-        <form method="post" class="panel entity-form" id="alumnoEditarForm">
+        <form method="post" class="panel entity-form empresa-form" id="alumnoEditarForm">
           <input type="hidden" name="id_alumno" value="<?php echo (int) $idAlumno; ?>">
 
           <?php if ($errors): ?>
@@ -820,12 +820,13 @@ $active_page = 'alumnos';
             </section>
           <?php endif; ?>
 
-          <section class="entity-section">
-            <div class="panel-header">
-              <h3>Datos del alumno</h3>
-              <p>Se incluyen todas las columnas de la tabla <strong>alumnos</strong>.</p>
-            </div>
-            <div class="entity-grid">
+          <div class="empresa-form-grid">
+            <section class="panel empresa-block empresa-block-main">
+              <div class="panel-header">
+                <h3>Datos del alumno</h3>
+                <p>Se incluyen todas las columnas de la tabla <strong>alumnos</strong>.</p>
+              </div>
+              <div class="entity-grid empresa-datos-grid">
               <?php
                 $cpValue = $formAlumnoData['cp'] ?? '';
                 $provinciaSeleccionada = isset($formAlumnoData['id_provincia']) && (int) $formAlumnoData['id_provincia'] > 0
@@ -886,137 +887,120 @@ $active_page = 'alumnos';
                   <?php endif; ?>
                 </label>
               <?php endforeach; ?>
-            </div>
-          </section>
-
-          <section class="entity-section">
-            <div class="entity-section-header">
-              <div class="panel-header">
-                <h3>Teléfonos</h3>
-                <p>Edita, elimina o añade teléfonos para el alumno.</p>
               </div>
-              <button type="button" class="edit-toggle" data-add-item="#telefonosList" data-template="#telefonoTemplate">Añadir teléfono</button>
-            </div>
-            <div class="entity-stack" id="telefonosList">
-              <?php foreach ($telefonos as $index => $telefono): ?>
-                <article class="entity-repeatable-item">
-                  <input type="hidden" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($telefonoPrimaryKey); ?>]" value="<?php echo (int) ($telefono[$telefonoPrimaryKey] ?? 0); ?>">
-                  <div class="entity-grid">
-                    <?php foreach ($telefonoColumns as $column): ?>
-                      <?php
-                        $name = $column['name'];
-                        if ($name === $telefonoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-                          continue;
-                        }
-                        $fieldId = 'tel_existing_' . $index . '_' . $name;
-                        $inputType = input_type_for_column($column);
-                        $value = $telefono[$name] ?? '';
-                      ?>
-                      <label for="<?php echo h($fieldId); ?>">
-                        <?php echo h(build_field_label($name)); ?>
-                        <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]" value="<?php echo h((string) $value); ?>">
-                      </label>
-                    <?php endforeach; ?>
-                    <label>
-                      Eliminar
-                      <select name="telefonos[existing][<?php echo (int) $index; ?>][_delete]">
-                        <option value="0" selected>No</option>
-                        <option value="1">Sí</option>
-                      </select>
-                    </label>
-                  </div>
-                </article>
-              <?php endforeach; ?>
-            </div>
 
-            <div class="entity-stack" id="telefonosNuevosList">
-              <article class="entity-repeatable-item">
-                <div class="entity-grid">
-                  <?php foreach ($telefonoColumns as $column): ?>
-                    <?php
-                      $name = $column['name'];
-                      if ($name === $telefonoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-                        continue;
-                      }
-                      $fieldId = 'tel_new_0_' . $name;
-                      $inputType = input_type_for_column($column);
-                    ?>
-                    <label for="<?php echo h($fieldId); ?>">
-                      <?php echo h(build_field_label($name)); ?>
-                      <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="telefonos[new][0][<?php echo h($name); ?>]" value="">
-                    </label>
-                  <?php endforeach; ?>
+              <section class="entity-section empresa-subsection" id="mediosContactoSection">
+                <div class="entity-section-header">
+                  <h3>Medios de contacto</h3>
                 </div>
-              </article>
-            </div>
-          </section>
+                <div class="grid empresa-medios-grid">
+                  <section class="entity-nested-section" id="telefonosAlumnoSection">
+                    <div class="entity-section-header">
+                      <h4>Teléfonos</h4>
+                      <button type="button" class="edit-toggle" data-add-item="#telefonosAlumnoList" data-template="#telefonoTemplate">Añadir teléfono</button>
+                    </div>
+                    <div class="entity-stack" id="telefonosAlumnoList" data-next-index="0">
+                      <?php foreach ($telefonos as $index => $telefono): ?>
+                        <div class="entity-repeatable-item empresa-inline-item" data-existing-item="1">
+                          <input type="hidden" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($telefonoPrimaryKey); ?>]" value="<?php echo (int) ($telefono[$telefonoPrimaryKey] ?? 0); ?>">
+                          <input type="hidden" name="telefonos[existing][<?php echo (int) $index; ?>][_delete]" value="0" data-delete-field>
+                          <div class="entity-inline-grid empresa-contact-item-grid">
+                            <?php foreach ($telefonoColumns as $column): ?>
+                              <?php
+                                $name = $column['name'];
+                                if ($name === $telefonoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
+                                  continue;
+                                }
+                                $fieldId = 'tel_existing_' . $index . '_' . $name;
+                                $value = $telefono[$name] ?? '';
+                              ?>
+                              <?php if ($name === 'telefono'): ?>
+                                <label for="<?php echo h($fieldId); ?>">
+                                  Número
+                                  <input id="<?php echo h($fieldId); ?>" type="text" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]" value="<?php echo h((string) $value); ?>">
+                                </label>
+                              <?php elseif ($name === 'etiqueta'): ?>
+                                <label for="<?php echo h($fieldId); ?>">
+                                  Etiqueta
+                                  <select id="<?php echo h($fieldId); ?>" name="telefonos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]">
+                                    <option value="">Selecciona</option>
+                                    <option value="Principal" <?php echo (string) $value === 'Principal' ? 'selected' : ''; ?>>Principal</option>
+                                    <option value="Móvil" <?php echo (string) $value === 'Móvil' ? 'selected' : ''; ?>>Móvil</option>
+                                    <option value="Secundario" <?php echo (string) $value === 'Secundario' ? 'selected' : ''; ?>>Secundario</option>
+                                    <option value="Trabajo" <?php echo (string) $value === 'Trabajo' ? 'selected' : ''; ?>>Trabajo</option>
+                                    <option value="Casa" <?php echo (string) $value === 'Casa' ? 'selected' : ''; ?>>Casa</option>
+                                    <option value="Personal" <?php echo (string) $value === 'Personal' ? 'selected' : ''; ?>>Personal</option>
+                                    <option value="Otro" <?php echo (string) $value === 'Otro' ? 'selected' : ''; ?>>Otro</option>
+                                  </select>
+                                </label>
+                              <?php endif; ?>
+                            <?php endforeach; ?>
+                            <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
+                          </div>
+                        </div>
+                      <?php endforeach; ?>
+                    </div>
+                  </section>
 
-          <section class="entity-section">
-            <div class="entity-section-header">
+                  <section class="entity-nested-section" id="correosAlumnoSection">
+                    <div class="entity-section-header">
+                      <h4>Correos</h4>
+                      <button type="button" class="edit-toggle" data-add-item="#correosAlumnoList" data-template="#correoTemplate">Añadir correo</button>
+                    </div>
+                    <div class="entity-stack" id="correosAlumnoList" data-next-index="0">
+                      <?php foreach ($correos as $index => $correo): ?>
+                        <div class="entity-repeatable-item empresa-inline-item" data-existing-item="1">
+                          <input type="hidden" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($correoPrimaryKey); ?>]" value="<?php echo (int) ($correo[$correoPrimaryKey] ?? 0); ?>">
+                          <input type="hidden" name="correos[existing][<?php echo (int) $index; ?>][_delete]" value="0" data-delete-field>
+                          <div class="entity-inline-grid empresa-contact-item-grid">
+                            <?php foreach ($correoColumns as $column): ?>
+                              <?php
+                                $name = $column['name'];
+                                if ($name === $correoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
+                                  continue;
+                                }
+                                $fieldId = 'correo_existing_' . $index . '_' . $name;
+                                $value = $correo[$name] ?? '';
+                              ?>
+                              <?php if ($name === 'direccion_correo'): ?>
+                                <label for="<?php echo h($fieldId); ?>">
+                                  Correo electrónico
+                                  <input id="<?php echo h($fieldId); ?>" type="email" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]" value="<?php echo h((string) $value); ?>">
+                                </label>
+                              <?php elseif ($name === 'etiqueta'): ?>
+                                <label for="<?php echo h($fieldId); ?>">
+                                  Etiqueta
+                                  <select id="<?php echo h($fieldId); ?>" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]">
+                                    <option value="">Selecciona</option>
+                                    <option value="Principal" <?php echo (string) $value === 'Principal' ? 'selected' : ''; ?>>Principal</option>
+                                    <option value="Trabajo" <?php echo (string) $value === 'Trabajo' ? 'selected' : ''; ?>>Trabajo</option>
+                                    <option value="Facturación" <?php echo (string) $value === 'Facturación' ? 'selected' : ''; ?>>Facturación</option>
+                                    <option value="Personal" <?php echo (string) $value === 'Personal' ? 'selected' : ''; ?>>Personal</option>
+                                    <option value="Otro" <?php echo (string) $value === 'Otro' ? 'selected' : ''; ?>>Otro</option>
+                                  </select>
+                                </label>
+                              <?php endif; ?>
+                            <?php endforeach; ?>
+                            <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
+                          </div>
+                        </div>
+                      <?php endforeach; ?>
+                    </div>
+                  </section>
+                </div>
+              </section>
+            </section>
+
+            <section class="panel empresa-block empresa-block-direcciones">
               <div class="panel-header">
-                <h3>Correos</h3>
-                <p>Edita, elimina o añade correos para el alumno.</p>
+                <h3>Acciones</h3>
+                <p>Guarda los cambios del alumno o vuelve a la ficha.</p>
               </div>
-              <button type="button" class="edit-toggle" data-add-item="#correosList" data-template="#correoTemplate">Añadir correo</button>
-            </div>
-
-            <div class="entity-stack" id="correosList">
-              <?php foreach ($correos as $index => $correo): ?>
-                <article class="entity-repeatable-item">
-                  <input type="hidden" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($correoPrimaryKey); ?>]" value="<?php echo (int) ($correo[$correoPrimaryKey] ?? 0); ?>">
-                  <div class="entity-grid">
-                    <?php foreach ($correoColumns as $column): ?>
-                      <?php
-                        $name = $column['name'];
-                        if ($name === $correoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-                          continue;
-                        }
-                        $fieldId = 'correo_existing_' . $index . '_' . $name;
-                        $inputType = input_type_for_column($column);
-                        $value = $correo[$name] ?? '';
-                      ?>
-                      <label for="<?php echo h($fieldId); ?>">
-                        <?php echo h(build_field_label($name)); ?>
-                        <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="correos[existing][<?php echo (int) $index; ?>][<?php echo h($name); ?>]" value="<?php echo h((string) $value); ?>">
-                      </label>
-                    <?php endforeach; ?>
-                    <label>
-                      Eliminar
-                      <select name="correos[existing][<?php echo (int) $index; ?>][_delete]">
-                        <option value="0" selected>No</option>
-                        <option value="1">Sí</option>
-                      </select>
-                    </label>
-                  </div>
-                </article>
-              <?php endforeach; ?>
-            </div>
-
-            <div class="entity-stack" id="correosNuevosList">
-              <article class="entity-repeatable-item">
-                <div class="entity-grid">
-                  <?php foreach ($correoColumns as $column): ?>
-                    <?php
-                      $name = $column['name'];
-                      if ($name === $correoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-                        continue;
-                      }
-                      $fieldId = 'correo_new_0_' . $name;
-                      $inputType = input_type_for_column($column);
-                    ?>
-                    <label for="<?php echo h($fieldId); ?>">
-                      <?php echo h(build_field_label($name)); ?>
-                      <input id="<?php echo h($fieldId); ?>" type="<?php echo h($inputType); ?>" name="correos[new][0][<?php echo h($name); ?>]" value="">
-                    </label>
-                  <?php endforeach; ?>
-                </div>
-              </article>
-            </div>
-          </section>
-
-          <div class="form-actions">
-            <button type="submit" class="primary-button">Guardar cambios</button>
-            <a class="ghost-button" href="alumno_detalle.php?id_alumno=<?php echo (int) $idAlumno; ?>">Cancelar</a>
+              <div class="form-actions">
+                <button type="submit" class="primary-button">Guardar cambios</button>
+                <a class="ghost-button" href="alumno_detalle.php?id_alumno=<?php echo (int) $idAlumno; ?>">Cancelar</a>
+              </div>
+            </section>
           </div>
         </form>
       <?php endif; ?>
@@ -1024,48 +1008,56 @@ $active_page = 'alumnos';
   </div>
 
   <template id="telefonoTemplate">
-    <article class="entity-repeatable-item">
-      <div class="entity-grid">
-        <?php foreach ($telefonoColumns as $column): ?>
-          <?php
-            $name = $column['name'];
-            if ($name === $telefonoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-              continue;
-            }
-            $inputType = input_type_for_column($column);
-          ?>
-          <label>
-            <?php echo h(build_field_label($name)); ?>
-            <input type="<?php echo h($inputType); ?>" data-name="<?php echo h($name); ?>" value="">
-          </label>
-        <?php endforeach; ?>
+    <div class="entity-repeatable-item empresa-inline-item">
+      <div class="entity-inline-grid empresa-contact-item-grid">
+        <label>
+          Número
+          <input type="text" name="telefonos[new][__INDEX__][telefono]">
+        </label>
+        <label>
+          Etiqueta
+          <select name="telefonos[new][__INDEX__][etiqueta]">
+            <option value="">Selecciona</option>
+            <option value="Principal">Principal</option>
+            <option value="Móvil">Móvil</option>
+            <option value="Secundario">Secundario</option>
+            <option value="Trabajo">Trabajo</option>
+            <option value="Casa">Casa</option>
+            <option value="Personal">Personal</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </label>
+        <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
       </div>
-    </article>
+    </div>
   </template>
 
   <template id="correoTemplate">
-    <article class="entity-repeatable-item">
-      <div class="entity-grid">
-        <?php foreach ($correoColumns as $column): ?>
-          <?php
-            $name = $column['name'];
-            if ($name === $correoPrimaryKey || $name === 'id_entidad' || $name === 'entidad_tipo') {
-              continue;
-            }
-            $inputType = input_type_for_column($column);
-          ?>
-          <label>
-            <?php echo h(build_field_label($name)); ?>
-            <input type="<?php echo h($inputType); ?>" data-name="<?php echo h($name); ?>" value="">
-          </label>
-        <?php endforeach; ?>
+    <div class="entity-repeatable-item empresa-inline-item">
+      <div class="entity-inline-grid empresa-contact-item-grid">
+        <label>
+          Correo electrónico
+          <input type="email" name="correos[new][__INDEX__][direccion_correo]">
+        </label>
+        <label>
+          Etiqueta
+          <select name="correos[new][__INDEX__][etiqueta]">
+            <option value="">Selecciona</option>
+            <option value="Principal">Principal</option>
+            <option value="Trabajo">Trabajo</option>
+            <option value="Facturación">Facturación</option>
+            <option value="Personal">Personal</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </label>
+        <button type="button" class="ghost-button" data-remove-item>Eliminar</button>
       </div>
-    </article>
+    </div>
   </template>
 
   <script>
     (function () {
-      const buildName = (group, index, field) => `${group}[new][${index}][${field}]`;
+      const replaceIndex = (value, index) => value.replaceAll('__INDEX__', String(index));
       const cpInput = document.querySelector('#alumno_cp_lookup');
       const provinciaSelect = document.querySelector('#alumno_provincia_lookup');
       const localidadInput = document.querySelector('#alumno_localidad_lookup');
@@ -1180,34 +1172,45 @@ $active_page = 'alumnos';
         }
       };
 
-      const addButtons = document.querySelectorAll('[data-add-item][data-template]');
-      addButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const templateSelector = button.getAttribute('data-template');
-          const template = document.querySelector(templateSelector);
-          if (!template) {
-            return;
+      const addItemFromTemplate = (listSelector, templateSelector) => {
+        const list = document.querySelector(listSelector);
+        const template = document.querySelector(templateSelector);
+        if (!list || !template) {
+          return null;
+        }
+
+        const itemIndex = Number(list.dataset.nextIndex || 0);
+        const html = replaceIndex(template.innerHTML, itemIndex);
+        list.insertAdjacentHTML('beforeend', html);
+        list.dataset.nextIndex = String(itemIndex + 1);
+        return list.lastElementChild;
+      };
+
+      document.addEventListener('click', (event) => {
+        const addButton = event.target.closest('[data-add-item]');
+        if (addButton) {
+          addItemFromTemplate(addButton.dataset.addItem, addButton.dataset.template);
+          return;
+        }
+
+        const removeButton = event.target.closest('[data-remove-item]');
+        if (!removeButton) {
+          return;
+        }
+
+        const wrapper = removeButton.closest('.entity-repeatable-item');
+        if (!wrapper) {
+          return;
+        }
+
+        if (wrapper.dataset.existingItem === '1') {
+          const deleteField = wrapper.querySelector('[data-delete-field]');
+          if (deleteField) {
+            deleteField.value = '1';
           }
+        }
 
-          const target = templateSelector === '#telefonoTemplate'
-            ? document.querySelector('#telefonosNuevosList')
-            : document.querySelector('#correosNuevosList');
-
-          if (!target) {
-            return;
-          }
-
-          const groupName = templateSelector === '#telefonoTemplate' ? 'telefonos' : 'correos';
-          const index = target.querySelectorAll('.entity-repeatable-item').length;
-          const fragment = template.content.cloneNode(true);
-
-          fragment.querySelectorAll('[data-name]').forEach((input) => {
-            const fieldName = input.getAttribute('data-name');
-            input.setAttribute('name', buildName(groupName, index, fieldName));
-          });
-
-          target.appendChild(fragment);
-        });
+        wrapper.remove();
       });
 
       cpInput?.addEventListener('blur', fetchAddressFromPostalCode);
