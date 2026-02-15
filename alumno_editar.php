@@ -871,6 +871,16 @@ $active_page = 'alumnos';
               $provinciaSeleccionada = isset($formAlumnoData['id_provincia']) && (int) $formAlumnoData['id_provincia'] > 0
                 ? (int) $formAlumnoData['id_provincia']
                 : ($madridProvinciaId ?? 0);
+              $provinciaNombre = '';
+              foreach ($provinciaOptions as $provinciaOption) {
+                if ((int) $provinciaOption['id_provincia'] === (int) $provinciaSeleccionada) {
+                  $provinciaNombre = (string) ($provinciaOption['nombre'] ?? '');
+                  break;
+                }
+              }
+              if ($provinciaNombre === '' && isset($formAlumnoData['provincia_nombre'])) {
+                $provinciaNombre = (string) $formAlumnoData['provincia_nombre'];
+              }
               $localidadValue = $formAlumnoData['localidad_nombre'] ?? ($student['localidad_nombre'] ?? '');
             ?>
 
@@ -965,14 +975,9 @@ $active_page = 'alumnos';
                 </label>
                 <label for="alumno_provincia_lookup">
                   Provincia
-                  <select id="alumno_provincia_lookup" name="alumno[id_provincia]">
-                    <option value="">Seleccionar</option>
-                    <?php foreach ($provinciaOptions as $provincia): ?>
-                      <?php $idProvinciaOption = (int) $provincia['id_provincia']; ?>
-                      <option value="<?php echo $idProvinciaOption; ?>" <?php echo $idProvinciaOption === (int) $provinciaSeleccionada ? 'selected' : ''; ?>><?php echo h($provincia['nombre']); ?></option>
-                    <?php endforeach; ?>
-                  </select>
+                  <input id="alumno_provincia_lookup" type="text" name="alumno_provincia_nombre" value="<?php echo h((string) $provinciaNombre); ?>">
                 </label>
+                <input id="alumno_provincia_lookup_id" type="hidden" name="alumno[id_provincia]" value="<?php echo (int) $provinciaSeleccionada; ?>">
                 <label for="alumno_localidad_lookup">
                   Localidad
                   <input id="alumno_localidad_lookup" type="text" name="alumno_localidad_nombre" value="<?php echo h((string) $localidadValue); ?>">
@@ -1120,9 +1125,17 @@ $active_page = 'alumnos';
     (function () {
       const replaceIndex = (value, index) => value.replaceAll('__INDEX__', String(index));
       const cpInput = document.querySelector('#alumno_cp_lookup');
-      const provinciaSelect = document.querySelector('#alumno_provincia_lookup');
+      const provinciaInput = document.querySelector('#alumno_provincia_lookup');
+      const provinciaIdInput = document.querySelector('#alumno_provincia_lookup_id');
       const localidadInput = document.querySelector('#alumno_localidad_lookup');
       const cpStatus = document.querySelector('#cpLookupStatus');
+      const provinciasIndex = new Map();
+      <?php foreach ($provinciaOptions as $provincia): ?>
+        provinciasIndex.set('<?php echo addslashes(normalize_localidad_lookup_value((string) ($provincia['nombre'] ?? ''))); ?>', {
+          id: '<?php echo (int) $provincia['id_provincia']; ?>',
+          nombre: '<?php echo addslashes((string) ($provincia['nombre'] ?? '')); ?>',
+        });
+      <?php endforeach; ?>
 
       const fetchJson = async (url, options = {}) => {
         const response = await fetch(url, {
@@ -1147,41 +1160,31 @@ $active_page = 'alumnos';
       };
 
       const normalizePostalCode = (value) => String(value || '').trim().replace(/[\s-]+/g, '');
+      const normalizeLookupText = (value) => String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
 
-      const fetchProvinciaPorCpPrefix = async (prefix) => {
-        if (!prefix || prefix.length < 2) {
-          return null;
+      const syncProvinciaId = () => {
+        if (!provinciaInput || !provinciaIdInput) {
+          return;
         }
 
-        const data = await fetchJson(
-          `alumno_editar.php?action=provincia_por_cp_prefix&prefix=${encodeURIComponent(prefix)}&id=<?php echo (int) $idAlumno; ?>`
-        );
-
-        return data?.ok ? data.id_provincia : null;
-      };
-
-      const getOrCreateLocalidad = async (idProvincia, cp, nombreLocalidad) => {
-        if (!idProvincia || !nombreLocalidad) {
-          return null;
+        const provinciaNormalized = normalizeLookupText(provinciaInput.value || '');
+        const provinciaMatch = provinciasIndex.get(provinciaNormalized);
+        if (!provinciaMatch) {
+          return;
         }
 
-        const body = new URLSearchParams({
-          id_provincia: String(idProvincia),
-          cp: String(cp || ''),
-          nombre_localidad: String(nombreLocalidad || ''),
-        });
-
-        const data = await fetchJson(`alumno_editar.php?action=localidad_get_or_create&id=<?php echo (int) $idAlumno; ?>`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-          body: body.toString(),
-        });
-
-        return data?.ok ? data : null;
+        provinciaInput.value = provinciaMatch.nombre;
+        provinciaIdInput.value = provinciaMatch.id;
       };
 
       const fetchAddressFromPostalCode = async () => {
-        if (!cpInput || !provinciaSelect || !localidadInput) {
+        if (!cpInput || !provinciaInput || !localidadInput) {
           return;
         }
 
@@ -1190,46 +1193,32 @@ $active_page = 'alumnos';
           return;
         }
 
-        const prefix = postalCode.slice(0, 2);
         setCpStatus('⏳ Cargando datos de dirección…', true);
 
         try {
-          const idProvincia = await fetchProvinciaPorCpPrefix(prefix);
-          if (idProvincia && provinciaSelect.value !== String(idProvincia)) {
-            provinciaSelect.value = String(idProvincia);
-          }
-
           const response = await fetch(`https://api.zippopotam.us/es/${encodeURIComponent(postalCode)}`);
           if (!response.ok) {
-            setCpStatus('No se han encontrado datos para ese código postal.', true);
+            setCpStatus('', false);
             return;
           }
 
           const data = await response.json();
           const place = Array.isArray(data.places) && data.places.length > 0 ? data.places[0] : null;
+          const provinciaName = String(place?.state || '').trim();
           const localidadName = String(place?.['place name'] || '').trim();
 
-          if (!localidadName) {
-            setCpStatus('No se ha podido obtener la localidad para ese código postal.', true);
-            return;
+          if (provinciaName) {
+            provinciaInput.value = provinciaName;
+            syncProvinciaId();
           }
 
-          localidadInput.value = localidadName;
-
-          const provinciaParaLocalidad = provinciaSelect.value ? Number(provinciaSelect.value) : 0;
-          if (!provinciaParaLocalidad) {
-            setCpStatus('Selecciona una provincia para asociar la localidad.', true);
-            return;
-          }
-
-          const localidadDb = await getOrCreateLocalidad(provinciaParaLocalidad, postalCode, localidadName);
-          if (localidadDb?.nombre) {
-            localidadInput.value = String(localidadDb.nombre);
+          if (localidadName) {
+            localidadInput.value = localidadName;
           }
 
           setCpStatus('', false);
         } catch (_) {
-          setCpStatus('No se ha podido consultar el código postal en este momento.', true);
+          setCpStatus('', false);
         }
       };
 
@@ -1275,6 +1264,7 @@ $active_page = 'alumnos';
       });
 
       cpInput?.addEventListener('blur', fetchAddressFromPostalCode);
+      provinciaInput?.addEventListener('blur', syncProvinciaId);
     })();
   </script>
 </body>
