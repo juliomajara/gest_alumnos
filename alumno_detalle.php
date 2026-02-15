@@ -156,12 +156,9 @@ if ($student) {
 
   $practicas_stmt = $pdo->prepare(
     'SELECT pr.id_practica,
-            pr.anexo,
             pr.fecha_inicio,
             pr.fecha_fin,
             pr.horas,
-            pr.requiere_anexo_5,
-            pr.requiere_anexo_6,
             pr.observaciones,
             e.nombre AS empresa,
             pe.estado AS practicas_estado,
@@ -655,7 +652,6 @@ $dias_semana = [
                   <th>Estado</th>
                   <th>Fechas</th>
                   <th>Horas</th>
-                  <th>Anexos</th>
                   <th>Tutor empresa</th>
                   <th>Dirección</th>
                   <th>Observaciones</th>
@@ -664,7 +660,7 @@ $dias_semana = [
               <tbody>
                 <?php if (!$practicas): ?>
                   <tr>
-                    <td colspan="8">No hay prácticas registradas.</td>
+                    <td colspan="7">No hay prácticas registradas.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($practicas as $practica): ?>
@@ -676,16 +672,6 @@ $dias_semana = [
                           format_date($practica['fecha_fin'], 'Sin fin')
                         )
                       );
-                      $anexos = [];
-                      if ($practica['anexo']) {
-                        $anexos[] = 'Anexo ' . $practica['anexo'];
-                      }
-                      if ((int) $practica['requiere_anexo_5'] === 1) {
-                        $anexos[] = 'Requiere Anexo 5';
-                      }
-                      if ((int) $practica['requiere_anexo_6'] === 1) {
-                        $anexos[] = 'Requiere Anexo 6';
-                      }
                       $tutor_nombre = trim(
                         sprintf(
                           '%s %s %s',
@@ -714,7 +700,6 @@ $dias_semana = [
                       <td><?php echo htmlspecialchars(format_value($practica['practicas_estado']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars($fechas, ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $practica['horas'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($anexos ? implode(' · ', $anexos) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td>
                         <?php echo htmlspecialchars($tutor_nombre ?: 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
                         <?php if ($practica['tutor_dni']): ?>
