@@ -177,9 +177,14 @@ function build_plan_pdf_filename(array $practice): string {
     return function_exists('mb_substr') ? mb_substr($value, 0, $maxLength) : substr($value, 0, $maxLength);
   };
 
-  $student = full_name($practice, 'alumno');
+  $student = trim(implode(' ', array_filter([
+    trim((string) ($practice['alumno_apellido1'] ?? '')),
+    trim((string) ($practice['alumno_apellido2'] ?? '')),
+  ], static fn (string $value): bool => $value !== '')));
+  $studentName = trim((string) ($practice['alumno_nombre'] ?? ''));
+  $student = trim($student) . ($student !== '' && $studentName !== '' ? '_' : '') . $studentName;
   $company = (string) ($practice['empresa_nombre'] ?? '');
-  $dateForFile = date('Y-m-d');
+  $dateForFile = date('Ymd');
 
   return sprintf(
     'PlanFormación_%s_%s_%s.pdf',
@@ -187,6 +192,162 @@ function build_plan_pdf_filename(array $practice): string {
     $sanitize($company, 80),
     $sanitize($dateForFile, 20)
   );
+}
+
+function set_checkbox_state(DOMElement $checkbox, bool $checked): void {
+  $classes = preg_split('/\s+/', trim($checkbox->getAttribute('class'))) ?: [];
+  $classes = array_values(array_filter($classes, static fn (string $class): bool => $class !== '' && $class !== 'checkbox-filled'));
+
+  if ($checked) {
+    $classes[] = 'checkbox-filled';
+  }
+
+  if (!in_array('checkbox', $classes, true)) {
+    array_unshift($classes, 'checkbox');
+  }
+
+  $checkbox->setAttribute('class', implode(' ', array_unique($classes)));
+}
+
+function xpath_literal(string $value): string {
+  if (!str_contains($value, "'")) {
+    return "'" . $value . "'";
+  }
+
+  if (!str_contains($value, '"')) {
+    return '"' . $value . '"';
+  }
+
+  $parts = explode("'", $value);
+  $result = [];
+  foreach ($parts as $index => $part) {
+    if ($part !== '') {
+      $result[] = "'" . $part . "'";
+    }
+    if ($index < count($parts) - 1) {
+      $result[] = '"\'"';
+    }
+  }
+
+  return 'concat(' . implode(', ', $result) . ')';
+}
+
+function normalize_upper(string $value): string {
+  return function_exists('mb_strtoupper') ? mb_strtoupper($value, 'UTF-8') : strtoupper($value);
+}
+
+function mark_checkbox_group_option(DOMXPath $xpath, string $groupLabel, string $optionToMark): void {
+  $groups = $xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " checkbox-group ")][.//span[contains(normalize-space(.), ' . xpath_literal($groupLabel) . ')]]');
+  if (!($groups instanceof DOMNodeList) || $groups->length === 0) {
+    return;
+  }
+
+  $group = $groups->item(0);
+  if (!($group instanceof DOMElement)) {
+    return;
+  }
+
+  $items = $xpath->query('.//div[contains(concat(" ", normalize-space(@class), " "), " checkbox-item ")]', $group);
+  if (!($items instanceof DOMNodeList)) {
+    return;
+  }
+
+  foreach ($items as $item) {
+    if (!($item instanceof DOMElement)) {
+      continue;
+    }
+
+    $labelNodes = $xpath->query('./span[1]', $item);
+    $checkboxNodes = $xpath->query('./span[contains(concat(" ", normalize-space(@class), " "), " checkbox ")]', $item);
+    if (!($labelNodes instanceof DOMNodeList) || $labelNodes->length === 0 || !($checkboxNodes instanceof DOMNodeList) || $checkboxNodes->length === 0) {
+      continue;
+    }
+
+    $label = trim((string) $labelNodes->item(0)?->textContent);
+    $checkbox = $checkboxNodes->item($checkboxNodes->length - 1);
+    if ($checkbox instanceof DOMElement) {
+      set_checkbox_state($checkbox, normalize_upper($label) === normalize_upper($optionToMark));
+    }
+  }
+}
+
+function set_multiline_content_by_id(DOMXPath $xpath, string $id, array $lines): void {
+  $nodes = $xpath->query('//*[@id="' . $id . '"]');
+  if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
+    return;
+  }
+
+  $node = $nodes->item(0);
+  if (!($node instanceof DOMElement)) {
+    return;
+  }
+
+  while ($node->firstChild !== null) {
+    $node->removeChild($node->firstChild);
+  }
+
+  $owner = $node->ownerDocument;
+  if (!($owner instanceof DOMDocument)) {
+    return;
+  }
+
+  foreach (array_values($lines) as $index => $line) {
+    if ($index > 0) {
+      $node->appendChild($owner->createElement('br'));
+    }
+    $node->appendChild($owner->createTextNode($line));
+  }
+}
+
+function calculate_schedule_metrics(array $scheduleByDay): array {
+  $hasWeekend = false;
+  $maxDayHours = 0.0;
+  $weeklyHours = 0.0;
+
+  foreach ($scheduleByDay as $day => $segments) {
+    $dayHours = 0.0;
+    foreach ($segments as $segment) {
+      $entrada = time_to_seconds((string) ($segment['hora_entrada'] ?? ''));
+      $salida = time_to_seconds((string) ($segment['hora_salida'] ?? ''));
+      if ($entrada !== null && $salida !== null && $salida > $entrada) {
+        $dayHours += ($salida - $entrada) / 3600;
+      }
+    }
+
+    if ((int) $day === 6 || (int) $day === 7 || (int) $day === 0) {
+      if ($dayHours > 0) {
+        $hasWeekend = true;
+      }
+    }
+
+    $maxDayHours = max($maxDayHours, $dayHours);
+    $weeklyHours += $dayHours;
+  }
+
+  return [
+    'has_weekend' => $hasWeekend,
+    'max_day_hours' => $maxDayHours,
+    'weekly_hours' => $weeklyHours,
+  ];
+}
+
+function build_extraordinary_authorization_causes(array $practice, array $scheduleByDay): array {
+  $causes = [];
+  $provinceId = isset($practice['direccion_id_provincia']) ? (int) $practice['direccion_id_provincia'] : 0;
+  if ($provinceId > 0 && $provinceId !== 28) {
+    $causes[] = 'El centro de trabajo está ubicado en otra comunidad autónoma.';
+  }
+
+  $metrics = calculate_schedule_metrics($scheduleByDay);
+  if ($metrics['has_weekend']) {
+    $causes[] = 'Parte de las prácticas se desarrollan durante días no lectivos.';
+  }
+
+  if ($metrics['max_day_hours'] > 8.0 || $metrics['weekly_hours'] > 40.0) {
+    $causes[] = 'El horario es diferente de los definidos con carácter general.';
+  }
+
+  return $causes;
 }
 
 function redirect_to_practice(int $practiceId, ?string $documentStatus = null, ?string $documentError = null): void {
@@ -245,7 +406,7 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $companyCif = v($practice['empresa_cif'] ?? null);
   $companyTutor = blank_if_unavailable(full_name($practice, 'tutor'));
   $courseName = v($practice['curso_escolar'] ?? null);
-  $cycleName = v($practice['grupo'] ?? null);
+  $cycleName = v($practice['ciclo_nombre'] ?? null);
 
   $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
   if ($endDateRaw === '') {
@@ -256,23 +417,21 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $hoursValue = v($practice['horas'] ?? null);
   $totalHours = $hoursValue === '' ? '' : $hoursValue . ' horas';
 
-  $codigoConvenio = trim(implode(' / ', array_values(array_filter([
-    v($practice['empresa_convenio'] ?? null),
-    v($practice['anexo'] ?? null),
-  ], static fn (string $item): bool => $item !== ''))));
+  $circExcep = (int) ($practice['circ_excep'] ?? 0);
+  $causes = $circExcep === 1 ? build_extraordinary_authorization_causes($practice, $scheduleByDay) : [];
 
   $values = [
     'date' => date('d/m/Y'),
     'course' => $courseName,
     'ciclo-formativo' => $cycleName,
-    'codigo' => $codigoConvenio,
-    'curso' => v($practice['anexo'] ?? null),
+    'codigo' => v($practice['ciclo_codigo'] ?? null),
+    'curso' => v($practice['curso_ordinal'] ?? null),
     'alumno' => $studentName,
     'correo_alumno' => v($practice['alumno_email'] ?? null),
     'telefono_alumno' => v($practice['alumno_telefono'] ?? null),
-    'centro_docente' => '',
-    'correo_centro' => v($practice['centro_email'] ?? null),
-    'telefono_centro' => v($practice['centro_telefono'] ?? null),
+    'centro_docente' => 'IES Laguna de Joatzel',
+    'correo_centro' => 'ies.lagunadejoatzel.getafe@educa.madrid.org',
+    'telefono_centro' => '916837197',
     'tutor_centro' => v($practice['tutor_centro'] ?? null),
     'correo_tutor_centro' => v($practice['tutor_centro_email'] ?? null),
     'telefono_tutor_centro' => v($practice['tutor_centro_telefono'] ?? null),
@@ -291,14 +450,17 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
     'periodo_1_horario' => $scheduleSummary,
     'total_horas' => $totalHours,
     'observaciones' => v($practice['observaciones'] ?? null),
-    'causas_autorizacion' => (int) ($practice['circ_excep'] ?? 0) === 1
-      ? 'Circunstancias excepcionales informadas en la práctica.'
-      : 'No requiere autorización extraordinaria.',
+    'causas_autorizacion' => '',
   ];
 
   foreach ($values as $id => $value) {
     $setById($xpath, $id, $value);
   }
+
+  set_multiline_content_by_id($xpath, 'causas_autorizacion', $causes);
+  mark_checkbox_group_option($xpath, 'Requiere medidas/adaptaciones extraordinarias por discapacidad:', 'NO');
+  mark_checkbox_group_option($xpath, 'Requiere autorización extraordinaria:', $circExcep === 1 ? 'SÍ' : 'NO');
+  mark_checkbox_group_option($xpath, 'Intervalo de formación:', 'Diario');
 
   $moduleTableBodies = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " module-table ")]/tbody');
   if ($moduleTableBodies instanceof DOMNodeList && $moduleTableBodies->length > 0) {
@@ -362,17 +524,15 @@ function fetch_plan_formacion_rows(PDO $pdo, array $practice): array {
       pr.id_practica_ra,
       pr.porcentaje,
       m.codigo,
-      m.abreviatura,
       m.materia_general,
       m.materia_propia,
-      ra.numero AS ra_numero,
-      ra.descripcion AS ra_descripcion
+      ra.numero AS ra_numero
      FROM practicas_ras pr
      LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
      LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
      WHERE pr.id_curso_escolar = :id_curso_escolar
        AND pr.id_ciclo = :id_ciclo
-     ORDER BY m.codigo, m.abreviatura, ra.numero, pr.id_practica_ra'
+     ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC'
   );
   $stmt->execute([
     'id_curso_escolar' => $courseId,
@@ -381,33 +541,20 @@ function fetch_plan_formacion_rows(PDO $pdo, array $practice): array {
 
   $rows = [];
   foreach ($stmt->fetchAll() as $row) {
-    $moduleName = trim(implode(' - ', array_values(array_filter([
-      v($row['materia_general'] ?? null),
-      v($row['materia_propia'] ?? null),
-    ], static fn (string $item): bool => $item !== ''))));
-
-    $raNumero = v($row['ra_numero'] ?? null);
-    $raDescripcion = v($row['ra_descripcion'] ?? null);
-    $raLabel = '';
-    if ($raNumero !== '' && $raDescripcion !== '') {
-      $raLabel = 'RA ' . $raNumero . '. ' . $raDescripcion;
-    } elseif ($raNumero !== '') {
-      $raLabel = 'RA ' . $raNumero;
-    } else {
-      $raLabel = $raDescripcion;
+    $moduleName = v($row['materia_general'] ?? null);
+    if ($moduleName === '') {
+      $moduleName = v($row['materia_propia'] ?? null);
     }
 
-    $percentage = isset($row['porcentaje']) ? (float) $row['porcentaje'] : null;
-    // Criterio acordado para el PDF: 100% = íntegramente empresa; (0,100) = compartida.
-    $markCompany = ($percentage !== null && $percentage >= 100.0) ? 'X' : '';
-    $markShared = ($percentage !== null && $percentage > 0.0 && $percentage < 100.0) ? 'X' : '';
+    $raNumero = v($row['ra_numero'] ?? null);
+    $raLabel = $raNumero !== '' ? 'RA ' . $raNumero : '';
 
     $rows[] = [
       'modulo' => $moduleName,
       'codigo' => v($row['codigo'] ?? null),
       'resultado' => $raLabel,
-      'empresa_x' => $markCompany,
-      'compartida_x' => $markShared,
+      'empresa_x' => '',
+      'compartida_x' => 'X',
     ];
   }
 
@@ -699,16 +846,21 @@ if ($id_practica === false || $id_practica === null) {
         d.puerta AS direccion_puerta,
         d.otros AS direccion_otros,
         d.cp AS direccion_cp,
+        d.id_provincia AS direccion_id_provincia,
         d.principal AS direccion_principal,
         v.via AS direccion_via_tipo,
         ld.nombre AS direccion_localidad,
         pd.nombre AS direccion_provincia,
         pa.pais AS direccion_pais,
         ac.id_curso_escolar,
+        ac.id_curso,
         ce.curso_escolar,
+        c.curso AS curso_ordinal,
         ac.id_grupo,
         g.id_ciclo,
-        g.grupo
+        g.grupo,
+        ci.ciclo AS ciclo_nombre,
+        ci.abreviatura AS ciclo_codigo
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
@@ -727,7 +879,9 @@ if ($id_practica === false || $id_practica === null) {
             WHERE ac2.id_alumno = p.id_alumno
         )
       LEFT JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+      LEFT JOIN cursos c ON c.id_curso = ac.id_curso
       LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
+      LEFT JOIN ciclos ci ON ci.id_ciclo = g.id_ciclo
       WHERE p.id_practica = :id_practica
       LIMIT 1'
     );
