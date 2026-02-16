@@ -312,6 +312,20 @@ function set_span_by_text(DOMXPath $xpath, string $currentText, string $value): 
   }
 }
 
+function remove_table_row_by_span_placeholder(DOMXPath $xpath, string $placeholder): void {
+  $nodes = $xpath->query('//tr[.//span[normalize-space(text()) = ' . xpath_literal($placeholder) . ']]');
+  if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
+    return;
+  }
+
+  $row = $nodes->item(0);
+  if ($row === null || $row->parentNode === null) {
+    return;
+  }
+
+  $row->parentNode->removeChild($row);
+}
+
 function set_observaciones_text(DOMXPath $xpath, string $value): void {
   $nodes = $xpath->query('//table[.//strong[contains(normalize-space(.), "Observaciones:")]]/tr[2]/td');
   if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
@@ -522,11 +536,22 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
 
   for ($index = 1; $index <= 17; $index++) {
     $row = $planRows[$index - 1] ?? [];
-    set_span_by_text($xpath, 'modulo' . $index, v($row['modulo'] ?? null));
-    set_span_by_text($xpath, 'codigo' . $index, v($row['codigo'] ?? null));
-    set_span_by_text($xpath, 'RA' . $index, v($row['resultado'] ?? null));
-    set_span_by_text($xpath, 'integro' . $index, v($row['empresa_x'] ?? null));
-    set_span_by_text($xpath, 'compartido' . $index, v($row['compartida_x'] ?? null));
+    $modulo = v($row['modulo'] ?? null);
+    $codigo = v($row['codigo'] ?? null);
+    $resultado = v($row['resultado'] ?? null);
+    $integro = v($row['empresa_x'] ?? null);
+    $compartido = v($row['compartida_x'] ?? null);
+
+    if ($modulo === '' && $codigo === '' && $resultado === '' && $integro === '' && $compartido === '') {
+      remove_table_row_by_span_placeholder($xpath, 'modulo' . $index);
+      continue;
+    }
+
+    set_span_by_text($xpath, 'modulo' . $index, $modulo);
+    set_span_by_text($xpath, 'codigo' . $index, $codigo);
+    set_span_by_text($xpath, 'RA' . $index, $resultado);
+    set_span_by_text($xpath, 'integro' . $index, $integro);
+    set_span_by_text($xpath, 'compartido' . $index, $compartido);
   }
 
   $rendered = $dom->saveHTML();
