@@ -14,6 +14,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 10px;
+            border: 2px solid #000;
         }
         td {
             border: 1px solid #000;
@@ -63,6 +64,21 @@
             text-align: center;
             padding: 30px 5px 5px 5px;
         }
+        .no-right-border {
+            border-right: 0 !important;
+        }
+
+        .no-right-border + td {
+            border-left: 0 !important;
+        }
+        .no-bottom-border td {
+            border-bottom: 0 !important;
+        }
+
+        /* Quitar también el borde superior de la fila siguiente */
+        .no-bottom-border + tr td {
+            border-top: 0 !important;
+        }
     </style>
 </head>
 <body>
@@ -79,24 +95,23 @@
 
 <table>
     <tr>
-        <td rowspan="3" class="logo-cell">★★★<br>★★★★</td>
+        <td rowspan="3" class="no-right-border"><img src="bandera_CM.png" style="width: 100px;"></td>
         <td class="title-cell">
             <strong>PLAN DE FORMACIÓN</strong><br>
             Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado<br>
             Régimen: <span>General</span><br>
-            Fecha: <span>02/03/2026</span> / Curso <span>2025 - 2026</span>
+            Fecha: <span>fecha de creación</span> / Curso <span>curso escolar</span>
         </td>
     </tr>
 </table>
 
 <table>
     <tr>
-        <td colspan="2"><strong>Ciclo Formativo/Curso de especialización/ Programa de especialización:</strong><br>
-        <span>Técnico Superior en Desarrollo de Aplicaciones Multiplataforma</span></td>
+        <td colspan="2"><strong>Ciclo Formativo:</strong> <span>Nombre del ciclo formativo</span></td>
     </tr>
     <tr>
-        <td><strong>Código:</strong> <span>IFCS03</span></td>
-        <td><strong>Curso:</strong> <span>2º</span></td>
+        <td><strong>Código:</strong> <span>código del ciclo</span></td>
+        <td><strong>Curso:</strong> <span>curso del alumno</span></td>
     </tr>
 </table>
 
@@ -104,44 +119,36 @@
     <tr>
         <td colspan="2"><strong>Alumno/a:</strong> <span>Nombre del Alumno</span></td>
     </tr>
-    <tr>
+    <tr style="border-bottom: 2px solid #000;">
         <td><strong>Correo electrónico:</strong> <span>correo del alumno</span></td>
         <td><strong>Teléfono:</strong> <span>Teléfono del alumno</span></td>
     </tr>
-</table>
 
-<table class="field-row">
     <tr>
         <td colspan="2"><strong>Centro docente:</strong> IES Laguna de Joatzel</td>
     </tr>
-    <tr>
+    <tr style="border-bottom: 2px solid #000;">
         <td><strong>Correo electrónico:</strong> ies.lagunadejoatzel.getafe@educa.madrid.org</td>
         <td><strong>Teléfono:</strong> 916837197</td>
     </tr>
-</table>
 
-<table class="field-row">
     <tr>
         <td colspan="2"><strong>Tutor/a del centro de formación:</strong> <span>Nombre del tutor</span></td>
     </tr>
-    <tr>
+    <tr style="border-bottom: 2px solid #000;">
         <td><strong>Correo electrónico:</strong> <span>correo del tutor</span></td>
         <td><strong>Teléfono:</strong> <span>teléfono del tutor</span></td>
     </tr>
-</table>
 
-<table class="field-row">
     <tr>
         <td><strong>Empresa u organismo equiparado:</strong> <span>Nombre de la empresa</span></td>
         <td><strong>N.I.F.:</strong> <span>NIF de la empresa</span></td>
     </tr>
-    <tr>
+    <tr style="border-bottom: 2px solid #000;">
         <td><strong>Correo electrónico:</strong> <span>correo de la empresa</span></td>
         <td><strong>Teléfono:</strong> <span>Teléfono de la empresa</span></td>
     </tr>
-</table>
 
-<table class="field-row">
     <tr>
         <td colspan="2"><strong>Tutor/a de empresa u organismo equiparado:</strong> <span>Nombre del tutor de empresa</span></td>
     </tr>
@@ -157,7 +164,7 @@
             SÍ <span class="checkbox"></span> &nbsp;&nbsp; NO <span class="checkbox checked"></span>
         </td>
     </tr>
-    <tr>
+    <tr class="no-bottom-border">
         <td>▪ En caso afirmativo, especificar medidas/adaptaciones:</td>
     </tr>
     <tr>
@@ -171,7 +178,7 @@
             SÍ <span class="checkbox"></span> &nbsp;&nbsp; NO <span class="checkbox checked"></span>
         </td>
     </tr>
-    <tr>
+    <tr class="no-bottom-border">
         <td>▪ Indicar causa/s:</td>
     </tr>
     <tr>
@@ -206,21 +213,7 @@
         <td style="text-align: center;"><span>fecha incio - fecha fin</span></td>
         <td style="text-align: center;"><span>horario</span></td>
     </tr>
-    <tr>
-        <td style="height: 25px;"></td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td style="height: 25px;"></td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
-        <td style="height: 25px;"></td>
-        <td></td>
-        <td></td>
-    </tr>
+
     <tr>
         <td colspan="2" style="text-align: right; padding-right: 20px;"><strong>Total horas:</strong></td>
         <td style="text-align: center;"><strong><span>horas</span></strong></td>
