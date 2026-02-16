@@ -71,6 +71,53 @@ function format_academic_year_from_date(?string $date): string {
   return $startYear . ' - ' . ($startYear + 1);
 }
 
+function get_previous_school_day(?string $startDate, PDO $pdo): ?string {
+  if ($startDate === null || trim($startDate) === '') {
+    return null;
+  }
+
+  $start = DateTime::createFromFormat('Y-m-d', trim($startDate));
+  if (!$start || $start->format('Y-m-d') !== trim($startDate)) {
+    return null;
+  }
+
+  $current = clone $start;
+  $current->modify('-1 day');
+
+  $festivosStmt = null;
+  try {
+    $festivosStmt = $pdo->prepare('SELECT 1 FROM festivos WHERE fecha = :fecha LIMIT 1');
+  } catch (Throwable $e) {
+    $festivosStmt = null;
+  }
+
+  for ($attempt = 0; $attempt < 370; $attempt++) {
+    $weekday = (int) $current->format('N');
+    if ($weekday >= 6) {
+      $current->modify('-1 day');
+      continue;
+    }
+
+    $isHoliday = false;
+    if ($festivosStmt !== null) {
+      try {
+        $festivosStmt->execute(['fecha' => $current->format('Y-m-d')]);
+        $isHoliday = (bool) $festivosStmt->fetchColumn();
+      } catch (Throwable $e) {
+        $isHoliday = false;
+      }
+    }
+
+    if (!$isHoliday) {
+      return $current->format('Y-m-d');
+    }
+
+    $current->modify('-1 day');
+  }
+
+  return null;
+}
+
 function format_bool_value($value, string $fallback = 'No disponible'): string {
   if ($value === null || $value === '') {
     return $fallback;
@@ -224,7 +271,7 @@ function set_checkbox_state(DOMElement $checkbox, bool $checked): void {
   }
 
   $checkbox->setAttribute('class', implode(' ', array_unique($classes)));
-  $checkbox->textContent = $checked ? 'X' : "\u{00A0}";
+  $checkbox->textContent = "\u{00A0}";
 }
 
 function xpath_literal(string $value): string {
@@ -503,7 +550,7 @@ function blank_if_unavailable(string $value): string {
   return $value === 'No disponible' ? '' : $value;
 }
 
-function build_plan_formacion_html(array $practice, array $scheduleByDay, array $planRows): string {
+function build_plan_formacion_html(array $practice, array $scheduleByDay, array $planRows, PDO $pdo): string {
   $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
   if (!is_file($templatePath)) {
     throw new RuntimeException('No se encuentra la plantilla docs/practicas_plan_formacion.html.');
@@ -527,24 +574,13 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $companyName = v($practice['empresa_nombre'] ?? null);
   $companyCif = v($practice['empresa_cif'] ?? null);
   $companyTutor = blank_if_unavailable(full_name($practice, 'tutor'));
-  $courseName = v($practice['curso_escolar'] ?? null);
+  $courseName = format_academic_year_from_date(date('Y-m-d'));
   if ($courseName === '') {
-    $courseName = format_academic_year_from_date((string) ($practice['fecha_inicio'] ?? ''));
+    $courseName = v($practice['curso_escolar'] ?? null);
   }
 
-  $creationDateRaw = '';
-  foreach (['fecha_creacion', 'created_at', 'fecha_alta', 'fecha_registro'] as $candidateField) {
-    $candidateValue = v($practice[$candidateField] ?? null);
-    if ($candidateValue !== '') {
-      $creationDateRaw = $candidateValue;
-      break;
-    }
-  }
-
-  $creationDate = '';
-  if ($creationDateRaw !== '') {
-    $creationDate = format_date(substr($creationDateRaw, 0, 10), '');
-  }
+  $previousSchoolDay = get_previous_school_day((string) ($practice['fecha_inicio'] ?? ''), $pdo);
+  $creationDate = $previousSchoolDay !== null ? format_date($previousSchoolDay, '') : '';
 
   if ($creationDate === '') {
     $creationDate = date('d/m/Y');
@@ -1296,7 +1332,7 @@ $mpdf->WriteHTML($html, \Mpdf\HTMLParserMode::HTML_BODY);
 
         try {
           $plan_rows = fetch_plan_formacion_rows($pdo, $practice);
-          $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows);
+          $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows, $pdo);
           $plan_html_path = $planDirectory . '/' . pathinfo($plan_file_name, PATHINFO_FILENAME) . '.html';
           if (file_put_contents($plan_html_path, $pdfHtml) === false) {
             throw new RuntimeException('No se pudo guardar el HTML generado del plan de formación.');
