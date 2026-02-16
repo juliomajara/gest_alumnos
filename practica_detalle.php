@@ -1277,7 +1277,7 @@ $css_reparacion = '
 
 // 2. Inyectamos los estilos JUSTO antes del contenido HTML
 $mpdf->WriteHTML($css_reparacion, \Mpdf\HTMLParserMode::HEADER_CSS);
-$mpdf->WriteHTML($html, \Mpdf\HTMLParserMode::HTML_BODY);
+$mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
             $mpdf->Output($calendar_file_path, \Mpdf\Output\Destination::FILE);
             $calendar_status = 'Calendario generado correctamente.';
           } catch (Throwable $pdfError) {
