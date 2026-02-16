@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 10pt;
+            font-size: 12px;
             margin: 20px;
         }
         table {
@@ -84,9 +84,9 @@
 <!-- Page 1 -->
 <table>
     <tr>
-        <td colspan="2" class="header">
-            Anexo<br>
-            Plan de formaci&oacute;n en empresa u organismo equiparado
+        <td colspan="2" class="header" style="font-size: 12pt">
+            ANEXO<br>
+            PLAN DE FORMACI&Oacute;N EN EMPRESA U ORGANISMO EQUIPARADO
         </td>
     </tr>
 </table>
@@ -97,7 +97,7 @@
         <td rowspan="3" style="border-right:0 !important;">
             <img src="bandera_CM.png" style="width: 100px;">
         </td>
-        <td class="title-cell" style="border-left:0 !important;">
+        <td class="title-cell" style="border-left:0 !important; font-size: 9pt">
             <strong>PLAN DE FORMACI&Oacute;N</strong><br>
             Resultados de aprendizaje en periodos de formaci&oacute;n en empresa u organismo equiparado<br>
             R&eacute;gimen: <span>General</span><br>
@@ -165,11 +165,14 @@
             S&Iacute; <span class="checkbox">&nbsp;</span> &nbsp;&nbsp; NO <span class="checkbox checked checkbox-filled">&nbsp;</span>
         </td>
     </tr>
-    <tr class="no-bottom-border">
-        <td>&#9642; En caso afirmativo, especificar medidas/adaptaciones:</td>
-    </tr>
+
+    <!-- CAMBIO mPDF-safe: quitar borde inferior de ESTA fila -->
     <tr>
-        <td style="height: 30px;"></td>
+        <td style="border-bottom:0 !important;">&#9642; En caso afirmativo, especificar medidas/adaptaciones:</td>
+    </tr>
+    <!-- CAMBIO mPDF-safe: quitar borde superior de LA SIGUIENTE fila -->
+    <tr>
+        <td style="height: 30px; border-top:0 !important;"></td>
     </tr>
 </table>
 
@@ -179,11 +182,14 @@
             S&Iacute; <span class="checkbox">&nbsp;</span> &nbsp;&nbsp; NO <span class="checkbox checked checkbox-filled">&nbsp;</span>
         </td>
     </tr>
-    <tr class="no-bottom-border">
-        <td>&#9642; Indicar causa/s:</td>
-    </tr>
+
+    <!-- CAMBIO mPDF-safe: quitar borde inferior de ESTA fila -->
     <tr>
-        <td style="height: 30px;"></td>
+        <td style="border-bottom:0 !important;">&#9642; Indicar causa/s:</td>
+    </tr>
+    <!-- CAMBIO mPDF-safe: quitar borde superior de LA SIGUIENTE fila -->
+    <tr>
+        <td style="height: 30px; border-top:0 !important;"></td>
     </tr>
 </table>
 
@@ -235,11 +241,11 @@
 <!-- Page 2 -->
 <table>
     <tr>
-        <td style="width: 35%; text-align: center;"><strong>M&oacute;dulo profesional<br>(Denominaci&oacute;n)</strong></td>
+        <td style="width: 47.5%; text-align: center;"><strong>M&oacute;dulo profesional (Denominaci&oacute;n)</strong></td>
         <td style="width: 15%; text-align: center;"><strong>C&oacute;digo</strong></td>
-        <td style="width: 15%; text-align: center;"><strong>Resultados de<br>Aprendizaje<br>(*)</strong></td>
-        <td style="width: 17.5%; text-align: center;"><strong>Impartido<br>&iacute;ntegramente<br>en la empresa<br>(marcar con una x)</strong></td>
-        <td style="width: 17.5%; text-align: center;"><strong>Impartici&oacute;n<br>compartida con<br>el centro<br>docente<br>(marcar con una x)</strong></td>
+        <td style="width: 12.5%; text-align: center;"><strong>Resultados de Aprendizaje (*)</strong></td>
+        <td style="width: 12.5%; text-align: center;"><strong>Impartido &iacute;ntegramente en la empresa</strong></td>
+        <td style="width: 12.5%; text-align: center;"><strong>Impartici&oacute;n compartida con el centro docente</strong></td>
     </tr>
     <tr>
         <td><span>Sistemas operativos en red</span></td>
@@ -248,7 +254,92 @@
         <td style="text-align: center;"><span></span></td>
         <td style="text-align: center;"><span>X</span></td>
     </tr>
-    <!-- ... resto igual ... -->
+    <tr>
+        <td><span>Sistemas operativos en red</span></td>
+        <td style="text-align: center;"><span>0224</span></td>
+        <td style="text-align: center;"><span>RA 2</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Sistemas operativos en red</span></td>
+        <td style="text-align: center;"><span>0224</span></td>
+        <td style="text-align: center;"><span>RA 3</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Sistemas operativos en red</span></td>
+        <td style="text-align: center;"><span>0224</span></td>
+        <td style="text-align: center;"><span>RA 4</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Sistemas operativos en red</span></td>
+        <td style="text-align: center;"><span>0224</span></td>
+        <td style="text-align: center;"><span>RA 6</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Seguridad inform&aacute;tica</span></td>
+        <td style="text-align: center;"><span>0226</span></td>
+        <td style="text-align: center;"><span>RA 1</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Seguridad inform&aacute;tica</span></td>
+        <td style="text-align: center;"><span>0226</span></td>
+        <td style="text-align: center;"><span>RA 2</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Seguridad inform&aacute;tica</span></td>
+        <td style="text-align: center;"><span>0226</span></td>
+        <td style="text-align: center;"><span>RA 3</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Seguridad inform&aacute;tica</span></td>
+        <td style="text-align: center;"><span>0226</span></td>
+        <td style="text-align: center;"><span>RA 4</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Servicios en red</span></td>
+        <td style="text-align: center;"><span>0227</span></td>
+        <td style="text-align: center;"><span>RA 6</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Aplicaciones web</span></td>
+        <td style="text-align: center;"><span>0228</span></td>
+        <td style="text-align: center;"><span>RA 4</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Digitalizaci&oacute;n aplicada a los sectores productivos (GM)</span></td>
+        <td style="text-align: center;"><span>1664</span></td>
+        <td style="text-align: center;"><span>RA 1</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    <tr>
+        <td><span>Sostenibilidad aplicada al sistema productivo</span></td>
+        <td style="text-align: center;"><span>1708</span></td>
+        <td style="text-align: center;"><span>RA 6</span></td>
+        <td style="text-align: center;"><span></span></td>
+        <td style="text-align: center;"><span>X</span></td>
+    </tr>
+    
+    
 </table>
 
 <p class="small-text">(*) Indicar el n&uacute;mero que corresponde al resultado de aprendizaje seg&uacute;n lo establecido en el real decreto que establece el t&iacute;tulo correspondiente.</p>

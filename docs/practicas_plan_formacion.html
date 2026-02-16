@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 10pt;
+            font-size: 12px;
             margin: 20px;
         }
         table {
@@ -76,6 +76,12 @@
             border-top: 0 !important;
         }
         .no-collapse { border-collapse: separate !important; border-spacing: 0 !important; }
+        .table-header td{
+            vertical-align: middle;
+            text-align: center;
+            padding-top: 8px;
+            padding-bottom: 8px;
+        }
 
     </style>
 </head>
@@ -84,9 +90,9 @@
 <!-- Page 1 -->
 <table>
     <tr>
-        <td colspan="2" class="header">
-            Anexo<br>
-            Plan de formación en empresa u organismo equiparado
+        <td colspan="2" class="header" style="font-size: 12pt">
+            ANEXO<br>
+            PLAN DE FORMACIÓN EN EMPRESA U ORGANISMO EQUIPARADO
         </td>
     </tr>
 </table>
@@ -97,7 +103,7 @@
         <td rowspan="3" style="border-right:0 !important;">
             <img src="bandera_CM.png" style="width: 100px;">
         </td>
-        <td class="title-cell" style="border-left:0 !important;">
+        <td class="title-cell" style="border-left:0 !important; font-size: 9pt">
             <strong>PLAN DE FORMACIÓN</strong><br>
             Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado<br>
             Régimen: <span>General</span><br>
@@ -240,12 +246,12 @@
 
 <!-- Page 2 -->
 <table>
-    <tr>
-        <td style="width: 35%; text-align: center;"><strong>Módulo profesional<br>(Denominación)</strong></td>
+    <tr class="table-header">
+        <td style="width: 47.5%; text-align: center;"><strong>Módulo profesional (Denominación)</strong></td>
         <td style="width: 15%; text-align: center;"><strong>Código</strong></td>
-        <td style="width: 15%; text-align: center;"><strong>Resultados de<br>Aprendizaje<br>(*)</strong></td>
-        <td style="width: 17.5%; text-align: center;"><strong>Impartido<br>íntegramente<br>en la empresa<br>(marcar con una x)</strong></td>
-        <td style="width: 17.5%; text-align: center;"><strong>Impartición<br>compartida con<br>el centro<br>docente<br>(marcar con una x)</strong></td>
+        <td style="width: 12.5%; text-align: center;"><strong>Resultados de Aprendizaje (*)</strong></td>
+        <td style="width: 12.5%; text-align: center;"><strong>Impartido íntegramente en la empresa</strong></td>
+        <td style="width: 12.5%; text-align: center;"><strong>Impartición compartida con el centro docente</strong></td>
     </tr>
     <tr>
         <td><span>modulo1</span></td>
