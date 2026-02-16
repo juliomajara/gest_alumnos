@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 15-02-2026 a las 19:50:09
+-- Tiempo de generación: 16-02-2026 a las 13:57:38
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -102,7 +102,7 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (41, '10256695', '55004421J', '281677982021', 'Santamera', 'Gallego', 'Marcos', '2008-06-09', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'joseluissantamera@gmail.com', NULL, NULL, 'piluchigallego@gmail.com', NULL, 0, NULL, 0, NULL),
 (42, '10602065', '02783538D', '281632217017', 'Serrano', 'Domínguez', 'Alejandro', '2006-05-25', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'lolidomna@gmail.com', NULL, NULL, 'serrano.ema@gmail.com', NULL, 0, NULL, 0, NULL),
 (43, '5136117', '55006498C', '281581105996', 'Tello', 'Horcajo', 'Sergio', '2007-05-20', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'dtellosanchez@yahoo.com', NULL, NULL, 'rosahorcajo@yahoo.es', NULL, 0, NULL, 0, NULL),
-(44, '12003501', '07137486B', '281524199433', 'Torre', 'Sánchez', 'Adrián de la', '2008-09-26', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'm.carmensanchez.s@hotmail.es', NULL, NULL, 'franciscotorrecasado@hotmail.es', NULL, 0, NULL, 0, NULL),
+(44, '12003501', '07137486B', '281524199433', 'Torre', 'Sánchez', 'Adrián de la', '2008-09-26', 130, 28, NULL, NULL, 0, NULL, NULL, 'm.carmensanchez.s@hotmail.es', NULL, NULL, 'franciscotorrecasado@hotmail.es', NULL, 0, NULL, 0, NULL),
 (45, '5630950', '53720005D', '281439037372', 'Tul', 'Tabango', 'Anderson Joel', '2004-10-21', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'germaniatabango@gmail.com', NULL, 0, NULL, 0, NULL),
 (46, '10408261', '02560357C', '281618790395', 'Vega', 'Sánchez', 'Adrián', '2006-01-24', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'rvhrvhrvh@gmail.com', NULL, NULL, 'monicascla@gmail.com', NULL, 0, NULL, 0, NULL),
 (47, '9495357', '55139932P', '281572846650', 'Velázquez', 'Orgaz', 'Francisco', '2005-08-04', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'velazquezdavid11@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
@@ -864,7 +864,11 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (131, 'alumno', 132, 'sarasegovia2003@gmail.com', 'Personal'),
 (132, 'alumno', 133, 'carlosutreroduran@gmail.com', 'Personal'),
 (133, 'alumno', 134, 'yaizav210907@gmail.com', 'Personal'),
-(134, 'alumno', 135, 'zhoujj.081@gmail.com', 'Personal');
+(134, 'alumno', 135, 'zhoujj.081@gmail.com', 'Personal'),
+(135, 'empresa', 1, 'asdfasdf@asdf.com', 'Trabajo'),
+(136, 'empresa_tutor', 2, 'qweqwer@qwerqwr.com', 'Trabajo'),
+(137, 'alumno', 44, 'asdf@educa.madrid.org', 'EducaMadrid'),
+(138, 'profesor', 1, 'julio.sanchezfernandez@educa.madrid.org', 'EducaMadrid');
 
 -- --------------------------------------------------------
 
@@ -1487,7 +1491,7 @@ CREATE TABLE `direcciones` (
 --
 
 INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provincia`, `id_localidad`, `id_via`, `nombre_via`, `numero`, `bloque`, `escalera`, `planta`, `puerta`, `otros`, `etiqueta`, `cp`, `principal`) VALUES
-(1, 1, 1, 28, 1, 10, 'Marqués de Mondéjar', '33', NULL, NULL, NULL, NULL, NULL, 'Principal', '28905', 1);
+(2, 1, 1, 28, 1, 10, 'Marqués de Mondéjar', '33', NULL, NULL, NULL, NULL, NULL, 'Principal', '28905', 1);
 
 -- --------------------------------------------------------
 
@@ -1510,7 +1514,7 @@ CREATE TABLE `empresas` (
 --
 
 INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `convenio`, `notas`) VALUES
-(1, NULL, 'Elecnor', NULL, NULL, 916, NULL);
+(1, 'A79486833', 'Elecnor', NULL, NULL, 916, NULL);
 
 -- --------------------------------------------------------
 
@@ -1549,7 +1553,7 @@ CREATE TABLE `empresas_tutores` (
 --
 
 INSERT INTO `empresas_tutores` (`id_empresas_tutor`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `dni`, `comentarios`) VALUES
-(1, 1, 'Zubia', NULL, 'Gonzalo Miguel', '16076514C', NULL);
+(2, 1, 'Zubia', NULL, 'Gonzalo Miguel', '16076514C', NULL);
 
 -- --------------------------------------------------------
 
@@ -1599,11 +1603,11 @@ CREATE TABLE `grupos_tutores` (
 --
 
 INSERT INTO `grupos_tutores` (`id_grupo_tutor`, `id_grupo`, `id_profesor`, `id_curso_escolar`) VALUES
-(1, 4, 1, 1),
 (2, 3, 2, 1),
 (3, 5, 10, 1),
 (4, 7, 11, 1),
-(5, 9, 12, 1);
+(5, 9, 12, 1),
+(6, 4, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -1782,14 +1786,14 @@ INSERT INTO `modulos_profesores` (`id_modulo_profesor`, `id_modulo`, `id_profeso
 (2, 11, 7, 1),
 (3, 15, 8, 1),
 (4, 16, 9, 1),
-(5, 9, 1, 1),
 (6, 8, 2, 1),
 (7, 12, 4, 1),
 (8, 13, 5, 1),
 (9, 10, 6, 1),
-(10, 22, 1, 1),
-(11, 64, 1, 1),
-(12, 61, 1, 1);
+(13, 22, 1, 1),
+(14, 61, 1, 1),
+(15, 64, 1, 1),
+(16, 9, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -1977,7 +1981,8 @@ CREATE TABLE `practicas` (
 --
 
 INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `fecha_fin_real`, `horas`, `circ_excep`, `observaciones`) VALUES
-(1, 35, 1, 1, 1, 146, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL);
+(2, 44, 1, 2, 2, 136, 1, '2026-02-23', '2026-05-08', 1, '2026-05-11', 370, 0, NULL),
+(3, 17, 1, 2, 2, 200, 1, '2026-02-23', '2026-11-24', 0, '2026-11-24', 500, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2070,11 +2075,18 @@ CREATE TABLE `practicas_horario` (
 --
 
 INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_semana`, `hora_entrada`, `hora_salida`) VALUES
-(1, 1, 1, '08:00:00', '16:00:00'),
-(2, 1, 2, '08:00:00', '16:00:00'),
-(3, 1, 3, '08:00:00', '16:00:00'),
-(4, 1, 4, '08:00:00', '16:00:00'),
-(5, 1, 5, '08:00:00', '16:00:00');
+(6, 2, 1, '08:00:00', '14:00:00'),
+(7, 2, 1, '15:00:00', '17:00:00'),
+(8, 2, 2, '08:00:00', '14:00:00'),
+(9, 2, 2, '15:00:00', '17:00:00'),
+(10, 2, 3, '08:00:00', '14:00:00'),
+(11, 2, 3, '15:00:00', '17:00:00'),
+(12, 2, 4, '08:00:00', '14:00:00'),
+(13, 2, 4, '15:00:00', '17:00:00'),
+(14, 2, 5, '08:00:00', '14:00:00'),
+(15, 2, 5, '15:00:00', '17:00:00'),
+(16, 3, 1, '08:00:00', '15:00:00'),
+(17, 3, 2, '08:00:00', '15:00:00');
 
 -- --------------------------------------------------------
 
@@ -2469,7 +2481,10 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (131, 'alumno', 132, '655437783', 'Personal'),
 (132, 'alumno', 133, '630416206', 'Personal'),
 (133, 'alumno', 134, '647727693', 'Personal'),
-(134, 'alumno', 135, '624890110', 'Personal');
+(134, 'alumno', 135, '624890110', 'Personal'),
+(135, 'empresa', 1, '654654654', 'Trabajo'),
+(136, 'empresa_tutor', 2, '654654654', 'Trabajo'),
+(137, 'profesor', 1, '649496323', 'Personal');
 
 -- --------------------------------------------------------
 
@@ -2846,7 +2861,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=135;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=139;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
@@ -2870,7 +2885,7 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
@@ -2888,7 +2903,7 @@ ALTER TABLE `empresas_contactos`
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
 --
 ALTER TABLE `empresas_tutores`
-  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `grupos`
@@ -2900,7 +2915,7 @@ ALTER TABLE `grupos`
 -- AUTO_INCREMENT de la tabla `grupos_tutores`
 --
 ALTER TABLE `grupos_tutores`
-  MODIFY `id_grupo_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_grupo_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `localidades`
@@ -2924,7 +2939,7 @@ ALTER TABLE `modulos`
 -- AUTO_INCREMENT de la tabla `modulos_profesores`
 --
 ALTER TABLE `modulos_profesores`
-  MODIFY `id_modulo_profesor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id_modulo_profesor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `niveles`
@@ -2948,7 +2963,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -2972,7 +2987,7 @@ ALTER TABLE `practicas_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
@@ -3008,7 +3023,7 @@ ALTER TABLE `resultados_aprendizaje`
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=135;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=138;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
