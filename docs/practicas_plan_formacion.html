@@ -43,15 +43,21 @@
             width: 40%;
         }
         .checkbox {
-            width: 15px;
+            width: 18px;
             height: 15px;
             border: 1px solid #000;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
             vertical-align: middle;
+            box-sizing: border-box;
+            font-weight: bold;
+            line-height: 1;
         }
-        .checkbox.checked::after {
-            content: '●';
+        .checkbox.checked::after,
+        .checkbox-filled::after {
+            content: 'X';
         }
         .field-row td {
             padding: 8px 5px;
