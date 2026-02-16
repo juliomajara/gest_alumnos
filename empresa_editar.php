@@ -185,6 +185,40 @@ function pick_best_lookup_match(string $needle, array $rows, string $nameKey): ?
   return $bestScore >= 45.0 ? $bestRow : null;
 }
 
+function build_save_error_message(Throwable $exception): string {
+  $details = [];
+
+  $message = trim($exception->getMessage());
+  if ($message !== '') {
+    $details[] = $message;
+  }
+
+  if ($exception instanceof PDOException) {
+    $errorInfo = $exception->errorInfo;
+    if (is_array($errorInfo)) {
+      $sqlState = isset($errorInfo[0]) ? trim((string) $errorInfo[0]) : '';
+      $driverCode = isset($errorInfo[1]) ? trim((string) $errorInfo[1]) : '';
+      $driverMessage = isset($errorInfo[2]) ? trim((string) $errorInfo[2]) : '';
+
+      if ($sqlState !== '') {
+        $details[] = 'SQLSTATE: ' . $sqlState;
+      }
+      if ($driverCode !== '') {
+        $details[] = 'Código PDO: ' . $driverCode;
+      }
+      if ($driverMessage !== '' && $driverMessage !== $message) {
+        $details[] = $driverMessage;
+      }
+    }
+  }
+
+  if (!$details) {
+    $details[] = 'Error interno sin detalle adicional.';
+  }
+
+  return 'No se pudo guardar la empresa. Motivo: ' . implode(' | ', $details);
+}
+
 if (isset($_GET['action'])) {
   header('Content-Type: application/json; charset=utf-8');
 
@@ -859,7 +893,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
       if ($pdo->inTransaction()) {
         $pdo->rollBack();
       }
-      $errors[] = 'No se pudo guardar la empresa. Revisa los datos e inténtalo de nuevo.';
+      $errors[] = build_save_error_message($exception);
     }
   }
 }
