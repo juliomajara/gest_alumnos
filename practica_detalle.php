@@ -260,18 +260,14 @@ function build_plan_pdf_filename(array $practice): string {
 
 function set_checkbox_state(DOMElement $checkbox, bool $checked): void {
   $classes = preg_split('/\s+/', trim($checkbox->getAttribute('class'))) ?: [];
-  $classes = array_values(array_filter($classes, static fn (string $class): bool => $class !== '' && $class !== 'checkbox-filled'));
-
-  if ($checked) {
-    $classes[] = 'checkbox-filled';
-  }
+  $classes = array_values(array_filter($classes, static fn (string $class): bool => $class !== ''));
 
   if (!in_array('checkbox', $classes, true)) {
     array_unshift($classes, 'checkbox');
   }
 
   $checkbox->setAttribute('class', implode(' ', array_unique($classes)));
-  $checkbox->textContent = "\u{00A0}";
+  $checkbox->textContent = $checked ? 'X' : "\u{00A0}";
 }
 
 function xpath_literal(string $value): string {
@@ -600,10 +596,15 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $causes = $circExcep === 1 ? build_extraordinary_authorization_causes($practice, $scheduleByDay) : [];
 
   $valuesByPlaceholder = [
+    'fecha de creación' => $creationDate,
     '02/03/2026' => $creationDate,
+    'curso escolar' => $courseName,
     '2025 - 2026' => $courseName,
+    'Nombre del ciclo formativo' => $cycleName,
     'Técnico Superior en Desarrollo de Aplicaciones Multiplataforma' => $cycleName,
+    'código del ciclo' => v($practice['ciclo_codigo'] ?? null),
     'IFCS03' => v($practice['ciclo_codigo'] ?? null),
+    'curso del alumno' => v($practice['curso_ordinal'] ?? null),
     '2º' => v($practice['curso_ordinal'] ?? null),
     'Nombre del Alumno' => $studentName,
     'correo del alumno' => v($practice['alumno_email'] ?? null),
