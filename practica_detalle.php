@@ -312,6 +312,18 @@ function set_span_by_text(DOMXPath $xpath, string $currentText, string $value): 
   }
 }
 
+function set_span_after_strong_label(DOMXPath $xpath, string $labelText, string $value): void {
+  $nodes = $xpath->query('//td[.//strong[contains(normalize-space(.), ' . xpath_literal($labelText) . ')]]//span[1]');
+  if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
+    return;
+  }
+
+  $node = $nodes->item(0);
+  if ($node instanceof DOMElement) {
+    $node->textContent = $value;
+  }
+}
+
 function remove_table_row_by_span_placeholder(DOMXPath $xpath, string $placeholder): void {
   $nodes = $xpath->query('//tr[.//span[normalize-space(text()) = ' . xpath_literal($placeholder) . ']]');
   if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
@@ -354,6 +366,8 @@ function set_checkbox_in_table_by_title(DOMXPath $xpath, string $title, int $ind
   if (!($checkbox instanceof DOMElement)) {
     return;
   }
+
+  set_checkbox_state($checkbox, $checked);
 
   $classes = preg_split('/\s+/', trim($checkbox->getAttribute('class'))) ?: [];
   $classes = array_values(array_filter($classes, static fn (string $class): bool => $class !== ''));
@@ -510,6 +524,10 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   foreach ($valuesByPlaceholder as $placeholder => $value) {
     set_span_by_text($xpath, $placeholder, $value);
   }
+
+  set_span_after_strong_label($xpath, 'Ciclo Formativo/Curso de especialización/ Programa de especialización:', $cycleName);
+  set_span_after_strong_label($xpath, 'Código:', v($practice['ciclo_codigo'] ?? null));
+  set_span_after_strong_label($xpath, 'Curso:', v($practice['curso_ordinal'] ?? null));
 
   $causasText = implode(' ', $causes);
   if ($causasText !== '') {
