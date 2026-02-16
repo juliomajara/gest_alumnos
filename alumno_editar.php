@@ -331,11 +331,10 @@ if (isset($_GET['action'])) {
         }
       }
 
-      $insert = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, cp) VALUES (:id_provincia, :nombre, :cp)');
+      $insert = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre) VALUES (:id_provincia, :nombre)');
       $insert->execute([
         'id_provincia' => $idProvincia,
         'nombre' => $nombreLocalidad,
-        'cp' => $cp !== '' ? $cp : null,
       ]);
 
       echo json_encode([
@@ -674,11 +673,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           }
 
           if (!isset($newAlumnoData['id_localidad']) || $newAlumnoData['id_localidad'] === null) {
-            $insertLocalidad = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, cp) VALUES (:id_provincia, :nombre, :cp)');
+            $insertLocalidad = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre) VALUES (:id_provincia, :nombre)');
             $insertLocalidad->execute([
               'id_provincia' => $idProvincia,
               'nombre' => $localidadNombre,
-              'cp' => normalize_text($newAlumnoData['cp'] ?? null),
             ]);
             $newAlumnoData['id_localidad'] = (int) $pdo->lastInsertId();
           }
