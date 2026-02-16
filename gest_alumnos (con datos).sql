@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-02-2026 a las 19:39:32
+-- Tiempo de generación: 16-02-2026 a las 22:48:44
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -59,7 +59,7 @@ CREATE TABLE `alumnos` (
 --
 
 INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apellido2`, `nombre`, `fecha_nacimiento`, `horas_ffe_aprobadas`, `id_provincia`, `id_localidad`, `cp`, `repite_curso`, `nombre_tutor1`, `telefono_tutor1`, `correo_tutor1`, `nombre_tutor2`, `telefono_tutor2`, `correo_tutor2`, `faltas_10_dia`, `faltas_10_cantidad`, `faltas_15_dia`, `faltas_15_cantidad`, `comentarios`) VALUES
-(1, '8858757', '47318106E', '281580268564', 'Blasco', 'Gata', 'Andrea', '2007-03-22', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'ablascoguijo@gmail.com', NULL, NULL, 'yolygata4@gmail.com', NULL, 0, NULL, 0, NULL),
+(1, '8858757', '47318106E', '281580268564', 'Blasco', 'Gata', 'Andrea', '2007-03-22', 130, 28, NULL, NULL, 0, NULL, NULL, 'ablascoguijo@gmail.com', NULL, NULL, 'yolygata4@gmail.com', NULL, 0, NULL, 0, NULL),
 (2, '10271520', '49589569M', '281576458080', 'Blázquez', 'Vargas', 'Gonzalo', '2006-04-05', 0, 28, NULL, NULL, 0, NULL, NULL, 'jesus.blazquez@siemens-healthineers.com', NULL, NULL, 'raquel@maderasvargas.es', NULL, 0, NULL, 0, NULL),
 (3, '13242046', '49157732Q', '281489274682', 'Bonet', 'Borrás', 'Aarón', '2008-11-16', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'susanaborras@hotmail.es', NULL, NULL, 'davidbherraez@gmail.com', NULL, 0, NULL, 0, NULL),
 (4, '48336796', 'Y6795560V', '281595440980', 'Borda', 'Sanchez', 'Joselyn Yalimet', '2001-08-16', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
@@ -69,13 +69,13 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (8, '21663413', 'Y6082370B', '281617949529', 'Cazún', 'Bonilla', 'Samuel Oswaldo', '2006-03-16', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'fredyos711@gmail.com', NULL, NULL, 'bliza806@gmail.com', NULL, 0, NULL, 0, NULL),
 (9, '9963382', '02592144K', '281504434368', 'Cortés', 'Gallego', 'Diego', '2008-05-11', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'jorgecortesnevado@gmail.com', NULL, NULL, 'gallegoevamaria@gmail.com', NULL, 0, NULL, 0, NULL),
 (10, '12240647', '49593929H', '281025571337', 'Díaz', 'García', 'Álvaro', '2007-07-14', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'phiolina@gmail.com', NULL, NULL, 'buyator@gmail.com', NULL, 0, NULL, 0, NULL),
-(11, '50762439', '04262785B', '281573953460', 'Escalada', 'Galán', 'Gabriel', '2005-11-13', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'alesba@yahoo.es', NULL, NULL, 'pigaruiz@gmail.com', NULL, 0, NULL, 0, NULL),
+(11, '50762439', '04262785B', '281573953460', 'Escalada', 'Galán', 'Gabriel', '2005-11-13', 60, 28, 1, '28903', 0, NULL, NULL, 'alesba@yahoo.es', NULL, NULL, 'pigaruiz@gmail.com', NULL, 0, NULL, 0, NULL),
 (12, '13498849', '54732340E', '281651658241', 'Gallardo', 'Pérez', 'Roberto', '2008-11-02', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'maygema@gmail.com', NULL, NULL, 'gemita.perez20@gmail.com', NULL, 0, NULL, 0, NULL),
 (13, '13482091', '03486572W', '281453285056', 'García', 'Bueno', 'Alejandro', '2008-04-26', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'juanfcogarcianavarro@gmail.com', NULL, NULL, 'gemabuenoverde162@gmail.com', NULL, 0, NULL, 0, NULL),
 (14, '10166048', '54287520E', NULL, 'García', 'Deacal', 'Mario', '2007-10-30', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'azudeacalpena@gmail.com', NULL, NULL, 'cgarciab@fernandezmolina.com', NULL, 0, NULL, 0, NULL),
 (15, '9991187', '54994483B', '281547505095', 'Garnacho', 'Linares', 'Roberto', '2006-11-15', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'rubengarnacho35@hotmail.es', NULL, NULL, 'b.linares.sanchez@gmail.com', NULL, 0, NULL, 0, NULL),
-(16, '10440964', '55127182T', '281614418628', 'Giraldo', 'Arias', 'Juan Pablo', '2006-01-14', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'fgiraldo45@gmail.com', NULL, NULL, 'yamile314@gmail.com', NULL, 0, NULL, 0, NULL),
-(17, '10615935', '48159046J', '281577759395', 'González', 'Alcocer', 'Rubén', '2006-07-18', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'josegarrillas@hotmail.com', NULL, NULL, 'kamialco@hotmail.com', NULL, 0, NULL, 0, NULL),
+(16, '10440964', '55127182T', '281614418628', 'Giraldo', 'Arias', 'Juan Pablo', '2006-01-14', 130, 28, NULL, NULL, 0, NULL, NULL, 'fgiraldo45@gmail.com', NULL, NULL, 'yamile314@gmail.com', NULL, 0, NULL, 0, NULL),
+(17, '10615935', '48159046J', '281577759395', 'González', 'Alcocer', 'Rubén', '2006-07-18', 130, 28, NULL, NULL, 0, NULL, NULL, 'josegarrillas@hotmail.com', NULL, NULL, 'kamialco@hotmail.com', NULL, 0, NULL, 0, NULL),
 (18, '10227398', '55581259B', '281617877686', 'González', 'Parrondo', 'Itzan', '2008-07-08', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'kik_mikr@hotmail.com', NULL, NULL, 'itzan878@gmail.com', NULL, 0, NULL, 0, NULL),
 (19, '9786011', '47318754A', '281578239042', 'Gutiérrez', 'Lucio', 'Jorge', '2006-08-24', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'guti10agv@hotmail.com', NULL, NULL, 'alsosanjo@hotmail.com', NULL, 0, NULL, 0, NULL),
 (20, '9854796', '49746404A', '281579749616', 'Hurtado', 'Paredes', 'Darío', '2006-12-09', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'thejahc@gmail.com', NULL, NULL, 'rparedessierra@gmail.com', NULL, 0, NULL, 0, NULL),
@@ -98,10 +98,10 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (37, '12197446', '54033379P', '281537763063', 'Ruiz', 'Blanca', 'Marcos', '2007-08-30', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'dimasruiz242@yahoo.es', NULL, NULL, 'oblancaplaza@yahoo.es', NULL, 0, NULL, 0, NULL),
 (38, '13762278', '48161087F', '281560350424', 'Sánchez', 'Martín', 'Diego', '2008-01-04', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'albertorepor@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (39, '9758179', '49150194E', '281576429889', 'Sánchez', 'Palomar', 'Míriam', '2006-03-31', 130, 28, 5, '28943', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
-(40, '9854901', '49591353H', '281632191048', 'Sánchez', 'Sánchez', 'Adrián', '2006-12-20', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'danisanguti@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
+(40, '9854901', '49591353H', '281632191048', 'Sánchez', 'Sánchez', 'Adrián', '2006-12-20', 130, 28, NULL, NULL, 0, NULL, NULL, 'danisanguti@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (41, '10256695', '55004421J', '281677982021', 'Santamera', 'Gallego', 'Marcos', '2008-06-09', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'joseluissantamera@gmail.com', NULL, NULL, 'piluchigallego@gmail.com', NULL, 0, NULL, 0, NULL),
-(42, '10602065', '02783538D', '281632217017', 'Serrano', 'Domínguez', 'Alejandro', '2006-05-25', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'lolidomna@gmail.com', NULL, NULL, 'serrano.ema@gmail.com', NULL, 0, NULL, 0, NULL),
-(43, '5136117', '55006498C', '281581105996', 'Tello', 'Horcajo', 'Sergio', '2007-05-20', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'dtellosanchez@yahoo.com', NULL, NULL, 'rosahorcajo@yahoo.es', NULL, 0, NULL, 0, NULL),
+(42, '10602065', '02783538D', '281632217017', 'Serrano', 'Domínguez', 'Alejandro', '2006-05-25', 130, 28, NULL, NULL, 0, NULL, NULL, 'lolidomna@gmail.com', NULL, NULL, 'serrano.ema@gmail.com', NULL, 0, NULL, 0, NULL),
+(43, '5136117', '55006498C', '281581105996', 'Tello', 'Horcajo', 'Sergio', '2007-05-20', 130, 28, NULL, NULL, 0, NULL, NULL, 'dtellosanchez@yahoo.com', NULL, NULL, 'rosahorcajo@yahoo.es', NULL, 0, NULL, 0, NULL),
 (44, '12003501', '07137486B', '281524199433', 'Torre', 'Sánchez', 'Adrián de la', '2008-09-26', 0, 28, 1, '28903', 0, NULL, NULL, 'm.carmensanchez.s@hotmail.es', NULL, NULL, 'franciscotorrecasado@hotmail.es', NULL, 0, NULL, 0, NULL),
 (45, '5630950', '53720005D', '281439037372', 'Tul', 'Tabango', 'Anderson Joel', '2004-10-21', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'germaniatabango@gmail.com', NULL, 0, NULL, 0, NULL),
 (46, '10408261', '02560357C', '281618790395', 'Vega', 'Sánchez', 'Adrián', '2006-01-24', 0, 28, NULL, NULL, 0, NULL, NULL, 'rvhrvhrvh@gmail.com', NULL, NULL, 'monicascla@gmail.com', NULL, 0, NULL, 0, NULL),
@@ -899,7 +899,33 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (169, 'alumno', 48, 'cz4601@educa.madrid.org', 'EducaMadrid'),
 (170, 'empresa', 10, 'lti@ltisistemas.net', 'Trabajo'),
 (171, 'empresa_contacto', 12, 'bdiaz@ltisistemas.net', 'Trabajo'),
-(172, 'empresa_tutor', 11, 'pdiaz@ltisistemas.net', 'Trabajo');
+(172, 'empresa_tutor', 11, 'pdiaz@ltisistemas.net', 'Trabajo'),
+(173, 'empresa_contacto', 13, 'andres.aranguren@idbmp.es', 'Trabajo'),
+(174, 'empresa_contacto', 14, 'franciscojavier.lopez@idbmp.es', 'Trabajo'),
+(175, 'empresa_tutor', 12, 'ricardo.blecua@idbmp.es', 'Trabajo'),
+(176, 'alumno', 11, 'geg055@educa.madrid.org', 'EducaMadrid'),
+(177, 'empresa', 12, 'info@institutoidem.es', 'Trabajo'),
+(178, 'empresa_contacto', 15, 'info@institutoidem.es', 'Trabajo'),
+(179, 'empresa_tutor', 13, 'info@institutoidem.es', 'Trabajo'),
+(180, 'empresa_contacto', 17, 'laura@magaversa.com', 'Trabajo'),
+(181, 'empresa_contacto', 18, 'hola@creativersion.com', 'Trabajo'),
+(182, 'empresa_tutor', 14, 'laura@magaversa.com', 'Trabajo'),
+(183, 'empresa', 14, 'ana@calicantoarq.com', 'Trabajo'),
+(184, 'empresa_contacto', 19, 'ana@calicantoarq.com', 'Trabajo'),
+(185, 'empresa_tutor', 15, 'ana@calicantoarq.com', 'Trabajo'),
+(186, 'empresa', 15, 'teresahh.psicologia@gmail.com', 'Trabajo'),
+(187, 'empresa_contacto', 20, 'teresahh.psicologia@gmail.com', 'Trabajo'),
+(188, 'empresa_tutor', 16, 'teresahh.psicologia@gmail.com', 'Trabajo'),
+(189, 'empresa', 16, 'info-com@info-computer.com', 'Trabajo'),
+(190, 'empresa_contacto', 21, 'ana.ramiro@info-computer.com', 'Trabajo'),
+(191, 'empresa_tutor', 17, 'ana.ramiro@info-computer.com', 'Trabajo'),
+(192, 'empresa_contacto', 22, 'nuria.meitin@clinica.urjc.es', 'Trabajo'),
+(193, 'empresa', 18, 'd.ruiz@grupoitsl.com', 'Trabajo'),
+(194, 'empresa_contacto', 23, 'd.ruiz@grupoitsl.com', 'Trabajo'),
+(195, 'empresa_tutor', 19, 'd.ruiz@grupoitsl.com', 'Trabajo'),
+(196, 'empresa', 19, 'juliangrande@infoneri.com', 'Trabajo'),
+(197, 'empresa_contacto', 24, 'juliangrande@infoneri.com', 'Trabajo'),
+(198, 'empresa_tutor', 20, 'juliangrande@infoneri.com', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -1534,7 +1560,16 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (11, 7, 1, 28, 4, 10, 'Maestro Alonso', '21-23', NULL, NULL, NULL, NULL, NULL, 'Centro de Trabajo', '28028', 0),
 (12, 8, 1, 45, NULL, 10, 'Bajada del Salvador', '5', NULL, NULL, NULL, NULL, NULL, 'Principal', '45223', 1),
 (13, 9, 1, 28, 4, 10, 'Valle de Tobalina', '42', NULL, NULL, NULL, NULL, 'Nave 11', 'Principal', '28021', 1),
-(14, 10, 1, 28, 4, 10, 'Resina', '13-15', NULL, NULL, NULL, NULL, 'Nave 2-14', 'Principal', '28021', 1);
+(14, 10, 1, 28, 4, 10, 'Resina', '13-15', NULL, NULL, NULL, NULL, 'Nave 2-14', 'Principal', '28021', 1),
+(15, 11, 1, 28, 4, 5, 'Daroca', '294', NULL, NULL, NULL, NULL, NULL, 'Principal', '28032', 1),
+(16, 12, 1, 28, 4, 10, 'Luna', '19', NULL, NULL, NULL, NULL, 'Local 2', 'Principal', '28004', 1),
+(17, 13, 1, 28, 4, 10, 'Amaltea', '1', NULL, 'F', '1', 'A', NULL, 'Principal', '28045', 1),
+(18, 14, 1, 28, 1, 10, 'Garcilaso', '14', NULL, NULL, '2', NULL, NULL, 'Principal', '28904', 1),
+(19, 15, 1, 28, NULL, 10, 'Capitan Angosto Gómez Castrillón', '18', NULL, NULL, 'Bajo', 'Derecha', NULL, 'Principal', '28300', 1),
+(20, 16, 1, 28, 4, 5, 'de los Rosales', '42', '3', NULL, NULL, NULL, 'Nave 210, 211, 212', 'Principal', '28021', 1),
+(21, 17, 1, 28, NULL, 5, 'Atenas', 's/n', NULL, NULL, NULL, NULL, 'Campus URJC Alcorcón - Edificio Clínica Universitaria - 2ª planta', 'Principal', '28922', 1),
+(22, 18, 1, 28, 1, 10, 'Progreso', '2', NULL, NULL, NULL, NULL, 'Oficina 214', 'Principal', '28906', 1),
+(23, 19, 1, 28, NULL, 10, 'Reyes Católicos', '5', NULL, NULL, '4', 'B', NULL, 'Principal', '28802', 1);
 
 -- --------------------------------------------------------
 
@@ -1566,7 +1601,16 @@ INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`,
 (7, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, 916, NULL),
 (8, '02767448L', 'César Martín', 'Lara', 'Bastidas', 917, NULL),
 (9, 'B81848749', 'Memory Sistemas Informáticos, S.L.', NULL, NULL, 433, NULL),
-(10, 'B80691694', 'Laboratorio Técnico Informático, S.L.', NULL, NULL, 1352, NULL);
+(10, 'B80691694', 'Laboratorio Técnico Informático, S.L.', NULL, NULL, 1352, NULL),
+(11, 'A87299848', 'Imprenta de Billetes, S. A.', NULL, NULL, 1351, NULL),
+(12, 'B85224376', 'Instituto de Diseño, Estilismo y Moda S.L.', NULL, NULL, 1560, NULL),
+(13, 'B13904214', 'Magaversa, S.L.', NULL, NULL, 1568, NULL),
+(14, '51069694B', 'Ana', 'Alfageme', 'Langdon', 1563, NULL),
+(15, '50474566P', 'Teresa', 'Hernando', 'Herrero', 1556, NULL),
+(16, 'B84425420', 'Ibérica Infocomputer, S.L.', NULL, NULL, 1325, NULL),
+(17, 'G87063285', 'Fundación Clínica Universitaria de la Universidad Rey Juan C', NULL, NULL, 900, NULL),
+(18, 'B87999504', 'Gruservit, Grupo de Servicios Informáticos y Tecnología S.L.', NULL, NULL, 960, NULL),
+(19, '52100377H', 'Julián', 'Grande', 'Santamaría', 1320, NULL);
 
 -- --------------------------------------------------------
 
@@ -1599,7 +1643,19 @@ INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido
 (9, 7, 'Calero', 'Romero', 'Alejandra Yamilex', NULL, NULL),
 (10, 8, 'Lara', 'Bastidas', 'César Martín', NULL, NULL),
 (11, 9, 'Navarro', 'Flor de Lis', 'Raúl', NULL, NULL),
-(12, 10, 'Díaz', 'Tena', 'Beatriz', NULL, NULL);
+(12, 10, 'Díaz', 'Tena', 'Beatriz', NULL, NULL),
+(13, 11, 'Aranguren', 'Jiménez', 'Andrés', NULL, NULL),
+(14, 11, 'López', 'Muñoz', 'Francisco Javier', NULL, NULL),
+(15, 12, 'Pérez', 'Lara', 'Erik', NULL, NULL),
+(16, 12, 'Díez', 'Merino', 'Ester', NULL, NULL),
+(17, 13, 'Gómez', 'Alique', 'Laura', NULL, NULL),
+(18, 13, 'Torrijos', 'Azores', 'Javier', NULL, NULL),
+(19, 14, 'Alfageme', 'Langdon', 'Ana', NULL, NULL),
+(20, 15, 'Hernando', 'Herrero', 'Teresa', NULL, NULL),
+(21, 16, 'Ramiro', NULL, 'Ana', NULL, NULL),
+(22, 17, 'Meitín', 'Quelle', 'Nuria', NULL, NULL),
+(23, 18, 'Ruiz', 'Mora', 'Daniel', NULL, NULL),
+(24, 19, 'Grande', 'Santamaría', 'Julián', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1631,7 +1687,16 @@ INSERT INTO `empresas_tutores` (`id_empresas_tutor`, `id_empresa`, `apellido1`, 
 (8, 7, 'Zubia', 'Saez', 'Gonzalo Miguel', '16076514C', NULL),
 (9, 8, 'Lara', 'Bastidas', 'César Martín', '02767448L', NULL),
 (10, 9, 'Navarro', 'Flor de Lis', 'Raúl', NULL, NULL),
-(11, 10, 'Díaz', 'Tena', 'Hipólito', '50108437Q', NULL);
+(11, 10, 'Díaz', 'Tena', 'Hipólito', '50108437Q', NULL),
+(12, 11, 'Blecua', 'Morales', 'Ricardo', '17729230W', NULL),
+(13, 12, 'Pérez', 'Lara', 'Erik', '72097911H', NULL),
+(14, 13, 'Gómez', 'Alique', 'Laura', '50740497J', NULL),
+(15, 14, 'Alfageme', 'Langdon', 'Ana', '51069694B', NULL),
+(16, 15, 'Hernando', 'Herrero', 'Teresa', '50474566P', NULL),
+(17, 16, 'Ramiro', NULL, 'Ana', '06255766L', NULL),
+(18, 17, 'Aguilar-Tablada', 'Masso', 'María Victoria', '43624572N', NULL),
+(19, 18, 'Ruiz', 'Mora', 'Daniel', '49007655Z', NULL),
+(20, 19, 'Grande', 'Santamaría', 'Julián', '52100377H', NULL);
 
 -- --------------------------------------------------------
 
@@ -2071,7 +2136,14 @@ INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion
 (8, 46, 8, 12, 9, 153, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, NULL),
 (9, 47, 9, 13, 10, 62, 1, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, NULL),
 (10, 48, 8, 12, 9, 63, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, NULL),
-(11, 2, 10, 14, 11, 93, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL);
+(11, 2, 10, 14, 11, 93, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
+(12, 11, 11, 15, 12, 94, 1, '2026-02-23', '2026-05-28', 1, '2026-05-29', 440, 0, NULL),
+(13, 42, 17, 21, 18, 21, 1, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, NULL),
+(14, 16, 8, 12, 9, 18, 1, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 1, NULL),
+(15, 17, 9, 13, 10, 26, 1, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, NULL),
+(16, 40, 16, 20, 17, 27, 1, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, NULL),
+(17, 43, 18, 22, 19, 17, 1, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 0, NULL),
+(18, 1, 19, 23, 20, 16, 1, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2250,7 +2322,47 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (84, 11, 4, '09:00:00', '14:00:00'),
 (85, 11, 4, '15:00:00', '18:00:00'),
 (86, 11, 5, '09:00:00', '14:00:00'),
-(87, 11, 5, '15:00:00', '18:00:00');
+(87, 11, 5, '15:00:00', '18:00:00'),
+(88, 12, 1, '08:00:00', '15:30:00'),
+(89, 12, 2, '08:00:00', '15:30:00'),
+(90, 12, 3, '08:00:00', '15:30:00'),
+(91, 12, 4, '08:00:00', '15:30:00'),
+(92, 12, 5, '08:00:00', '15:30:00'),
+(93, 13, 1, '08:30:00', '15:30:00'),
+(94, 13, 2, '08:30:00', '15:30:00'),
+(95, 13, 3, '08:30:00', '15:30:00'),
+(96, 13, 4, '08:30:00', '15:30:00'),
+(97, 13, 5, '08:30:00', '15:30:00'),
+(98, 14, 1, '09:30:00', '14:30:00'),
+(99, 14, 1, '16:30:00', '19:30:00'),
+(100, 14, 2, '09:30:00', '14:30:00'),
+(101, 14, 2, '16:30:00', '19:30:00'),
+(102, 14, 3, '09:30:00', '14:30:00'),
+(103, 14, 3, '16:30:00', '19:30:00'),
+(104, 14, 4, '09:30:00', '14:30:00'),
+(105, 14, 4, '16:30:00', '19:30:00'),
+(106, 14, 5, '09:30:00', '14:30:00'),
+(107, 14, 5, '16:30:00', '19:30:00'),
+(108, 15, 1, '08:00:00', '16:00:00'),
+(109, 15, 2, '08:00:00', '16:00:00'),
+(110, 15, 3, '08:00:00', '16:00:00'),
+(111, 15, 4, '08:00:00', '16:00:00'),
+(112, 15, 5, '08:00:00', '16:00:00'),
+(113, 16, 1, '08:00:00', '16:00:00'),
+(114, 16, 2, '08:00:00', '16:00:00'),
+(115, 16, 3, '08:00:00', '16:00:00'),
+(116, 16, 4, '08:00:00', '16:00:00'),
+(117, 16, 5, '08:00:00', '16:00:00'),
+(118, 17, 1, '07:00:00', '15:00:00'),
+(119, 17, 2, '07:00:00', '15:00:00'),
+(120, 17, 3, '07:00:00', '15:00:00'),
+(121, 17, 4, '07:00:00', '15:00:00'),
+(122, 17, 5, '07:00:00', '15:00:00'),
+(123, 18, 1, '08:00:00', '15:00:00'),
+(124, 18, 2, '08:00:00', '15:00:00'),
+(125, 18, 3, '08:00:00', '15:00:00'),
+(126, 18, 4, '08:00:00', '15:00:00'),
+(127, 18, 5, '08:00:00', '15:00:00');
 
 -- --------------------------------------------------------
 
@@ -2675,7 +2787,34 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (164, 'empresa_contacto', 11, '669703997', 'Trabajo'),
 (165, 'empresa', 10, '917230258', 'Trabajo'),
 (166, 'empresa', 10, '917230328', 'Trabajo'),
-(167, 'empresa_tutor', 11, '917230258', 'Trabajo');
+(167, 'empresa_tutor', 11, '917230258', 'Trabajo'),
+(168, 'empresa', 11, '915742200', 'Trabajo'),
+(169, 'empresa_contacto', 13, '918726421', 'Trabajo'),
+(170, 'empresa_tutor', 12, '919077000', 'Trabajo'),
+(171, 'empresa', 12, '646917725', 'Trabajo'),
+(172, 'empresa_contacto', 15, '646917725', 'Trabajo'),
+(173, 'empresa_contacto', 16, '655828542', 'Trabajo'),
+(174, 'empresa_tutor', 13, '646917725', 'Trabajo'),
+(175, 'empresa_contacto', 17, '687467235', 'Trabajo'),
+(176, 'empresa_contacto', 18, '609601322', 'Trabajo'),
+(177, 'empresa_tutor', 14, '687467235', 'Trabajo'),
+(178, 'empresa', 14, '669113805', 'Trabajo'),
+(179, 'empresa_contacto', 19, '669113805', 'Trabajo'),
+(180, 'empresa_tutor', 15, '669113805', 'Trabajo'),
+(181, 'empresa', 15, '653210444', 'Trabajo'),
+(182, 'empresa_contacto', 20, '653210444', 'Trabajo'),
+(183, 'empresa_tutor', 16, '653210444', 'Trabajo'),
+(184, 'empresa', 16, '910771230', 'Trabajo'),
+(185, 'empresa_contacto', 21, '910771230', 'Trabajo'),
+(186, 'empresa_tutor', 17, '910771230', 'Trabajo'),
+(187, 'empresa', 17, '914888664', 'Trabajo'),
+(188, 'empresa_contacto', 22, '914888664', 'Trabajo'),
+(189, 'empresa', 18, '917170012', 'Trabajo'),
+(190, 'empresa_contacto', 23, '620541219', 'Trabajo'),
+(191, 'empresa_tutor', 19, '620541219', 'Trabajo'),
+(192, 'empresa', 19, '607419044', 'Trabajo'),
+(193, 'empresa_contacto', 24, '607419044', 'Trabajo'),
+(194, 'empresa_tutor', 20, '607419044', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -3052,7 +3191,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=199;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
@@ -3076,25 +3215,25 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
 --
 ALTER TABLE `empresas`
-  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
 --
 ALTER TABLE `empresas_tutores`
-  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `grupos`
@@ -3154,7 +3293,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -3178,7 +3317,7 @@ ALTER TABLE `practicas_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
@@ -3214,7 +3353,7 @@ ALTER TABLE `resultados_aprendizaje`
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=195;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
