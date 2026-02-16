@@ -44,15 +44,17 @@
             width: 40%;
         }
         .checkbox {
-            width: 15px;
+            width: 18px;
+            min-width: 18px;
             height: 15px;
+            line-height: 15px;
             border: 1px solid #000;
             display: inline-block;
             text-align: center;
             vertical-align: middle;
-        }
-        .checkbox.checked::after {
-            content: '●';
+            font-weight: bold;
+            font-size: 11px;
+            box-sizing: border-box;
         }
         .field-row td {
             padding: 8px 5px;
