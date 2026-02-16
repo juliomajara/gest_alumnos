@@ -91,10 +91,13 @@
     </tr>
 </table>
 
+<!-- SOLO CAMBIO: inline border-right:0 y border-left:0 en los dos TD -->
 <table class="no-collapse">
     <tr>
-        <td rowspan="3" class="no-right-border"><img src="bandera_CM.png" style="width: 100px;"></td>
-        <td class="title-cell no-right-border" >
+        <td rowspan="3" style="border-right:0 !important;">
+            <img src="bandera_CM.png" style="width: 100px;">
+        </td>
+        <td class="title-cell" style="border-left:0 !important;">
             <strong>PLAN DE FORMACIÓN</strong><br>
             Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado<br>
             Régimen: <span>General</span><br>
@@ -144,7 +147,7 @@
     </tr>
     <tr style="border-bottom: 2px solid #000;">
         <td><strong>Correo electrónico:</strong> <span>correo de la empresa</span></td>
-        <td><strong>Teléfono:</strong> <span>Teléfono de la empresa</span></td>
+        <td><strong>Teléfono:</strong> <span>Teléfono del alumno</span></td>
     </tr>
 
     <tr>
@@ -162,11 +165,14 @@
             SÍ <span class="checkbox"></span> &nbsp;&nbsp; NO <span class="checkbox checked"></span>
         </td>
     </tr>
-    <tr class="no-bottom-border">
-        <td>▪ En caso afirmativo, especificar medidas/adaptaciones:</td>
-    </tr>
+
+    <!-- CAMBIO mPDF-safe: quitar borde inferior de ESTA fila -->
     <tr>
-        <td style="height: 30px;"></td>
+        <td style="border-bottom:0 !important;">▪ En caso afirmativo, especificar medidas/adaptaciones:</td>
+    </tr>
+    <!-- CAMBIO mPDF-safe: quitar borde superior de LA SIGUIENTE fila -->
+    <tr>
+        <td style="height: 30px; border-top:0 !important;"></td>
     </tr>
 </table>
 
@@ -176,11 +182,14 @@
             SÍ <span class="checkbox"></span> &nbsp;&nbsp; NO <span class="checkbox checked"></span>
         </td>
     </tr>
-    <tr class="no-bottom-border">
-        <td>▪ Indicar causa/s:</td>
-    </tr>
+
+    <!-- CAMBIO mPDF-safe: quitar borde inferior de ESTA fila -->
     <tr>
-        <td style="height: 30px;"></td>
+        <td style="border-bottom:0 !important;">▪ Indicar causa/s:</td>
+    </tr>
+    <!-- CAMBIO mPDF-safe: quitar borde superior de LA SIGUIENTE fila -->
+    <tr>
+        <td style="height: 30px; border-top:0 !important;"></td>
     </tr>
 </table>
 
@@ -342,20 +351,6 @@
         <td style="text-align: center;"><span>RA15</span></td>
         <td style="text-align: center;"><span>integro15</span></td>
         <td style="text-align: center;"><span>compartido15</span></td>
-    </tr>
-    <tr>
-        <td><span>modulo16</span></td>
-        <td style="text-align: center;"><span>codigo16</span></td>
-        <td style="text-align: center;"><span>RA16</span></td>
-        <td style="text-align: center;"><span>integro16</span></td>
-        <td style="text-align: center;"><span>compartido16</span></td>
-    </tr>
-    <tr>
-        <td><span>modulo17</span></td>
-        <td style="text-align: center;"><span>codigo17</span></td>
-        <td style="text-align: center;"><span>RA17</span></td>
-        <td style="text-align: center;"><span>integro17</span></td>
-        <td style="text-align: center;"><span>compartido17</span></td>
     </tr>
 </table>
 

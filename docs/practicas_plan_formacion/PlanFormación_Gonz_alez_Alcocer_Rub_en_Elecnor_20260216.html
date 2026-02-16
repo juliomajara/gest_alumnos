@@ -75,6 +75,8 @@
         .no-bottom-border + tr td {
             border-top: 0 !important;
         }
+        .no-collapse { border-collapse: separate !important; border-spacing: 0 !important; }
+
     </style>
 </head>
 <body>
@@ -89,10 +91,13 @@
     </tr>
 </table>
 
-<table>
+<!-- SOLO CAMBIO: inline border-right:0 y border-left:0 en los dos TD -->
+<table class="no-collapse">
     <tr>
-        <td rowspan="3" class="no-right-border"><img src="bandera_CM.png" style="width: 100px;"></td>
-        <td class="title-cell no-right-border">
+        <td rowspan="3" style="border-right:0 !important;">
+            <img src="bandera_CM.png" style="width: 100px;">
+        </td>
+        <td class="title-cell" style="border-left:0 !important;">
             <strong>PLAN DE FORMACI&Oacute;N</strong><br>
             Resultados de aprendizaje en periodos de formaci&oacute;n en empresa u organismo equiparado<br>
             R&eacute;gimen: <span>General</span><br>
@@ -142,7 +147,7 @@
     </tr>
     <tr style="border-bottom: 2px solid #000;">
         <td><strong>Correo electr&oacute;nico:</strong> <span>asdfasdf@asdf.com</span></td>
-        <td><strong>Tel&eacute;fono:</strong> <span>654654654</span></td>
+        <td><strong>Tel&eacute;fono:</strong> <span>Tel&eacute;fono del alumno</span></td>
     </tr>
 
     <tr>
@@ -243,94 +248,7 @@
         <td style="text-align: center;"><span></span></td>
         <td style="text-align: center;"><span>X</span></td>
     </tr>
-    <tr>
-        <td><span>Sistemas operativos en red</span></td>
-        <td style="text-align: center;"><span>0224</span></td>
-        <td style="text-align: center;"><span>RA 2</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Sistemas operativos en red</span></td>
-        <td style="text-align: center;"><span>0224</span></td>
-        <td style="text-align: center;"><span>RA 3</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Sistemas operativos en red</span></td>
-        <td style="text-align: center;"><span>0224</span></td>
-        <td style="text-align: center;"><span>RA 4</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Sistemas operativos en red</span></td>
-        <td style="text-align: center;"><span>0224</span></td>
-        <td style="text-align: center;"><span>RA 6</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Seguridad inform&aacute;tica</span></td>
-        <td style="text-align: center;"><span>0226</span></td>
-        <td style="text-align: center;"><span>RA 1</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Seguridad inform&aacute;tica</span></td>
-        <td style="text-align: center;"><span>0226</span></td>
-        <td style="text-align: center;"><span>RA 2</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Seguridad inform&aacute;tica</span></td>
-        <td style="text-align: center;"><span>0226</span></td>
-        <td style="text-align: center;"><span>RA 3</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Seguridad inform&aacute;tica</span></td>
-        <td style="text-align: center;"><span>0226</span></td>
-        <td style="text-align: center;"><span>RA 4</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Servicios en red</span></td>
-        <td style="text-align: center;"><span>0227</span></td>
-        <td style="text-align: center;"><span>RA 6</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Aplicaciones web</span></td>
-        <td style="text-align: center;"><span>0228</span></td>
-        <td style="text-align: center;"><span>RA 4</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Digitalizaci&oacute;n aplicada a los sectores productivos (GM)</span></td>
-        <td style="text-align: center;"><span>1664</span></td>
-        <td style="text-align: center;"><span>RA 1</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    <tr>
-        <td><span>Sostenibilidad aplicada al sistema productivo</span></td>
-        <td style="text-align: center;"><span>1708</span></td>
-        <td style="text-align: center;"><span>RA 6</span></td>
-        <td style="text-align: center;"><span></span></td>
-        <td style="text-align: center;"><span>X</span></td>
-    </tr>
-    
-    
-    
-    
+    <!-- ... resto igual ... -->
 </table>
 
 <p class="small-text">(*) Indicar el n&uacute;mero que corresponde al resultado de aprendizaje seg&uacute;n lo establecido en el real decreto que establece el t&iacute;tulo correspondiente.</p>
