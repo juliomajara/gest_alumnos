@@ -54,6 +54,23 @@ function format_time(?string $value, string $fallback = '—'): string {
   return $value;
 }
 
+function format_academic_year_from_date(?string $date): string {
+  if ($date === null || $date === '') {
+    return '';
+  }
+
+  $parsed = DateTime::createFromFormat('Y-m-d', $date);
+  if (!$parsed || $parsed->format('Y-m-d') !== $date) {
+    return '';
+  }
+
+  $year = (int) $parsed->format('Y');
+  $month = (int) $parsed->format('n');
+  $startYear = $month >= 9 ? $year : $year - 1;
+
+  return $startYear . ' - ' . ($startYear + 1);
+}
+
 function format_bool_value($value, string $fallback = 'No disponible'): string {
   if ($value === null || $value === '') {
     return $fallback;
@@ -207,7 +224,7 @@ function set_checkbox_state(DOMElement $checkbox, bool $checked): void {
   }
 
   $checkbox->setAttribute('class', implode(' ', array_unique($classes)));
-  $checkbox->textContent = $checked ? 'X' : '';
+  $checkbox->textContent = $checked ? 'X' : "\u{00A0}";
 }
 
 function xpath_literal(string $value): string {
@@ -356,6 +373,38 @@ function set_observaciones_text(DOMXPath $xpath, string $value): void {
   $node->textContent = $value;
 }
 
+
+function center_plan_marks(DOMXPath $xpath, int $rows = 17): void {
+  for ($index = 1; $index <= $rows; $index++) {
+    foreach (['integro', 'compartido'] as $prefix) {
+      $nodes = $xpath->query('//span[normalize-space(text()) = ' . xpath_literal($prefix . $index) . ']');
+      if (!($nodes instanceof DOMNodeList) || $nodes->length === 0) {
+        continue;
+      }
+
+      $span = $nodes->item(0);
+      if (!($span instanceof DOMElement)) {
+        continue;
+      }
+
+      $cell = $span->parentNode;
+      if (!($cell instanceof DOMElement)) {
+        continue;
+      }
+
+      $style = trim((string) $cell->getAttribute('style'));
+      if ($style !== '' && !str_ends_with($style, ';')) {
+        $style .= ';';
+      }
+
+      if (!str_contains($style, 'text-align: center')) {
+        $style .= ' text-align: center;';
+      }
+
+      $cell->setAttribute('style', trim($style));
+    }
+  }
+}
 function set_checkbox_in_table_by_title(DOMXPath $xpath, string $title, int $index, bool $checked): void {
   $nodes = $xpath->query('//table[.//strong[contains(normalize-space(.), ' . xpath_literal($title) . ')]]//span[contains(concat(" ", normalize-space(@class), " "), " checkbox ")]');
   if (!($nodes instanceof DOMNodeList) || $nodes->length <= $index) {
@@ -479,6 +528,27 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $companyCif = v($practice['empresa_cif'] ?? null);
   $companyTutor = blank_if_unavailable(full_name($practice, 'tutor'));
   $courseName = v($practice['curso_escolar'] ?? null);
+  if ($courseName === '') {
+    $courseName = format_academic_year_from_date((string) ($practice['fecha_inicio'] ?? ''));
+  }
+
+  $creationDateRaw = '';
+  foreach (['fecha_creacion', 'created_at', 'fecha_alta', 'fecha_registro'] as $candidateField) {
+    $candidateValue = v($practice[$candidateField] ?? null);
+    if ($candidateValue !== '') {
+      $creationDateRaw = $candidateValue;
+      break;
+    }
+  }
+
+  $creationDate = '';
+  if ($creationDateRaw !== '') {
+    $creationDate = format_date(substr($creationDateRaw, 0, 10), '');
+  }
+
+  if ($creationDate === '') {
+    $creationDate = date('d/m/Y');
+  }
   $cycleName = v($practice['ciclo_nombre'] ?? null);
 
   $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
@@ -494,7 +564,7 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   $causes = $circExcep === 1 ? build_extraordinary_authorization_causes($practice, $scheduleByDay) : [];
 
   $valuesByPlaceholder = [
-    '02/03/2026' => date('d/m/Y'),
+    '02/03/2026' => $creationDate,
     '2025 - 2026' => $courseName,
     'Técnico Superior en Desarrollo de Aplicaciones Multiplataforma' => $cycleName,
     'IFCS03' => v($practice['ciclo_codigo'] ?? null),
@@ -551,6 +621,8 @@ function build_plan_formacion_html(array $practice, array $scheduleByDay, array 
   set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 2, false);
   set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 3, false);
   set_checkbox_in_table_by_title($xpath, 'Intervalo de formación:', 4, false);
+
+  center_plan_marks($xpath);
 
   for ($index = 1; $index <= 17; $index++) {
     $row = $planRows[$index - 1] ?? [];
