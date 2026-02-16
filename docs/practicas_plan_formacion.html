@@ -18,7 +18,7 @@
         }
         td {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 3px 5px;
             vertical-align: top;
         }
         .header {
@@ -44,21 +44,15 @@
             width: 40%;
         }
         .checkbox {
-            width: 18px;
+            width: 15px;
             height: 15px;
             border: 1px solid #000;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-block;
             text-align: center;
             vertical-align: middle;
-            box-sizing: border-box;
-            font-weight: bold;
-            line-height: 1;
         }
-        .checkbox.checked::after,
-        .checkbox-filled::after {
-            content: 'X';
+        .checkbox.checked::after {
+            content: '●';
         }
         .field-row td {
             padding: 8px 5px;
@@ -68,15 +62,11 @@
         }
         .signature-cell {
             text-align: center;
-            padding: 30px 5px 5px 5px;
+            padding: 80px 5px 5px 5px;
         }
-        .no-right-border {
-            border-right: 0 !important;
-        }
+        .no-right-border { border-right: 0 !important; }
+        .no-left-border  { border-left:  0 !important; }
 
-        .no-right-border + td {
-            border-left: 0 !important;
-        }
         .no-bottom-border td {
             border-bottom: 0 !important;
         }
@@ -85,6 +75,8 @@
         .no-bottom-border + tr td {
             border-top: 0 !important;
         }
+        .no-collapse { border-collapse: separate !important; border-spacing: 0 !important; }
+
     </style>
 </head>
 <body>
@@ -99,14 +91,14 @@
     </tr>
 </table>
 
-<table>
+<table class="no-collapse">
     <tr>
         <td rowspan="3" class="no-right-border"><img src="bandera_CM.png" style="width: 100px;"></td>
-        <td class="title-cell">
+        <td class="title-cell no-right-border" >
             <strong>PLAN DE FORMACIÓN</strong><br>
             Resultados de aprendizaje en periodos de formación en empresa u organismo equiparado<br>
             Régimen: <span>General</span><br>
-            Fecha: <span>fecha de creación</span> / Curso <span>curso escolar</span>
+            Fecha: <span>fecha de creación</span> / Curso: <span>curso escolar</span>
         </td>
     </tr>
 </table>
@@ -250,120 +242,120 @@
         <td><span>modulo1</span></td>
         <td style="text-align: center;"><span>codigo1</span></td>
         <td style="text-align: center;"><span>RA1</span></td>
-        <td><span>integro1</span></td>
-        <td><span>compartido1</span></td>
+        <td style="text-align: center;"><span>integro1</span></td>
+        <td style="text-align: center;"><span>compartido1</span></td>
     </tr>
     <tr>
         <td><span>modulo2</span></td>
         <td style="text-align: center;"><span>codigo2</span></td>
         <td style="text-align: center;"><span>RA2</span></td>
-        <td><span>integro2</span></td>
-        <td><span>compartido2</span></td>
+        <td style="text-align: center;"><span>integro2</span></td>
+        <td style="text-align: center;"><span>compartido2</span></td>
     </tr>
     <tr>
         <td><span>modulo3</span></td>
         <td style="text-align: center;"><span>codigo3</span></td>
         <td style="text-align: center;"><span>RA3</span></td>
-        <td><span>integro3</span></td>
-        <td><span>compartido3</span></td>
+        <td style="text-align: center;"><span>integro3</span></td>
+        <td style="text-align: center;"><span>compartido3</span></td>
     </tr>
     <tr>
         <td><span>modulo4</span></td>
         <td style="text-align: center;"><span>codigo4</span></td>
         <td style="text-align: center;"><span>RA4</span></td>
-        <td><span>integro4</span></td>
-        <td><span>compartido4</span></td>
+        <td style="text-align: center;"><span>integro4</span></td>
+        <td style="text-align: center;"><span>compartido4</span></td>
     </tr>
     <tr>
         <td><span>modulo5</span></td>
         <td style="text-align: center;"><span>codigo5</span></td>
         <td style="text-align: center;"><span>RA5</span></td>
-        <td><span>integro5</span></td>
-        <td><span>compartido5</span></td>
+        <td style="text-align: center;"><span>integro5</span></td>
+        <td style="text-align: center;"><span>compartido5</span></td>
     </tr>
     <tr>
         <td><span>modulo6</span></td>
         <td style="text-align: center;"><span>codigo6</span></td>
         <td style="text-align: center;"><span>RA6</span></td>
-        <td><span>integro6</span></td>
-        <td><span>compartido6</span></td>
+        <td style="text-align: center;"><span>integro6</span></td>
+        <td style="text-align: center;"><span>compartido6</span></td>
     </tr>
     <tr>
         <td><span>modulo7</span></td>
         <td style="text-align: center;"><span>codigo7</span></td>
         <td style="text-align: center;"><span>RA7</span></td>
-        <td><span>integro7</span></td>
-        <td><span>compartido7</span></td>
+        <td style="text-align: center;"><span>integro7</span></td>
+        <td style="text-align: center;"><span>compartido7</span></td>
     </tr>
     <tr>
         <td><span>modulo8</span></td>
         <td style="text-align: center;"><span>codigo8</span></td>
         <td style="text-align: center;"><span>RA8</span></td>
-        <td><span>integro8</span></td>
-        <td><span>compartido8</span></td>
+        <td style="text-align: center;"><span>integro8</span></td>
+        <td style="text-align: center;"><span>compartido8</span></td>
     </tr>
     <tr>
         <td><span>modulo9</span></td>
         <td style="text-align: center;"><span>codigo9</span></td>
         <td style="text-align: center;"><span>RA9</span></td>
-        <td><span>integro9</span></td>
-        <td><span>compartido9</span></td>
+        <td style="text-align: center;"><span>integro9</span></td>
+        <td style="text-align: center;"><span>compartido9</span></td>
     </tr>
     <tr>
         <td><span>modulo10</span></td>
         <td style="text-align: center;"><span>codigo10</span></td>
         <td style="text-align: center;"><span>RA10</span></td>
-        <td><span>integro10</span></td>
-        <td><span>compartido10</span></td>
+        <td style="text-align: center;"><span>integro10</span></td>
+        <td style="text-align: center;"><span>compartido10</span></td>
     </tr>
     <tr>
         <td><span>modulo11</span></td>
         <td style="text-align: center;"><span>codigo11</span></td>
         <td style="text-align: center;"><span>RA11</span></td>
-        <td><span>integro11</span></td>
-        <td><span>compartido11</span></td>
+        <td style="text-align: center;"><span>integro11</span></td>
+        <td style="text-align: center;"><span>compartido11</span></td>
     </tr>
     <tr>
         <td><span>modulo12</span></td>
         <td style="text-align: center;"><span>codigo12</span></td>
         <td style="text-align: center;"><span>RA12</span></td>
-        <td><span>integro12</span></td>
-        <td><span>compartido12</span></td>
+        <td style="text-align: center;"><span>integro12</span></td>
+        <td style="text-align: center;"><span>compartido12</span></td>
     </tr>
     <tr>
         <td><span>modulo13</span></td>
         <td style="text-align: center;"><span>codigo13</span></td>
         <td style="text-align: center;"><span>RA13</span></td>
-        <td><span>integro13</span></td>
-        <td><span>compartido13</span></td>
+        <td style="text-align: center;"><span>integro13</span></td>
+        <td style="text-align: center;"><span>compartido13</span></td>
     </tr>
     <tr>
         <td><span>modulo14</span></td>
         <td style="text-align: center;"><span>codigo14</span></td>
         <td style="text-align: center;"><span>RA14</span></td>
-        <td><span>integro14</span></td>
-        <td><span>compartido14</span></td>
+        <td style="text-align: center;"><span>integro14</span></td>
+        <td style="text-align: center;"><span>compartido14</span></td>
     </tr>
     <tr>
         <td><span>modulo15</span></td>
         <td style="text-align: center;"><span>codigo15</span></td>
         <td style="text-align: center;"><span>RA15</span></td>
-        <td><span>integro15</span></td>
-        <td><span>compartido15</span></td>
+        <td style="text-align: center;"><span>integro15</span></td>
+        <td style="text-align: center;"><span>compartido15</span></td>
     </tr>
     <tr>
         <td><span>modulo16</span></td>
         <td style="text-align: center;"><span>codigo16</span></td>
         <td style="text-align: center;"><span>RA16</span></td>
-        <td><span>integro16</span></td>
-        <td><span>compartido16</span></td>
+        <td style="text-align: center;"><span>integro16</span></td>
+        <td style="text-align: center;"><span>compartido16</span></td>
     </tr>
     <tr>
         <td><span>modulo17</span></td>
         <td style="text-align: center;"><span>codigo17</span></td>
         <td style="text-align: center;"><span>RA17</span></td>
-        <td><span>integro17</span></td>
-        <td><span>compartido17</span></td>
+        <td style="text-align: center;"><span>integro17</span></td>
+        <td style="text-align: center;"><span>compartido17</span></td>
     </tr>
 </table>
 
@@ -384,7 +376,7 @@
             Fdo.: Tutor/a del centro docente
         </td>
         <td class="signature-cell" style="width: 33.33%;">
-            Fdo.: Tutor/a de la empresa u organismo equiparado
+            Fdo.: Tutor/a de la empresa
         </td>
         <td class="signature-cell" style="width: 33.33%;">
             Fdo.: Alumno/a

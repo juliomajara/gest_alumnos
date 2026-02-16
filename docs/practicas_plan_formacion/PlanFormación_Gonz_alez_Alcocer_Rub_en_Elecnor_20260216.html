@@ -18,7 +18,7 @@
         }
         td {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 3px 5px;
             vertical-align: top;
         }
         .header {
@@ -62,15 +62,11 @@
         }
         .signature-cell {
             text-align: center;
-            padding: 30px 5px 5px 5px;
+            padding: 80px 5px 5px 5px;
         }
-        .no-right-border {
-            border-right: 0 !important;
-        }
+        .no-right-border { border-right: 0 !important; }
+        .no-left-border  { border-left:  0 !important; }
 
-        .no-right-border + td {
-            border-left: 0 !important;
-        }
         .no-bottom-border td {
             border-bottom: 0 !important;
         }
@@ -96,11 +92,11 @@
 <table>
     <tr>
         <td rowspan="3" class="no-right-border"><img src="bandera_CM.png" style="width: 100px;"></td>
-        <td class="title-cell">
+        <td class="title-cell no-right-border">
             <strong>PLAN DE FORMACI&Oacute;N</strong><br>
             Resultados de aprendizaje en periodos de formaci&oacute;n en empresa u organismo equiparado<br>
             R&eacute;gimen: <span>General</span><br>
-            Fecha: <span>fecha de creaci&oacute;n</span> / Curso <span>curso escolar</span>
+            Fecha: <span>fecha de creaci&oacute;n</span> / Curso: <span>curso escolar</span>
         </td>
     </tr>
 </table>
@@ -161,7 +157,7 @@
 <table>
     <tr>
         <td><strong>Requiere medidas/adaptaciones extraordinarias por discapacidad:</strong> 
-            S&Iacute; <span class="checkbox">&nbsp;</span> &nbsp;&nbsp; NO <span class="checkbox checked checkbox-filled">X</span>
+            S&Iacute; <span class="checkbox">&nbsp;</span> &nbsp;&nbsp; NO <span class="checkbox checked checkbox-filled">&nbsp;</span>
         </td>
     </tr>
     <tr class="no-bottom-border">
@@ -175,7 +171,7 @@
 <table>
     <tr>
         <td><strong>Requiere autorizaci&oacute;n extraordinaria:</strong> 
-            S&Iacute; <span class="checkbox">&nbsp;</span> &nbsp;&nbsp; NO <span class="checkbox checked checkbox-filled">X</span>
+            S&Iacute; <span class="checkbox">&nbsp;</span> &nbsp;&nbsp; NO <span class="checkbox checked checkbox-filled">&nbsp;</span>
         </td>
     </tr>
     <tr class="no-bottom-border">
@@ -190,7 +186,7 @@
     <tr>
         <td>
             <strong>Intervalo de formaci&oacute;n:</strong> &nbsp;
-            Diario <span class="checkbox checked checkbox-filled">X</span> &nbsp;
+            Diario <span class="checkbox checked checkbox-filled">&nbsp;</span> &nbsp;
             Semanal <span class="checkbox">&nbsp;</span> &nbsp;
             Mensual <span class="checkbox">&nbsp;</span> &nbsp;
             Otros <span class="checkbox">&nbsp;</span> &nbsp;
@@ -213,11 +209,7 @@
         <td style="text-align: center;"><span>23/02/2026 - 24/11/2026</span></td>
         <td style="text-align: center;"><span>L: 08:00-15:00 / M: 08:00-15:00 / X: &mdash; / J: &mdash; / V: &mdash; / S: &mdash; / D: &mdash;</span></td>
     </tr>
-    <tr>
-        <td style="height: 25px;"></td>
-        <td></td>
-        <td></td>
-    </tr>
+
     <tr>
         <td colspan="2" style="text-align: right; padding-right: 20px;"><strong>Total horas:</strong></td>
         <td style="text-align: center;"><strong><span>500 horas</span></strong></td>
@@ -358,7 +350,7 @@
             Fdo.: Tutor/a del centro docente
         </td>
         <td class="signature-cell" style="width: 33.33%;">
-            Fdo.: Tutor/a de la empresa u organismo equiparado
+            Fdo.: Tutor/a de la empresa
         </td>
         <td class="signature-cell" style="width: 33.33%;">
             Fdo.: Alumno/a
