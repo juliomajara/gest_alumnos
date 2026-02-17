@@ -65,7 +65,8 @@ body {
 }
 
 .sidebar-logo-full {
-  width: min(132px, 100%);
+  width: auto;
+  height: 30px;
   max-width: 132px;
   max-height: 34px;
 }
@@ -132,12 +133,22 @@ body {
 
 .sidebar.collapsed .sidebar-header {
   width: 100%;
+  flex-direction: column;
   justify-content: center;
+  gap: 6px;
 }
 
 .sidebar.collapsed .sidebar-logo-link {
   flex: 0 0 auto;
   justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  order: 1;
+}
+
+.sidebar.collapsed .sidebar-logo-link {
+  order: 2;
 }
 
 .sidebar.collapsed .sidebar-logo-full {
