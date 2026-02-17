@@ -102,7 +102,7 @@ function render_student_rows(array $students): string
       <tr>
         <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
         <td>
-          <a href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">
+          <a class="practice-link" href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">
             <?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>
           </a>
         </td>
