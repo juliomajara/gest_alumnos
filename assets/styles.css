@@ -129,9 +129,11 @@ body {
 }
 
 .sidebar-scroll-top {
-  margin-top: auto;
-  position: sticky;
+  position: fixed;
+  left: 12px;
   bottom: 12px;
+  width: calc(190px - 24px);
+  z-index: 20;
   border: 1px solid var(--border);
   background: #f5f7ff;
   color: var(--muted);
@@ -155,6 +157,13 @@ body {
 
 .sidebar.collapsed .sidebar-scroll-top {
   display: none;
+}
+
+
+@media (max-width: 980px) {
+  .sidebar-scroll-top {
+    display: none;
+  }
 }
 
 .sidebar-float-tab {
