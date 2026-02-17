@@ -63,7 +63,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: 10px;
   box-shadow: 0 4px 12px rgba(22, 35, 63, 0.08);
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
@@ -269,7 +269,7 @@ body {
 .sidebar-footer {
   margin-top: auto;
   background: #f1f4ff;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -291,7 +291,7 @@ body {
   align-items: center;
   gap: 24px;
   background: var(--card);
-  border-radius: 14px;
+  border-radius: 10px;
   padding: 12px 16px;
   box-shadow: var(--shadow);
 }
@@ -307,7 +307,7 @@ body {
 .topbar-search input {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 10px;
   padding: 10px 14px 10px 40px;
   font-size: 0.9rem;
   background: #f9faff;
@@ -443,7 +443,7 @@ a.edit-toggle:active {
 
 .card {
   background: var(--card);
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 16px;
   box-shadow: var(--shadow);
   display: flex;
@@ -472,7 +472,7 @@ a.edit-toggle:active {
   color: #4965f0;
   font-size: 0.7rem;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: 10px;
   font-weight: 600;
 }
 
@@ -482,7 +482,7 @@ a.edit-toggle:active {
 
 .calendar-panel {
   background: var(--card);
-  border-radius: 18px;
+  border-radius: 10px;
   padding: 20px;
   box-shadow: var(--shadow);
   display: flex;
@@ -509,7 +509,7 @@ a.edit-toggle:active {
 }
 
 .month-card {
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   padding: 12px;
   background: #fdfdff;
@@ -539,7 +539,7 @@ a.edit-toggle:active {
 .day {
   height: 28px;
   width: 28px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #e8ecf7;
   display: grid;
   place-items: center;
@@ -585,7 +585,7 @@ a.edit-toggle:active {
   display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 10px;
   margin-right: 8px;
   vertical-align: middle;
 }
@@ -614,7 +614,7 @@ a.edit-toggle:active {
 
 .panel {
   background: var(--card);
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 18px;
   box-shadow: var(--shadow);
   display: flex;
@@ -642,7 +642,7 @@ a.edit-toggle:active {
 .help-tooltip-trigger {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: 10px;
   border: 1px solid var(--border);
   background: #f5f7ff;
   color: var(--muted);
@@ -672,7 +672,7 @@ a.edit-toggle:active {
   max-width: 320px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: var(--shadow);
   padding: 12px 14px;
   font-size: 0.8rem;
@@ -853,7 +853,7 @@ a.edit-toggle:active {
 
 .empresa-form .entity-nested-section {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 12px;
   background: #f9faff;
 }
@@ -998,7 +998,7 @@ a.edit-toggle:active {
 .entity-form select,
 .entity-form textarea {
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 10px;
   padding: 10px 14px;
   font-size: 0.9rem;
   color: var(--text);
@@ -1006,7 +1006,7 @@ a.edit-toggle:active {
 }
 
 .entity-form textarea {
-  border-radius: 12px;
+  border-radius: 10px;
   min-height: 110px;
 }
 
@@ -1020,7 +1020,7 @@ a.edit-toggle:active {
 .entity-repeatable-item {
   border: 1px solid var(--border);
   background: #f9faff;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1072,7 +1072,7 @@ a.edit-toggle:active {
   background: #e4f7ec;
   color: #2d8a57;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: 10px;
   font-weight: 600;
 }
 
@@ -1134,7 +1134,7 @@ a.edit-toggle:active {
 .legend-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border-radius: 10px;
   display: inline-block;
   background: #e5e9f5;
 }
@@ -1155,7 +1155,7 @@ a.edit-toggle:active {
 
 .calendar-month {
   background: var(--card);
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 14px;
   box-shadow: var(--shadow);
   display: flex;
@@ -1194,7 +1194,7 @@ a.edit-toggle:active {
 
 .calendar-day {
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   min-height: 30px;
   background: #fff;
   font-weight: 600;
@@ -1438,7 +1438,7 @@ a.edit-toggle:active {
 
 .practicas-ras details {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #f9faff;
 }
 
@@ -1550,7 +1550,7 @@ a.edit-toggle:active {
   margin: 10vh auto 0;
   width: min(640px, calc(100% - 32px));
   background: #fff;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
   padding: 18px;
@@ -1618,7 +1618,7 @@ a.edit-toggle:active {
   overflow: auto;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: var(--shadow);
   padding: 14px;
   display: flex;
