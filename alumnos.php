@@ -127,7 +127,6 @@ if (($_GET['ajax'] ?? '') === '1') {
 
 $page_title = 'Alumnos | Gestor de Alumnos';
 $active_page = 'alumnos';
-$use_alt_ui = (($_GET['ui'] ?? '') === 'alt');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -139,9 +138,6 @@ $use_alt_ui = (($_GET['ui'] ?? '') === 'alt');
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/styles.css">
-  <?php if ($use_alt_ui): ?>
-    <link rel="stylesheet" href="assets/styles_alt.css">
-  <?php endif; ?>
 </head>
 <body>
   <div class="page">
