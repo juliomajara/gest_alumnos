@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-02-2026 a las 22:48:44
+-- Tiempo de generación: 17-02-2026 a las 19:49:40
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -82,18 +82,18 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (21, '13694494', '49704977E', '281356573228', 'Ikubor', 'Aimienoho', 'Wisdom Osamwenuyi', '2008-11-06', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'linda.aimienoho@yahoo.com', NULL, NULL, 'kevinvincent10@yahoo.com', NULL, 0, NULL, 0, NULL),
 (22, '7626425', '55138304J', '281547259868', 'Jiménez', 'Ramiro', 'Roberto', '2006-10-23', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'narcisarg@gmail.com', NULL, 0, NULL, 0, NULL),
 (23, '12748235', '06625477M', '281631745252', 'López', 'López', 'José Ignacio', '2007-10-01', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'belencalzada8@gmail.com', NULL, NULL, 'ignaciolopez-999@outlook.es', NULL, 0, NULL, 0, NULL),
-(24, '9859524', '54299675X', '281543120901', 'Mangas', 'Martínez', 'Daniel', '2006-07-08', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, 0, NULL, 0, NULL),
+(24, '9859524', '54299675X', '281543120901', 'Mangas', 'Martínez', 'Daniel', '2006-07-08', 0, 28, NULL, NULL, 0, NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, 0, NULL, 0, NULL),
 (25, '12329830', '49589590A', '281079016519', 'Martín', 'León', 'Mario', '2008-03-13', 0, 28, NULL, NULL, 0, NULL, NULL, 'gmartin_sanchez@hotmail.com', NULL, NULL, 'mudita-rl@hotmail.com', NULL, 0, NULL, 0, NULL),
-(26, '13796525', 'Y1652928R', NULL, 'Mielnik', NULL, 'Bartosz', '2008-08-17', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'krisloro@interia.pl', NULL, NULL, 'dorciam9@interia.pl', NULL, 0, NULL, 0, NULL),
-(27, '11831358', '02745808E', '281501532957', 'Moncada', 'Bueno', 'Sebastián', '2007-11-09', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'moncadaosoriodidier@gmail.com', NULL, NULL, 'osoriojuly@hotmail.com', NULL, 0, NULL, 0, NULL),
+(26, '13796525', 'Y1652928R', NULL, 'Mielnik', NULL, 'Bartosz', '2008-08-17', 0, 28, NULL, NULL, 0, NULL, NULL, 'krisloro@interia.pl', NULL, NULL, 'dorciam9@interia.pl', NULL, 0, NULL, 0, NULL),
+(27, '11831358', '02745808E', '281501532957', 'Moncada', 'Bueno', 'Sebastián', '2007-11-09', 0, 28, NULL, NULL, 0, NULL, NULL, 'moncadaosoriodidier@gmail.com', NULL, NULL, 'osoriojuly@hotmail.com', NULL, 0, NULL, 0, NULL),
 (28, '14675492', '51818089D', '281375971006', 'Nieto', 'Gómez', 'Daniel', '2006-05-07', 0, 28, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
-(29, '9854833', '55139532E', '281576636219', 'Orovio', 'Fernández', 'Adrián', '2006-04-21', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'oroviosan@hotmail.com', NULL, NULL, 'anabascuana@gmail.com', NULL, 0, NULL, 0, NULL),
+(29, '9854833', '55139532E', '281576636219', 'Orovio', 'Fernández', 'Adrián', '2006-04-21', 0, 28, NULL, NULL, 0, NULL, NULL, 'oroviosan@hotmail.com', NULL, NULL, 'anabascuana@gmail.com', NULL, 0, NULL, 0, NULL),
 (30, '4545521', '49702188Q', '281444582641', 'Pascual', 'González', 'Alejandro', '1998-02-08', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (31, '9631236', '03489468T', '281462321618', 'Pérez', 'Alonso', 'Rubén', '2005-12-14', 130, 28, NULL, NULL, 0, NULL, NULL, 'hectorperezaparicio333@gmail.com', NULL, NULL, 'pilaralonso555@gmail.com', NULL, 0, NULL, 0, NULL),
 (32, '12277735', '01867649A', '201055952475', 'Pérez', 'Marín', 'Rubén', '2008-07-12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'luisamartincamara@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (33, '48532358', 'Z1978609Q', '281655816814', 'Pomarino', 'Mejía', 'Eduardo Gianfranco', '2005-03-25', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'carlascargglioni@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (34, '9019508', '49588427J', '281572721661', 'Puras', 'García', 'César', '2005-08-03', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'tonigarmar@hotmail.es', NULL, NULL, 'cespurn@hotmail.com', NULL, 0, NULL, 0, NULL),
-(35, '11550457', '54993476Q', '281550184925', 'Rodríguez', 'Mateos', 'Adrián', '2007-07-26', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'daromanad@gmail.com', NULL, NULL, 'natadriblan@gmail.com', NULL, 0, NULL, 0, NULL),
+(35, '11550457', '54993476Q', '281550184925', 'Rodríguez', 'Mateos', 'Adrián', '2007-07-26', 0, 28, NULL, NULL, 0, NULL, NULL, 'daromanad@gmail.com', NULL, NULL, 'natadriblan@gmail.com', NULL, 0, NULL, 0, NULL),
 (36, '10859827', '01867899T', '281323189363', 'Rubio', 'Alonso', 'Antonio', '2007-12-18', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'antoniorubio963@gmail.com', NULL, NULL, 'mareamorada.6@gmail.com', NULL, 0, NULL, 0, NULL),
 (37, '12197446', '54033379P', '281537763063', 'Ruiz', 'Blanca', 'Marcos', '2007-08-30', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'dimasruiz242@yahoo.es', NULL, NULL, 'oblancaplaza@yahoo.es', NULL, 0, NULL, 0, NULL),
 (38, '13762278', '48161087F', '281560350424', 'Sánchez', 'Martín', 'Diego', '2008-01-04', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'albertorepor@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
@@ -103,7 +103,7 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (42, '10602065', '02783538D', '281632217017', 'Serrano', 'Domínguez', 'Alejandro', '2006-05-25', 130, 28, NULL, NULL, 0, NULL, NULL, 'lolidomna@gmail.com', NULL, NULL, 'serrano.ema@gmail.com', NULL, 0, NULL, 0, NULL),
 (43, '5136117', '55006498C', '281581105996', 'Tello', 'Horcajo', 'Sergio', '2007-05-20', 130, 28, NULL, NULL, 0, NULL, NULL, 'dtellosanchez@yahoo.com', NULL, NULL, 'rosahorcajo@yahoo.es', NULL, 0, NULL, 0, NULL),
 (44, '12003501', '07137486B', '281524199433', 'Torre', 'Sánchez', 'Adrián de la', '2008-09-26', 0, 28, 1, '28903', 0, NULL, NULL, 'm.carmensanchez.s@hotmail.es', NULL, NULL, 'franciscotorrecasado@hotmail.es', NULL, 0, NULL, 0, NULL),
-(45, '5630950', '53720005D', '281439037372', 'Tul', 'Tabango', 'Anderson Joel', '2004-10-21', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'germaniatabango@gmail.com', NULL, 0, NULL, 0, NULL),
+(45, '5630950', '53720005D', '281439037372', 'Tul', 'Tabango', 'Anderson Joel', '2004-10-21', 0, 28, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'germaniatabango@gmail.com', NULL, 0, NULL, 0, NULL),
 (46, '10408261', '02560357C', '281618790395', 'Vega', 'Sánchez', 'Adrián', '2006-01-24', 0, 28, NULL, NULL, 0, NULL, NULL, 'rvhrvhrvh@gmail.com', NULL, NULL, 'monicascla@gmail.com', NULL, 0, NULL, 0, NULL),
 (47, '9495357', '55139932P', '281572846650', 'Velázquez', 'Orgaz', 'Francisco', '2005-08-04', 130, 28, 1, '28901', 0, NULL, NULL, 'velazquezdavid11@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (48, '49939217', 'Y4274170W', '291122260517', 'Zhou', NULL, 'Chengwei', '2005-08-17', 0, 28, 6, '28971', 0, NULL, NULL, 'angelzhang1595@gmail.com', NULL, NULL, 'angelzhang1595@gmail.com', NULL, 0, NULL, 0, NULL),
@@ -925,7 +925,8 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (195, 'empresa_tutor', 19, 'd.ruiz@grupoitsl.com', 'Trabajo'),
 (196, 'empresa', 19, 'juliangrande@infoneri.com', 'Trabajo'),
 (197, 'empresa_contacto', 24, 'juliangrande@infoneri.com', 'Trabajo'),
-(198, 'empresa_tutor', 20, 'juliangrande@infoneri.com', 'Trabajo');
+(198, 'empresa_tutor', 20, 'juliangrande@infoneri.com', 'Trabajo'),
+(199, 'alumno', 27, 'sebastian.moncada1@educa.madrid.org', 'EducaMadrid');
 
 -- --------------------------------------------------------
 
@@ -2143,7 +2144,13 @@ INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion
 (15, 17, 9, 13, 10, 26, 1, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, NULL),
 (16, 40, 16, 20, 17, 27, 1, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, NULL),
 (17, 43, 18, 22, 19, 17, 1, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 0, NULL),
-(18, 1, 19, 23, 20, 16, 1, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, NULL);
+(18, 1, 19, 23, 20, 16, 1, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, NULL),
+(19, 26, 13, 17, 14, 166, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
+(20, 27, 13, 17, 14, 166, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
+(21, 29, 12, 16, 13, 165, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
+(22, 24, 12, 16, 13, 165, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
+(23, 35, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
+(24, 45, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2362,7 +2369,37 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (124, 18, 2, '08:00:00', '15:00:00'),
 (125, 18, 3, '08:00:00', '15:00:00'),
 (126, 18, 4, '08:00:00', '15:00:00'),
-(127, 18, 5, '08:00:00', '15:00:00');
+(127, 18, 5, '08:00:00', '15:00:00'),
+(128, 19, 1, '08:00:00', '16:00:00'),
+(129, 19, 2, '08:00:00', '16:00:00'),
+(130, 19, 3, '08:00:00', '16:00:00'),
+(131, 19, 4, '08:00:00', '16:00:00'),
+(132, 19, 5, '08:00:00', '16:00:00'),
+(133, 20, 1, '08:00:00', '16:00:00'),
+(134, 20, 2, '08:00:00', '16:00:00'),
+(135, 20, 3, '08:00:00', '16:00:00'),
+(136, 20, 4, '08:00:00', '16:00:00'),
+(137, 20, 5, '08:00:00', '16:00:00'),
+(138, 21, 1, '08:00:00', '16:00:00'),
+(139, 21, 2, '08:00:00', '16:00:00'),
+(140, 21, 3, '08:00:00', '16:00:00'),
+(141, 21, 4, '08:00:00', '16:00:00'),
+(142, 21, 5, '08:00:00', '16:00:00'),
+(143, 22, 1, '08:00:00', '16:00:00'),
+(144, 22, 2, '08:00:00', '16:00:00'),
+(145, 22, 3, '08:00:00', '16:00:00'),
+(146, 22, 4, '08:00:00', '16:00:00'),
+(147, 22, 5, '08:00:00', '16:00:00'),
+(148, 23, 1, '08:00:00', '16:00:00'),
+(149, 23, 2, '08:00:00', '16:00:00'),
+(150, 23, 3, '08:00:00', '16:00:00'),
+(151, 23, 4, '08:00:00', '16:00:00'),
+(152, 23, 5, '08:00:00', '16:00:00'),
+(153, 24, 1, '08:00:00', '16:00:00'),
+(154, 24, 2, '08:00:00', '16:00:00'),
+(155, 24, 3, '08:00:00', '16:00:00'),
+(156, 24, 4, '08:00:00', '16:00:00'),
+(157, 24, 5, '08:00:00', '16:00:00');
 
 -- --------------------------------------------------------
 
@@ -3191,7 +3228,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=199;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=200;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
@@ -3293,7 +3330,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -3317,7 +3354,7 @@ ALTER TABLE `practicas_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
