@@ -90,6 +90,7 @@ function render_module_rows(array $modules): string
         $ciclo = 'No disponible';
         $ciclo_abreviatura = trim((string) ($module['ciclo_abreviatura'] ?? ''));
         $curso_numero = trim((string) ($module['curso'] ?? ''));
+        $curso_numero = str_replace('º', '', $curso_numero);
         if ($ciclo_abreviatura !== '' || $curso_numero !== '') {
           $ciclo = $ciclo_abreviatura . $curso_numero;
         }
@@ -107,15 +108,15 @@ function render_module_rows(array $modules): string
       ?>
       <tr>
         <td><?php echo htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'); ?></td>
         <td>
           <?php if ($id_modulo > 0): ?>
-            <a href="modulo_detalle.php?id_modulo=<?php echo urlencode((string) $id_modulo); ?>"><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></a>
+            <a class="practice-link" href="modulo_detalle.php?id_modulo=<?php echo urlencode((string) $id_modulo); ?>"><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></a>
           <?php else: ?>
             <?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?>
           <?php endif; ?>
         </td>
+        <td><?php echo htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($horas_semanales, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($horas_totales, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars((string) $total_ra, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -203,9 +204,9 @@ $active_page = 'modulos';
             <thead>
               <tr>
                 <th>Ciclo</th>
+                <th>Nombre</th>
                 <th>Código</th>
                 <th>Abreviatura</th>
-                <th>Nombre</th>
                 <th>Horas semanales</th>
                 <th>Horas totales</th>
                 <th>RA</th>
