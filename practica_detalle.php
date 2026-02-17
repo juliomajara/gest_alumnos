@@ -548,7 +548,10 @@ function blank_if_unavailable(string $value): string {
 }
 
 function build_plan_formacion_html(array $practice, array $scheduleByDay, array $planRows, PDO $pdo): string {
-  $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
+  $templatePath = __DIR__ . '/../docs/practicas_plan_formacion.html';
+  if (!is_file($templatePath)) {
+    $templatePath = __DIR__ . '/docs/practicas_plan_formacion.html';
+  }
   if (!is_file($templatePath)) {
     throw new RuntimeException('No se encuentra la plantilla docs/practicas_plan_formacion.html.');
   }
