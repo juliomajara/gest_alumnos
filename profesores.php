@@ -79,35 +79,88 @@ $teachers_stmt = $pdo->prepare(
 $teachers_stmt->execute($params);
 $teachers = $teachers_stmt->fetchAll();
 
+function display_value(mixed $value): string
+{
+  if ($value === null) {
+    return '';
+  }
+
+  $normalized = trim((string) $value);
+  if ($normalized === '' || mb_strtolower($normalized, 'UTF-8') === 'no disponible') {
+    return '';
+  }
+
+  return $normalized;
+}
+
+function format_teacher_name(mixed $apellido1, mixed $apellido2, mixed $nombre): string
+{
+  $parts = [];
+  $firstSurname = display_value($apellido1);
+  $secondSurname = display_value($apellido2);
+  $firstName = display_value($nombre);
+
+  if ($firstSurname !== '') {
+    $parts[] = $firstSurname;
+  }
+
+  if ($secondSurname !== '') {
+    $parts[] = $secondSurname;
+  }
+
+  $surnameBlock = implode(' ', $parts);
+
+  if ($surnameBlock !== '' && $firstName !== '') {
+    return $surnameBlock . ', ' . $firstName;
+  }
+
+  if ($surnameBlock !== '') {
+    return $surnameBlock;
+  }
+
+  return $firstName;
+}
+
+function format_modules(mixed $modules): string
+{
+  $cleanModules = display_value($modules);
+  if ($cleanModules === '') {
+    return '';
+  }
+
+  $items = array_filter(array_map('trim', explode(',', $cleanModules)), static fn (string $item): bool => $item !== '');
+
+  if (!$items) {
+    return '';
+  }
+
+  $escapedItems = array_map(static fn (string $item): string => htmlspecialchars($item, ENT_QUOTES, 'UTF-8'), $items);
+  return implode('<br>', $escapedItems);
+}
+
 function render_teacher_rows(array $teachers): string
 {
   ob_start();
   if (!$teachers): ?>
     <tr>
-      <td colspan="10">No hay profesores para los filtros seleccionados.</td>
+      <td colspan="7">No hay profesores para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($teachers as $teacher): ?>
       <?php
-        $id_profesor = $teacher['id_profesor'] ? (string) $teacher['id_profesor'] : 'No disponible';
-        $apellido1 = $teacher['apellido1'] ?: 'No disponible';
-        $apellido2 = $teacher['apellido2'] ?: 'No disponible';
-        $nombre = $teacher['nombre'] ?: 'No disponible';
-        $dni = $teacher['dni'] ?: 'No disponible';
-        $grupos_tutor = $teacher['grupos_tutor'] ?: 'Sin tutoría';
-        $modulos = $teacher['modulos'] ?: 'Sin módulos';
-        $telefonos = $teacher['telefonos'] ?: 'No disponible';
-        $correos = $teacher['correos'] ?: 'No disponible';
+        $nombreProfesor = format_teacher_name($teacher['apellido1'] ?? null, $teacher['apellido2'] ?? null, $teacher['nombre'] ?? null);
+        $dni = display_value($teacher['dni'] ?? null);
+        $grupos_tutor = display_value($teacher['grupos_tutor'] ?? null);
+        $modulos = format_modules($teacher['modulos'] ?? null);
+        $telefonos = display_value($teacher['telefonos'] ?? null);
+        $correos = display_value($teacher['correos'] ?? null);
         $editarUrl = 'profesor_editar.php?id=' . (int) $teacher['id_profesor'];
       ?>
       <tr>
-        <td><?php echo htmlspecialchars($id_profesor, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($apellido1, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($apellido2, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($nombreProfesor, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($grupos_tutor, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($modulos, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo $modulos; ?></td>
         <td><?php echo htmlspecialchars($telefonos, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($correos, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><a href="<?php echo htmlspecialchars($editarUrl, ENT_QUOTES, 'UTF-8'); ?>">Editar</a></td>
@@ -181,15 +234,12 @@ $active_page = 'profesores';
           <table>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Apellido 1</th>
-                <th>Apellido 2</th>
-                <th>Nombre</th>
+                <th>Profesor</th>
                 <th>DNI</th>
-                <th>Grupo tutor</th>
+                <th>Tutor</th>
                 <th>Módulos</th>
-                <th>Teléfonos</th>
-                <th>Correos</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
                 <th>Acciones</th>
               </tr>
             </thead>
