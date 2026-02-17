@@ -412,6 +412,14 @@ a.ghost-button:active {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+a.edit-toggle,
+a.edit-toggle:visited,
+a.edit-toggle:hover,
+a.edit-toggle:focus,
+a.edit-toggle:active {
+  text-decoration: none;
+}
+
 .edit-toggle.is-active {
   background: var(--primary);
   color: #fff;
