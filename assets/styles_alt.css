@@ -10,6 +10,12 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .panel-grid thead th,
+  .panel-grid tbody td {
+    padding: 0.9rem 1.1rem;
+    text-align: center;
+  }
+
   .panel-grid tbody td {
     border-bottom: 1px solid var(--border);
     transition: background-color 0.18s ease;
@@ -21,6 +27,16 @@
 
   .panel-grid tbody tr:hover td {
     background: #eef3ff;
+  }
+
+  .panel-grid tbody td a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.18s ease;
+  }
+
+  .panel-grid tbody td a:hover {
+    color: var(--primary);
   }
 
   .panel-grid th,
