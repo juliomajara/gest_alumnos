@@ -32,11 +32,11 @@ body {
 
 .sidebar {
   background: var(--card);
-  padding: 16px 12px;
+  padding: 10px 12px;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 8px;
   position: relative;
   overflow: hidden;
   transition: padding 0.2s ease;
