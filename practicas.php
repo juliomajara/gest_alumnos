@@ -6,6 +6,35 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
+$allowed_orders = ['alumno', 'empresa'];
+$order_param = (string) ($_GET['orden'] ?? 'alumno');
+$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno';
+
+function format_date(?string $value, string $fallback = 'No disponible'): string
+{
+  if ($value === null || $value === '') {
+    return $fallback;
+  }
+
+  $date = DateTime::createFromFormat('Y-m-d', $value);
+
+  if ($date !== false && $date->format('Y-m-d') === $value) {
+    return $date->format('d/m/Y');
+  }
+
+  return $value;
+}
+
+function build_order_url(string $order): string
+{
+  $params = $_GET;
+  $params['orden'] = $order;
+  unset($params['ajax']);
+
+  $query = http_build_query($params);
+
+  return 'practicas.php' . ($query !== '' ? '?' . $query : '');
+}
 
 $filters = [];
 $params = [];
@@ -36,6 +65,10 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
+$order_clause = $current_order === 'empresa'
+  ? 'ORDER BY e.nombre ASC, e.apellido1 ASC, e.apellido2 ASC, p.id_practica DESC'
+  : 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica DESC';
+
 $practices_stmt = $pdo->prepare(
   'SELECT
     p.id_practica,
@@ -58,7 +91,7 @@ $practices_stmt = $pdo->prepare(
   LEFT JOIN practicas_estados pe
     ON pe.id_practicas_estado = p.id_practicas_estado
   ' . $where_clause . '
-  ORDER BY p.fecha_inicio DESC, p.id_practica DESC'
+  ' . $order_clause
 );
 
 $practices_stmt->execute($params);
@@ -91,8 +124,8 @@ function render_practice_rows(array $practices): string
         ], static fn ($value) => trim((string) $value) !== '')));
         $empresa = $empresa !== '' ? $empresa : 'No disponible';
 
-        $fecha_inicio = $practice['fecha_inicio'] ?: 'No disponible';
-        $fecha_fin = $practice['fecha_fin'] ?: 'No disponible';
+        $fecha_inicio = format_date($practice['fecha_inicio'] ?? null);
+        $fecha_fin = format_date($practice['fecha_fin'] ?? null);
 
         $convenio = $practice['convenio'] !== null && $practice['convenio'] !== ''
           ? (string) $practice['convenio']
@@ -174,6 +207,7 @@ $active_page = 'practicas';
             aria-label="Buscar por alumno, empresa, DNI, CIF o convenio"
             value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
           >
+          <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
         <div class="topbar-actions"></div>
       </form>
@@ -188,8 +222,8 @@ $active_page = 'practicas';
           <table>
             <thead>
               <tr>
-                <th>Alumno</th>
-                <th>Empresa</th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('alumno'), ENT_QUOTES, 'UTF-8'); ?>">Alumno</a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa'), ENT_QUOTES, 'UTF-8'); ?>">Empresa</a></th>
                 <th>Fecha de inicio</th>
                 <th>Fecha de fin</th>
                 <th>Anexo 2.1</th>
