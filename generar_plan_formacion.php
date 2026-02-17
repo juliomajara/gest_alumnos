@@ -27,14 +27,14 @@ SELECT p.*, p.fecha_fin, p.fecha_fin_real, p.dias_extra, a.nombre AS alumno_nomb
   (SELECT t1.telefono FROM telefonos t1 WHERE t1.entidad_tipo = 'alumno' AND t1.id_entidad = a.id_alumno ORDER BY t1.id_telefono ASC LIMIT 1) AS alumno_telefono,
   (SELECT c2.direccion_correo FROM correos c2 WHERE c2.entidad_tipo = 'empresa' AND c2.id_entidad = e.id_empresa ORDER BY c2.id_correo ASC LIMIT 1) AS empresa_email,
   (SELECT t2.telefono FROM telefonos t2 WHERE t2.entidad_tipo = 'empresa' AND t2.id_entidad = e.id_empresa ORDER BY t2.id_telefono ASC LIMIT 1) AS empresa_telefono,
-  (SELECT c3.direccion_correo FROM correos c3 WHERE c3.entidad_tipo = 'empresa_tutor' AND c3.id_entidad = et.id_empresa_tutor ORDER BY c3.id_correo ASC LIMIT 1) AS tutor_empresa_email,
-  (SELECT t3.telefono FROM telefonos t3 WHERE t3.entidad_tipo = 'empresa_tutor' AND t3.id_entidad = et.id_empresa_tutor ORDER BY t3.id_telefono ASC LIMIT 1) AS tutor_empresa_telefono,
+  (SELECT c3.direccion_correo FROM correos c3 WHERE c3.entidad_tipo = 'empresa_tutor' AND c3.id_entidad = et.id_empresas_tutor ORDER BY c3.id_correo ASC LIMIT 1) AS tutor_empresa_email,
+  (SELECT t3.telefono FROM telefonos t3 WHERE t3.entidad_tipo = 'empresa_tutor' AND t3.id_entidad = et.id_empresas_tutor ORDER BY t3.id_telefono ASC LIMIT 1) AS tutor_empresa_telefono,
   (SELECT c4.direccion_correo FROM correos c4 WHERE c4.entidad_tipo = 'profesor' AND c4.id_entidad = pc.id_profesor ORDER BY c4.id_correo ASC LIMIT 1) AS tutor_centro_email,
   (SELECT t4.telefono FROM telefonos t4 WHERE t4.entidad_tipo = 'profesor' AND t4.id_entidad = pc.id_profesor ORDER BY t4.id_telefono ASC LIMIT 1) AS tutor_centro_telefono
 FROM practicas p
 LEFT JOIN alumnos a ON a.id_alumno = p.id_alumno
 LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
-LEFT JOIN empresas_tutores et ON et.id_empresa_tutor = p.id_empresa_tutor
+LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
 LEFT JOIN direcciones d ON d.id_direccion = p.id_direccion
 LEFT JOIN vias v ON v.id_via = d.id_via
 LEFT JOIN localidades ld ON ld.id_localidad = d.id_localidad
