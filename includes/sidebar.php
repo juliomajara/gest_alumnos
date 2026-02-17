@@ -53,10 +53,6 @@ $nav_items = [
 ?>
 <aside class="sidebar" id="appSidebar">
   <div class="sidebar-header">
-    <a class="sidebar-logo-link" href="index.php" aria-label="Ir al dashboard">
-      <img class="sidebar-logo sidebar-logo-full" src="assets/logo/logo-full.svg" alt="Gest Alumnos">
-      <img class="sidebar-logo sidebar-logo-icon" src="assets/logo/logo.svg" alt="" aria-hidden="true">
-    </a>
     <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="Colapsar sidebar">
       <span class="sidebar-toggle-icon" id="sidebarToggleIcon" aria-hidden="true">‹</span>
       <span class="sr-only" id="sidebarToggleLabel">Colapsar sidebar</span>
@@ -84,10 +80,8 @@ $nav_items = [
     const toggleIcon = document.getElementById('sidebarToggleIcon');
     const toggleLabel = document.getElementById('sidebarToggleLabel');
     const scrollTopButton = document.getElementById('sidebarScrollTop');
-    const logoLink = sidebar.querySelector('.sidebar-logo-link');
-    const logoFull = sidebar.querySelector('.sidebar-logo-full');
 
-    if (!sidebar || !toggle || !toggleIcon || !toggleLabel || !scrollTopButton || !logoLink || !logoFull) {
+    if (!sidebar || !toggle || !toggleIcon || !toggleLabel || !scrollTopButton) {
       return;
     }
 
@@ -110,31 +104,17 @@ $nav_items = [
       toggleIcon.textContent = isCollapsed ? '›' : '‹';
     };
 
-    const updateLogoMode = () => {
-      if (isCollapsed) {
-        sidebar.classList.remove('logo-compact');
-        return;
-      }
-
-      const availableWidth = logoLink.clientWidth;
-      const fullLogoWidth = Math.min(132, logoFull.naturalWidth || 132);
-      const shouldCompact = availableWidth > 0 && availableWidth < fullLogoWidth;
-      sidebar.classList.toggle('logo-compact', shouldCompact);
-    };
-
     const updateScrollTopVisibility = () => {
       scrollTopButton.classList.toggle('is-hidden', window.scrollY === 0);
     };
 
     updateSidebar();
-    updateLogoMode();
     updateScrollTopVisibility();
 
     toggle.addEventListener('click', () => {
       isCollapsed = !isCollapsed;
       localStorage.setItem(storageKey, isCollapsed ? '1' : '0');
       updateSidebar();
-      updateLogoMode();
     });
 
     scrollTopButton.addEventListener('click', () => {
@@ -142,7 +122,5 @@ $nav_items = [
     });
 
     window.addEventListener('scroll', updateScrollTopVisibility, { passive: true });
-    window.addEventListener('resize', updateLogoMode, { passive: true });
-    logoFull.addEventListener('load', updateLogoMode, { once: true });
   })();
 </script>
