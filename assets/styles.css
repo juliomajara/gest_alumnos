@@ -49,34 +49,6 @@ body {
   gap: 12px;
 }
 
-.sidebar-logo-link {
-  flex: 1;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  text-decoration: none;
-}
-
-.sidebar-logo {
-  display: block;
-  width: auto;
-  height: auto;
-}
-
-.sidebar-logo-full {
-  width: auto;
-  height: 30px;
-  max-width: 132px;
-  max-height: 34px;
-}
-
-.sidebar-logo-icon {
-  display: none;
-  width: 28px;
-  height: 28px;
-}
-
 .sidebar-handle {
   display: flex;
 }
@@ -136,35 +108,6 @@ body {
   flex-direction: column;
   justify-content: center;
   gap: 6px;
-}
-
-.sidebar.collapsed .sidebar-logo-link {
-  flex: 0 0 auto;
-  justify-content: center;
-}
-
-.sidebar.collapsed .sidebar-toggle {
-  order: 1;
-}
-
-.sidebar.collapsed .sidebar-logo-link {
-  order: 2;
-}
-
-.sidebar.collapsed .sidebar-logo-full {
-  display: none;
-}
-
-.sidebar.collapsed .sidebar-logo-icon {
-  display: block;
-}
-
-.sidebar.logo-compact .sidebar-logo-full {
-  display: none;
-}
-
-.sidebar.logo-compact .sidebar-logo-icon {
-  display: block;
 }
 
 .sidebar.collapsed .brand {
@@ -1195,14 +1138,6 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 16px;
-  }
-
-  .sidebar-logo-link {
-    flex: 0 1 auto;
-  }
-
-  .sidebar-logo-full {
-    max-width: 118px;
   }
 
   .sidebar-handle {
