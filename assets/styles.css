@@ -370,6 +370,19 @@ body {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+a.primary-button,
+a.ghost-button,
+a.primary-button:visited,
+a.ghost-button:visited,
+a.primary-button:hover,
+a.ghost-button:hover,
+a.primary-button:focus,
+a.ghost-button:focus,
+a.primary-button:active,
+a.ghost-button:active {
+  text-decoration: none;
+}
+
 .primary-button {
   background: var(--primary);
   color: #fff;
