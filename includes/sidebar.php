@@ -5,49 +5,49 @@ $nav_items = [
     'key' => 'dashboard',
     'label' => 'Dashboard',
     'href' => 'index.php',
-    'icon' => '⌂',
+    'icon' => 'assets/icons/dashboard.svg',
   ],
   [
     'key' => 'alumnos',
     'label' => 'Alumnos',
     'href' => 'alumnos.php',
-    'icon' => '👥',
+    'icon' => 'assets/icons/alumnos.svg',
   ],
   [
     'key' => 'modulos',
     'label' => 'Módulos',
     'href' => 'modulos.php',
-    'icon' => '📚',
+    'icon' => 'assets/icons/modulos.svg',
   ],
   [
     'key' => 'empresas',
     'label' => 'Empresas',
     'href' => 'empresas.php',
-    'icon' => '🏢',
+    'icon' => 'assets/icons/empresas.svg',
   ],
   [
     'key' => 'practicas',
     'label' => 'Prácticas',
     'href' => 'practicas.php',
-    'icon' => '🧪',
+    'icon' => 'assets/icons/practicas.svg',
   ],
   [
     'key' => 'profesores',
     'label' => 'Profesores',
     'href' => 'profesores.php',
-    'icon' => '🧑‍🏫',
+    'icon' => 'assets/icons/profesores.svg',
   ],
   [
     'key' => 'calendario',
     'label' => 'Calendario',
     'href' => 'calendario.php',
-    'icon' => '📅',
+    'icon' => 'assets/icons/calendario.svg',
   ],
   [
     'key' => 'configuracion',
     'label' => 'Configuración',
     'href' => 'configuracion.php',
-    'icon' => '⚙',
+    'icon' => 'assets/icons/configuracion.svg',
   ],
 ];
 ?>
@@ -64,7 +64,9 @@ $nav_items = [
         class="nav-link<?php echo $item['key'] === $active_page ? ' active' : ''; ?>"
         href="<?php echo htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
       >
-        <span class="nav-icon" aria-hidden="true"><?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?></span>
+        <span class="nav-icon" aria-hidden="true">
+          <img class="nav-icon-image" src="<?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" alt="">
+        </span>
         <span class="nav-text"><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></span>
       </a>
     <?php endforeach; ?>
