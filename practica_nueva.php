@@ -611,10 +611,36 @@ if (!$groups) {
   $groups = $pdo->query('SELECT id_grupo, grupo FROM grupos ORDER BY grupo')->fetchAll();
 }
 
+$default_tutor_group = 0;
+if ($active_course_id > 0) {
+  $default_group_stmt = $pdo->prepare(
+    'SELECT gt.id_grupo
+     FROM grupos_tutores gt
+     INNER JOIN profesores p ON p.id_profesor = gt.id_profesor
+     WHERE gt.id_curso_escolar = :id_curso_escolar
+       AND p.nombre = :nombre
+       AND p.apellido1 = :apellido1
+       AND p.apellido2 = :apellido2
+     ORDER BY gt.id_grupo
+     LIMIT 1'
+  );
+  $default_group_stmt->execute([
+    'id_curso_escolar' => $active_course_id,
+    'nombre' => 'Julio',
+    'apellido1' => 'Sánchez',
+    'apellido2' => 'Fernández',
+  ]);
+  $default_tutor_group = (int) ($default_group_stmt->fetchColumn() ?: 0);
+}
+
 $companies = $pdo->query('SELECT id_empresa, nombre, apellido1, apellido2 FROM empresas ORDER BY nombre, apellido1, apellido2')->fetchAll();
 $no_lectivos = array_keys($non_teaching_lookup);
 
 $selected_group = isset($form_values['id_grupo']) ? (int) $form_values['id_grupo'] : 0;
+if ($selected_group <= 0 && $default_tutor_group > 0) {
+  $selected_group = $default_tutor_group;
+  $form_values['id_grupo'] = (string) $default_tutor_group;
+}
 $selected_student = isset($form_values['id_alumno']) ? (int) $form_values['id_alumno'] : 0;
 $selected_company = isset($form_values['id_empresa']) ? (int) $form_values['id_empresa'] : 0;
 $selected_address = isset($form_values['id_direccion']) ? (int) $form_values['id_direccion'] : 0;
@@ -1235,21 +1261,30 @@ $dias_semana = [
         const response = await fetch(`practica_nueva.php?action=company_data&id_empresa=${companyId}`);
         const data = await response.json();
 
+        const direcciones = Array.isArray(data?.direcciones) ? data.direcciones : [];
+        const tutores = Array.isArray(data?.tutores) ? data.tutores : [];
+
         resetSelect(addressSelect, 'Selecciona una dirección');
-        (data.direcciones || []).forEach((address) => {
+        direcciones.forEach((address) => {
           const option = document.createElement('option');
           option.value = String(address.id_direccion);
           option.textContent = address.label;
           addressSelect.appendChild(option);
         });
+        if (direcciones.length === 1) {
+          addressSelect.value = String(direcciones[0].id_direccion);
+        }
 
         resetSelect(tutorSelect, 'Selecciona un tutor');
-        (data.tutores || []).forEach((tutor) => {
+        tutores.forEach((tutor) => {
           const option = document.createElement('option');
           option.value = String(tutor.id_empresas_tutor);
           option.textContent = tutor.nombre;
           tutorSelect.appendChild(option);
         });
+        if (tutores.length === 1) {
+          tutorSelect.value = String(tutores[0].id_empresas_tutor);
+        }
       } catch (error) {
         resetSelect(addressSelect, 'No se pudieron cargar direcciones');
         resetSelect(tutorSelect, 'No se pudieron cargar tutores');
