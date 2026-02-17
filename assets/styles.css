@@ -65,6 +65,7 @@ body {
 }
 
 .sidebar-logo-full {
+  width: min(132px, 100%);
   max-width: 132px;
   max-height: 34px;
 }
@@ -144,6 +145,14 @@ body {
 }
 
 .sidebar.collapsed .sidebar-logo-icon {
+  display: block;
+}
+
+.sidebar.logo-compact .sidebar-logo-full {
+  display: none;
+}
+
+.sidebar.logo-compact .sidebar-logo-icon {
   display: block;
 }
 

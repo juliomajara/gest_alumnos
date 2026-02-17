@@ -84,8 +84,10 @@ $nav_items = [
     const toggleIcon = document.getElementById('sidebarToggleIcon');
     const toggleLabel = document.getElementById('sidebarToggleLabel');
     const scrollTopButton = document.getElementById('sidebarScrollTop');
+    const logoLink = sidebar.querySelector('.sidebar-logo-link');
+    const logoFull = sidebar.querySelector('.sidebar-logo-full');
 
-    if (!sidebar || !toggle || !toggleIcon || !toggleLabel || !scrollTopButton) {
+    if (!sidebar || !toggle || !toggleIcon || !toggleLabel || !scrollTopButton || !logoLink || !logoFull) {
       return;
     }
 
@@ -108,17 +110,31 @@ $nav_items = [
       toggleIcon.textContent = isCollapsed ? '›' : '‹';
     };
 
+    const updateLogoMode = () => {
+      if (isCollapsed) {
+        sidebar.classList.remove('logo-compact');
+        return;
+      }
+
+      const availableWidth = logoLink.clientWidth;
+      const fullLogoWidth = Math.min(132, logoFull.naturalWidth || 132);
+      const shouldCompact = availableWidth > 0 && availableWidth < fullLogoWidth;
+      sidebar.classList.toggle('logo-compact', shouldCompact);
+    };
+
     const updateScrollTopVisibility = () => {
       scrollTopButton.classList.toggle('is-hidden', window.scrollY === 0);
     };
 
     updateSidebar();
+    updateLogoMode();
     updateScrollTopVisibility();
 
     toggle.addEventListener('click', () => {
       isCollapsed = !isCollapsed;
       localStorage.setItem(storageKey, isCollapsed ? '1' : '0');
       updateSidebar();
+      updateLogoMode();
     });
 
     scrollTopButton.addEventListener('click', () => {
@@ -126,5 +142,7 @@ $nav_items = [
     });
 
     window.addEventListener('scroll', updateScrollTopVisibility, { passive: true });
+    window.addEventListener('resize', updateLogoMode, { passive: true });
+    logoFull.addEventListener('load', updateLogoMode, { once: true });
   })();
 </script>
