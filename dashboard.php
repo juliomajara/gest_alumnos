@@ -190,7 +190,6 @@ $active_page = 'dashboard';
     <main class="content">
       <header class="header">
         <div>
-          <p class="eyebrow">Panel de control</p>
           <h1>Dashboard</h1>
           <p class="subheading">Métricas reales del sistema para alumnos, prácticas, empresas, módulos y profesorado.</p>
         </div>
