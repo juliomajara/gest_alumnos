@@ -5,41 +5,49 @@ $nav_items = [
     'key' => 'dashboard',
     'label' => 'Dashboard',
     'href' => 'index.php',
+    'icon' => '⌂',
   ],
   [
     'key' => 'alumnos',
     'label' => 'Alumnos',
     'href' => 'alumnos.php',
+    'icon' => '👥',
   ],
   [
     'key' => 'modulos',
     'label' => 'Módulos',
     'href' => 'modulos.php',
+    'icon' => '📚',
   ],
   [
     'key' => 'empresas',
     'label' => 'Empresas',
     'href' => 'empresas.php',
+    'icon' => '🏢',
   ],
   [
     'key' => 'practicas',
     'label' => 'Prácticas',
     'href' => 'practicas.php',
+    'icon' => '🧪',
   ],
-   [
+  [
     'key' => 'profesores',
     'label' => 'Profesores',
     'href' => 'profesores.php',
+    'icon' => '🧑‍🏫',
   ],
   [
     'key' => 'calendario',
     'label' => 'Calendario',
     'href' => 'calendario.php',
+    'icon' => '📅',
   ],
   [
     'key' => 'configuracion',
     'label' => 'Configuración',
     'href' => 'configuracion.php',
+    'icon' => '⚙',
   ],
 ];
 ?>
@@ -56,50 +64,42 @@ $nav_items = [
         class="nav-link<?php echo $item['key'] === $active_page ? ' active' : ''; ?>"
         href="<?php echo htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
       >
-        <?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?>
+        <span class="nav-icon" aria-hidden="true"><?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?></span>
+        <span class="nav-text"><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></span>
       </a>
     <?php endforeach; ?>
   </nav>
   <button class="sidebar-scroll-top is-hidden" id="sidebarScrollTop" type="button">Volver arriba</button>
 </aside>
-<button
-  id="sidebarFloatingTab"
-  class="sidebar-float-tab"
-  type="button"
-  aria-label="Abrir menú"
-  aria-expanded="false"
->
-  <span aria-hidden="true">☰</span>
-</button>
 <script>
   (function () {
     const sidebar = document.getElementById('appSidebar');
     const toggle = document.getElementById('sidebarToggle');
     const toggleIcon = document.getElementById('sidebarToggleIcon');
-    const floatingTab = document.getElementById('sidebarFloatingTab');
+    const toggleLabel = document.getElementById('sidebarToggleLabel');
     const scrollTopButton = document.getElementById('sidebarScrollTop');
 
-    if (!sidebar || !toggle || !toggleIcon || !floatingTab || !scrollTopButton) {
+    if (!sidebar || !toggle || !toggleIcon || !toggleLabel || !scrollTopButton) {
       return;
     }
 
     const page = sidebar.closest('.page');
-    const storageKey = 'sidebarCollapsed';
-    let isCollapsed = localStorage.getItem(storageKey) === 'true';
+    const storageKey = 'sidebar_collapsed';
+    let isCollapsed = localStorage.getItem(storageKey) === '1';
 
     const updateSidebar = () => {
       const isExpanded = !isCollapsed;
       const ariaLabel = isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar';
 
       if (page) {
-        page.classList.toggle('sidebar-hidden', isCollapsed);
+        page.classList.toggle('sidebar-collapsed', isCollapsed);
       }
 
+      sidebar.classList.toggle('collapsed', isCollapsed);
       toggle.setAttribute('aria-expanded', String(isExpanded));
       toggle.setAttribute('aria-label', ariaLabel);
+      toggleLabel.textContent = ariaLabel;
       toggleIcon.textContent = isCollapsed ? '›' : '‹';
-      floatingTab.classList.toggle('is-visible', isCollapsed);
-      floatingTab.setAttribute('aria-expanded', String(isExpanded));
     };
 
     const updateScrollTopVisibility = () => {
@@ -111,13 +111,7 @@ $nav_items = [
 
     toggle.addEventListener('click', () => {
       isCollapsed = !isCollapsed;
-      localStorage.setItem(storageKey, String(isCollapsed));
-      updateSidebar();
-    });
-
-    floatingTab.addEventListener('click', () => {
-      isCollapsed = false;
-      localStorage.setItem(storageKey, String(isCollapsed));
+      localStorage.setItem(storageKey, isCollapsed ? '1' : '0');
       updateSidebar();
     });
 
