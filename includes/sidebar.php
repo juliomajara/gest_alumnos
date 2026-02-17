@@ -53,6 +53,10 @@ $nav_items = [
 ?>
 <aside class="sidebar" id="appSidebar">
   <div class="sidebar-header">
+    <a class="sidebar-logo-link" href="index.php" aria-label="Ir al dashboard">
+      <img class="sidebar-logo sidebar-logo-full" src="assets/logo/logo-full.svg" alt="Gest Alumnos">
+      <img class="sidebar-logo sidebar-logo-icon" src="assets/logo/logo.svg" alt="" aria-hidden="true">
+    </a>
     <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="true" aria-label="Colapsar sidebar">
       <span class="sidebar-toggle-icon" id="sidebarToggleIcon" aria-hidden="true">‹</span>
       <span class="sr-only" id="sidebarToggleLabel">Colapsar sidebar</span>
