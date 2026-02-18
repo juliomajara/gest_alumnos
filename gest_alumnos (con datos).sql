@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 17-02-2026 a las 19:49:40
+-- Tiempo de generación: 18-02-2026 a las 10:16:58
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -2150,7 +2150,10 @@ INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion
 (21, 29, 12, 16, 13, 165, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
 (22, 24, 12, 16, 13, 165, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
 (23, 35, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
-(24, 45, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL);
+(24, 45, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
+(25, 37, 6, 9, 7, 174, 1, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, NULL),
+(26, 47, 9, 13, 10, 175, 1, '2026-02-26', '2026-05-13', 0, '2026-05-13', 370, 0, NULL),
+(27, 32, 9, 13, 10, 177, 1, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2399,7 +2402,22 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (154, 24, 2, '08:00:00', '16:00:00'),
 (155, 24, 3, '08:00:00', '16:00:00'),
 (156, 24, 4, '08:00:00', '16:00:00'),
-(157, 24, 5, '08:00:00', '16:00:00');
+(157, 24, 5, '08:00:00', '16:00:00'),
+(158, 25, 1, '09:00:00', '17:00:00'),
+(159, 25, 2, '09:00:00', '17:00:00'),
+(160, 25, 3, '09:00:00', '17:00:00'),
+(161, 25, 4, '09:00:00', '17:00:00'),
+(162, 25, 5, '09:00:00', '17:00:00'),
+(163, 26, 1, '08:00:00', '16:00:00'),
+(164, 26, 2, '08:00:00', '16:00:00'),
+(165, 26, 3, '08:00:00', '16:00:00'),
+(166, 26, 4, '08:00:00', '16:00:00'),
+(167, 26, 5, '08:00:00', '16:00:00'),
+(168, 27, 1, '08:00:00', '16:00:00'),
+(169, 27, 2, '08:00:00', '16:00:00'),
+(170, 27, 3, '08:00:00', '16:00:00'),
+(171, 27, 4, '08:00:00', '16:00:00'),
+(172, 27, 5, '08:00:00', '16:00:00');
 
 -- --------------------------------------------------------
 
@@ -3330,7 +3348,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -3354,7 +3372,7 @@ ALTER TABLE `practicas_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
