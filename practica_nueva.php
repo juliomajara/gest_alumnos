@@ -224,6 +224,29 @@ function calculate_real_end_date(string $fecha_fin, int $dias_extra, array $non_
   return $current->format('Y-m-d');
 }
 
+function add_years_to_date(string $value, int $years): ?string {
+  $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value, new DateTimeZone('UTC'));
+  if (!$date) {
+    return null;
+  }
+
+  return $date->modify('+' . $years . ' years')->format('Y-m-d');
+}
+
+function compare_iso_dates(string $left, string $right): int {
+  return strcmp($left, $right);
+}
+
+function inclusive_days_between(string $start, string $end): ?int {
+  $start_date = DateTimeImmutable::createFromFormat('!Y-m-d', $start, new DateTimeZone('UTC'));
+  $end_date = DateTimeImmutable::createFromFormat('!Y-m-d', $end, new DateTimeZone('UTC'));
+  if (!$start_date || !$end_date || $end_date < $start_date) {
+    return null;
+  }
+
+  return $start_date->diff($end_date)->days + 1;
+}
+
 function practice_full_name(array $row, string $nameKey = 'nombre'): string {
   $parts = array_filter([
     trim((string) ($row['apellido1'] ?? '')),
@@ -412,6 +435,9 @@ $success_message = null;
 $anexo4_warning_message = null;
 $anexo4_warning_reasons = [];
 $pending_circ_excep_confirmation = false;
+$minor_age_warning_message = null;
+$minor_age_warning_details = [];
+$pending_minor_age_confirmation = false;
 $form_values = $_POST;
 $non_teaching_data = load_non_teaching_days($pdo);
 $non_teaching_lookup = $non_teaching_data['dates'];
@@ -434,6 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $observaciones = normalize_text($_POST['observaciones'] ?? null);
   $horario = is_array($_POST['horario'] ?? null) ? $_POST['horario'] : [];
   $confirm_circ_excep = ($_POST['confirm_circ_excep'] ?? '') === '1';
+  $confirm_minor_age = ($_POST['confirm_minor_age'] ?? '') === '1';
 
   if ($dias_extra_raw !== null) {
     if (!preg_match('/^-?\d+$/', $dias_extra_raw)) {
@@ -507,6 +534,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form_values['fecha_fin_real'] = $fecha_fin_real;
   }
 
+  $mayor_edad = 1;
+  $requires_minor_age_confirmation = false;
+  if ($alumno_id > 0 && $fecha_inicio !== null && valid_date($fecha_inicio)) {
+    $birth_stmt = $pdo->prepare('SELECT fecha_nacimiento FROM alumnos WHERE id_alumno = :id_alumno LIMIT 1');
+    $birth_stmt->execute(['id_alumno' => $alumno_id]);
+    $fecha_nacimiento = $birth_stmt->fetchColumn();
+    $fecha_nacimiento = is_string($fecha_nacimiento) ? trim($fecha_nacimiento) : null;
+
+    if ($fecha_nacimiento === null || !valid_date($fecha_nacimiento)) {
+      $errors[] = 'No se pudo calcular la mayoría de edad porque la fecha de nacimiento del alumno no es válida.';
+    } else {
+      $fecha_cumple_18 = add_years_to_date($fecha_nacimiento, 18);
+      if ($fecha_cumple_18 === null) {
+        $errors[] = 'No se pudo calcular la mayoría de edad del alumno.';
+      } else {
+        $mayor_edad = compare_iso_dates($fecha_inicio, $fecha_cumple_18) >= 0 ? 1 : 0;
+
+        if ($mayor_edad === 0) {
+          $requires_minor_age_confirmation = true;
+          $period_end = null;
+          if ($fecha_fin_real !== null && valid_date($fecha_fin_real)) {
+            $period_end = $fecha_fin_real;
+          } elseif ($fecha_fin !== null && valid_date($fecha_fin)) {
+            $period_end = $fecha_fin;
+          }
+
+          if ($period_end === null || compare_iso_dates($period_end, $fecha_inicio) < 0) {
+            $minor_age_warning_message = 'El alumno/a será menor de edad al iniciar las prácticas.';
+            $minor_age_warning_details[] = 'No se han podido calcular los porcentajes por falta de fechas válidas del periodo.';
+          } elseif (compare_iso_dates($fecha_cumple_18, $period_end) > 0) {
+            $minor_age_warning_message = 'El alumno/a será menor de edad durante todo el periodo de prácticas.';
+          } else {
+            $minor_days_end = (new DateTimeImmutable($fecha_cumple_18, new DateTimeZone('UTC')))->modify('-1 day')->format('Y-m-d');
+            $minor_days = 0;
+            if (compare_iso_dates($minor_days_end, $fecha_inicio) >= 0) {
+              $minor_days = inclusive_days_between($fecha_inicio, $minor_days_end) ?? 0;
+            }
+            $total_days = inclusive_days_between($fecha_inicio, $period_end);
+
+            if ($total_days === null || $total_days <= 0) {
+              $minor_age_warning_message = 'El alumno/a será menor de edad al iniciar las prácticas y cumplirá 18 años durante las mismas.';
+              $minor_age_warning_details[] = 'No se han podido calcular los porcentajes por falta de fechas válidas del periodo.';
+            } else {
+              $minor_percentage = round(($minor_days / $total_days) * 100, 1);
+              $adult_percentage = round(100 - $minor_percentage, 1);
+              $minor_age_warning_message = sprintf(
+                'El alumno/a será menor de edad al iniciar las prácticas y cumplirá 18 años en el transcurso de las mismas (hará un %.1f%% de días siendo menor de edad y un %.1f%% de días siendo mayor de edad).',
+                $minor_percentage,
+                $adult_percentage
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if ($minor_age_warning_message === null && $requires_minor_age_confirmation) {
+    $minor_age_warning_message = 'El alumno/a será menor de edad al iniciar las prácticas.';
+  }
+
   if (!$errors) {
     if ($requires_circ_excep && !$confirm_circ_excep) {
       $pending_circ_excep_confirmation = true;
@@ -515,17 +603,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($unknown_province_by_policy) {
         $anexo4_warning_reasons[] = 'Política aplicada: al no poder verificar provincia se marca circ_excep=1 para evitar incumplimientos.';
       }
-    } else {
+    }
+
+    if ($requires_minor_age_confirmation && !$confirm_minor_age) {
+      $pending_minor_age_confirmation = true;
+    }
+
+    if (!$pending_circ_excep_confirmation && !$pending_minor_age_confirmation) {
       try {
         $pdo->beginTransaction();
 
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
             id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
-            fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, circ_excep
+            fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, circ_excep, mayor_edad
           ) VALUES (
             :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
-            :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :circ_excep
+            :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :circ_excep, :mayor_edad
           )'
         );
 
@@ -543,6 +637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'dias_extra' => $dias_extra,
           'observaciones' => $observaciones,
           'circ_excep' => $requires_circ_excep ? 1 : 0,
+          'mayor_edad' => $mayor_edad,
         ]);
 
         $practice_id = (int) $pdo->lastInsertId();
@@ -775,10 +870,29 @@ $dias_semana = [
         </section>
       <?php endif; ?>
 
+      <?php if ($pending_minor_age_confirmation): ?>
+        <section class="panel">
+          <div class="panel-header">
+            <h3><?php echo htmlspecialchars($minor_age_warning_message ?? '', ENT_QUOTES, 'UTF-8'); ?></h3>
+            <p>Antes de guardar, confirma que deseas continuar con esta práctica.</p>
+          </div>
+          <?php if ($minor_age_warning_details): ?>
+            <ul class="form-errors">
+              <?php foreach ($minor_age_warning_details as $detail): ?>
+                <li><?php echo htmlspecialchars($detail, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+        </section>
+      <?php endif; ?>
+
       <form method="post" class="panel entity-form practica-nueva-form">
         <input type="hidden" name="id_curso_escolar" value="<?php echo $active_course_id; ?>">
         <?php if ($pending_circ_excep_confirmation): ?>
           <input type="hidden" name="confirm_circ_excep" value="1">
+        <?php endif; ?>
+        <?php if ($pending_minor_age_confirmation): ?>
+          <input type="hidden" name="confirm_minor_age" value="1">
         <?php endif; ?>
 
         <section class="entity-section">
@@ -946,7 +1060,7 @@ $dias_semana = [
         </section>
 
         <div class="form-actions">
-          <?php if ($pending_circ_excep_confirmation): ?>
+          <?php if ($pending_circ_excep_confirmation || $pending_minor_age_confirmation): ?>
             <button type="submit" class="edit-toggle">Guardar igualmente</button>
             <a href="practica_nueva.php" class="ghost-button">Volver y revisar</a>
           <?php else: ?>
