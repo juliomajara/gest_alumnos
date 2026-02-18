@@ -18,13 +18,25 @@ try {
   $pdo = db();
   $sql = <<<'SQL'
 SELECT p.*, p.fecha_fin, p.fecha_fin_real, p.dias_extra, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
-  e.convenio AS empresa_convenio, e.nombre AS empresa_nombre, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
+  e.convenio AS empresa_convenio, e.nombre AS empresa_nombre, e.cif AS empresa_cif, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
   d.id_provincia AS direccion_id_provincia, d.nombre_via AS direccion_nombre_via, d.numero AS direccion_numero, d.bloque AS direccion_bloque, d.escalera AS direccion_escalera,
   d.planta AS direccion_planta, d.puerta AS direccion_puerta, d.otros AS direccion_otros, d.cp AS direccion_cp, v.via AS direccion_via_tipo, ld.nombre AS direccion_localidad,
   pd.nombre AS direccion_provincia, pa.pais AS direccion_pais, ac.id_curso_escolar, ac.id_curso, ce.curso_escolar, c.curso AS curso_ordinal, ac.id_grupo, g.id_ciclo,
-  ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo,
+  ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, pc.nombre AS pc_nombre, pc.apellido1 AS pc_apellido1, pc.apellido2 AS pc_apellido2,
   CONCAT_WS(CHAR(32), pc.apellido1, pc.apellido2, pc.nombre) AS tutor_centro,
-  (SELECT c1.direccion_correo FROM correos c1 WHERE c1.entidad_tipo = 'alumno' AND c1.id_entidad = a.id_alumno ORDER BY c1.id_correo ASC LIMIT 1) AS alumno_email,
+  (
+    SELECT c1.direccion_correo
+    FROM correos c1
+    WHERE c1.entidad_tipo = 'alumno' AND c1.id_entidad = a.id_alumno
+    ORDER BY
+      CASE
+        WHEN TRIM(COALESCE(c1.etiqueta, '')) = 'EducaMadrid' THEN 1
+        WHEN TRIM(COALESCE(c1.etiqueta, '')) = 'Personal' THEN 2
+        ELSE 3
+      END,
+      c1.id_correo ASC
+    LIMIT 1
+  ) AS alumno_email,
   (SELECT t1.telefono FROM telefonos t1 WHERE t1.entidad_tipo = 'alumno' AND t1.id_entidad = a.id_alumno ORDER BY t1.id_telefono ASC LIMIT 1) AS alumno_telefono,
   (SELECT c2.direccion_correo FROM correos c2 WHERE c2.entidad_tipo = 'empresa' AND c2.id_entidad = e.id_empresa ORDER BY c2.id_correo ASC LIMIT 1) AS empresa_email,
   (SELECT t2.telefono FROM telefonos t2 WHERE t2.entidad_tipo = 'empresa' AND t2.id_entidad = e.id_empresa ORDER BY t2.id_telefono ASC LIMIT 1) AS empresa_telefono,
@@ -88,11 +100,118 @@ SQL;
   }
 
   $paths = practicas_get_document_paths($practice);
+  $sanitizePlanFileComponent = static function (?string $value, int $maxLength = 80): string {
+    $value = trim((string) $value);
+    if ($value === '') {
+      return 'NA';
+    }
+
+    $value = preg_replace('/[\\\/\:*?"<>|]+/u', '', $value) ?? '';
+    $value = preg_replace('/\s+/u', '', $value) ?? '';
+    $value = preg_replace('/_+/u', '_', $value) ?? '';
+    $value = trim($value, '._-');
+
+    if ($value === '') {
+      return 'NA';
+    }
+
+    return function_exists('mb_substr') ? mb_substr($value, 0, $maxLength) : substr($value, 0, $maxLength);
+  };
+
+  $planFileName = sprintf(
+    'PlanFormación_%s_%s.pdf',
+    $sanitizePlanFileComponent(trim((string) ($practice['alumno_nombre'] ?? '')) . trim((string) ($practice['alumno_apellido1'] ?? ''),), 80),
+    $sanitizePlanFileComponent((string) ($practice['empresa_nombre'] ?? ''), 80)
+  );
+  $paths['plan_file_name'] = $planFileName;
+  $paths['plan_file_path'] = $paths['plan_directory'] . '/' . $planFileName;
+
+  $tutorNombre = trim((string) ($practice['pc_nombre'] ?? ''));
+  $tutorApellido1 = trim((string) ($practice['pc_apellido1'] ?? ''));
+  $tutorApellido2 = trim((string) ($practice['pc_apellido2'] ?? ''));
+  $practice['tutor_centro'] = trim(implode(' ', array_filter([$tutorApellido1, $tutorApellido2])) . ', ' . $tutorNombre, ' ,');
+
   $plan_rows = fetch_plan_formacion_rows($pdo, $practice);
   $pdfHtml = build_plan_formacion_html($practice, $schedule_by_day, $plan_rows, $pdo);
-  $plan_html_path = $paths['plan_directory'] . '/' . pathinfo($paths['plan_file_name'], PATHINFO_FILENAME) . '.html';
-  if (file_put_contents($plan_html_path, $pdfHtml) === false) {
-    throw new RuntimeException('No se pudo guardar el HTML generado del plan de formación.');
+
+  $scheduleSummaryParts = [];
+  $scheduleLabels = [1 => 'L', 2 => 'M', 3 => 'X', 4 => 'J', 5 => 'V', 6 => 'S', 7 => 'D'];
+  foreach ($scheduleLabels as $dayNumber => $dayLabel) {
+    $segments = $schedule_by_day[$dayNumber] ?? [];
+    $ranges = [];
+    foreach ($segments as $segment) {
+      $entrada = format_time($segment['hora_entrada'] ?? null, '');
+      $salida = format_time($segment['hora_salida'] ?? null, '');
+      if ($entrada !== '' && $salida !== '') {
+        $ranges[] = $entrada . '-' . $salida;
+      }
+    }
+    if ($ranges !== []) {
+      $scheduleSummaryParts[] = $dayLabel . ': ' . implode(' / ', $ranges);
+    }
+  }
+
+  $todayRaw = date('Y-m-d');
+  $startDateRaw = trim((string) ($practice['fecha_inicio'] ?? ''));
+  $creationDateRaw = $todayRaw;
+  if ($startDateRaw !== '' && $todayRaw > $startDateRaw) {
+    $candidate = DateTime::createFromFormat('Y-m-d', $startDateRaw);
+    if ($candidate && $candidate->format('Y-m-d') === $startDateRaw) {
+      $candidate->modify('-1 day');
+      $noLectivosStmt = $pdo->prepare('SELECT 1 FROM no_lectivos WHERE fecha = :fecha LIMIT 1');
+      for ($attempt = 0; $attempt < 370; $attempt++) {
+        $weekday = (int) $candidate->format('N');
+        if ($weekday >= 6) {
+          $candidate->modify('-1 day');
+          continue;
+        }
+
+        $noLectivosStmt->execute(['fecha' => $candidate->format('Y-m-d')]);
+        $isNoLectivo = (bool) $noLectivosStmt->fetchColumn();
+        if (!$isNoLectivo) {
+          $creationDateRaw = $candidate->format('Y-m-d');
+          break;
+        }
+
+        $candidate->modify('-1 day');
+      }
+    } else {
+      $previousSchoolDay = get_previous_school_day($startDateRaw, $pdo);
+      if ($previousSchoolDay !== null) {
+        $creationDateRaw = $previousSchoolDay;
+      }
+    }
+  }
+  $creationDate = format_date($creationDateRaw, date('d/m/Y'));
+
+  $dom = new DOMDocument();
+  libxml_use_internal_errors(true);
+  $htmlForDom = function_exists('mb_convert_encoding')
+    ? mb_convert_encoding($pdfHtml, 'HTML-ENTITIES', 'UTF-8')
+    : $pdfHtml;
+  $dom->loadHTML($htmlForDom);
+  libxml_clear_errors();
+  $xpath = new DOMXPath($dom);
+
+  $titleCellSpans = $xpath->query('//td[contains(concat(" ", normalize-space(@class), " "), " title-cell ")]//span');
+  if ($titleCellSpans instanceof DOMNodeList && $titleCellSpans->length >= 2) {
+    $dateSpan = $titleCellSpans->item(1);
+    if ($dateSpan instanceof DOMElement) {
+      $dateSpan->textContent = $creationDate;
+    }
+  }
+
+  $periodHorarioSpan = $xpath->query('//table[.//strong[contains(normalize-space(.), "Periodos de formación en empresa u organismo equiparado:")]]/tr[3]/td[3]//span[1]');
+  if ($periodHorarioSpan instanceof DOMNodeList && $periodHorarioSpan->length > 0) {
+    $horario = $periodHorarioSpan->item(0);
+    if ($horario instanceof DOMElement) {
+      $horario->textContent = implode(' / ', $scheduleSummaryParts);
+    }
+  }
+
+  $pdfHtml = $dom->saveHTML();
+  if (trim((string) $pdfHtml) === '') {
+    throw new RuntimeException('El contenido renderizado del plan de formación está vacío.');
   }
 
   $mpdf = new Mpdf([
