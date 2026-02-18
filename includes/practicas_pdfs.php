@@ -61,8 +61,9 @@ function practicas_build_plan_pdf_filename(array $practice): string {
       }
     }
 
+    $value = preg_replace('/[\x00-\x1F\x7F]+/', '', $value) ?? '';
     $value = preg_replace('/[\/\\:*?"<>|]+/', '', $value) ?? '';
-    $value = preg_replace('/[^A-Za-z0-9]+/', '_', $value) ?? '';
+    $value = preg_replace('/[^A-Za-z0-9]+/', '', $value) ?? '';
     $value = preg_replace('/_+/', '_', $value) ?? '';
     $value = trim($value, '._-');
 
@@ -73,14 +74,32 @@ function practicas_build_plan_pdf_filename(array $practice): string {
     return function_exists('mb_substr') ? mb_substr($value, 0, $maxLength) : substr($value, 0, $maxLength);
   };
 
-  $student = trim(implode(' ', array_filter([
-    trim((string) ($practice['alumno_apellido1'] ?? '')),
-    trim((string) ($practice['alumno_apellido2'] ?? '')),
-  ], static fn (string $value): bool => $value !== '')));
-  $studentName = trim((string) ($practice['alumno_nombre'] ?? ''));
-  $student = trim($student) . ($student !== '' && $studentName !== '' ? '_' : '') . $studentName;
+  $baseName = implode('_', [
+    'PF',
+    $sanitize((string) ($practice['anexo'] ?? ''), 20),
+    $sanitize((string) ($practice['empresa_convenio'] ?? ''), 20),
+    $sanitize((string) ($practice['alumno_nombre'] ?? '') . (string) ($practice['alumno_apellido1'] ?? ''), 40),
+    $sanitize((string) ($practice['empresa_nombre'] ?? ''), 40),
+  ]);
 
-  return sprintf('PlanFormación_%s_%s_%s.pdf', $sanitize($student, 80), $sanitize((string) ($practice['empresa_nombre'] ?? ''), 80), date('Ymd'));
+  $baseName = preg_replace('/_+/', '_', $baseName) ?? 'PF';
+  $baseName = trim($baseName, '._-');
+  if ($baseName === '') {
+    $baseName = 'PF';
+  }
+
+  $maxBaseLength = 80 - 4;
+  if (function_exists('mb_substr')) {
+    $baseName = mb_substr($baseName, 0, $maxBaseLength);
+  } else {
+    $baseName = substr($baseName, 0, $maxBaseLength);
+  }
+  $baseName = rtrim($baseName, '._-');
+  if ($baseName === '') {
+    $baseName = 'PF';
+  }
+
+  return $baseName . '.pdf';
 }
 
 function practicas_get_document_paths(array $practice): array {

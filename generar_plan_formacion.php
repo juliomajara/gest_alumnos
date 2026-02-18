@@ -241,6 +241,7 @@ SQL;
   $mpdf = new Mpdf([
     'mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 10, 'margin_right' => 10,
     'margin_top' => 10, 'margin_bottom' => 10, 'default_font_size' => 12,
+    'default_font' => 'arial',
     'shrink_tables_to_fit' => 0, 'tempDir' => ensure_mpdf_temp_dir(), 'keep_table_proportions' => true, 'use_kwt' => true,
   ]);
   $mpdf->setBasePath(__DIR__ . '/docs/');
