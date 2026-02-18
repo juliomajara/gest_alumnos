@@ -38,8 +38,54 @@ SELECT p.*, p.fecha_fin, p.fecha_fin_real, p.dias_extra, a.nombre AS alumno_nomb
     LIMIT 1
   ) AS alumno_email,
   (SELECT t1.telefono FROM telefonos t1 WHERE t1.entidad_tipo = 'alumno' AND t1.id_entidad = a.id_alumno ORDER BY t1.id_telefono ASC LIMIT 1) AS alumno_telefono,
-  (SELECT c2.direccion_correo FROM correos c2 WHERE c2.entidad_tipo = 'empresa' AND c2.id_entidad = e.id_empresa ORDER BY c2.id_correo ASC LIMIT 1) AS empresa_email,
-  (SELECT t2.telefono FROM telefonos t2 WHERE t2.entidad_tipo = 'empresa' AND t2.id_entidad = e.id_empresa ORDER BY t2.id_telefono ASC LIMIT 1) AS empresa_telefono,
+  COALESCE(
+    (SELECT c2.direccion_correo FROM correos c2 WHERE c2.entidad_tipo = 'empresa' AND c2.id_entidad = e.id_empresa ORDER BY c2.id_correo ASC LIMIT 1),
+    (
+      SELECT cc1.direccion_correo
+      FROM correos cc1
+      WHERE cc1.entidad_tipo = 'empresa_contacto'
+        AND cc1.id_entidad = (
+          SELECT ec1.id_empresa_contacto
+          FROM empresas_contactos ec1
+          WHERE ec1.id_empresa = e.id_empresa
+          ORDER BY ec1.id_empresa_contacto ASC
+          LIMIT 1
+        )
+      ORDER BY cc1.id_correo ASC
+      LIMIT 1
+    )
+  ) AS empresa_email,
+  COALESCE(
+    (SELECT t2.telefono FROM telefonos t2 WHERE t2.entidad_tipo = 'empresa' AND t2.id_entidad = e.id_empresa ORDER BY t2.id_telefono ASC LIMIT 1),
+    (
+      SELECT tc1.telefono
+      FROM telefonos tc1
+      WHERE tc1.entidad_tipo = 'empresa_contacto'
+        AND tc1.id_entidad = (
+          SELECT ec1.id_empresa_contacto
+          FROM empresas_contactos ec1
+          WHERE ec1.id_empresa = e.id_empresa
+          ORDER BY ec1.id_empresa_contacto ASC
+          LIMIT 1
+        )
+      ORDER BY tc1.id_telefono ASC
+      LIMIT 1
+    ),
+    (
+      SELECT tc2.telefono
+      FROM telefonos tc2
+      WHERE tc2.entidad_tipo = 'empresa_contacto'
+        AND tc2.id_entidad = (
+          SELECT ec2.id_empresa_contacto
+          FROM empresas_contactos ec2
+          WHERE ec2.id_empresa = e.id_empresa
+          ORDER BY ec2.id_empresa_contacto ASC
+          LIMIT 1 OFFSET 1
+        )
+      ORDER BY tc2.id_telefono ASC
+      LIMIT 1
+    )
+  ) AS empresa_telefono,
   (SELECT c3.direccion_correo FROM correos c3 WHERE c3.entidad_tipo = 'empresa_tutor' AND c3.id_entidad = et.id_empresas_tutor ORDER BY c3.id_correo ASC LIMIT 1) AS tutor_empresa_email,
   (SELECT t3.telefono FROM telefonos t3 WHERE t3.entidad_tipo = 'empresa_tutor' AND t3.id_entidad = et.id_empresas_tutor ORDER BY t3.id_telefono ASC LIMIT 1) AS tutor_empresa_telefono,
   (SELECT c4.direccion_correo FROM correos c4 WHERE c4.entidad_tipo = 'profesor' AND c4.id_entidad = pc.id_profesor ORDER BY c4.id_correo ASC LIMIT 1) AS tutor_centro_email,
