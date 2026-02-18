@@ -36,6 +36,38 @@ function format_bool(?int $value, string $fallback = 'No disponible'): string {
   return $value === 1 ? 'Sí' : 'No';
 }
 
+function calculate_practica_estado(array $practica): string {
+  if ((int) ($practica['cancelada'] ?? 0) === 1) {
+    return 'Cancelada';
+  }
+
+  $fecha_inicio = $practica['fecha_inicio'] ?? null;
+  $fecha_fin_real = $practica['fecha_fin_real'] ?? null;
+
+  if (!$fecha_inicio || !$fecha_fin_real) {
+    return 'No disponible';
+  }
+
+  $inicio = DateTime::createFromFormat('Y-m-d', (string) $fecha_inicio);
+  $fin_real = DateTime::createFromFormat('Y-m-d', (string) $fecha_fin_real);
+
+  if (!$inicio || !$fin_real) {
+    return 'No disponible';
+  }
+
+  $hoy = new DateTime('today');
+
+  if ($hoy < $inicio) {
+    return 'En espera';
+  }
+
+  if ($hoy > $fin_real) {
+    return 'Finalizada';
+  }
+
+  return 'En curso';
+}
+
 function pick_contact_value(array $items, string $value_key, array $preferred_labels): ?string {
   foreach ($preferred_labels as $label) {
     foreach ($items as $item) {
@@ -156,9 +188,10 @@ if ($company) {
     'SELECT pr.id_practica,
             pr.fecha_inicio,
             pr.fecha_fin,
+            pr.fecha_fin_real,
+            pr.cancelada,
             pr.horas,
             pr.observaciones,
-            pe.estado AS practicas_estado,
             et.nombre AS tutor_nombre,
             et.apellido1 AS tutor_apellido1,
             et.apellido2 AS tutor_apellido2,
@@ -182,7 +215,6 @@ if ($company) {
             ll.nombre AS direccion_localidad,
             pa.pais AS direccion_pais
      FROM practicas pr
-     LEFT JOIN practicas_estados pe ON pe.id_practicas_estado = pr.id_practicas_estado
      LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = pr.id_empresa_tutor
      LEFT JOIN alumnos a ON a.id_alumno = pr.id_alumno
      LEFT JOIN direcciones d ON d.id_direccion = pr.id_direccion
@@ -682,7 +714,7 @@ $dias_semana = [
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars($alumno_detalle, ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(format_value($practica['practicas_estado']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(calculate_practica_estado($practica), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars($fechas, ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $practica['horas'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td>
