@@ -8,7 +8,8 @@ require_once __DIR__ . '/includes/practicas_pdf_helpers.php';
 
 use Mpdf\Mpdf;
 
-$id_practica = filter_var($_GET['id_practica'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+$id_practica_raw = $_GET['id_practica'] ?? null;
+$id_practica = filter_var($id_practica_raw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 if ($id_practica === false || $id_practica === null) {
   practicas_redirect_to_detail(0, null, 'Plan: No se ha indicado un identificador de práctica válido.');
 }
