@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-02-2026 a las 12:48:50
+-- Tiempo de generación: 18-02-2026 a las 13:05:59
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -363,13 +363,13 @@ CREATE TABLE `practicas` (
   `id_direccion` int(10) UNSIGNED DEFAULT NULL,
   `id_empresa_tutor` int(10) UNSIGNED DEFAULT NULL,
   `anexo` smallint(5) UNSIGNED DEFAULT NULL,
-  `id_practicas_estado` int(10) UNSIGNED DEFAULT NULL,
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
   `fecha_fin_real` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
+  `cancelada` tinyint(1) NOT NULL DEFAULT 0,
   `mayor_edad` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -395,17 +395,6 @@ CREATE TABLE `practicas_anexos` (
 
 CREATE TABLE `practicas_anexos_estados` (
   `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL,
-  `estado` varchar(60) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `practicas_estados`
---
-
-CREATE TABLE `practicas_estados` (
-  `id_practicas_estado` int(10) UNSIGNED NOT NULL,
   `estado` varchar(60) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -698,8 +687,7 @@ ALTER TABLE `practicas`
   ADD KEY `fk_pra_alumno` (`id_alumno`),
   ADD KEY `fk_pra_empresa` (`id_empresa`),
   ADD KEY `fk_pra_direccion` (`id_direccion`),
-  ADD KEY `fk_pra_tutor` (`id_empresa_tutor`),
-  ADD KEY `fk_pra_estado` (`id_practicas_estado`);
+  ADD KEY `fk_pra_tutor` (`id_empresa_tutor`);
 
 --
 -- Indices de la tabla `practicas_anexos`
@@ -712,12 +700,6 @@ ALTER TABLE `practicas_anexos`
 --
 ALTER TABLE `practicas_anexos_estados`
   ADD PRIMARY KEY (`id_practicas_anexo_estado`);
-
---
--- Indices de la tabla `practicas_estados`
---
-ALTER TABLE `practicas_estados`
-  ADD PRIMARY KEY (`id_practicas_estado`);
 
 --
 -- Indices de la tabla `practicas_horario`
@@ -920,12 +902,6 @@ ALTER TABLE `practicas_anexos_estados`
   MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `practicas_estados`
---
-ALTER TABLE `practicas_estados`
-  MODIFY `id_practicas_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
@@ -1083,7 +1059,6 @@ ALTER TABLE `practicas`
   ADD CONSTRAINT `fk_pra_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`),
   ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_pra_estado` FOREIGN KEY (`id_practicas_estado`) REFERENCES `practicas_estados` (`id_practicas_estado`),
   ADD CONSTRAINT `fk_pra_tutor` FOREIGN KEY (`id_empresa_tutor`) REFERENCES `empresas_tutores` (`id_empresas_tutor`);
 
 --

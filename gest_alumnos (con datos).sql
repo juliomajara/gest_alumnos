@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-02-2026 a las 10:16:58
+-- Tiempo de generación: 18-02-2026 a las 13:05:49
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -2112,13 +2112,14 @@ CREATE TABLE `practicas` (
   `id_direccion` int(10) UNSIGNED DEFAULT NULL,
   `id_empresa_tutor` int(10) UNSIGNED DEFAULT NULL,
   `anexo` smallint(5) UNSIGNED DEFAULT NULL,
-  `id_practicas_estado` int(10) UNSIGNED DEFAULT NULL,
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
   `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
   `fecha_fin_real` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
+  `cancelada` tinyint(1) NOT NULL DEFAULT 0,
+  `mayor_edad` tinyint(1) NOT NULL DEFAULT 0,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -2126,34 +2127,33 @@ CREATE TABLE `practicas` (
 -- Volcado de datos para la tabla `practicas`
 --
 
-INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `id_practicas_estado`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `fecha_fin_real`, `horas`, `circ_excep`, `observaciones`) VALUES
-(1, 23, 1, 1, 1, 59, 1, '2026-02-23', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
-(2, 25, 2, 2, 2, 95, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
-(3, 28, 3, 5, 4, 64, 1, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, NULL),
-(4, 30, 4, 7, 5, 60, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(5, 31, 5, 8, 6, 154, 1, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, NULL),
-(6, 39, 6, 9, 7, 61, 1, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, NULL),
-(7, 44, 7, 11, 8, 143, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(8, 46, 8, 12, 9, 153, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, NULL),
-(9, 47, 9, 13, 10, 62, 1, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, NULL),
-(10, 48, 8, 12, 9, 63, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, NULL),
-(11, 2, 10, 14, 11, 93, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(12, 11, 11, 15, 12, 94, 1, '2026-02-23', '2026-05-28', 1, '2026-05-29', 440, 0, NULL),
-(13, 42, 17, 21, 18, 21, 1, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, NULL),
-(14, 16, 8, 12, 9, 18, 1, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 1, NULL),
-(15, 17, 9, 13, 10, 26, 1, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, NULL),
-(16, 40, 16, 20, 17, 27, 1, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, NULL),
-(17, 43, 18, 22, 19, 17, 1, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 0, NULL),
-(18, 1, 19, 23, 20, 16, 1, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, NULL),
-(19, 26, 13, 17, 14, 166, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(20, 27, 13, 17, 14, 166, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(21, 29, 12, 16, 13, 165, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(22, 24, 12, 16, 13, 165, 1, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, NULL),
-(23, 35, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
-(24, 45, 15, 19, 16, 167, 1, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, NULL),
-(25, 37, 6, 9, 7, 174, 1, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, NULL),
-(26, 47, 9, 13, 10, 175, 1, '2026-02-26', '2026-05-13', 0, '2026-05-13', 370, 0, NULL),
-(27, 32, 9, 13, 10, 177, 1, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, NULL);
+INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `fecha_fin_real`, `horas`, `circ_excep`, `cancelada`, `mayor_edad`, `observaciones`) VALUES
+(1, 23, 1, 1, 1, 59, '2026-02-23', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
+(2, 25, 2, 2, 2, 95, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
+(3, 28, 3, 5, 4, 64, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL),
+(4, 30, 4, 7, 5, 60, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(5, 31, 5, 8, 6, 154, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, 0, 0, NULL),
+(6, 39, 6, 9, 7, 61, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, 0, 0, NULL),
+(7, 44, 7, 11, 8, 143, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(8, 46, 8, 12, 9, 153, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, 0, 0, NULL),
+(10, 48, 8, 12, 9, 63, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, 0, 0, NULL),
+(11, 2, 10, 14, 11, 93, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(12, 11, 11, 15, 12, 94, '2026-02-23', '2026-05-28', 1, '2026-05-29', 440, 0, 0, 0, NULL),
+(13, 42, 17, 21, 18, 21, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, 0, 0, NULL),
+(14, 16, 8, 12, 9, 18, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 1, 0, 0, NULL),
+(15, 17, 9, 13, 10, 26, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, 0, 0, NULL),
+(16, 40, 16, 20, 17, 27, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, 0, 0, NULL),
+(17, 43, 18, 22, 19, 17, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 0, 0, 0, NULL),
+(18, 1, 19, 23, 20, 16, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, 0, 0, NULL),
+(19, 26, 13, 17, 14, 166, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(20, 27, 13, 17, 14, 166, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
+(23, 35, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
+(24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
+(25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL),
+(26, 47, 9, 13, 10, 175, '2026-02-26', '2026-05-13', 0, '2026-05-13', 370, 0, 0, 0, NULL),
+(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, 0, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -2205,27 +2205,6 @@ INSERT INTO `practicas_anexos_estados` (`id_practicas_anexo_estado`, `estado`) V
 (7, 'Completado'),
 (8, 'Enviado al alumno'),
 (9, 'Devuelto a la empresa');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `practicas_estados`
---
-
-CREATE TABLE `practicas_estados` (
-  `id_practicas_estado` int(10) UNSIGNED NOT NULL,
-  `estado` varchar(60) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `practicas_estados`
---
-
-INSERT INTO `practicas_estados` (`id_practicas_estado`, `estado`) VALUES
-(1, 'En espera'),
-(2, 'En curso'),
-(3, 'Finalizada'),
-(4, 'Cancelada');
 
 -- --------------------------------------------------------
 
@@ -2308,11 +2287,6 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (60, 8, 4, '16:30:00', '19:30:00'),
 (61, 8, 5, '09:30:00', '14:30:00'),
 (62, 8, 5, '16:30:00', '19:30:00'),
-(63, 9, 1, '08:00:00', '16:00:00'),
-(64, 9, 2, '08:00:00', '16:00:00'),
-(65, 9, 3, '08:00:00', '16:00:00'),
-(66, 9, 4, '08:00:00', '16:00:00'),
-(67, 9, 5, '08:00:00', '16:00:00'),
 (68, 10, 1, '09:30:00', '14:30:00'),
 (69, 10, 1, '16:30:00', '19:30:00'),
 (70, 10, 2, '09:30:00', '14:30:00'),
@@ -3141,8 +3115,7 @@ ALTER TABLE `practicas`
   ADD KEY `fk_pra_alumno` (`id_alumno`),
   ADD KEY `fk_pra_empresa` (`id_empresa`),
   ADD KEY `fk_pra_direccion` (`id_direccion`),
-  ADD KEY `fk_pra_tutor` (`id_empresa_tutor`),
-  ADD KEY `fk_pra_estado` (`id_practicas_estado`);
+  ADD KEY `fk_pra_tutor` (`id_empresa_tutor`);
 
 --
 -- Indices de la tabla `practicas_anexos`
@@ -3155,12 +3128,6 @@ ALTER TABLE `practicas_anexos`
 --
 ALTER TABLE `practicas_anexos_estados`
   ADD PRIMARY KEY (`id_practicas_anexo_estado`);
-
---
--- Indices de la tabla `practicas_estados`
---
-ALTER TABLE `practicas_estados`
-  ADD PRIMARY KEY (`id_practicas_estado`);
 
 --
 -- Indices de la tabla `practicas_horario`
@@ -3363,12 +3330,6 @@ ALTER TABLE `practicas_anexos_estados`
   MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
--- AUTO_INCREMENT de la tabla `practicas_estados`
---
-ALTER TABLE `practicas_estados`
-  MODIFY `id_practicas_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
@@ -3526,7 +3487,6 @@ ALTER TABLE `practicas`
   ADD CONSTRAINT `fk_pra_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`),
   ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_pra_estado` FOREIGN KEY (`id_practicas_estado`) REFERENCES `practicas_estados` (`id_practicas_estado`),
   ADD CONSTRAINT `fk_pra_tutor` FOREIGN KEY (`id_empresa_tutor`) REFERENCES `empresas_tutores` (`id_empresas_tutor`);
 
 --
