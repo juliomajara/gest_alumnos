@@ -158,10 +158,20 @@ if ($student) {
     'SELECT pr.id_practica,
             pr.fecha_inicio,
             pr.fecha_fin,
+            pr.fecha_fin_real,
+            pr.cancelada,
             pr.horas,
             pr.observaciones,
             e.nombre AS empresa,
-            pe.estado AS practicas_estado,
+            CASE
+              WHEN pr.cancelada = 1 THEN "Cancelada"
+              WHEN pr.fecha_inicio IS NULL OR pr.fecha_inicio = "" THEN ""
+              WHEN COALESCE(NULLIF(pr.fecha_fin_real, ""), pr.fecha_fin) IS NULL
+                OR COALESCE(NULLIF(pr.fecha_fin_real, ""), pr.fecha_fin) = "" THEN ""
+              WHEN CURDATE() < pr.fecha_inicio THEN "En espera"
+              WHEN CURDATE() <= COALESCE(NULLIF(pr.fecha_fin_real, ""), pr.fecha_fin) THEN "En curso"
+              ELSE "Finalizada"
+            END AS practicas_estado,
             et.nombre AS tutor_nombre,
             et.apellido1 AS tutor_apellido1,
             et.apellido2 AS tutor_apellido2,
@@ -181,7 +191,6 @@ if ($student) {
             pa.pais AS direccion_pais
      FROM practicas pr
      LEFT JOIN empresas e ON e.id_empresa = pr.id_empresa
-     LEFT JOIN practicas_estados pe ON pe.id_practicas_estado = pr.id_practicas_estado
      LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = pr.id_empresa_tutor
      LEFT JOIN direcciones d ON d.id_direccion = pr.id_direccion
      LEFT JOIN vias v ON v.id_via = d.id_via
