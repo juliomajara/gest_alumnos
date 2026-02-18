@@ -100,29 +100,7 @@ SQL;
   }
 
   $paths = practicas_get_document_paths($practice);
-  $sanitizePlanFileComponent = static function (?string $value, int $maxLength = 80): string {
-    $value = trim((string) $value);
-    if ($value === '') {
-      return 'NA';
-    }
-
-    $value = preg_replace('/[\\\/\:*?"<>|]+/u', '', $value) ?? '';
-    $value = preg_replace('/\s+/u', '', $value) ?? '';
-    $value = preg_replace('/_+/u', '_', $value) ?? '';
-    $value = trim($value, '._-');
-
-    if ($value === '') {
-      return 'NA';
-    }
-
-    return function_exists('mb_substr') ? mb_substr($value, 0, $maxLength) : substr($value, 0, $maxLength);
-  };
-
-  $planFileName = sprintf(
-    'PlanFormación_%s_%s.pdf',
-    $sanitizePlanFileComponent(trim((string) ($practice['alumno_nombre'] ?? '')) . trim((string) ($practice['alumno_apellido1'] ?? ''),), 80),
-    $sanitizePlanFileComponent((string) ($practice['empresa_nombre'] ?? ''), 80)
-  );
+  $planFileName = practicas_build_plan_pdf_filename($practice);
   $paths['plan_file_name'] = $planFileName;
   $paths['plan_file_path'] = $paths['plan_directory'] . '/' . $planFileName;
 
