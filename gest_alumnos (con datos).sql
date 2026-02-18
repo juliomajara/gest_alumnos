@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-02-2026 a las 13:05:49
+-- Tiempo de generación: 18-02-2026 a las 18:27:24
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1584,6 +1584,7 @@ CREATE TABLE `empresas` (
   `nombre` varchar(60) NOT NULL,
   `apellido1` varchar(60) DEFAULT NULL,
   `apellido2` varchar(60) DEFAULT NULL,
+  `nombre_comercial` varchar(150) DEFAULT NULL,
   `convenio` smallint(5) UNSIGNED DEFAULT NULL,
   `notas` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -1592,26 +1593,26 @@ CREATE TABLE `empresas` (
 -- Volcado de datos para la tabla `empresas`
 --
 
-INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `convenio`, `notas`) VALUES
-(1, 'B84523786', 'Fuenlabrada GTP Sistemas, S.L.', NULL, NULL, 1350, NULL),
-(2, 'B56352123', 'Whitewater Treatment Spain, S.L.', NULL, NULL, 1306, NULL),
-(3, 'B86218609', 'Zelenza, S.L.', NULL, NULL, 1557, NULL),
-(4, 'B83331041', 'Madrid Theme Park Management, S.L.', NULL, NULL, 408, NULL),
-(5, '47039080D', 'Ana María', 'García-Page', 'Díaz', 1562, NULL),
-(6, 'B82049602', 'Jet Computer, S.L.', NULL, NULL, 805, NULL),
-(7, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, 916, NULL),
-(8, '02767448L', 'César Martín', 'Lara', 'Bastidas', 917, NULL),
-(9, 'B81848749', 'Memory Sistemas Informáticos, S.L.', NULL, NULL, 433, NULL),
-(10, 'B80691694', 'Laboratorio Técnico Informático, S.L.', NULL, NULL, 1352, NULL),
-(11, 'A87299848', 'Imprenta de Billetes, S. A.', NULL, NULL, 1351, NULL),
-(12, 'B85224376', 'Instituto de Diseño, Estilismo y Moda S.L.', NULL, NULL, 1560, NULL),
-(13, 'B13904214', 'Magaversa, S.L.', NULL, NULL, 1568, NULL),
-(14, '51069694B', 'Ana', 'Alfageme', 'Langdon', 1563, NULL),
-(15, '50474566P', 'Teresa', 'Hernando', 'Herrero', 1556, NULL),
-(16, 'B84425420', 'Ibérica Infocomputer, S.L.', NULL, NULL, 1325, NULL),
-(17, 'G87063285', 'Fundación Clínica Universitaria de la Universidad Rey Juan C', NULL, NULL, 900, NULL),
-(18, 'B87999504', 'Gruservit, Grupo de Servicios Informáticos y Tecnología S.L.', NULL, NULL, 960, NULL),
-(19, '52100377H', 'Julián', 'Grande', 'Santamaría', 1320, NULL);
+INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `nombre_comercial`, `convenio`, `notas`) VALUES
+(1, 'B84523786', 'Fuenlabrada GTP Sistemas, S.L.', NULL, NULL, NULL, 1350, NULL),
+(2, 'B56352123', 'Whitewater Treatment Spain, S.L.', NULL, NULL, NULL, 1306, NULL),
+(3, 'B86218609', 'Zelenza, S.L.', NULL, NULL, NULL, 1557, NULL),
+(4, 'B83331041', 'Madrid Theme Park Management, S.L.', NULL, NULL, NULL, 408, NULL),
+(5, '47039080D', 'Ana María', 'García-Page', 'Díaz', NULL, 1562, NULL),
+(6, 'B82049602', 'Jet Computer, S.L.', NULL, NULL, NULL, 805, NULL),
+(7, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, NULL, 916, NULL),
+(8, '02767448L', 'César Martín', 'Lara', 'Bastidas', NULL, 917, NULL),
+(9, 'B81848749', 'Memory Sistemas Informáticos, S.L.', NULL, NULL, NULL, 433, NULL),
+(10, 'B80691694', 'Laboratorio Técnico Informático, S.L.', NULL, NULL, NULL, 1352, NULL),
+(11, 'A87299848', 'Imprenta de Billetes, S. A.', NULL, NULL, NULL, 1351, NULL),
+(12, 'B85224376', 'Instituto de Diseño, Estilismo y Moda S.L.', NULL, NULL, NULL, 1560, NULL),
+(13, 'B13904214', 'Magaversa, S.L.', NULL, NULL, NULL, 1568, NULL),
+(14, '51069694B', 'Ana', 'Alfageme', 'Langdon', NULL, 1563, NULL),
+(15, '50474566P', 'Teresa', 'Hernando', 'Herrero', NULL, 1556, NULL),
+(16, 'B84425420', 'Ibérica Infocomputer, S.L.', NULL, NULL, NULL, 1325, NULL),
+(17, 'G87063285', 'Fundación Clínica Universitaria de la Universidad Rey Juan C', NULL, NULL, NULL, 900, NULL),
+(18, 'B87999504', 'Gruservit, Grupo de Servicios Informáticos y Tecnología S.L.', NULL, NULL, NULL, 960, NULL),
+(19, '52100377H', 'Julián', 'Grande', 'Santamaría', NULL, 1320, NULL);
 
 -- --------------------------------------------------------
 

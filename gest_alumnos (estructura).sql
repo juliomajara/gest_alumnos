@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-02-2026 a las 13:05:59
+-- Tiempo de generación: 18-02-2026 a las 18:27:45
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -196,6 +196,7 @@ CREATE TABLE `empresas` (
   `nombre` varchar(60) NOT NULL,
   `apellido1` varchar(60) DEFAULT NULL,
   `apellido2` varchar(60) DEFAULT NULL,
+  `nombre_comercial` varchar(150) DEFAULT NULL,
   `convenio` smallint(5) UNSIGNED DEFAULT NULL,
   `notas` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
