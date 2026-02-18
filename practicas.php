@@ -10,6 +10,33 @@ $allowed_orders = ['alumno', 'empresa'];
 $order_param = (string) ($_GET['orden'] ?? 'alumno');
 $current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno';
 
+$status = (string) ($_GET['status'] ?? '');
+$error_code = (string) ($_GET['error'] ?? '');
+$error_detail = trim((string) ($_GET['detail'] ?? ''));
+$flash_message = null;
+
+if ($status === 'deleted') {
+  $flash_message = 'La práctica se ha eliminado correctamente.';
+} elseif ($error_code !== '') {
+  if ($error_code === 'invalid_id') {
+    $flash_message = 'No se ha podido completar la operación porque el identificador de la práctica no es válido.';
+  } elseif ($error_code === 'not_found') {
+    $flash_message = 'No se ha encontrado la práctica solicitada o ya no está disponible.';
+  } elseif ($error_code === 'bad_confirmation') {
+    $flash_message = 'No se ha eliminado la práctica porque la confirmación del primer apellido es incorrecta.';
+  } elseif ($error_code === 'invalid_csrf') {
+    $flash_message = 'No se ha podido validar la solicitud de eliminación. Vuelve a intentarlo desde el listado.';
+  } elseif ($error_code === 'delete_failed') {
+    $flash_message = 'Se produjo un error al eliminar la práctica y se revirtieron todos los cambios.';
+  } else {
+    $flash_message = 'No se pudo completar la operación solicitada.';
+  }
+
+  if ($error_detail !== '') {
+    $flash_message .= ' Detalle: ' . $error_detail;
+  }
+}
+
 function format_date(?string $value, string $fallback = 'No disponible'): string
 {
   if ($value === null || $value === '') {
@@ -102,7 +129,7 @@ function render_practice_rows(array $practices): string
   ob_start();
   if (!$practices): ?>
     <tr>
-      <td colspan="6">No hay prácticas para los filtros seleccionados.</td>
+      <td colspan="7">No hay prácticas para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($practices as $practice): ?>
@@ -148,6 +175,11 @@ function render_practice_rows(array $practices): string
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <a class="practice-link" href="practica_eliminar.php?id_practica=<?php echo urlencode((string) $practice['id_practica']); ?>">
+            Eliminar
+          </a>
+        </td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -213,6 +245,10 @@ $active_page = 'practicas';
       </form>
 
       <section class="panel">
+        <?php if ($flash_message !== null): ?>
+          <p><?php echo htmlspecialchars($flash_message, ENT_QUOTES, 'UTF-8'); ?></p>
+        <?php endif; ?>
+
         <div class="panel-header">
           <h3>Listado de prácticas</h3>
           <p>Alumno, empresa, periodo, anexo 2.1 y estado de cada práctica.</p>
@@ -228,6 +264,7 @@ $active_page = 'practicas';
                 <th>Fecha de fin</th>
                 <th>Anexo 2.1</th>
                 <th>Estado</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
