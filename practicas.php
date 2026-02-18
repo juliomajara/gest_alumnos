@@ -52,6 +52,32 @@ function format_date(?string $value, string $fallback = 'No disponible'): string
   return $value;
 }
 
+function calculate_practice_status(array $practice): string
+{
+  if ((int) ($practice['cancelada'] ?? 0) === 1) {
+    return 'Cancelada';
+  }
+
+  $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
+  $fecha_fin_real = (string) ($practice['fecha_fin_real'] ?? '');
+
+  if ($fecha_inicio === '' || $fecha_fin_real === '') {
+    return 'No disponible';
+  }
+
+  $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+  if ($today < $fecha_inicio) {
+    return 'En espera';
+  }
+
+  if ($today <= $fecha_fin_real) {
+    return 'En curso';
+  }
+
+  return 'Finalizada';
+}
+
 function build_order_url(string $order): string
 {
   $params = $_GET;
@@ -102,21 +128,20 @@ $practices_stmt = $pdo->prepare(
     p.anexo,
     p.fecha_inicio,
     p.fecha_fin,
+    p.fecha_fin_real,
+    p.cancelada,
     a.nombre AS alumno_nombre,
     a.apellido1 AS alumno_apellido1,
     a.apellido2 AS alumno_apellido2,
     e.nombre AS empresa_nombre,
     e.apellido1 AS empresa_apellido1,
     e.apellido2 AS empresa_apellido2,
-    e.convenio,
-    pe.estado AS estado_practica
+    e.convenio
   FROM practicas p
   INNER JOIN alumnos a
     ON a.id_alumno = p.id_alumno
   INNER JOIN empresas e
     ON e.id_empresa = p.id_empresa
-  LEFT JOIN practicas_estados pe
-    ON pe.id_practicas_estado = p.id_practicas_estado
   ' . $where_clause . '
   ' . $order_clause
 );
@@ -162,7 +187,7 @@ function render_practice_rows(array $practices): string
           : 'No disponible';
         $anexo_21 = $convenio . ' / ' . $anexo;
 
-        $estado = $practice['estado_practica'] ?: 'No disponible';
+        $estado = calculate_practice_status($practice);
       ?>
       <tr>
         <td>
