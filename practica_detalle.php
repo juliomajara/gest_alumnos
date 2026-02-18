@@ -1016,7 +1016,11 @@ if ($id_practica === false || $id_practica === null) {
         p.fecha_fin,
         p.fecha_fin_real,
         p.dias_extra,
-        pe.estado AS estado_practica,
+        CASE
+          WHEN COALESCE(p.cancelada, 0) = 1 THEN \'Cancelada\'
+          ELSE NULL
+        END AS estado_practica,
+        COALESCE(p.cancelada, 0) AS id_practicas_estado,
         a.nia AS alumno_nia,
         a.dni AS alumno_dni,
         a.nombre AS alumno_nombre,
@@ -1116,7 +1120,6 @@ if ($id_practica === false || $id_practica === null) {
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
-      LEFT JOIN practicas_estados pe ON pe.id_practicas_estado = p.id_practicas_estado
       LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
       LEFT JOIN direcciones d ON d.id_direccion = p.id_direccion
       LEFT JOIN vias v ON v.id_via = d.id_via
