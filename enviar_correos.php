@@ -917,13 +917,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         $hasPlan = isset($documentTypesByStudent[$studentId]['plan']);
 
         if ($hasCalendar && $hasPlan) {
-          $bodyTemplate = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $bodyTemplate = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente los documentos.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
           $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
         } elseif ($hasCalendar) {
-          $bodyTemplate = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $bodyTemplate = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente el documento.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
           $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
         } else {
-          $bodyTemplate = "Hola [[nombre del alumno]],\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $bodyTemplate = "Hola [[nombre del alumno]],\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente el documento.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
           $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
         }
 
