@@ -54,9 +54,13 @@ function full_name(array $row, string $prefix): string {
 }
 
 function build_address(array $practice): string {
-  $parts = array_filter([
+  $via = trim(implode(' ', array_filter([
     trim((string) ($practice['direccion_via_tipo'] ?? '')),
     trim((string) ($practice['direccion_nombre_via'] ?? '')),
+  ], static fn (string $value): bool => $value !== '')));
+
+  $parts = array_filter([
+    $via,
     trim((string) ($practice['direccion_numero'] ?? '')),
     ($practice['direccion_bloque'] ?? '') !== '' ? 'Bloque ' . $practice['direccion_bloque'] : '',
     ($practice['direccion_escalera'] ?? '') !== '' ? 'Esc. ' . $practice['direccion_escalera'] : '',
@@ -322,7 +326,6 @@ try {
     1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo',
   ];
 
-  $attendanceDays = count_attendance_days($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
   $pdfHtml = '<h1 style="margin-bottom:8px;">Calendario de prácticas</h1>';
   $pdfHtml .= '<p><strong>Alumno:</strong> ' . htmlspecialchars(full_name($practice, 'alumno'), ENT_QUOTES, 'UTF-8') . '</p>';
   $pdfHtml .= '<p><strong>Empresa:</strong> ' . htmlspecialchars((string) ($practice['empresa_nombre'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
@@ -335,8 +338,10 @@ try {
     $pdfHtml .= '<p style="font-size:9pt; color:#666666;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
   }
   $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
-  $pdfHtml .= '<p style="margin-top:8px;"><strong>Total de horas de prácticas: ' . htmlspecialchars(format_value($practice['horas'], '0'), ENT_QUOTES, 'UTF-8') . ' horas</strong></p>';
-  $pdfHtml .= '<p><strong>Total de días que asistirá a la empresa: ' . $attendanceDays . ' días</strong></p>';
+  $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Observaciones</h3>';
+  if (($practice['observaciones'] ?? null) !== null && trim((string) $practice['observaciones']) !== '') {
+    $pdfHtml .= '<p>' . nl2br(htmlspecialchars((string) $practice['observaciones'], ENT_QUOTES, 'UTF-8')) . '</p>';
+  }
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
