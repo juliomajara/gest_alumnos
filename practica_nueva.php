@@ -620,10 +620,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
-            id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, id_practicas_estado,
+            id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, cancelada,
             fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, circ_excep, mayor_edad
           ) VALUES (
-            :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :id_practicas_estado,
+            :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :cancelada,
             :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :circ_excep, :mayor_edad
           )'
         );
@@ -634,7 +634,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'id_direccion' => $direccion_id > 0 ? $direccion_id : null,
           'id_empresa_tutor' => $tutor_id > 0 ? $tutor_id : null,
           'anexo' => $anexo !== null && ctype_digit($anexo) ? (int) $anexo : null,
-          'id_practicas_estado' => 1,
+          'cancelada' => 0,
           'fecha_inicio' => $fecha_inicio,
           'fecha_fin' => $fecha_fin,
           'fecha_fin_real' => $fecha_fin_real,
