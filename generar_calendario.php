@@ -327,6 +327,8 @@ try {
     $pdfHtml .= '<p style="font-size:9pt; color:#666666;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
   }
   $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
+  $observaciones = trim((string) ($practice['observaciones'] ?? ''));
+  $pdfHtml .= '<p style="font-family: Arial; margin-top: 12px;"><strong>Observaciones:</strong><br>' . htmlspecialchars($observaciones, ENT_QUOTES, 'UTF-8') . '</p>';
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
