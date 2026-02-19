@@ -438,6 +438,7 @@ $pending_circ_excep_confirmation = false;
 $minor_age_warning_message = null;
 $minor_age_warning_details = [];
 $pending_minor_age_confirmation = false;
+$save_error_detail = null;
 $form_values = $_POST;
 $non_teaching_data = load_non_teaching_days($pdo);
 $non_teaching_lookup = $non_teaching_data['dates'];
@@ -497,6 +498,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $schedule_analysis = analyze_schedule($horario);
   foreach ($schedule_analysis['errors'] as $schedule_error) {
     $errors[] = $schedule_error;
+  }
+
+  if ($errors) {
+    $save_error_detail = implode(' ', $errors);
   }
 
   $province_id = null;
@@ -623,7 +628,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           )'
         );
 
-        $insert_practice_stmt->execute([
+        $practice_inserted = $insert_practice_stmt->execute([
           'id_alumno' => $alumno_id,
           'id_empresa' => $empresa_id,
           'id_direccion' => $direccion_id > 0 ? $direccion_id : null,
@@ -639,6 +644,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'circ_excep' => $requires_circ_excep ? 1 : 0,
           'mayor_edad' => $mayor_edad,
         ]);
+
+        if ($practice_inserted === false) {
+          $error_info = $insert_practice_stmt->errorInfo();
+          throw new RuntimeException(
+            sprintf(
+              'Error PDO en INSERT práctica. SQLSTATE: %s; Código: %s; Mensaje: %s.',
+              (string) ($error_info[0] ?? 'N/A'),
+              (string) ($error_info[1] ?? 'N/A'),
+              (string) ($error_info[2] ?? 'N/A')
+            )
+          );
+        }
 
         $practice_id = (int) $pdo->lastInsertId();
         $insert_schedule_stmt = $pdo->prepare(
@@ -667,12 +684,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               continue;
             }
 
-            $insert_schedule_stmt->execute([
+            $schedule_inserted = $insert_schedule_stmt->execute([
               'id_practica' => $practice_id,
               'dia_semana' => $day,
               'hora_entrada' => $segment['entrada'] . ':00',
               'hora_salida' => $segment['salida'] . ':00',
             ]);
+
+            if ($schedule_inserted === false) {
+              $error_info = $insert_schedule_stmt->errorInfo();
+              throw new RuntimeException(
+                sprintf(
+                  'Error PDO en INSERT horario. SQLSTATE: %s; Código: %s; Mensaje: %s.',
+                  (string) ($error_info[0] ?? 'N/A'),
+                  (string) ($error_info[1] ?? 'N/A'),
+                  (string) ($error_info[2] ?? 'N/A')
+                )
+              );
+            }
           }
         }
 
@@ -684,6 +713,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $pdo->rollBack();
         }
         $errors[] = 'No se pudo guardar la práctica.';
+
+        if ($error instanceof PDOException) {
+          $error_info = $error->errorInfo;
+          $save_error_detail = sprintf(
+            'SQLSTATE: %s; Código PDO: %s; Mensaje: %s.',
+            (string) ($error_info[0] ?? 'N/A'),
+            (string) $error->getCode(),
+            $error->getMessage()
+          );
+        } else {
+          $save_error_detail = $error->getMessage();
+        }
       }
     }
   }
@@ -837,6 +878,9 @@ $dias_semana = [
           <div class="panel-header">
             <h3>Revisa el formulario</h3>
             <p>Hay datos pendientes antes de guardar la práctica.</p>
+            <?php if ($save_error_detail !== null): ?>
+              <p>Motivo: <?php echo htmlspecialchars($save_error_detail, ENT_QUOTES, 'UTF-8'); ?></p>
+            <?php endif; ?>
           </div>
           <ul class="form-errors">
             <?php foreach ($errors as $error): ?>
