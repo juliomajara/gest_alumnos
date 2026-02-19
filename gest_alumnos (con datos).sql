@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-02-2026 a las 18:27:24
+-- Tiempo de generación: 19-02-2026 a las 13:06:30
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -91,7 +91,7 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (30, '4545521', '49702188Q', '281444582641', 'Pascual', 'González', 'Alejandro', '1998-02-08', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (31, '9631236', '03489468T', '281462321618', 'Pérez', 'Alonso', 'Rubén', '2005-12-14', 130, 28, NULL, NULL, 0, NULL, NULL, 'hectorperezaparicio333@gmail.com', NULL, NULL, 'pilaralonso555@gmail.com', NULL, 0, NULL, 0, NULL),
 (32, '12277735', '01867649A', '201055952475', 'Pérez', 'Marín', 'Rubén', '2008-07-12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'luisamartincamara@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
-(33, '48532358', 'Z1978609Q', '281655816814', 'Pomarino', 'Mejía', 'Eduardo Gianfranco', '2005-03-25', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'carlascargglioni@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
+(33, '48532358', 'Z1978609Q', '281655816814', 'Pomarino', 'Mejía', 'Eduardo Gianfranco', '2005-03-25', NULL, 28, NULL, NULL, 0, NULL, NULL, 'carlascargglioni@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (34, '9019508', '49588427J', '281572721661', 'Puras', 'García', 'César', '2005-08-03', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'tonigarmar@hotmail.es', NULL, NULL, 'cespurn@hotmail.com', NULL, 0, NULL, 0, NULL),
 (35, '11550457', '54993476Q', '281550184925', 'Rodríguez', 'Mateos', 'Adrián', '2007-07-26', 0, 28, NULL, NULL, 0, NULL, NULL, 'daromanad@gmail.com', NULL, NULL, 'natadriblan@gmail.com', NULL, 0, NULL, 0, NULL),
 (36, '10859827', '01867899T', '281323189363', 'Rubio', 'Alonso', 'Antonio', '2007-12-18', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'antoniorubio963@gmail.com', NULL, NULL, 'mareamorada.6@gmail.com', NULL, 0, NULL, 0, NULL),
@@ -762,7 +762,7 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (29, 'alumno', 30, 'pasculini98@gmail.com', 'Personal'),
 (30, 'alumno', 31, 'rubenproby@gmail.com', 'Personal'),
 (31, 'alumno', 32, 'rubenpm120708@gmail.com', 'Personal'),
-(32, 'alumno', 33, 'gianfrancopome@gmail.com', 'Personal'),
+(32, 'alumno', 33, 'julipi.sf@gmail.com', 'Personal'),
 (33, 'alumno', 34, 'cesarpurasgar@gmail.com', 'Personal'),
 (34, 'alumno', 35, 'adriroma2007@gmail.com', 'Personal'),
 (35, 'alumno', 36, 'antoniorubioalonso8@gmail.com', 'Personal'),
@@ -926,7 +926,8 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (196, 'empresa', 19, 'juliangrande@infoneri.com', 'Trabajo'),
 (197, 'empresa_contacto', 24, 'juliangrande@infoneri.com', 'Trabajo'),
 (198, 'empresa_tutor', 20, 'juliangrande@infoneri.com', 'Trabajo'),
-(199, 'alumno', 27, 'sebastian.moncada1@educa.madrid.org', 'EducaMadrid');
+(199, 'alumno', 27, 'sebastian.moncada1@educa.madrid.org', 'EducaMadrid'),
+(200, 'alumno', 33, 'julio.sanchezfernandez@educa.madrid.org', NULL);
 
 -- --------------------------------------------------------
 
@@ -1749,10 +1750,10 @@ CREATE TABLE `grupos_tutores` (
 
 INSERT INTO `grupos_tutores` (`id_grupo_tutor`, `id_grupo`, `id_profesor`, `id_curso_escolar`) VALUES
 (2, 3, 2, 1),
-(3, 5, 10, 1),
 (4, 7, 11, 1),
-(5, 9, 12, 1),
-(6, 4, 1, 1);
+(7, 4, 1, 1),
+(9, 9, 12, 1),
+(10, 5, 10, 1);
 
 -- --------------------------------------------------------
 
@@ -1929,18 +1930,18 @@ CREATE TABLE `modulos_profesores` (
 --
 
 INSERT INTO `modulos_profesores` (`id_modulo_profesor`, `id_modulo`, `id_profesor`, `id_curso_escolar`) VALUES
-(1, 14, 3, 1),
-(2, 11, 7, 1),
 (3, 15, 8, 1),
-(4, 16, 9, 1),
 (6, 8, 2, 1),
-(7, 12, 4, 1),
 (8, 13, 5, 1),
 (9, 10, 6, 1),
-(13, 22, 1, 1),
-(14, 61, 1, 1),
-(15, 64, 1, 1),
-(16, 9, 1, 1);
+(17, 22, 1, 1),
+(18, 61, 1, 1),
+(19, 64, 1, 1),
+(20, 9, 1, 1),
+(21, 14, 3, 1),
+(22, 16, 9, 1),
+(23, 12, 4, 1),
+(24, 11, 7, 1);
 
 -- --------------------------------------------------------
 
@@ -2460,16 +2461,16 @@ CREATE TABLE `profesores` (
 --
 
 INSERT INTO `profesores` (`id_profesor`, `apellido1`, `apellido2`, `nombre`, `dni`) VALUES
-(1, 'Sanchez', 'Fernandez', 'Julio', '52509464G'),
+(1, 'Sánchez', 'Fernández', 'Julio', '52509464G'),
 (2, 'Ruescas', 'Cruz', 'Yolanda', '49095015C'),
-(3, 'Almodovar', 'Vialas', 'Sonia', NULL),
-(4, 'Perez', 'Revuelta', 'Inmaculada', NULL),
+(3, 'Almodóvar', 'Vialas', 'Sonia', NULL),
+(4, 'Pérez', 'Revuelta', 'Inmaculada', NULL),
 (5, 'Saldaña', 'Plaza', 'Marta', NULL),
 (6, 'González', 'Palacios', 'Isidro', NULL),
-(7, 'Perez', 'Romero', 'Esteban', NULL),
+(7, 'Pérez', 'Romero', 'Esteban', NULL),
 (8, 'Villoria', 'Valiente', 'Cristina', NULL),
-(9, 'Perez', 'Pinillos', 'Daniel', NULL),
-(10, 'Garcia', 'Fernandez', 'David', '50961088B'),
+(9, 'Pérez', 'Pinillos', 'Daniel', NULL),
+(10, 'García', 'Fernández', 'David', '50961088B'),
 (11, 'Fernández', 'Fernández', 'Alain', '72490362C'),
 (12, 'Abderrahman', 'Cañabate', 'Ricardo', '03899222D');
 
@@ -3214,7 +3215,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=200;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=201;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
@@ -3268,7 +3269,7 @@ ALTER TABLE `grupos`
 -- AUTO_INCREMENT de la tabla `grupos_tutores`
 --
 ALTER TABLE `grupos_tutores`
-  MODIFY `id_grupo_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_grupo_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `localidades`
@@ -3292,7 +3293,7 @@ ALTER TABLE `modulos`
 -- AUTO_INCREMENT de la tabla `modulos_profesores`
 --
 ALTER TABLE `modulos_profesores`
-  MODIFY `id_modulo_profesor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id_modulo_profesor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `niveles`
