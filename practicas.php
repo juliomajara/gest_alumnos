@@ -6,7 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
-$allowed_orders = ['alumno', 'empresa'];
+$allowed_orders = ['alumno', 'empresa', 'fecha_inicio', 'fecha_fin', 'anexo', 'estado'];
 $order_param = (string) ($_GET['orden'] ?? 'alumno');
 $current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno';
 
@@ -118,9 +118,20 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
-$order_clause = $current_order === 'empresa'
-  ? 'ORDER BY e.nombre ASC, e.apellido1 ASC, e.apellido2 ASC, p.id_practica DESC'
-  : 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica DESC';
+$order_clause = match ($current_order) {
+  'empresa' => 'ORDER BY e.nombre ASC, e.apellido1 ASC, e.apellido2 ASC, p.id_practica DESC',
+  'fecha_inicio' => 'ORDER BY p.fecha_inicio ASC, p.id_practica DESC',
+  'fecha_fin' => 'ORDER BY COALESCE(p.fecha_fin_real, p.fecha_fin) ASC, p.id_practica DESC',
+  'anexo' => 'ORDER BY CAST(p.anexo AS UNSIGNED) ASC, p.id_practica DESC',
+  'estado' => "ORDER BY CASE
+    WHEN p.cancelada = 1 THEN 1
+    WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = '' OR p.fecha_fin_real IS NULL OR p.fecha_fin_real = '' THEN 2
+    WHEN CURDATE() < p.fecha_inicio THEN 3
+    WHEN CURDATE() <= p.fecha_fin_real THEN 4
+    ELSE 5
+  END ASC, p.id_practica DESC",
+  default => 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica DESC',
+};
 
 $practices_stmt = $pdo->prepare(
   'SELECT
@@ -285,10 +296,10 @@ $active_page = 'practicas';
               <tr>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('alumno'), ENT_QUOTES, 'UTF-8'); ?>">Alumno</a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa'), ENT_QUOTES, 'UTF-8'); ?>">Empresa</a></th>
-                <th>Fecha de inicio</th>
-                <th>Fecha de fin</th>
-                <th>Anexo 2.1</th>
-                <th>Estado</th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_inicio'), ENT_QUOTES, 'UTF-8'); ?>">Fecha de inicio</a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin'), ENT_QUOTES, 'UTF-8'); ?>">Fecha de fin</a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo'), ENT_QUOTES, 'UTF-8'); ?>">Anexo 2.1</a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado'), ENT_QUOTES, 'UTF-8'); ?>">Estado</a></th>
                 <th>Acciones</th>
               </tr>
             </thead>
