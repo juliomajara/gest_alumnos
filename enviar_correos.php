@@ -219,8 +219,59 @@ function resolve_document_path(array $practice, string $docType, array $allowedD
     return $defaultPath;
   }
 
+  $findByPrefix = static function (string $directory, array $prefixes) use ($allowedDirs): string {
+    $realDirectory = realpath($directory);
+    if ($realDirectory === false || !is_dir($realDirectory)) {
+      return '';
+    }
+
+    foreach ($prefixes as $prefix) {
+      $cleanPrefix = trim($prefix);
+      if ($cleanPrefix === '') {
+        continue;
+      }
+
+      $matches = glob($realDirectory . DIRECTORY_SEPARATOR . $cleanPrefix . '*.pdf') ?: [];
+      if (!$matches) {
+        continue;
+      }
+
+      usort($matches, static function (string $first, string $second): int {
+        return (filemtime($second) ?: 0) <=> (filemtime($first) ?: 0);
+      });
+
+      foreach ($matches as $candidatePath) {
+        if (is_safe_document_path($candidatePath, $allowedDirs)) {
+          return $candidatePath;
+        }
+      }
+    }
+
+    return '';
+  };
+
+  $anexo = practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20);
+  $convenio = practicas_sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20);
+
+  if ($docType === 'plan') {
+    $planPath = $findByPrefix(__DIR__ . '/docs/practicas_plan_formacion', [
+      'PF_' . $anexo . '_' . $convenio . '_',
+      'PF_' . $convenio . '_' . $anexo . '_',
+    ]);
+
+    return $planPath;
+  }
+
   if ($docType !== 'calendar') {
     return '';
+  }
+
+  $calendarPath = $findByPrefix(__DIR__ . '/docs/practicas_info', [
+    $convenio . '_' . $anexo . '_',
+    $anexo . '_' . $convenio . '_',
+  ]);
+  if ($calendarPath !== '') {
+    return $calendarPath;
   }
 
   $calendarDirectory = (string) ($paths['calendar_directory'] ?? (__DIR__ . '/docs/practicas_info'));
