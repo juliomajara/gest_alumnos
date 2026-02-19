@@ -1668,6 +1668,11 @@ a.edit-toggle:active {
   text-decoration: underline;
 }
 
+.panel-grid .empresa-name-trigger--practicas:hover,
+.panel-grid .empresa-name-trigger--practicas:focus-visible {
+  font-weight: 700;
+}
+
 .practica-horario-detalle-table {
   table-layout: fixed;
 }

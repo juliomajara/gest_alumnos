@@ -234,6 +234,21 @@ $practices = $practices_stmt->fetchAll();
 
 function render_practice_rows(array $practices): string
 {
+  $format_person_display_name = static function (?string $full_name): string {
+    $parts = preg_split('/\s+/', trim((string) $full_name)) ?: [];
+    $parts = array_values(array_filter($parts, static fn ($part) => $part !== ''));
+
+    if ($parts === []) {
+      return 'No disponible';
+    }
+
+    if (count($parts) === 1) {
+      return $parts[0];
+    }
+
+    return $parts[0] . ' ' . $parts[1];
+  };
+
   ob_start();
   if (!$practices): ?>
     <tr>
@@ -260,14 +275,12 @@ function render_practice_rows(array $practices): string
         $empresa = $empresa !== '' ? $empresa : 'No disponible';
         $empresa_cif = trim((string) ($practice['empresa_cif'] ?? ''));
         $empresa_cif = $empresa_cif !== '' ? $empresa_cif : 'No disponible';
-        $empresa_contacto_nombre = trim((string) ($practice['empresa_contacto_nombre'] ?? ''));
-        $empresa_contacto_nombre = $empresa_contacto_nombre !== '' ? $empresa_contacto_nombre : 'No disponible';
+        $empresa_contacto_nombre = $format_person_display_name($practice['empresa_contacto_nombre'] ?? null);
         $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? ''));
         $empresa_contacto_email = $empresa_contacto_email !== '' ? $empresa_contacto_email : 'No disponible';
         $empresa_contacto_telefono = trim((string) ($practice['empresa_contacto_telefono'] ?? ''));
         $empresa_contacto_telefono = $empresa_contacto_telefono !== '' ? $empresa_contacto_telefono : 'No disponible';
-        $empresa_tutor_nombre = trim((string) ($practice['empresa_tutor_nombre'] ?? ''));
-        $empresa_tutor_nombre = $empresa_tutor_nombre !== '' ? $empresa_tutor_nombre : 'No disponible';
+        $empresa_tutor_nombre = $format_person_display_name($practice['empresa_tutor_nombre'] ?? null);
         $empresa_tutor_email = trim((string) ($practice['empresa_tutor_email'] ?? ''));
         $empresa_tutor_email = $empresa_tutor_email !== '' ? $empresa_tutor_email : 'No disponible';
         $empresa_tutor_telefono = trim((string) ($practice['empresa_tutor_telefono'] ?? ''));
@@ -294,7 +307,7 @@ function render_practice_rows(array $practices): string
         </td>
         <td>
           <span
-            class="empresa-name-trigger"
+            class="empresa-name-trigger empresa-name-trigger--practicas"
             role="button"
             tabindex="0"
             aria-haspopup="dialog"
@@ -529,23 +542,49 @@ $active_page = 'practicas';
         activeTrigger = null;
       };
 
-      const addInfoItem = (label, value, copyType = '') => {
+      const getValueOrFallback = (value) => {
+        const normalized = (value || '').trim();
+        return normalized !== '' ? normalized : 'No disponible';
+      };
+
+      const createCopyNode = (value) => {
+        if (value === 'No disponible') {
+          return document.createTextNode(value);
+        }
+
+        const copyLink = document.createElement('a');
+        copyLink.href = '#';
+        copyLink.textContent = value;
+        copyLink.dataset.copyValue = value;
+        return copyLink;
+      };
+
+      const addInfoItem = (label, value) => {
         const item = document.createElement('li');
         const strong = document.createElement('strong');
         strong.textContent = `${label}: `;
         item.appendChild(strong);
 
-        if (copyType !== '' && value !== 'No disponible') {
-          const copyValue = document.createElement('span');
-          copyValue.textContent = value;
-          copyValue.dataset.copyValue = value;
-          copyValue.dataset.copyType = copyType;
-          copyValue.setAttribute('role', 'button');
-          copyValue.setAttribute('tabindex', '0');
-          item.appendChild(copyValue);
-        } else {
-          item.appendChild(document.createTextNode(value));
-        }
+        item.appendChild(document.createTextNode(value));
+
+        detailList.appendChild(item);
+      };
+
+      const addPersonItem = (label, person, email, phone) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = `${label}: `;
+        item.appendChild(strong);
+        item.appendChild(document.createTextNode(person));
+
+        const contactLine = document.createElement('div');
+        const emailNode = createCopyNode(email);
+        const phoneNode = createCopyNode(phone);
+
+        contactLine.appendChild(emailNode);
+        contactLine.appendChild(document.createTextNode(' / '));
+        contactLine.appendChild(phoneNode);
+        item.appendChild(contactLine);
 
         detailList.appendChild(item);
       };
@@ -558,13 +597,19 @@ $active_page = 'practicas';
         title.textContent = trigger.dataset.empresaNombre || 'Empresa';
         detailList.innerHTML = '';
 
-        addInfoItem('CIF', trigger.dataset.empresaCif || 'No disponible');
-        addInfoItem('Nombre de la persona de contacto', trigger.dataset.contactoNombre || 'No disponible');
-        addInfoItem('Correo de la persona de contacto', trigger.dataset.contactoEmail || 'No disponible', 'email');
-        addInfoItem('Teléfono de la persona de contacto', trigger.dataset.contactoTelefono || 'No disponible', 'phone');
-        addInfoItem('Nombre del tutor', trigger.dataset.tutorNombre || 'No disponible');
-        addInfoItem('Correo del tutor', trigger.dataset.tutorEmail || 'No disponible', 'email');
-        addInfoItem('Teléfono del tutor', trigger.dataset.tutorTelefono || 'No disponible', 'phone');
+        addInfoItem('CIF', getValueOrFallback(trigger.dataset.empresaCif));
+        addPersonItem(
+          'Persona de contacto',
+          getValueOrFallback(trigger.dataset.contactoNombre),
+          getValueOrFallback(trigger.dataset.contactoEmail),
+          getValueOrFallback(trigger.dataset.contactoTelefono)
+        );
+        addPersonItem(
+          'Tutor',
+          getValueOrFallback(trigger.dataset.tutorNombre),
+          getValueOrFallback(trigger.dataset.tutorEmail),
+          getValueOrFallback(trigger.dataset.tutorTelefono)
+        );
 
         activeTrigger = trigger;
         trigger.setAttribute('aria-expanded', 'true');
@@ -584,9 +629,11 @@ $active_page = 'practicas';
           openPopover(trigger);
           return;
         }
+      });
 
+      popover.addEventListener('click', (event) => {
         const copyButton = event.target.closest('[data-copy-value]');
-        if (!copyButton || !popover.contains(copyButton)) {
+        if (!copyButton) {
           return;
         }
 
@@ -613,11 +660,12 @@ $active_page = 'practicas';
         if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           trigger.click();
-          return;
         }
+      });
 
+      popover.addEventListener('keydown', (event) => {
         const copyTarget = event.target.closest('[data-copy-value]');
-        if (copyTarget && popover.contains(copyTarget) && (event.key === 'Enter' || event.key === ' ')) {
+        if (copyTarget && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
           copyTarget.click();
         }
