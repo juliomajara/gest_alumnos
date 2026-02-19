@@ -24,15 +24,15 @@ function get_mail_config(): array
   $mail = is_array($cfg['mail'] ?? null) ? $cfg['mail'] : [];
 
   return [
-    'from_email' => (string) ($mail['from_email'] ?? ''),
-    'from_name' => (string) ($mail['from_name'] ?? 'Gestor de Alumnos'),
-    'reply_to' => (string) ($mail['reply_to'] ?? ''),
-    'transport' => (string) ($mail['transport'] ?? 'mail'),
-    'smtp_host' => (string) ($mail['smtp_host'] ?? ''),
-    'smtp_port' => (int) ($mail['smtp_port'] ?? 587),
-    'smtp_user' => (string) ($mail['smtp_user'] ?? ''),
-    'smtp_pass' => (string) ($mail['smtp_pass'] ?? ''),
-    'smtp_secure' => (string) ($mail['smtp_secure'] ?? 'tls'),
+    'from_email' => (string) ($mail['from_email'] ?? 'julio.sanchezfernandez@educa.madrid.org'),
+    'from_name' => (string) ($mail['from_name'] ?? 'Julio Sánchez'),
+    'reply_to' => (string) ($mail['reply_to'] ?? 'julio.sanchezfernandez@educa.madrid.org'),
+    'transport' => (string) ($mail['transport'] ?? 'smtp'),
+    'smtp_host' => (string) ($mail['smtp_host'] ?? 'smtp01.educa.madrid.org'),
+    'smtp_port' => (int) ($mail['smtp_port'] ?? 465),
+    'smtp_user' => (string) ($mail['smtp_user'] ?? 'julio.sanchezfernandez'),
+    'smtp_pass' => (string) ($mail['smtp_pass'] ?? 'died10.Jerk'),
+    'smtp_secure' => (string) ($mail['smtp_secure'] ?? 'ssl'),
   ];
 }
 
