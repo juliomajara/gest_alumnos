@@ -138,7 +138,7 @@ function fetch_practices_for_students(PDO $pdo, array $studentIds): array
       e.convenio AS empresa_convenio,
       a.nombre AS alumno_nombre,
       a.apellido1 AS alumno_apellido1,
-      e.nombre AS empresa_nombre
+      e.nombre_comercial AS empresa_nombre
     FROM practicas p
     INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
     INNER JOIN empresas e ON e.id_empresa = p.id_empresa
@@ -784,17 +784,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
 
         $subject = 'Documentación de prácticas';
         $practiceData = $practiceDataByStudent[$studentId] ?? [];
+        $studentFirstName = trim((string) ($practiceData['alumno_nombre'] ?? ''));
+        if ($studentFirstName === '') {
+          $studentFirstName = $studentName;
+        }
         $companyName = trim((string) ($practiceData['empresa_nombre'] ?? ''));
         $startDate = trim((string) ($practiceData['fecha_inicio'] ?? ''));
+        if ($startDate !== '') {
+          $date = DateTime::createFromFormat('Y-m-d', $startDate);
+          if ($date instanceof DateTime) {
+            $startDate = $date->format('d/m/Y');
+          }
+        }
+
+        $bodyReplacements = [
+          '[[nombre del alumno]]' => $studentFirstName,
+          '[[fecha de inicio]]' => $startDate,
+          '[[nombre de la empresa]]' => $companyName,
+        ];
         $hasCalendar = isset($documentTypesByStudent[$studentId]['calendar']);
         $hasPlan = isset($documentTypesByStudent[$studentId]['plan']);
 
         if ($hasCalendar && $hasPlan) {
-          $body = "Hola {$studentName},\n\nempiezas tus prácticas de FFE el próximo {$startDate} en la empresa {$companyName} en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $bodyTemplate = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
         } elseif ($hasCalendar) {
-          $body = "Hola {$studentName},\n\nempiezas tus prácticas de FFE el próximo {$startDate} en la empresa {$companyName} en el horario adjunto.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $bodyTemplate = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
         } else {
-          $body = "Hola {$studentName},\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $bodyTemplate = "Hola [[nombre del alumno]],\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
         }
 
         $result = send_mail_with_attachments($emails, $subject, $body, $attachments, $mailConfig);
