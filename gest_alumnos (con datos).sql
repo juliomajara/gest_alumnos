@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-02-2026 a las 13:06:30
+-- Tiempo de generación: 19-02-2026 a las 23:15:48
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -1595,25 +1595,25 @@ CREATE TABLE `empresas` (
 --
 
 INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`, `nombre_comercial`, `convenio`, `notas`) VALUES
-(1, 'B84523786', 'Fuenlabrada GTP Sistemas, S.L.', NULL, NULL, NULL, 1350, NULL),
-(2, 'B56352123', 'Whitewater Treatment Spain, S.L.', NULL, NULL, NULL, 1306, NULL),
-(3, 'B86218609', 'Zelenza, S.L.', NULL, NULL, NULL, 1557, NULL),
-(4, 'B83331041', 'Madrid Theme Park Management, S.L.', NULL, NULL, NULL, 408, NULL),
-(5, '47039080D', 'Ana María', 'García-Page', 'Díaz', NULL, 1562, NULL),
-(6, 'B82049602', 'Jet Computer, S.L.', NULL, NULL, NULL, 805, NULL),
-(7, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, NULL, 916, NULL),
-(8, '02767448L', 'César Martín', 'Lara', 'Bastidas', NULL, 917, NULL),
-(9, 'B81848749', 'Memory Sistemas Informáticos, S.L.', NULL, NULL, NULL, 433, NULL),
-(10, 'B80691694', 'Laboratorio Técnico Informático, S.L.', NULL, NULL, NULL, 1352, NULL),
-(11, 'A87299848', 'Imprenta de Billetes, S. A.', NULL, NULL, NULL, 1351, NULL),
-(12, 'B85224376', 'Instituto de Diseño, Estilismo y Moda S.L.', NULL, NULL, NULL, 1560, NULL),
-(13, 'B13904214', 'Magaversa, S.L.', NULL, NULL, NULL, 1568, NULL),
-(14, '51069694B', 'Ana', 'Alfageme', 'Langdon', NULL, 1563, NULL),
-(15, '50474566P', 'Teresa', 'Hernando', 'Herrero', NULL, 1556, NULL),
-(16, 'B84425420', 'Ibérica Infocomputer, S.L.', NULL, NULL, NULL, 1325, NULL),
-(17, 'G87063285', 'Fundación Clínica Universitaria de la Universidad Rey Juan C', NULL, NULL, NULL, 900, NULL),
-(18, 'B87999504', 'Gruservit, Grupo de Servicios Informáticos y Tecnología S.L.', NULL, NULL, NULL, 960, NULL),
-(19, '52100377H', 'Julián', 'Grande', 'Santamaría', NULL, 1320, NULL);
+(1, 'B84523786', 'Fuenlabrada GTP Sistemas, S.L.', NULL, NULL, 'Fuenlabrada GTP Sistemas, S.L.', 1350, NULL),
+(2, 'B56352123', 'Whitewater Treatment Spain, S.L.', NULL, NULL, 'Whitewater Treatment Spain, S.L.', 1306, NULL),
+(3, 'B86218609', 'Zelenza, S.L.', NULL, NULL, 'Zelenza, S.L.', 1557, NULL),
+(4, 'B83331041', 'Madrid Theme Park Management, S.L.', NULL, NULL, 'Madrid Theme Park Management, S.L.', 408, NULL),
+(5, '47039080D', 'Ana María', 'García-Page', 'Díaz', 'Ana María García-Page Díaz', 1562, NULL),
+(6, 'B82049602', 'Jet Computer, S.L.', NULL, NULL, 'Jet Computer, S.L.', 805, NULL),
+(7, 'A79486833', 'Elecnor Servicios y Proyectos, S.A.U.', NULL, NULL, 'Elecnor Servicios y Proyectos, S.A.U.', 916, NULL),
+(8, '02767448L', 'César Martín', 'Lara', 'Bastidas', 'Redphone Services', 917, NULL),
+(9, 'B81848749', 'Memory Sistemas Informáticos, S.L.', NULL, NULL, 'Memory Sistemas Informáticos, S.L.', 433, NULL),
+(10, 'B80691694', 'Laboratorio Técnico Informático, S.L.', NULL, NULL, 'Laboratorio Técnico Informático, S.L.', 1352, NULL),
+(11, 'A87299848', 'Imprenta de Billetes, S. A.', NULL, NULL, 'Imprenta de Billetes, S. A.', 1351, NULL),
+(12, 'B85224376', 'Instituto de Diseño, Estilismo y Moda S.L.', NULL, NULL, 'Instituto de Diseño, Estilismo y Moda S.L.', 1560, NULL),
+(13, 'B13904214', 'Magaversa, S.L.', NULL, NULL, 'Magaversa, S.L.', 1568, NULL),
+(14, '51069694B', 'Ana', 'Alfageme', 'Langdon', 'Calicanto Arquitectura', 1563, NULL),
+(15, '50474566P', 'Teresa', 'Hernando', 'Herrero', 'Teresa Hernando Herrero', 1556, NULL),
+(16, 'B84425420', 'Ibérica Infocomputer, S.L.', NULL, NULL, 'Ibérica Infocomputer, S.L.', 1325, NULL),
+(17, 'G87063285', 'Fundación Clínica Universitaria de la Universidad Rey Juan C', NULL, NULL, 'Fundación Clínica Universitaria de la Universidad Rey Juan C', 900, NULL),
+(18, 'B87999504', 'Gruservit, Grupo de Servicios Informáticos y Tecnología S.L.', NULL, NULL, 'Gruservit, Grupo de Servicios Informáticos y Tecnología S.L.', 960, NULL),
+(19, '52100377H', 'Julián', 'Grande', 'Santamaría', 'Infoneri', 1320, NULL);
 
 -- --------------------------------------------------------
 
@@ -2155,7 +2155,8 @@ INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion
 (24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
 (25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL),
 (26, 47, 9, 13, 10, 175, '2026-02-26', '2026-05-13', 0, '2026-05-13', 370, 0, 0, 0, NULL),
-(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, 0, 0, NULL);
+(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, 0, 0, NULL),
+(28, 33, 14, 18, 15, 900, '2026-02-23', '2026-06-03', 2, '2026-06-05', 500, 0, 0, 1, 'Preguntar por Ana al llegar.\r\nNo llamar al telefonillo.');
 
 -- --------------------------------------------------------
 
@@ -2393,7 +2394,12 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (169, 27, 2, '08:00:00', '16:00:00'),
 (170, 27, 3, '08:00:00', '16:00:00'),
 (171, 27, 4, '08:00:00', '16:00:00'),
-(172, 27, 5, '08:00:00', '16:00:00');
+(172, 27, 5, '08:00:00', '16:00:00'),
+(173, 28, 1, '09:00:00', '17:00:00'),
+(174, 28, 2, '09:00:00', '17:00:00'),
+(175, 28, 3, '09:00:00', '17:00:00'),
+(176, 28, 4, '09:00:00', '17:00:00'),
+(177, 28, 5, '09:00:00', '17:00:00');
 
 -- --------------------------------------------------------
 
@@ -3317,7 +3323,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -3335,7 +3341,7 @@ ALTER TABLE `practicas_anexos_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=178;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
