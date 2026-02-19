@@ -274,6 +274,7 @@ function fetch_students_for_send(PDO $pdo, array $studentIds): array
     $surname2 = trim((string) ($row['apellido2'] ?? ''));
     $result[$studentId] = [
       'id' => $studentId,
+      'first_name' => trim((string) ($row['nombre'] ?? '')),
       'name' => trim(sprintf('%s %s, %s', (string) $row['apellido1'], $surname2, (string) $row['nombre'])),
     ];
   }
@@ -811,7 +812,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         $practiceData = $practiceDataByStudent[$studentId] ?? [];
         $studentFirstName = trim((string) ($practiceData['alumno_nombre'] ?? ''));
         if ($studentFirstName === '') {
-          $studentFirstName = $studentName;
+          $studentFirstName = trim((string) ($studentData['first_name'] ?? ''));
         }
         $companyName = trim((string) ($practiceData['empresa_nombre'] ?? ''));
         $startDate = trim((string) ($practiceData['fecha_inicio'] ?? ''));
