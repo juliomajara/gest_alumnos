@@ -138,7 +138,7 @@ function fetch_practices_for_students(PDO $pdo, array $studentIds): array
       e.convenio AS empresa_convenio,
       a.nombre AS alumno_nombre,
       a.apellido1 AS alumno_apellido1,
-      e.nombre AS empresa_nombre
+      e.nombre_comercial AS empresa_nombre
     FROM practicas p
     INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
     INNER JOIN empresas e ON e.id_empresa = p.id_empresa
@@ -230,7 +230,7 @@ function fetch_students_for_send(PDO $pdo, array $studentIds): array
 
   $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
   $stmt = $pdo->prepare(
-    'SELECT id_alumno, nombre, apellido1, apellido2
+    'SELECT id_alumno, nombre
      FROM alumnos
      WHERE id_alumno IN (' . $placeholders . ')'
   );
@@ -248,7 +248,7 @@ function fetch_students_for_send(PDO $pdo, array $studentIds): array
     $surname2 = trim((string) ($row['apellido2'] ?? ''));
     $result[$studentId] = [
       'id' => $studentId,
-      'name' => trim(sprintf('%s %s, %s', (string) $row['apellido1'], $surname2, (string) $row['nombre'])),
+      'name' => trim((string) $row['nombre']),
     ];
   }
 
@@ -785,16 +785,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         $subject = 'Documentación de prácticas';
         $practiceData = $practiceDataByStudent[$studentId] ?? [];
         $companyName = trim((string) ($practiceData['empresa_nombre'] ?? ''));
-        $startDate = trim((string) ($practiceData['fecha_inicio'] ?? ''));
+        $rawStartDate = trim((string) ($practiceData['fecha_inicio'] ?? ''));
+        $startDate = $rawStartDate;
+
+        if ($rawStartDate !== '') {
+          $dt = DateTime::createFromFormat('Y-m-d', $rawStartDate);
+          if ($dt instanceof DateTime) {
+            $startDate = $dt->format('d/m/Y');
+          }
+        }
         $hasCalendar = isset($documentTypesByStudent[$studentId]['calendar']);
         $hasPlan = isset($documentTypesByStudent[$studentId]['plan']);
 
         if ($hasCalendar && $hasPlan) {
-          $body = "Hola {$studentName},\n\nempiezas tus prácticas de FFE el próximo {$startDate} en la empresa {$companyName} en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $body = "Hola {$studentName},\n\nempiezas tus prácticas de FFE el próximo {$startDate} en la empresa {$companyName} en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: Responde a este correo diciendo que has recibido los documentos correctamente.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
         } elseif ($hasCalendar) {
-          $body = "Hola {$studentName},\n\nempiezas tus prácticas de FFE el próximo {$startDate} en la empresa {$companyName} en el horario adjunto.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $body = "Hola {$studentName},\n\nempiezas tus prácticas de FFE el próximo {$startDate} en la empresa {$companyName} en el horario adjunto.\n\nIMPORTANTE: Responde a este correo diciendo que has recibido el documento correctamente.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
         } else {
-          $body = "Hola {$studentName},\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+          $body = "Hola {$studentName},\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: Responde a este correo diciendo que has recibido el documento correctamente.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
         }
 
         $result = send_mail_with_attachments($emails, $subject, $body, $attachments, $mailConfig);
