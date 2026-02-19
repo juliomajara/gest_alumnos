@@ -43,6 +43,21 @@ function format_time(?string $value, string $fallback = '—'): string {
   return $value;
 }
 
+function parse_iso_date(?string $value): ?DateTimeImmutable {
+  if ($value === null || $value === '') {
+    return null;
+  }
+
+  $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
+  $errors = DateTimeImmutable::getLastErrors();
+  $hasParseErrors = is_array($errors) && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0);
+  if (!$date || $hasParseErrors || $date->format('Y-m-d') !== $value) {
+    return null;
+  }
+
+  return $date->setTime(0, 0, 0);
+}
+
 function full_name(array $row, string $prefix): string {
   $parts = array_filter([
     trim((string) ($row[$prefix . '_apellido1'] ?? '')),
@@ -291,9 +306,9 @@ try {
     $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
   }
 
-  $startDate = $startDateRaw !== '' ? (new DateTimeImmutable($startDateRaw))->setTime(0, 0, 0) : false;
-  $endDate = $endDateRaw !== '' ? (new DateTimeImmutable($endDateRaw))->setTime(0, 0, 0) : false;
-  if (!$startDate || !$endDate || $startDate > $endDate) {
+  $startDate = parse_iso_date($startDateRaw);
+  $endDate = parse_iso_date($endDateRaw);
+  if ($startDate === null || $endDate === null || $startDate > $endDate) {
     practicas_redirect_to_detail((int) $id, null, 'Calendario: No se puede generar el calendario porque las fechas de inicio/fin son inválidas.');
   }
 
