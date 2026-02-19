@@ -293,9 +293,10 @@ function render_practice_rows(array $practices): string
           </a>
         </td>
         <td>
-          <button
-            type="button"
-            class="practice-link empresa-name-trigger"
+          <span
+            class="empresa-name-trigger"
+            role="button"
+            tabindex="0"
             aria-haspopup="dialog"
             aria-expanded="false"
             data-empresa-nombre="<?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?>"
@@ -306,7 +307,7 @@ function render_practice_rows(array $practices): string
             data-tutor-nombre="<?php echo htmlspecialchars($empresa_tutor_nombre, ENT_QUOTES, 'UTF-8'); ?>"
             data-tutor-email="<?php echo htmlspecialchars($empresa_tutor_email, ENT_QUOTES, 'UTF-8'); ?>"
             data-tutor-telefono="<?php echo htmlspecialchars($empresa_tutor_telefono, ENT_QUOTES, 'UTF-8'); ?>"
-          ><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></button>
+          ><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></span>
         </td>
         <td><?php echo htmlspecialchars($fecha_inicio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -528,19 +529,20 @@ $active_page = 'practicas';
         activeTrigger = null;
       };
 
-      const addInfoItem = (label, value, canCopy = false) => {
+      const addInfoItem = (label, value, copyType = '') => {
         const item = document.createElement('li');
         const strong = document.createElement('strong');
         strong.textContent = `${label}: `;
         item.appendChild(strong);
 
-        if (canCopy && value !== 'No disponible') {
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = 'ghost-button';
-          button.textContent = value;
-          button.dataset.copyValue = value;
-          item.appendChild(button);
+        if (copyType !== '' && value !== 'No disponible') {
+          const copyValue = document.createElement('span');
+          copyValue.textContent = value;
+          copyValue.dataset.copyValue = value;
+          copyValue.dataset.copyType = copyType;
+          copyValue.setAttribute('role', 'button');
+          copyValue.setAttribute('tabindex', '0');
+          item.appendChild(copyValue);
         } else {
           item.appendChild(document.createTextNode(value));
         }
@@ -556,14 +558,13 @@ $active_page = 'practicas';
         title.textContent = trigger.dataset.empresaNombre || 'Empresa';
         detailList.innerHTML = '';
 
-        addInfoItem('Nombre de la empresa', trigger.dataset.empresaNombre || 'No disponible');
         addInfoItem('CIF', trigger.dataset.empresaCif || 'No disponible');
         addInfoItem('Nombre de la persona de contacto', trigger.dataset.contactoNombre || 'No disponible');
-        addInfoItem('Correo de la persona de contacto', trigger.dataset.contactoEmail || 'No disponible', true);
-        addInfoItem('Teléfono de la persona de contacto', trigger.dataset.contactoTelefono || 'No disponible', true);
+        addInfoItem('Correo de la persona de contacto', trigger.dataset.contactoEmail || 'No disponible', 'email');
+        addInfoItem('Teléfono de la persona de contacto', trigger.dataset.contactoTelefono || 'No disponible', 'phone');
         addInfoItem('Nombre del tutor', trigger.dataset.tutorNombre || 'No disponible');
-        addInfoItem('Correo del tutor', trigger.dataset.tutorEmail || 'No disponible', true);
-        addInfoItem('Teléfono del tutor', trigger.dataset.tutorTelefono || 'No disponible', true);
+        addInfoItem('Correo del tutor', trigger.dataset.tutorEmail || 'No disponible', 'email');
+        addInfoItem('Teléfono del tutor', trigger.dataset.tutorTelefono || 'No disponible', 'phone');
 
         activeTrigger = trigger;
         trigger.setAttribute('aria-expanded', 'true');
@@ -589,6 +590,8 @@ $active_page = 'practicas';
           return;
         }
 
+        event.preventDefault();
+
         const copyValue = copyButton.dataset.copyValue || '';
         if (copyValue === '') {
           return;
@@ -603,6 +606,21 @@ $active_page = 'practicas';
             }, 1000);
           })
           .catch(() => {});
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger');
+        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+          return;
+        }
+
+        const copyTarget = event.target.closest('[data-copy-value]');
+        if (copyTarget && popover.contains(copyTarget) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          copyTarget.click();
+        }
       });
 
       layer.querySelectorAll('[data-popover-close]').forEach((element) => {
