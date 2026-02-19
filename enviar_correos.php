@@ -174,6 +174,34 @@ function is_safe_document_path(string $path, array $allowedDirs): bool
   return false;
 }
 
+function resolve_document_path(array $practice, string $docType, array $allowedDirs): string
+{
+  $paths = practicas_get_document_paths($practice);
+  $defaultPath = $docType === 'calendar'
+    ? (string) ($paths['calendar_file_path'] ?? '')
+    : (string) ($paths['plan_file_path'] ?? '');
+
+  if ($defaultPath !== '' && is_safe_document_path($defaultPath, $allowedDirs)) {
+    return $defaultPath;
+  }
+
+  if ($docType !== 'calendar') {
+    return '';
+  }
+
+  $calendarDirectory = (string) ($paths['calendar_directory'] ?? (__DIR__ . '/docs/practicas_info'));
+  $legacyCalendarFileName = implode('_', [
+    practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+    practicas_sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
+    practicas_sanitize_filename_component((string) ($practice['alumno_nombre'] ?? ''), 40),
+    practicas_sanitize_filename_component((string) ($practice['alumno_apellido1'] ?? ''), 40),
+    practicas_sanitize_filename_component((string) ($practice['empresa_nombre'] ?? ''), 70),
+  ]) . '.pdf';
+
+  $legacyPath = $calendarDirectory . '/' . $legacyCalendarFileName;
+  return is_safe_document_path($legacyPath, $allowedDirs) ? $legacyPath : '';
+}
+
 function build_documents_by_student(array $practices): array
 {
   $docsByStudent = [];
@@ -189,15 +217,13 @@ function build_documents_by_student(array $practices): array
       continue;
     }
 
-    $paths = practicas_get_document_paths($practice);
-
     $candidateDocs = [
       'calendar' => [
-        'path' => (string) ($paths['calendar_file_path'] ?? ''),
+        'path' => resolve_document_path($practice, 'calendar', $allowedDirs),
         'label' => 'Calendario prácticas',
       ],
       'plan' => [
-        'path' => (string) ($paths['plan_file_path'] ?? ''),
+        'path' => resolve_document_path($practice, 'plan', $allowedDirs),
         'label' => 'Plan formación',
       ],
     ];
@@ -718,8 +744,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         continue;
       }
 
-      $paths = practicas_get_document_paths($practice);
-      $path = $docType === 'calendar' ? (string) ($paths['calendar_file_path'] ?? '') : (string) ($paths['plan_file_path'] ?? '');
+      $path = resolve_document_path($practice, $docType, $allowedDirs);
       $label = $docType === 'calendar' ? 'Calendario prácticas' : 'Plan formación';
 
       if ($path === '' || !is_safe_document_path($path, $allowedDirs)) {
