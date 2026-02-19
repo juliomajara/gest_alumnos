@@ -31,7 +31,7 @@ function get_mail_config(): array
     'smtp_host' => (string) ($mail['smtp_host'] ?? 'smtp01.educa.madrid.org'),
     'smtp_port' => (int) ($mail['smtp_port'] ?? 465),
     'smtp_user' => (string) ($mail['smtp_user'] ?? 'julio.sanchezfernandez'),
-    'smtp_pass' => (string) ($mail['smtp_pass'] ?? 'died10.Jerk'),
+    'smtp_pass' => (string) ($mail['smtp_pass'] ?? 'diedasdfafadsasfd'),
     'smtp_secure' => (string) ($mail['smtp_secure'] ?? 'ssl'),
   ];
 }
