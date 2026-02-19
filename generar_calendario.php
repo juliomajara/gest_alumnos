@@ -43,21 +43,6 @@ function format_time(?string $value, string $fallback = '—'): string {
   return $value;
 }
 
-function parse_iso_date(?string $value): ?DateTimeImmutable {
-  if ($value === null || $value === '') {
-    return null;
-  }
-
-  $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
-  $errors = DateTimeImmutable::getLastErrors();
-  $hasParseErrors = is_array($errors) && (($errors['warning_count'] ?? 0) > 0 || ($errors['error_count'] ?? 0) > 0);
-  if (!$date || $hasParseErrors || $date->format('Y-m-d') !== $value) {
-    return null;
-  }
-
-  return $date->setTime(0, 0, 0);
-}
-
 function full_name(array $row, string $prefix): string {
   $parts = array_filter([
     trim((string) ($row[$prefix . '_apellido1'] ?? '')),
@@ -69,13 +54,9 @@ function full_name(array $row, string $prefix): string {
 }
 
 function build_address(array $practice): string {
-  $via = trim(implode(' ', array_filter([
+  $parts = array_filter([
     trim((string) ($practice['direccion_via_tipo'] ?? '')),
     trim((string) ($practice['direccion_nombre_via'] ?? '')),
-  ], static fn (string $value): bool => $value !== '')));
-
-  $parts = array_filter([
-    $via,
     trim((string) ($practice['direccion_numero'] ?? '')),
     ($practice['direccion_bloque'] ?? '') !== '' ? 'Bloque ' . $practice['direccion_bloque'] : '',
     ($practice['direccion_escalera'] ?? '') !== '' ? 'Esc. ' . $practice['direccion_escalera'] : '',
@@ -272,6 +253,17 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
   return $html . '</table>';
 }
 
+function count_attendance_days(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): int {
+  $count = 0;
+
+  for ($current = $startDate; $current <= $endDate; $current = $current->modify('+1 day')) {
+    if (!is_no_attendance_day($current, $nonSchoolDays, $scheduleByDay)) {
+      $count++;
+    }
+  }
+
+  return $count;
+}
 
 $idRaw = $_GET['id_practica'] ?? ($_POST['id_practica'] ?? ($_GET['id'] ?? ($_POST['id'] ?? null)));
 $id = filter_var($idRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
@@ -283,7 +275,7 @@ $tempFilePath = null;
 
 try {
   $pdo = db();
-  $stmt = $pdo->prepare('SELECT p.*,a.nombre AS alumno_nombre,a.apellido1 AS alumno_apellido1,a.apellido2 AS alumno_apellido2,e.convenio AS empresa_convenio,e.nombre_comercial AS empresa_nombre,d.nombre_via AS direccion_nombre_via,d.numero AS direccion_numero,d.bloque AS direccion_bloque,d.escalera AS direccion_escalera,d.planta AS direccion_planta,d.puerta AS direccion_puerta,d.otros AS direccion_otros,d.cp AS direccion_cp,v.via AS direccion_via_tipo,ld.nombre AS direccion_localidad,pd.nombre AS direccion_provincia,pa.pais AS direccion_pais FROM practicas p LEFT JOIN alumnos a ON a.id_alumno=p.id_alumno LEFT JOIN empresas e ON e.id_empresa=p.id_empresa LEFT JOIN direcciones d ON d.id_direccion=p.id_direccion LEFT JOIN vias v ON v.id_via=d.id_via LEFT JOIN localidades ld ON ld.id_localidad=d.id_localidad LEFT JOIN provincias pd ON pd.id_provincia=d.id_provincia LEFT JOIN paises pa ON pa.id_pais=d.id_pais WHERE p.id_practica=:id LIMIT 1');
+  $stmt = $pdo->prepare('SELECT p.*,a.nombre AS alumno_nombre,a.apellido1 AS alumno_apellido1,a.apellido2 AS alumno_apellido2,e.convenio AS empresa_convenio,e.nombre AS empresa_nombre,d.nombre_via AS direccion_nombre_via,d.numero AS direccion_numero,d.bloque AS direccion_bloque,d.escalera AS direccion_escalera,d.planta AS direccion_planta,d.puerta AS direccion_puerta,d.otros AS direccion_otros,d.cp AS direccion_cp,v.via AS direccion_via_tipo,ld.nombre AS direccion_localidad,pd.nombre AS direccion_provincia,pa.pais AS direccion_pais FROM practicas p LEFT JOIN alumnos a ON a.id_alumno=p.id_alumno LEFT JOIN empresas e ON e.id_empresa=p.id_empresa LEFT JOIN direcciones d ON d.id_direccion=p.id_direccion LEFT JOIN vias v ON v.id_via=d.id_via LEFT JOIN localidades ld ON ld.id_localidad=d.id_localidad LEFT JOIN provincias pd ON pd.id_provincia=d.id_provincia LEFT JOIN paises pa ON pa.id_pais=d.id_pais WHERE p.id_practica=:id LIMIT 1');
   $stmt->execute(['id' => $id]);
   $practice = $stmt->fetch();
 
@@ -306,9 +298,9 @@ try {
     $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
   }
 
-  $startDate = parse_iso_date($startDateRaw);
-  $endDate = parse_iso_date($endDateRaw);
-  if ($startDate === null || $endDate === null || $startDate > $endDate) {
+  $startDate = $startDateRaw !== '' ? (new DateTimeImmutable($startDateRaw))->setTime(0, 0, 0) : false;
+  $endDate = $endDateRaw !== '' ? (new DateTimeImmutable($endDateRaw))->setTime(0, 0, 0) : false;
+  if (!$startDate || !$endDate || $startDate > $endDate) {
     practicas_redirect_to_detail((int) $id, null, 'Calendario: No se puede generar el calendario porque las fechas de inicio/fin son inválidas.');
   }
 
@@ -330,6 +322,7 @@ try {
     1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo',
   ];
 
+  $attendanceDays = count_attendance_days($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
   $pdfHtml = '<h1 style="margin-bottom:8px;">Calendario de prácticas</h1>';
   $pdfHtml .= '<p><strong>Alumno:</strong> ' . htmlspecialchars(full_name($practice, 'alumno'), ENT_QUOTES, 'UTF-8') . '</p>';
   $pdfHtml .= '<p><strong>Empresa:</strong> ' . htmlspecialchars((string) ($practice['empresa_nombre'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
@@ -342,13 +335,12 @@ try {
     $pdfHtml .= '<p style="font-size:9pt; color:#666666;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
   }
   $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
-  $observaciones = trim((string) ($practice['observaciones'] ?? ''));
-  $pdfHtml .= '<p style="font-family: Arial; margin-top: 12px;"><strong>Observaciones:</strong><br>' . htmlspecialchars($observaciones, ENT_QUOTES, 'UTF-8') . '</p>';
+  $pdfHtml .= '<p style="margin-top:8px;"><strong>Total de horas de prácticas: ' . htmlspecialchars(format_value($practice['horas'], '0'), ENT_QUOTES, 'UTF-8') . ' horas</strong></p>';
+  $pdfHtml .= '<p><strong>Total de días que asistirá a la empresa: ' . $attendanceDays . ' días</strong></p>';
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
-    'default_font' => 'Arial',
     'margin_left' => 12,
     'margin_right' => 12,
     'margin_top' => 12,
@@ -356,7 +348,7 @@ try {
     'tempDir' => ensure_mpdf_temp_dir(),
   ]);
 
-  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; font-family: Arial !important; } * { font-family: Arial !important; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
+  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
   $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
   $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
 
