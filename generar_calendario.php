@@ -343,12 +343,12 @@ try {
   }
   $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
   $observaciones = trim((string) ($practice['observaciones'] ?? ''));
-  $pdfHtml .= '<p style="margin-top: 12px;"><strong>Observaciones:</strong><br>' . htmlspecialchars($observaciones, ENT_QUOTES, 'UTF-8') . '</p>';
+  $pdfHtml .= '<p style="font-family: Arial; margin-top: 12px;"><strong>Observaciones:</strong><br>' . htmlspecialchars($observaciones, ENT_QUOTES, 'UTF-8') . '</p>';
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
-    'default_font' => 'dejavusans',
+    'default_font' => 'Arial',
     'margin_left' => 12,
     'margin_right' => 12,
     'margin_top' => 12,
@@ -356,7 +356,7 @@ try {
     'tempDir' => ensure_mpdf_temp_dir(),
   ]);
 
-  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; font-family: dejavusans, sans-serif !important; } * { font-family: dejavusans, sans-serif !important; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
+  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; font-family: Arial !important; } * { font-family: Arial !important; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
   $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
   $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
 
