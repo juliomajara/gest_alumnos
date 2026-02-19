@@ -159,7 +159,7 @@ function is_safe_document_path(string $path, array $allowedDirs): bool
     return str_replace(['\\', '/'], DIRECTORY_SEPARATOR, trim($value));
   };
 
-  $normalizeForCompare = static function (string $value): string {
+  $normalizeForCompare = static function (string $value) use ($normalizeSeparators): string {
     $normalized = rtrim($normalizeSeparators($value), DIRECTORY_SEPARATOR);
     return DIRECTORY_SEPARATOR === '\\'
       ? strtolower($normalized)
