@@ -289,66 +289,23 @@ function fetch_emails_by_student(PDO $pdo, array $studentIds): array
   return $emailsByStudent;
 }
 
-function send_mail_with_attachments(array $toEmails, string $subject, string $body, array $attachments, array $mailConfig): array
+function encode_mime_header_value(string $value): string
 {
-  $autoloadPath = __DIR__ . '/vendor/autoload.php';
-  if (is_file($autoloadPath)) {
-    require_once $autoloadPath;
+  if (function_exists('mb_encode_mimeheader')) {
+    return mb_encode_mimeheader($value, 'UTF-8', 'B', "\r\n");
   }
 
-  $hasPhpMailer = class_exists('PHPMailer\\PHPMailer\\PHPMailer');
+  return '=?UTF-8?B?' . base64_encode($value) . '?=';
+}
 
-  if ($hasPhpMailer) {
-    $mailer = new PHPMailer\PHPMailer\PHPMailer(true);
-    $mailer->CharSet = 'UTF-8';
+function sanitize_header_filename(string $filename): string
+{
+  $clean = str_replace(["\r", "\n", '"'], ['', '', "'"], $filename);
+  return $clean === '' ? 'adjunto.pdf' : $clean;
+}
 
-    if (($mailConfig['transport'] ?? 'mail') === 'smtp') {
-      $mailer->isSMTP();
-      $mailer->Host = (string) ($mailConfig['smtp_host'] ?? '');
-      $mailer->Port = (int) ($mailConfig['smtp_port'] ?? 587);
-      $mailer->SMTPAuth = true;
-      $mailer->Username = (string) ($mailConfig['smtp_user'] ?? '');
-      $mailer->Password = (string) ($mailConfig['smtp_pass'] ?? '');
-      $secure = (string) ($mailConfig['smtp_secure'] ?? 'tls');
-      if ($secure === 'ssl') {
-        $mailer->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-      } else {
-        $mailer->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-      }
-    }
-
-    $fromEmail = trim((string) ($mailConfig['from_email'] ?? ''));
-    if ($fromEmail !== '' && filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
-      $mailer->setFrom($fromEmail, (string) ($mailConfig['from_name'] ?? 'Gestor de Alumnos'));
-    } else {
-      return ['ok' => false, 'error' => 'Configura un remitente válido en config.php (mail.from_email).'];
-    }
-
-    $replyTo = trim((string) ($mailConfig['reply_to'] ?? ''));
-    if ($replyTo !== '' && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) {
-      $mailer->addReplyTo($replyTo);
-    }
-
-    foreach ($toEmails as $email) {
-      $mailer->addAddress($email);
-    }
-
-    foreach ($attachments as $attachment) {
-      $mailer->addAttachment($attachment['path'], $attachment['name']);
-    }
-
-    $mailer->Subject = $subject;
-    $mailer->Body = $body;
-    $mailer->isHTML(false);
-
-    try {
-      $mailer->send();
-      return ['ok' => true, 'error' => null];
-    } catch (Throwable $e) {
-      return ['ok' => false, 'error' => $e->getMessage()];
-    }
-  }
-
+function build_multipart_mail_payload(array $toEmails, string $subject, string $body, array $attachments, array $mailConfig): array
+{
   $boundary = 'gestalumnos_' . md5((string) microtime(true));
   $headers = [];
 
@@ -358,41 +315,243 @@ function send_mail_with_attachments(array $toEmails, string $subject, string $bo
   }
 
   $fromName = trim((string) ($mailConfig['from_name'] ?? 'Gestor de Alumnos'));
-  $headers[] = 'From: ' . ($fromName !== '' ? mb_encode_mimeheader($fromName, 'UTF-8') . ' <' . $fromEmail . '>' : $fromEmail);
+  $fromHeader = $fromName !== ''
+    ? encode_mime_header_value($fromName) . ' <' . $fromEmail . '>'
+    : $fromEmail;
+  $headers[] = 'From: ' . $fromHeader;
 
   $replyTo = trim((string) ($mailConfig['reply_to'] ?? ''));
   if ($replyTo !== '' && filter_var($replyTo, FILTER_VALIDATE_EMAIL)) {
     $headers[] = 'Reply-To: ' . $replyTo;
   }
 
+  $headers[] = 'To: ' . implode(', ', $toEmails);
+  $headers[] = 'Subject: ' . encode_mime_header_value($subject);
+  $headers[] = 'Date: ' . date('r');
   $headers[] = 'MIME-Version: 1.0';
   $headers[] = 'Content-Type: multipart/mixed; boundary="' . $boundary . '"';
 
   $message = "--{$boundary}\r\n";
   $message .= "Content-Type: text/plain; charset=UTF-8\r\n";
   $message .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
-  $message .= $body . "\r\n";
+  $message .= str_replace(["\r\n", "\r"], "\n", $body) . "\r\n";
 
   foreach ($attachments as $attachment) {
-    $content = file_get_contents($attachment['path']);
+    $content = @file_get_contents((string) ($attachment['path'] ?? ''));
     if ($content === false) {
-      return ['ok' => false, 'error' => 'No se pudo leer el adjunto ' . $attachment['name'] . '.'];
+      return ['ok' => false, 'error' => 'No se pudo leer el adjunto ' . (string) ($attachment['name'] ?? '') . '.'];
     }
 
+    $rawFilename = sanitize_header_filename((string) ($attachment['name'] ?? 'adjunto.pdf'));
+    $encodedFilename = rawurlencode($rawFilename);
+
     $message .= "--{$boundary}\r\n";
-    $message .= 'Content-Type: application/pdf; name="' . addslashes($attachment['name']) . '"' . "\r\n";
-    $message .= 'Content-Transfer-Encoding: base64' . "\r\n";
-    $message .= 'Content-Disposition: attachment; filename="' . addslashes($attachment['name']) . '"' . "\r\n\r\n";
-    $message .= chunk_split(base64_encode($content)) . "\r\n";
+    $message .= 'Content-Type: application/pdf; name="' . $rawFilename . '"; name*=UTF-8\'\'' . $encodedFilename . "\r\n";
+    $message .= "Content-Transfer-Encoding: base64\r\n";
+    $message .= 'Content-Disposition: attachment; filename="' . $rawFilename . '"; filename*=UTF-8\'\'' . $encodedFilename . "\r\n\r\n";
+    $message .= chunk_split(base64_encode($content), 76, "\r\n") . "\r\n";
   }
 
-  $message .= "--{$boundary}--";
+  $message .= "--{$boundary}--\r\n";
 
-  $ok = mail(implode(',', $toEmails), '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, implode("\r\n", $headers));
+  return [
+    'ok' => true,
+    'headers' => $headers,
+    'message' => $message,
+    'from_email' => $fromEmail,
+  ];
+}
 
-  return $ok
-    ? ['ok' => true, 'error' => null]
-    : ['ok' => false, 'error' => 'mail() devolvió false. Revisa la configuración del servidor de correo.'];
+function smtp_read_response($socket): string
+{
+  $response = '';
+  while (($line = fgets($socket, 515)) !== false) {
+    $response .= $line;
+    if (strlen($line) >= 4 && $line[3] === ' ') {
+      break;
+    }
+  }
+
+  return trim($response);
+}
+
+function smtp_send_command($socket, string $command, array $expectedCodes, string $stage, string &$lastResponse): ?string
+{
+  if (fwrite($socket, $command . "\r\n") === false) {
+    return 'SMTP fallo en etapa ' . $stage . ': no se pudo escribir en el socket.';
+  }
+
+  $lastResponse = smtp_read_response($socket);
+  $code = (int) substr($lastResponse, 0, 3);
+  if (!in_array($code, $expectedCodes, true)) {
+    return 'SMTP fallo en etapa ' . $stage . ': respuesta [' . $lastResponse . '].';
+  }
+
+  return null;
+}
+
+function send_mail_with_attachments(array $toEmails, string $subject, string $body, array $attachments, array $mailConfig): array
+{
+  $validRecipients = [];
+  foreach ($toEmails as $email) {
+    $cleanEmail = trim((string) $email);
+    if ($cleanEmail === '' || !filter_var($cleanEmail, FILTER_VALIDATE_EMAIL)) {
+      continue;
+    }
+
+    $validRecipients[normalize_email_address($cleanEmail)] = $cleanEmail;
+  }
+
+  $recipients = array_values($validRecipients);
+  if (!$recipients) {
+    return ['ok' => false, 'error' => 'No hay destinatarios válidos para el envío.'];
+  }
+
+  $payload = build_multipart_mail_payload($recipients, $subject, $body, $attachments, $mailConfig);
+  if (!($payload['ok'] ?? false)) {
+    return ['ok' => false, 'error' => (string) ($payload['error'] ?? 'No se pudo construir el email.')];
+  }
+
+  $transport = strtolower(trim((string) ($mailConfig['transport'] ?? 'smtp')));
+  if ($transport !== 'smtp') {
+    $ok = mail(
+      implode(',', $recipients),
+      encode_mime_header_value($subject),
+      (string) $payload['message'],
+      implode("\r\n", (array) $payload['headers'])
+    );
+
+    return $ok
+      ? ['ok' => true, 'error' => null]
+      : ['ok' => false, 'error' => 'mail() devolvió false. Revisa la configuración del servidor de correo.'];
+  }
+
+  $smtpHost = trim((string) ($mailConfig['smtp_host'] ?? ''));
+  $smtpPort = (int) ($mailConfig['smtp_port'] ?? 465);
+  $smtpUser = trim((string) ($mailConfig['smtp_user'] ?? ''));
+  $smtpPass = (string) ($mailConfig['smtp_pass'] ?? '');
+  $smtpSecure = strtolower(trim((string) ($mailConfig['smtp_secure'] ?? 'ssl')));
+
+  if ($smtpHost === '' || $smtpPort <= 0 || $smtpUser === '' || $smtpPass === '') {
+    return ['ok' => false, 'error' => 'Configuración SMTP incompleta en config.php.'];
+  }
+
+  $remoteHost = $smtpHost;
+  if ($smtpSecure === 'ssl' || $smtpSecure === 'smtps' || $smtpPort === 465) {
+    $remoteHost = 'ssl://' . $smtpHost;
+  }
+
+  $context = stream_context_create([
+    'ssl' => [
+      'verify_peer' => true,
+      'verify_peer_name' => true,
+      'allow_self_signed' => false,
+    ],
+  ]);
+
+  $lastResponse = '';
+  $socket = @stream_socket_client($remoteHost . ':' . $smtpPort, $errno, $errstr, 20, STREAM_CLIENT_CONNECT, $context);
+  if ($socket === false) {
+    return ['ok' => false, 'error' => 'SMTP fallo en etapa connect: ' . $errstr . ' (' . $errno . ').'];
+  }
+
+  stream_set_timeout($socket, 20);
+
+  $lastResponse = smtp_read_response($socket);
+  $initialCode = (int) substr($lastResponse, 0, 3);
+  if ($initialCode !== 220) {
+    fclose($socket);
+    return ['ok' => false, 'error' => 'SMTP fallo en etapa connect: respuesta [' . $lastResponse . '].'];
+  }
+
+  $hostname = gethostname();
+  $heloHost = is_string($hostname) && $hostname !== '' ? $hostname : 'localhost';
+
+  $error = smtp_send_command($socket, 'EHLO ' . $heloHost, [250], 'ehlo', $lastResponse);
+  if ($error !== null) {
+    fclose($socket);
+    return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+  }
+
+  if ($smtpSecure === 'tls') {
+    $error = smtp_send_command($socket, 'STARTTLS', [220], 'starttls', $lastResponse);
+    if ($error !== null || !stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+      fclose($socket);
+      return ['ok' => false, 'error' => 'SMTP fallo en etapa starttls. Última respuesta: ' . $lastResponse];
+    }
+
+    $error = smtp_send_command($socket, 'EHLO ' . $heloHost, [250], 'ehlo', $lastResponse);
+    if ($error !== null) {
+      fclose($socket);
+      return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+    }
+  }
+
+  $error = smtp_send_command($socket, 'AUTH LOGIN', [334], 'auth', $lastResponse);
+  if ($error !== null) {
+    fclose($socket);
+    return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+  }
+
+  $error = smtp_send_command($socket, base64_encode($smtpUser), [334], 'auth_user', $lastResponse);
+  if ($error !== null) {
+    fclose($socket);
+    return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+  }
+
+  $error = smtp_send_command($socket, base64_encode($smtpPass), [235], 'auth_pass', $lastResponse);
+  if ($error !== null) {
+    fclose($socket);
+    return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+  }
+
+  $error = smtp_send_command($socket, 'MAIL FROM:<' . (string) $payload['from_email'] . '>', [250], 'mailfrom', $lastResponse);
+  if ($error !== null) {
+    fclose($socket);
+    return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+  }
+
+  foreach ($recipients as $recipient) {
+    $error = smtp_send_command($socket, 'RCPT TO:<' . $recipient . '>', [250, 251], 'rcptto', $lastResponse);
+    if ($error !== null) {
+      fclose($socket);
+      return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+    }
+  }
+
+  $error = smtp_send_command($socket, 'DATA', [354], 'data', $lastResponse);
+  if ($error !== null) {
+    fclose($socket);
+    return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
+  }
+
+  $rawData = implode("\r\n", (array) $payload['headers']) . "\r\n\r\n" . (string) $payload['message'];
+  $rawData = str_replace(["\r\n", "\r"], "\n", $rawData);
+  $lines = explode("\n", $rawData);
+  foreach ($lines as &$line) {
+    if (isset($line[0]) && $line[0] === '.') {
+      $line = '.' . $line;
+    }
+  }
+  unset($line);
+  $smtpData = implode("\r\n", $lines) . "\r\n.\r\n";
+
+  if (fwrite($socket, $smtpData) === false) {
+    fclose($socket);
+    return ['ok' => false, 'error' => 'SMTP fallo en etapa data: no se pudo enviar el cuerpo del mensaje.'];
+  }
+
+  $lastResponse = smtp_read_response($socket);
+  $dataCode = (int) substr($lastResponse, 0, 3);
+  if ($dataCode !== 250) {
+    fclose($socket);
+    return ['ok' => false, 'error' => 'SMTP fallo en etapa data: respuesta [' . $lastResponse . '].'];
+  }
+
+  smtp_send_command($socket, 'QUIT', [221], 'quit', $lastResponse);
+  fclose($socket);
+
+  return ['ok' => true, 'error' => null];
 }
 
 function render_student_rows(array $students, array $docsByStudent): string
