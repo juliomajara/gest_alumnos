@@ -155,18 +155,52 @@ function fetch_practices_for_students(PDO $pdo, array $studentIds): array
 
 function is_safe_document_path(string $path, array $allowedDirs): bool
 {
-  $realPath = realpath($path);
+  $normalizeSeparators = static function (string $value): string {
+    return str_replace(['\\', '/'], DIRECTORY_SEPARATOR, trim($value));
+  };
+
+  $normalizeForCompare = static function (string $value): string {
+    $normalized = rtrim($normalizeSeparators($value), DIRECTORY_SEPARATOR);
+    return DIRECTORY_SEPARATOR === '\\'
+      ? strtolower($normalized)
+      : $normalized;
+  };
+
+  $candidatePath = $normalizeSeparators($path);
+  if ($candidatePath === '') {
+    return false;
+  }
+
+  if (!preg_match('/^(?:[a-zA-Z]:[\\\\\/]|[\\\\\/]{2}|[\\\\\/])/', $candidatePath)) {
+    $candidatePath = __DIR__ . DIRECTORY_SEPARATOR . ltrim($candidatePath, '\\/');
+  }
+
+  $realPath = realpath($candidatePath);
   if ($realPath === false || !is_file($realPath)) {
     return false;
   }
 
+  $realPathNormalized = $normalizeForCompare($realPath);
+
   foreach ($allowedDirs as $dir) {
-    $realDir = realpath($dir);
+    $normalizedDir = $normalizeSeparators((string) $dir);
+    if ($normalizedDir === '') {
+      continue;
+    }
+
+    if (!preg_match('/^(?:[a-zA-Z]:[\\\\\/]|[\\\\\/]{2}|[\\\\\/])/', $normalizedDir)) {
+      $normalizedDir = __DIR__ . DIRECTORY_SEPARATOR . ltrim($normalizedDir, '\\/');
+    }
+
+    $realDir = realpath($normalizedDir);
     if ($realDir === false) {
       continue;
     }
 
-    if (str_starts_with($realPath, $realDir . DIRECTORY_SEPARATOR) || $realPath === $realDir) {
+    $realDirNormalized = $normalizeForCompare($realDir);
+    $realDirWithSeparator = rtrim($realDirNormalized, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+    if (str_starts_with($realPathNormalized, $realDirWithSeparator) || $realPathNormalized === $realDirNormalized) {
       return true;
     }
   }
