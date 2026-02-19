@@ -778,7 +778,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         }
 
         $subject = 'Documentación de prácticas';
-        $body = "Hola,\n\nAdjuntamos la documentación seleccionada de prácticas para {$studentName}.\n\nUn saludo.";
+        $body = "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
 
         $result = send_mail_with_attachments($emails, $subject, $body, $attachments, $mailConfig);
 
