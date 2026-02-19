@@ -144,10 +144,82 @@ $practices_stmt = $pdo->prepare(
     a.nombre AS alumno_nombre,
     a.apellido1 AS alumno_apellido1,
     a.apellido2 AS alumno_apellido2,
+    e.id_empresa,
     e.nombre AS empresa_nombre,
     e.apellido1 AS empresa_apellido1,
     e.apellido2 AS empresa_apellido2,
-    e.convenio
+    e.convenio,
+    e.cif AS empresa_cif,
+    (
+      SELECT TRIM(CONCAT_WS(" ", ec.nombre, ec.apellido1, ec.apellido2))
+      FROM empresas_contactos ec
+      WHERE ec.id_empresa = e.id_empresa
+      ORDER BY ec.id_empresa_contacto ASC
+      LIMIT 1
+    ) AS empresa_contacto_nombre,
+    (
+      SELECT cct.direccion_correo
+      FROM correos cct
+      WHERE cct.entidad_tipo = "empresa_contacto"
+        AND cct.id_entidad = (
+          SELECT ec1.id_empresa_contacto
+          FROM empresas_contactos ec1
+          WHERE ec1.id_empresa = e.id_empresa
+          ORDER BY ec1.id_empresa_contacto ASC
+          LIMIT 1
+        )
+      ORDER BY cct.id_correo ASC
+      LIMIT 1
+    ) AS empresa_contacto_email,
+    (
+      SELECT tct.telefono
+      FROM telefonos tct
+      WHERE tct.entidad_tipo = "empresa_contacto"
+        AND tct.id_entidad = (
+          SELECT ec2.id_empresa_contacto
+          FROM empresas_contactos ec2
+          WHERE ec2.id_empresa = e.id_empresa
+          ORDER BY ec2.id_empresa_contacto ASC
+          LIMIT 1
+        )
+      ORDER BY tct.id_telefono ASC
+      LIMIT 1
+    ) AS empresa_contacto_telefono,
+    (
+      SELECT TRIM(CONCAT_WS(" ", et.nombre, et.apellido1, et.apellido2))
+      FROM empresas_tutores et
+      WHERE et.id_empresa = e.id_empresa
+      ORDER BY et.id_empresas_tutor ASC
+      LIMIT 1
+    ) AS empresa_tutor_nombre,
+    (
+      SELECT cet.direccion_correo
+      FROM correos cet
+      WHERE cet.entidad_tipo = "empresa_tutor"
+        AND cet.id_entidad = (
+          SELECT et1.id_empresas_tutor
+          FROM empresas_tutores et1
+          WHERE et1.id_empresa = e.id_empresa
+          ORDER BY et1.id_empresas_tutor ASC
+          LIMIT 1
+        )
+      ORDER BY cet.id_correo ASC
+      LIMIT 1
+    ) AS empresa_tutor_email,
+    (
+      SELECT tet.telefono
+      FROM telefonos tet
+      WHERE tet.entidad_tipo = "empresa_tutor"
+        AND tet.id_entidad = (
+          SELECT et2.id_empresas_tutor
+          FROM empresas_tutores et2
+          WHERE et2.id_empresa = e.id_empresa
+          ORDER BY et2.id_empresas_tutor ASC
+          LIMIT 1
+        )
+      ORDER BY tet.id_telefono ASC
+      LIMIT 1
+    ) AS empresa_tutor_telefono
   FROM practicas p
   INNER JOIN alumnos a
     ON a.id_alumno = p.id_alumno
@@ -186,6 +258,20 @@ function render_practice_rows(array $practices): string
           $practice['empresa_apellido2'] ?? '',
         ], static fn ($value) => trim((string) $value) !== '')));
         $empresa = $empresa !== '' ? $empresa : 'No disponible';
+        $empresa_cif = trim((string) ($practice['empresa_cif'] ?? ''));
+        $empresa_cif = $empresa_cif !== '' ? $empresa_cif : 'No disponible';
+        $empresa_contacto_nombre = trim((string) ($practice['empresa_contacto_nombre'] ?? ''));
+        $empresa_contacto_nombre = $empresa_contacto_nombre !== '' ? $empresa_contacto_nombre : 'No disponible';
+        $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? ''));
+        $empresa_contacto_email = $empresa_contacto_email !== '' ? $empresa_contacto_email : 'No disponible';
+        $empresa_contacto_telefono = trim((string) ($practice['empresa_contacto_telefono'] ?? ''));
+        $empresa_contacto_telefono = $empresa_contacto_telefono !== '' ? $empresa_contacto_telefono : 'No disponible';
+        $empresa_tutor_nombre = trim((string) ($practice['empresa_tutor_nombre'] ?? ''));
+        $empresa_tutor_nombre = $empresa_tutor_nombre !== '' ? $empresa_tutor_nombre : 'No disponible';
+        $empresa_tutor_email = trim((string) ($practice['empresa_tutor_email'] ?? ''));
+        $empresa_tutor_email = $empresa_tutor_email !== '' ? $empresa_tutor_email : 'No disponible';
+        $empresa_tutor_telefono = trim((string) ($practice['empresa_tutor_telefono'] ?? ''));
+        $empresa_tutor_telefono = $empresa_tutor_telefono !== '' ? $empresa_tutor_telefono : 'No disponible';
 
         $fecha_inicio = format_date($practice['fecha_inicio'] ?? null);
         $fecha_fin = format_date($practice['fecha_fin'] ?? null);
@@ -206,7 +292,22 @@ function render_practice_rows(array $practices): string
             <?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?>
           </a>
         </td>
-        <td><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <button
+            type="button"
+            class="practice-link empresa-name-trigger"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            data-empresa-nombre="<?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?>"
+            data-empresa-cif="<?php echo htmlspecialchars($empresa_cif, ENT_QUOTES, 'UTF-8'); ?>"
+            data-contacto-nombre="<?php echo htmlspecialchars($empresa_contacto_nombre, ENT_QUOTES, 'UTF-8'); ?>"
+            data-contacto-email="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"
+            data-contacto-telefono="<?php echo htmlspecialchars($empresa_contacto_telefono, ENT_QUOTES, 'UTF-8'); ?>"
+            data-tutor-nombre="<?php echo htmlspecialchars($empresa_tutor_nombre, ENT_QUOTES, 'UTF-8'); ?>"
+            data-tutor-email="<?php echo htmlspecialchars($empresa_tutor_email, ENT_QUOTES, 'UTF-8'); ?>"
+            data-tutor-telefono="<?php echo htmlspecialchars($empresa_tutor_telefono, ENT_QUOTES, 'UTF-8'); ?>"
+          ><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></button>
+        </td>
         <td><?php echo htmlspecialchars($fecha_inicio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -311,11 +412,26 @@ $active_page = 'practicas';
       </section>
     </main>
   </div>
+
+  <div class="practicas-ras-popover-layer" id="empresa-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover" id="empresa-detail-popover" role="dialog" aria-modal="false" aria-labelledby="empresa-detail-title" hidden>
+      <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle de la empresa">×</button>
+      <h3 id="empresa-detail-title" class="practicas-ras-popover__title"></h3>
+      <ul class="practicas-ras-popover__criteria" id="empresa-detail-data"></ul>
+    </div>
+  </div>
+
   <script>
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
     const tableBody = document.querySelector('tbody');
+    const layer = document.getElementById('empresa-detail-layer');
+    const popover = document.getElementById('empresa-detail-popover');
+    const title = document.getElementById('empresa-detail-title');
+    const detailList = document.getElementById('empresa-detail-data');
     let debounceTimer = null;
+    let activeTrigger = null;
 
     const updateResults = (withDebounce = false) => {
       if (debounceTimer) {
@@ -357,6 +473,160 @@ $active_page = 'practicas';
     searchInput.addEventListener('input', () => {
       updateResults(true);
     });
+
+    if (layer && popover && title && detailList) {
+      const copyToClipboard = async (value) => {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+          return;
+        }
+
+        const helper = document.createElement('textarea');
+        helper.value = value;
+        helper.setAttribute('readonly', '');
+        helper.style.position = 'absolute';
+        helper.style.left = '-9999px';
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand('copy');
+        document.body.removeChild(helper);
+      };
+
+      const setPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        popover.style.top = `${Math.max(gutter, top)}px`;
+        popover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closePopover = () => {
+        popover.hidden = true;
+        layer.hidden = true;
+        if (activeTrigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeTrigger = null;
+      };
+
+      const addInfoItem = (label, value, canCopy = false) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = `${label}: `;
+        item.appendChild(strong);
+
+        if (canCopy && value !== 'No disponible') {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'ghost-button';
+          button.textContent = value;
+          button.dataset.copyValue = value;
+          item.appendChild(button);
+        } else {
+          item.appendChild(document.createTextNode(value));
+        }
+
+        detailList.appendChild(item);
+      };
+
+      const openPopover = (trigger) => {
+        if (activeTrigger && activeTrigger !== trigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+
+        title.textContent = trigger.dataset.empresaNombre || 'Empresa';
+        detailList.innerHTML = '';
+
+        addInfoItem('Nombre de la empresa', trigger.dataset.empresaNombre || 'No disponible');
+        addInfoItem('CIF', trigger.dataset.empresaCif || 'No disponible');
+        addInfoItem('Nombre de la persona de contacto', trigger.dataset.contactoNombre || 'No disponible');
+        addInfoItem('Correo de la persona de contacto', trigger.dataset.contactoEmail || 'No disponible', true);
+        addInfoItem('Teléfono de la persona de contacto', trigger.dataset.contactoTelefono || 'No disponible', true);
+        addInfoItem('Nombre del tutor', trigger.dataset.tutorNombre || 'No disponible');
+        addInfoItem('Correo del tutor', trigger.dataset.tutorEmail || 'No disponible', true);
+        addInfoItem('Teléfono del tutor', trigger.dataset.tutorTelefono || 'No disponible', true);
+
+        activeTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        layer.hidden = false;
+        popover.hidden = false;
+        setPopoverPosition(trigger);
+      };
+
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger');
+        if (trigger && tableBody.contains(trigger)) {
+          if (activeTrigger === trigger && !popover.hidden) {
+            closePopover();
+            return;
+          }
+
+          openPopover(trigger);
+          return;
+        }
+
+        const copyButton = event.target.closest('[data-copy-value]');
+        if (!copyButton || !popover.contains(copyButton)) {
+          return;
+        }
+
+        const copyValue = copyButton.dataset.copyValue || '';
+        if (copyValue === '') {
+          return;
+        }
+
+        copyToClipboard(copyValue)
+          .then(() => {
+            const originalText = copyButton.textContent;
+            copyButton.textContent = 'Copiado';
+            window.setTimeout(() => {
+              copyButton.textContent = originalText;
+            }, 1000);
+          })
+          .catch(() => {});
+      });
+
+      layer.querySelectorAll('[data-popover-close]').forEach((element) => {
+        element.addEventListener('click', closePopover);
+      });
+
+      window.addEventListener('resize', () => {
+        if (activeTrigger && !popover.hidden) {
+          setPopoverPosition(activeTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeTrigger && !popover.hidden) {
+          setPopoverPosition(activeTrigger);
+        }
+      }, true);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !popover.hidden) {
+          closePopover();
+        }
+      });
+    }
   </script>
 </body>
 </html>
