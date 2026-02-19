@@ -333,6 +333,7 @@ try {
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
+    'default_font' => 'Arial',
     'margin_left' => 12,
     'margin_right' => 12,
     'margin_top' => 12,
@@ -340,7 +341,7 @@ try {
     'tempDir' => ensure_mpdf_temp_dir(),
   ]);
 
-  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
+  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; font-family: Arial !important; } * { font-family: Arial !important; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
   $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
   $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
 
