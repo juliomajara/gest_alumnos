@@ -33,6 +33,11 @@ function get_mail_config(): array
     'smtp_user' => (string) ($mail['smtp_user'] ?? 'julio.sanchezfernandez'),
     'smtp_pass' => (string) ($mail['smtp_pass'] ?? 'died10.Jerk'),
     'smtp_secure' => (string) ($mail['smtp_secure'] ?? 'ssl'),
+    'imap_host' => (string) ($mail['imap_host'] ?? ($mail['smtp_host'] ?? 'smtp01.educa.madrid.org')),
+    'imap_port' => (int) ($mail['imap_port'] ?? 993),
+    'imap_user' => (string) ($mail['imap_user'] ?? ($mail['smtp_user'] ?? 'julio.sanchezfernandez')),
+    'imap_pass' => (string) ($mail['imap_pass'] ?? ($mail['smtp_pass'] ?? 'died10.Jerk')),
+    'imap_secure' => (string) ($mail['imap_secure'] ?? 'ssl'),
   ];
 }
 
@@ -503,6 +508,91 @@ function smtp_send_command($socket, string $command, array $expectedCodes, strin
   return null;
 }
 
+function ensure_sent_copy_required_headers(string $rawMessage, array $mailConfig): string
+{
+  $rawMessage = str_replace(["\r\n", "\r"], "\n", $rawMessage);
+  [$headersPart, $bodyPart] = array_pad(explode("\n\n", $rawMessage, 2), 2, '');
+  $headers = $headersPart === '' ? [] : explode("\n", $headersPart);
+
+  $hasDate = false;
+  $hasMessageId = false;
+  foreach ($headers as $headerLine) {
+    if (stripos($headerLine, 'Date:') === 0) {
+      $hasDate = true;
+    } elseif (stripos($headerLine, 'Message-ID:') === 0) {
+      $hasMessageId = true;
+    }
+  }
+
+  if (!$hasDate) {
+    $headers[] = 'Date: ' . date('r');
+  }
+
+  if (!$hasMessageId) {
+    $fromEmail = trim((string) ($mailConfig['from_email'] ?? ''));
+    $domain = 'localhost';
+    if (strpos($fromEmail, '@') !== false) {
+      $domainPart = substr($fromEmail, (int) strrpos($fromEmail, '@') + 1);
+      if (is_string($domainPart) && $domainPart !== '') {
+        $domain = preg_replace('/[^A-Za-z0-9.-]/', '', $domainPart) ?: 'localhost';
+      }
+    }
+
+    $headers[] = sprintf('Message-ID: <%s@%s>', bin2hex(random_bytes(8)), $domain);
+  }
+
+  return implode("\r\n", $headers) . "\r\n\r\n" . str_replace("\n", "\r\n", $bodyPart);
+}
+
+function save_to_sent_folder_imap(string $rawMessage, array $mailConfig): array
+{
+  if (!function_exists('imap_open') || !function_exists('imap_append')) {
+    return ['ok' => false, 'error' => 'La extensión IMAP de PHP no está disponible.'];
+  }
+
+  $imapHost = trim((string) ($mailConfig['imap_host'] ?? ''));
+  $imapPort = (int) ($mailConfig['imap_port'] ?? 993);
+  $imapUser = trim((string) ($mailConfig['imap_user'] ?? ''));
+  $imapPass = (string) ($mailConfig['imap_pass'] ?? '');
+  $imapSecure = strtolower(trim((string) ($mailConfig['imap_secure'] ?? 'ssl')));
+
+  if ($imapHost === '' || $imapPort <= 0 || $imapUser === '' || $imapPass === '') {
+    return ['ok' => false, 'error' => 'Configuración IMAP incompleta en config.php.'];
+  }
+
+  $securityFlag = '/imap';
+  if ($imapSecure === 'ssl') {
+    $securityFlag .= '/ssl';
+  } elseif ($imapSecure === 'tls') {
+    $securityFlag .= '/tls';
+  }
+  $securityFlag .= '/novalidate-cert';
+
+  $baseMailbox = '{' . $imapHost . ':' . $imapPort . $securityFlag . '}';
+  $folders = ['Sent', 'INBOX.Sent', 'Enviados', 'INBOX.Enviados'];
+  $preparedMessage = ensure_sent_copy_required_headers($rawMessage, $mailConfig);
+
+  imap_errors();
+  $imap = @imap_open($baseMailbox . 'INBOX', $imapUser, $imapPass, OP_HALFOPEN);
+  if ($imap === false) {
+    $imapError = imap_last_error();
+    return ['ok' => false, 'error' => 'No se pudo conectar por IMAP: ' . (string) $imapError];
+  }
+
+  foreach ($folders as $folder) {
+    $mailbox = $baseMailbox . $folder;
+    if (@imap_append($imap, $mailbox, $preparedMessage, '\\Seen')) {
+      imap_close($imap);
+      return ['ok' => true, 'error' => null];
+    }
+  }
+
+  $imapError = imap_last_error();
+  imap_close($imap);
+
+  return ['ok' => false, 'error' => 'No se pudo guardar en Sent/Enviados: ' . (string) $imapError];
+}
+
 function send_mail_with_attachments(array $toEmails, string $subject, string $body, array $attachments, array $mailConfig): array
 {
   $validRecipients = [];
@@ -525,6 +615,8 @@ function send_mail_with_attachments(array $toEmails, string $subject, string $bo
     return ['ok' => false, 'error' => (string) ($payload['error'] ?? 'No se pudo construir el email.')];
   }
 
+  $rawMessage = implode("\r\n", (array) $payload['headers']) . "\r\n\r\n" . (string) $payload['message'];
+
   $transport = strtolower(trim((string) ($mailConfig['transport'] ?? 'smtp')));
   if ($transport !== 'smtp') {
     $ok = mail(
@@ -535,7 +627,7 @@ function send_mail_with_attachments(array $toEmails, string $subject, string $bo
     );
 
     return $ok
-      ? ['ok' => true, 'error' => null]
+      ? ['ok' => true, 'error' => null, 'raw_message' => $rawMessage]
       : ['ok' => false, 'error' => 'mail() devolvió false. Revisa la configuración del servidor de correo.'];
   }
 
@@ -638,7 +730,7 @@ function send_mail_with_attachments(array $toEmails, string $subject, string $bo
     return ['ok' => false, 'error' => $error . ' Última respuesta: ' . $lastResponse];
   }
 
-  $rawData = implode("\r\n", (array) $payload['headers']) . "\r\n\r\n" . (string) $payload['message'];
+  $rawData = $rawMessage;
   $rawData = str_replace(["\r\n", "\r"], "\n", $rawData);
   $lines = explode("\n", $rawData);
   foreach ($lines as &$line) {
@@ -664,7 +756,7 @@ function send_mail_with_attachments(array $toEmails, string $subject, string $bo
   smtp_send_command($socket, 'QUIT', [221], 'quit', $lastResponse);
   fclose($socket);
 
-  return ['ok' => true, 'error' => null];
+  return ['ok' => true, 'error' => null, 'raw_message' => $rawMessage];
 }
 
 function render_student_rows(array $students, array $docsByStudent): string
@@ -932,6 +1024,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         if (!$result['ok']) {
           $summary['errors'][] = $studentName . ': ' . (string) $result['error'];
           continue;
+        }
+
+        if (strtolower(trim((string) ($mailConfig['transport'] ?? 'smtp'))) === 'smtp') {
+          $rawMessage = (string) ($result['raw_message'] ?? '');
+          if ($rawMessage !== '') {
+            $saveResult = save_to_sent_folder_imap($rawMessage, $mailConfig);
+            if (!($saveResult['ok'] ?? false)) {
+              $sentError = $studentName . ': error al guardar en enviados por IMAP: ' . (string) ($saveResult['error'] ?? 'error desconocido');
+              $summary['errors'][] = $sentError;
+              error_log($sentError);
+            }
+          }
         }
 
         $summary['students_sent']++;
