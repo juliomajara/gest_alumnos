@@ -33,12 +33,17 @@ function practicas_sanitize_filename_component(?string $value, int $maxLength = 
 }
 
 function practicas_build_calendar_pdf_filename(array $practice): string {
+  $companyNameForFile = (string) ($practice['nombre_comercial']
+    ?? $practice['empresa_nombre_comercial']
+    ?? $practice['empresa_nombre']
+    ?? '');
+
   $parts = [
     practicas_sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
     practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
     practicas_sanitize_filename_component((string) ($practice['alumno_nombre'] ?? ''), 40),
     practicas_sanitize_filename_component((string) ($practice['alumno_apellido1'] ?? ''), 40),
-    practicas_sanitize_filename_component((string) ($practice['empresa_nombre'] ?? ''), 70),
+    practicas_sanitize_filename_component($companyNameForFile, 70),
   ];
 
   $baseName = implode('_', $parts);

@@ -186,12 +186,17 @@ function sanitize_filename_component(?string $value, int $maxLength = 60): strin
 }
 
 function build_calendar_pdf_filename(array $practice): string {
+  $companyNameForFile = (string) ($practice['nombre_comercial']
+    ?? $practice['empresa_nombre_comercial']
+    ?? $practice['empresa_nombre']
+    ?? '');
+
   $parts = [
     sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
     sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
     sanitize_filename_component((string) ($practice['alumno_nombre'] ?? ''), 40),
     sanitize_filename_component((string) ($practice['alumno_apellido1'] ?? ''), 40),
-    sanitize_filename_component((string) ($practice['empresa_nombre'] ?? ''), 70),
+    sanitize_filename_component($companyNameForFile, 70),
   ];
 
   $baseName = implode('_', $parts);
@@ -948,4 +953,3 @@ function count_attendance_days(DateTimeImmutable $startDate, DateTimeImmutable $
 
   return $count;
 }
-
