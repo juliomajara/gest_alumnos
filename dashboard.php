@@ -66,7 +66,6 @@ $has_alumnos = table_exists($pdo, 'alumnos');
 $has_alumno_curso = table_exists($pdo, 'alumno_curso');
 $has_cursos_escolares = table_exists($pdo, 'cursos_escolares');
 $has_practicas = table_exists($pdo, 'practicas');
-$has_practicas_estados = table_exists($pdo, 'practicas_estados');
 $has_empresas = table_exists($pdo, 'empresas');
 $has_modulos = table_exists($pdo, 'modulos');
 $has_alumno_modulo = table_exists($pdo, 'alumno_modulo');
@@ -91,15 +90,16 @@ $total_practicas = $has_practicas
   ? fetch_scalar($pdo, 'SELECT COUNT(*) FROM practicas')
   : null;
 
-$practicas_activas = ($has_practicas && $has_practicas_estados)
+$practicas_activas = $has_practicas
   ? fetch_scalar(
     $pdo,
     'SELECT COUNT(*)
      FROM practicas p
-     LEFT JOIN practicas_estados pe ON pe.id_practicas_estado = p.id_practicas_estado
-     WHERE p.fecha_inicio <= CURDATE()
-       AND (p.fecha_fin IS NULL OR p.fecha_fin >= CURDATE())
-       AND (pe.estado IS NULL OR LOWER(pe.estado) NOT IN ("finalizada", "cancelada", "cerrada"))'
+     WHERE COALESCE(p.cancelada, 0) = 0
+       AND p.fecha_inicio IS NOT NULL
+       AND p.fecha_inicio <= CURDATE()
+       AND COALESCE(p.fecha_fin_real, p.fecha_fin) IS NOT NULL
+       AND COALESCE(p.fecha_fin_real, p.fecha_fin) >= CURDATE()'
   )
   : null;
 
@@ -123,13 +123,20 @@ $total_tutores_grupo = $has_grupos_tutores
   ? fetch_scalar($pdo, 'SELECT COUNT(DISTINCT id_profesor) FROM grupos_tutores')
   : null;
 
-$practicas_por_estado = ($has_practicas && $has_practicas_estados)
+$practicas_por_estado = $has_practicas
   ? fetch_rows(
     $pdo,
-    'SELECT COALESCE(pe.estado, "Sin estado") AS estado, COUNT(*) AS total
+    'SELECT
+      CASE
+        WHEN COALESCE(p.cancelada, 0) = 1 THEN "Cancelada"
+        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = "" OR COALESCE(p.fecha_fin_real, p.fecha_fin) IS NULL OR COALESCE(p.fecha_fin_real, p.fecha_fin) = "" THEN "No disponible"
+        WHEN CURDATE() < p.fecha_inicio THEN "En espera"
+        WHEN CURDATE() <= COALESCE(p.fecha_fin_real, p.fecha_fin) THEN "En curso"
+        ELSE "Finalizada"
+      END AS estado,
+      COUNT(*) AS total
      FROM practicas p
-     LEFT JOIN practicas_estados pe ON pe.id_practicas_estado = p.id_practicas_estado
-     GROUP BY pe.estado
+     GROUP BY estado
      ORDER BY total DESC, estado ASC'
   )
   : null;
@@ -141,7 +148,13 @@ $ultimas_practicas = ($has_practicas && $has_alumnos && $has_empresas)
       p.id_practica,
       p.fecha_inicio,
       p.fecha_fin,
-      COALESCE(pe.estado, "Sin estado") AS estado,
+      CASE
+        WHEN COALESCE(p.cancelada, 0) = 1 THEN "Cancelada"
+        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = "" OR COALESCE(p.fecha_fin_real, p.fecha_fin) IS NULL OR COALESCE(p.fecha_fin_real, p.fecha_fin) = "" THEN "No disponible"
+        WHEN CURDATE() < p.fecha_inicio THEN "En espera"
+        WHEN CURDATE() <= COALESCE(p.fecha_fin_real, p.fecha_fin) THEN "En curso"
+        ELSE "Finalizada"
+      END AS estado,
       a.nombre AS alumno_nombre,
       a.apellido1 AS alumno_apellido1,
       a.apellido2 AS alumno_apellido2,
@@ -151,7 +164,6 @@ $ultimas_practicas = ($has_practicas && $has_alumnos && $has_empresas)
      FROM practicas p
      INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
      INNER JOIN empresas e ON e.id_empresa = p.id_empresa
-     LEFT JOIN practicas_estados pe ON pe.id_practicas_estado = p.id_practicas_estado
      ORDER BY p.id_practica DESC
      LIMIT 6'
   )
