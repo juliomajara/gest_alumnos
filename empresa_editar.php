@@ -964,6 +964,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         }
       }
 
+      $ids_borrables = []; // MODIFICADO
+      if ($tutor_ids_mantenidos) { // MODIFICADO
+        $ids_mantenidos = array_values($tutor_ids_mantenidos);
+        $placeholders = implode(',', array_fill(0, count($ids_mantenidos), '?'));
+        $select_borrables_sql =
+          'SELECT et.id_empresas_tutor
+           FROM empresas_tutores et
+           WHERE et.id_empresa = ?
+             AND et.id_empresas_tutor NOT IN (' . $placeholders . ')
+             AND NOT EXISTS (
+               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = et.id_empresas_tutor
+             )';
+        $select_borrables_stmt = $pdo->prepare($select_borrables_sql);
+        $select_borrables_stmt->execute(array_merge([$id_empresa], $ids_mantenidos));
+      } else {
+        $select_borrables_stmt = $pdo->prepare(
+          'SELECT et.id_empresas_tutor
+           FROM empresas_tutores et
+           WHERE et.id_empresa = ?
+             AND NOT EXISTS (
+               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = et.id_empresas_tutor
+             )'
+        );
+        $select_borrables_stmt->execute([$id_empresa]);
+      }
+
+      foreach ($select_borrables_stmt->fetchAll(PDO::FETCH_COLUMN) as $id_borrable) { // MODIFICADO
+        $id_borrable = (int) $id_borrable;
+        if ($id_borrable > 0) {
+          $ids_borrables[] = $id_borrable;
+        }
+      }
+
+      if ($ids_borrables) { // MODIFICADO
+        $placeholders = implode(',', array_fill(0, count($ids_borrables), '?'));
+        $delete_tutor_medios_stmt = $pdo->prepare(
+          'DELETE FROM telefonos
+           WHERE entidad_tipo = ?
+             AND id_entidad IN (' . $placeholders . ')'
+        );
+        $delete_tutor_medios_stmt->execute(array_merge(['empresa_tutor'], $ids_borrables));
+
+        $delete_tutor_correos_stmt = $pdo->prepare(
+          'DELETE FROM correos
+           WHERE entidad_tipo = ?
+             AND id_entidad IN (' . $placeholders . ')'
+        );
+        $delete_tutor_correos_stmt->execute(array_merge(['empresa_tutor'], $ids_borrables));
+      }
+
       if ($tutor_ids_mantenidos) { // MODIFICADO
         $ids_mantenidos = array_values($tutor_ids_mantenidos);
         $placeholders = implode(',', array_fill(0, count($ids_mantenidos), '?'));
