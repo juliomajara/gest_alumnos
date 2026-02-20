@@ -314,6 +314,7 @@ $dias_semana = [
           <p class="subheading">Consulta la información general, contactos y prácticas asociadas a la empresa.</p>
         </div>
         <div class="header-actions">
+          <a class="primary-button" href="empresa_editar.php?id_empresa=<?= (int)$id_empresa ?>">Editar empresa</a> <!-- // MODIFICADO -->
           <a class="ghost-button" href="empresas.php">Volver al listado</a>
         </div>
       </header>
