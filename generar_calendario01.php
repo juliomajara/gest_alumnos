@@ -306,34 +306,47 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
 
   $monthsGrid = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " months-grid ")]')->item(0); // MODIFICADO
   if ($monthsGrid instanceof DOMElement) { // MODIFICADO
-    $rows = []; // MODIFICADO
-    foreach ($monthsGrid->getElementsByTagName('tr') as $tr) { // MODIFICADO
-      $rows[] = $tr; // MODIFICADO
-    } // MODIFICADO
-    foreach ($rows as $tr) { // MODIFICADO
-      $cells = []; // MODIFICADO
-      foreach ($tr->getElementsByTagName('td') as $td) { // MODIFICADO
-        $cells[] = $td; // MODIFICADO
-      } // MODIFICADO
-      foreach ($cells as $td) { // MODIFICADO
-        $hasMonth = false; // MODIFICADO
-        foreach ($td->getElementsByTagName('table') as $innerTable) { // MODIFICADO
-          if (strpos(' ' . $innerTable->getAttribute('class') . ' ', ' month ') !== false) { // MODIFICADO
-            $hasMonth = true; // MODIFICADO
-            break; // MODIFICADO
+    $rows = $xpath->query('./tbody/tr | ./tr', $monthsGrid); // MODIFICADO
+    if ($rows instanceof DOMNodeList) { // MODIFICADO
+      $rowsToRemove = []; // MODIFICADO
+      foreach ($rows as $trNode) { // MODIFICADO
+        if (!$trNode instanceof DOMElement) { // MODIFICADO
+          continue; // MODIFICADO
+        } // MODIFICADO
+
+        $cells = $xpath->query('./td', $trNode); // MODIFICADO
+        if (!$cells instanceof DOMNodeList) { // MODIFICADO
+          continue; // MODIFICADO
+        } // MODIFICADO
+
+        $cellsToRemove = []; // MODIFICADO
+        foreach ($cells as $tdNode) { // MODIFICADO
+          if (!$tdNode instanceof DOMElement) { // MODIFICADO
+            continue; // MODIFICADO
+          } // MODIFICADO
+
+          $monthTables = $xpath->query('./table[contains(concat(" ", normalize-space(@class), " "), " month ")]', $tdNode); // MODIFICADO
+          $hasMonth = $monthTables instanceof DOMNodeList && $monthTables->length > 0; // MODIFICADO
+          if (!$hasMonth && trim((string) $tdNode->textContent) === '') { // MODIFICADO
+            $cellsToRemove[] = $tdNode; // MODIFICADO
           } // MODIFICADO
         } // MODIFICADO
-        if (!$hasMonth && trim((string) $td->textContent) === '') { // MODIFICADO
-          if ($td->parentNode !== null) { // MODIFICADO
-            $td->parentNode->removeChild($td); // MODIFICADO
+
+        foreach ($cellsToRemove as $cellToRemove) { // MODIFICADO
+          if ($cellToRemove->parentNode !== null) { // MODIFICADO
+            $cellToRemove->parentNode->removeChild($cellToRemove); // MODIFICADO
           } // MODIFICADO
+        } // MODIFICADO
+
+        $remainingCells = $xpath->query('./td', $trNode); // MODIFICADO
+        if ($remainingCells instanceof DOMNodeList && $remainingCells->length === 0) { // MODIFICADO
+          $rowsToRemove[] = $trNode; // MODIFICADO
         } // MODIFICADO
       } // MODIFICADO
 
-      $remainingCells = $tr->getElementsByTagName('td'); // MODIFICADO
-      if ($remainingCells->length === 0) { // MODIFICADO
-        if ($tr->parentNode !== null) { // MODIFICADO
-          $tr->parentNode->removeChild($tr); // MODIFICADO
+      foreach ($rowsToRemove as $rowToRemove) { // MODIFICADO
+        if ($rowToRemove->parentNode !== null) { // MODIFICADO
+          $rowToRemove->parentNode->removeChild($rowToRemove); // MODIFICADO
         } // MODIFICADO
       } // MODIFICADO
     } // MODIFICADO
