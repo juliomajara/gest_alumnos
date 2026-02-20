@@ -1079,7 +1079,7 @@ $active_page = 'empresas';
         </div>
         <div class="header-actions">
           <button type="submit" form="empresaForm" class="primary-button">Guardar cambios</button><?php // MODIFICADO ?>
-          <a class="ghost-button" href="empresa_detalle.php?id_empresa=<?php echo (int) $id_empresa; ?>">Volver</a>
+          <a class="ghost-button" href="empresa_detalle.php?id_empresa=<?php echo (int) $id_empresa; ?>">Cancelar y volver</a>
         </div>
       </header>
 
