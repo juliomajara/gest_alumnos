@@ -249,6 +249,9 @@ $active_page = 'configuracion';
           <h1>Datos del centro</h1>
           <p class="subheading">Consulta y modifica la configuración general del centro.</p>
         </div>
+        <div class="header-actions">
+          <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
+        </div>
       </header>
 
       <?php if (isset($_GET['ok']) && $_GET['ok'] === '1'): ?>
@@ -274,7 +277,7 @@ $active_page = 'configuracion';
                 <?php if ($key === '') { continue; } ?>
                 <label>
                   <?php echo h($key); ?>
-                  <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>">
+                  <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>" readonly>
                 </label>
               <?php endforeach; ?>
             </div>
@@ -293,7 +296,7 @@ $active_page = 'configuracion';
                 ?>
                 <label>
                   <?php echo h($field); ?>
-                  <input type="text" name="row[<?php echo h($field); ?>]" value="<?php echo h($formValues[$field] ?? ''); ?>">
+                  <input type="text" name="row[<?php echo h($field); ?>]" value="<?php echo h($formValues[$field] ?? ''); ?>" readonly>
                 </label>
               <?php endforeach; ?>
             </div>
@@ -307,5 +310,42 @@ $active_page = 'configuracion';
       </form>
     </main>
   </div>
+  <script>
+    (() => {
+      const form = document.querySelector('form.entity-form');
+      const editToggle = document.getElementById('editToggle');
+      if (!form || !editToggle) {
+        return;
+      }
+
+      let editMode = false;
+      const controls = form.querySelectorAll('input, select, textarea');
+
+      const applyEditMode = () => {
+        controls.forEach((control) => {
+          if (control.tagName === 'SELECT') {
+            control.disabled = !editMode;
+            return;
+          }
+
+          const inputType = (control.type || '').toLowerCase();
+          if (inputType === 'checkbox' || inputType === 'radio' || inputType === 'file' || inputType === 'button') {
+            control.disabled = !editMode;
+          } else {
+            control.readOnly = !editMode;
+          }
+        });
+
+        editToggle.classList.toggle('is-active', editMode);
+      };
+
+      applyEditMode();
+
+      editToggle.addEventListener('click', () => {
+        editMode = !editMode;
+        applyEditMode();
+      });
+    })();
+  </script>
 </body>
 </html>
