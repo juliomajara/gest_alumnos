@@ -430,6 +430,7 @@ $form_values = [
     'nombre' => '',
     'apellido1' => '',
     'apellido2' => '',
+    'nombre_comercial' => '', // MODIFICADO
     'numero_convenio' => '',
   ],
   'telefonos_empresa' => [],
@@ -442,7 +443,7 @@ $form_values = [
 if ($id_empresa <= 0) {
   $load_error = 'No se ha indicado una empresa válida para editar.';
 } else {
-  $stmt = $pdo->prepare('SELECT id_empresa, cif, nombre, apellido1, apellido2, convenio FROM empresas WHERE id_empresa = :id_empresa LIMIT 1');
+  $stmt = $pdo->prepare('SELECT id_empresa, cif, nombre, apellido1, apellido2, convenio, nombre_comercial FROM empresas WHERE id_empresa = :id_empresa LIMIT 1'); // MODIFICADO
   $stmt->execute(['id_empresa' => $id_empresa]);
   $empresa_db = $stmt->fetch();
 
@@ -454,6 +455,7 @@ if ($id_empresa <= 0) {
       'nombre' => (string) ($empresa_db['nombre'] ?? ''),
       'apellido1' => (string) ($empresa_db['apellido1'] ?? ''),
       'apellido2' => (string) ($empresa_db['apellido2'] ?? ''),
+      'nombre_comercial' => (string) ($empresa_db['nombre_comercial'] ?? ''), // MODIFICADO
       'numero_convenio' => $empresa_db['convenio'] !== null ? (string) $empresa_db['convenio'] : '',
     ];
 
@@ -594,6 +596,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
     'nombre' => normalize_text($_POST['empresa']['nombre'] ?? null),
     'apellido1' => normalize_text($_POST['empresa']['apellido1'] ?? null),
     'apellido2' => normalize_text($_POST['empresa']['apellido2'] ?? null),
+    'nombre_comercial' => normalize_text($_POST['empresa']['nombre_comercial'] ?? null), // MODIFICADO
     'numero_convenio' => normalize_text($_POST['empresa']['numero_convenio'] ?? null),
   ];
 
@@ -713,7 +716,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
 
       $update_empresa = $pdo->prepare(
         'UPDATE empresas
-         SET cif = :cif, nombre = :nombre, apellido1 = :apellido1, apellido2 = :apellido2, convenio = :convenio
+         SET cif = :cif, nombre = :nombre, apellido1 = :apellido1, apellido2 = :apellido2, nombre_comercial = :nombre_comercial, convenio = :convenio
          WHERE id_empresa = :id_empresa'
       );
       $update_empresa->execute([
@@ -721,6 +724,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         'nombre' => $empresa['nombre'],
         'apellido1' => $empresa['apellido1'],
         'apellido2' => $empresa['apellido2'],
+        'nombre_comercial' => $empresa['nombre_comercial'], // MODIFICADO
         'convenio' => $empresa['numero_convenio'] !== null ? (int) $empresa['numero_convenio'] : null,
         'id_empresa' => $id_empresa,
       ]);
@@ -1126,6 +1130,10 @@ $active_page = 'empresas';
                 <input type="text" name="empresa[apellido2]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['apellido2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
               </label>
               <label>
+                Nombre comercial
+                <input type="text" name="empresa[nombre_comercial]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['nombre_comercial'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"> <?php // MODIFICADO ?>
+              </label>
+              <label>
                 CIF
                 <input type="text" name="empresa[cif]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['cif'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
               </label>
@@ -1347,6 +1355,47 @@ $active_page = 'empresas';
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
+
+    const empresaNombreInput = document.querySelector('input[name="empresa[nombre]"]'); // MODIFICADO
+    const empresaApellido1Input = document.querySelector('input[name="empresa[apellido1]"]'); // MODIFICADO
+    const empresaApellido2Input = document.querySelector('input[name="empresa[apellido2]"]'); // MODIFICADO
+    const empresaNombreComercialInput = document.querySelector('input[name="empresa[nombre_comercial]"]'); // MODIFICADO
+
+    const composeNombreComercial = () => [ // MODIFICADO
+      empresaNombreInput?.value?.trim() || '', // MODIFICADO
+      empresaApellido1Input?.value?.trim() || '', // MODIFICADO
+      empresaApellido2Input?.value?.trim() || '', // MODIFICADO
+    ].filter(Boolean).join(' ').trim(); // MODIFICADO
+
+    const syncNombreComercial = () => { // MODIFICADO
+      if (!empresaNombreComercialInput || empresaNombreComercialInput.dataset.userEdited === '1') { // MODIFICADO
+        return; // MODIFICADO
+      }
+
+      empresaNombreComercialInput.value = composeNombreComercial(); // MODIFICADO
+    };
+
+    if (empresaNombreComercialInput) { // MODIFICADO
+      const initialAutoValue = composeNombreComercial(); // MODIFICADO
+      const initialCurrentValue = (empresaNombreComercialInput.value || '').trim(); // MODIFICADO
+      if (initialCurrentValue !== '' && initialCurrentValue !== initialAutoValue) { // MODIFICADO
+        empresaNombreComercialInput.dataset.userEdited = '1'; // MODIFICADO
+      }
+
+      empresaNombreComercialInput.addEventListener('input', () => { // MODIFICADO
+        empresaNombreComercialInput.dataset.userEdited = '1'; // MODIFICADO
+      });
+    }
+
+    [empresaNombreInput, empresaApellido1Input, empresaApellido2Input].forEach((input) => { // MODIFICADO
+      if (!input) { // MODIFICADO
+        return; // MODIFICADO
+      }
+
+      input.addEventListener('input', syncNombreComercial); // MODIFICADO
+    });
+
+    syncNombreComercial(); // MODIFICADO
 
     const paisIdToCode = <?php echo json_encode($pais_id_to_code, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
     const initialFormValues = <?php echo json_encode($form_values, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
