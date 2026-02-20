@@ -16,6 +16,24 @@ $keyValueRows = [];
 $formValues = [];
 $singleRow = [];
 $singleRowPrimaryWhere = [];
+// MODIFICADO
+$centerFieldOrder = [
+  'instituto_nombre',
+  'instituto_codigo_centro',
+  'instituto_telefono',
+  'instituto_email',
+  'instituto_direccion',
+  'instituto_web',
+];
+// MODIFICADO
+$centerFieldLabels = [
+  'instituto_nombre' => 'Nombre',
+  'instituto_codigo_centro' => 'Código',
+  'instituto_telefono' => 'Teléfono',
+  'instituto_email' => 'Correo',
+  'instituto_direccion' => 'Dirección',
+  'instituto_web' => 'Web',
+];
 
 function h(?string $value): string {
   return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -90,50 +108,71 @@ try {
 
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$errors) {
     if ($isKeyValue) {
+      // MODIFICADO
       $postedValues = $_POST['values'] ?? [];
       if (!is_array($postedValues)) {
         $postedValues = [];
       }
 
+      $claveColumn = $columnMap['clave'];
+      $valorColumn = $columnMap['valor'];
+
+      $allowNullClave = (($claveColumn['Null'] ?? 'NO') === 'YES');
+      $allowNullValor = (($valorColumn['Null'] ?? 'NO') === 'YES');
+
+      $existingKeys = [];
       foreach ($keyValueRows as $row) {
         $key = (string) ($row['clave'] ?? '');
-        if ($key === '') {
-          continue;
+        if ($key !== '') {
+          $existingKeys[$key] = true;
         }
+      }
 
+      $pendingValues = [];
+      foreach ($centerFieldOrder as $key) {
         $rawInput = $postedValues[$key] ?? '';
         $trimmed = trim((string) $rawInput);
 
-        $valorColumn = $columnMap['valor'];
-        $allowNull = (($valorColumn['Null'] ?? 'NO') === 'YES');
-        $valueToStore = $trimmed;
+        if ($key === '' && !$allowNullClave) {
+          continue;
+        }
 
-        if ($trimmed === '' && $allowNull) {
+        $valueToStore = $trimmed;
+        if ($trimmed === '' && $allowNullValor) {
           $valueToStore = null;
         }
 
         $formValues[$key] = $trimmed;
-
-        $row['__new_valor'] = $valueToStore;
+        $pendingValues[$key] = $valueToStore;
       }
 
       if (!$errors) {
         $pdo->beginTransaction();
 
         $updateStmt = $pdo->prepare('UPDATE `config` SET `valor` = :valor WHERE `clave` = :clave');
-        foreach ($keyValueRows as $row) {
-          $key = (string) ($row['clave'] ?? '');
-          if ($key === '') {
+        // MODIFICADO
+        $insertStmt = $pdo->prepare('INSERT INTO `config` (`clave`, `valor`) VALUES (:clave, :valor)');
+
+        foreach ($pendingValues as $key => $valueToStore) {
+          $updateStmt->bindValue(':clave', $key, PDO::PARAM_STR);
+          if ($valueToStore === null) {
+            $updateStmt->bindValue(':valor', null, PDO::PARAM_NULL);
+          } else {
+            $updateStmt->bindValue(':valor', (string) $valueToStore, PDO::PARAM_STR);
+          }
+
+          if (isset($existingKeys[$key])) {
+            $updateStmt->execute();
             continue;
           }
 
-          $updateStmt->bindValue(':clave', $key, PDO::PARAM_STR);
-          if (($row['__new_valor'] ?? null) === null) {
-            $updateStmt->bindValue(':valor', null, PDO::PARAM_NULL);
+          $insertStmt->bindValue(':clave', $key, PDO::PARAM_STR);
+          if ($valueToStore === null) {
+            $insertStmt->bindValue(':valor', null, PDO::PARAM_NULL);
           } else {
-            $updateStmt->bindValue(':valor', (string) $row['__new_valor'], PDO::PARAM_STR);
+            $insertStmt->bindValue(':valor', (string) $valueToStore, PDO::PARAM_STR);
           }
-          $updateStmt->execute();
+          $insertStmt->execute();
         }
 
         $pdo->commit();
@@ -144,11 +183,17 @@ try {
       if (!$singleRow) {
         $errors[] = 'No hay registro de configuración para actualizar.';
       } else {
+        // MODIFICADO
         $updates = [];
         $bindings = [];
+        $columnNames = array_keys($columnMap);
+        $editableFields = array_values(array_filter(
+          $centerFieldOrder,
+          static fn (string $field): bool => in_array($field, $columnNames, true)
+        ));
 
-        foreach ($configColumns as $column) {
-          $field = (string) $column['Field'];
+        foreach ($editableFields as $field) {
+          $column = $columnMap[$field];
           $extra = strtolower((string) ($column['Extra'] ?? ''));
           $isPrimary = (($column['Key'] ?? '') === 'PRI');
 
@@ -270,35 +315,65 @@ $active_page = 'configuracion';
         <?php endif; ?>
 
         <?php if ($isKeyValue): ?>
+          <?php // MODIFICADO ?>
           <section class="entity-section">
-            <div class="entity-grid entity-grid--2">
-              <?php foreach ($keyValueRows as $row): ?>
-                <?php $key = (string) ($row['clave'] ?? ''); ?>
-                <?php if ($key === '') { continue; } ?>
+            <div class="entity-grid entity-grid--3">
+              <?php foreach (['instituto_nombre', 'instituto_codigo_centro', 'instituto_telefono'] as $key): ?>
                 <label>
-                  <?php echo h($key); ?>
+                  <?php echo h($centerFieldLabels[$key]); ?>
                   <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>" readonly>
                 </label>
               <?php endforeach; ?>
             </div>
+
+            <div class="entity-grid entity-grid--2">
+              <?php foreach (['instituto_direccion', 'instituto_email'] as $key): ?>
+                <label>
+                  <?php echo h($centerFieldLabels[$key]); ?>
+                  <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>" readonly>
+                </label>
+              <?php endforeach; ?>
+            </div>
+
+            <div class="entity-grid entity-grid--full">
+              <?php $key = 'instituto_web'; ?>
+              <label>
+                <?php echo h($centerFieldLabels[$key]); ?>
+                <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>" readonly>
+              </label>
+            </div>
           </section>
         <?php else: ?>
+          <?php // MODIFICADO ?>
           <section class="entity-section">
-            <div class="entity-grid entity-grid--2">
-              <?php foreach ($configColumns as $column): ?>
-                <?php
-                  $field = (string) $column['Field'];
-                  $extra = strtolower((string) ($column['Extra'] ?? ''));
-                  $isPrimary = (($column['Key'] ?? '') === 'PRI');
-                  if ($isPrimary || str_contains($extra, 'auto_increment') || str_contains($extra, 'generated')) {
-                    continue;
-                  }
-                ?>
+            <div class="entity-grid entity-grid--3">
+              <?php foreach (['instituto_nombre', 'instituto_codigo_centro', 'instituto_telefono'] as $field): ?>
+                <?php if (!isset($columnMap[$field])) { continue; } ?>
                 <label>
-                  <?php echo h($field); ?>
+                  <?php echo h($centerFieldLabels[$field]); ?>
                   <input type="text" name="row[<?php echo h($field); ?>]" value="<?php echo h($formValues[$field] ?? ''); ?>" readonly>
                 </label>
               <?php endforeach; ?>
+            </div>
+
+            <div class="entity-grid entity-grid--2">
+              <?php foreach (['instituto_direccion', 'instituto_email'] as $field): ?>
+                <?php if (!isset($columnMap[$field])) { continue; } ?>
+                <label>
+                  <?php echo h($centerFieldLabels[$field]); ?>
+                  <input type="text" name="row[<?php echo h($field); ?>]" value="<?php echo h($formValues[$field] ?? ''); ?>" readonly>
+                </label>
+              <?php endforeach; ?>
+            </div>
+
+            <div class="entity-grid entity-grid--full">
+              <?php $field = 'instituto_web'; ?>
+              <?php if (isset($columnMap[$field])): ?>
+                <label>
+                  <?php echo h($centerFieldLabels[$field]); ?>
+                  <input type="text" name="row[<?php echo h($field); ?>]" value="<?php echo h($formValues[$field] ?? ''); ?>" readonly>
+                </label>
+              <?php endif; ?>
             </div>
           </section>
         <?php endif; ?>
