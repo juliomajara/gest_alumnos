@@ -44,10 +44,10 @@ $nav_items = [
     'icon' => 'assets/icons/calendario.svg',
   ],
   [
-    'key' => 'configuracion',
-    'label' => 'Configuración',
-    'href' => 'utilidades.php', // MODIFICADO,
-    'icon' => 'assets/icons/configuracion.svg',
+    'key' => 'utilidades',
+    'label' => 'Utilidades',
+    'href' => 'utilidades.php',
+    'icon' => 'assets/icons/utilidades.svg',
   ],
 ];
 ?>

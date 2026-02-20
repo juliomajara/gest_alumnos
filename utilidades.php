@@ -20,7 +20,7 @@ $active_page = 'configuracion';
     <main class="content">
       <header class="header">
         <div>
-          <h1>Configuración</h1>
+          <h1>Utilidades</h1>
           <p class="subheading">Administra importaciones y accesos clave desde un único panel.</p>
         </div>
       </header>
