@@ -298,6 +298,7 @@ $active_page = 'configuracion';
         </div>
         <div class="header-actions">
           <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
+          <button type="submit" class="primary-button" id="saveChangesButton" form="datosCentroForm" hidden>Guardar cambios</button>
         </div>
       </header>
 
@@ -307,7 +308,7 @@ $active_page = 'configuracion';
         </section>
       <?php endif; ?>
 
-      <form method="post" class="panel entity-form">
+      <form method="post" class="panel entity-form" id="datosCentroForm">
         <?php if ($errors): ?>
           <ul class="form-errors">
             <?php foreach ($errors as $error): ?>
@@ -381,10 +382,6 @@ $active_page = 'configuracion';
           </section>
         <?php endif; ?>
 
-        <div class="form-actions">
-          <button type="submit" class="primary-button">Guardar cambios</button>
-          <a class="ghost-button" href="configuracion.php">Volver</a>
-        </div>
       </form>
     </main>
   </div>
@@ -392,7 +389,8 @@ $active_page = 'configuracion';
     (() => {
       const form = document.querySelector('form.entity-form');
       const editToggle = document.getElementById('editToggle');
-      if (!form || !editToggle) {
+      const saveChangesButton = document.getElementById('saveChangesButton');
+      if (!form || !editToggle || !saveChangesButton) {
         return;
       }
 
@@ -415,6 +413,7 @@ $active_page = 'configuracion';
         });
 
         editToggle.classList.toggle('is-active', editMode);
+        saveChangesButton.hidden = !editMode;
       };
 
       applyEditMode();
