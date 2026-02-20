@@ -34,7 +34,7 @@ $companies_stmt = $pdo->prepare(
     e.convenio,
     e.notas,
     TRIM(CONCAT_WS(" ", fc.nombre, fc.apellido1)) AS contacto,
-    t.telefono,
+    COALESCE(NULLIF(TRIM(t.telefono), \'\'), te.telefono) AS telefono,
     c.direccion_correo AS correo
   FROM empresas e
   LEFT JOIN (
@@ -65,6 +65,20 @@ $companies_stmt = $pdo->prepare(
       ON first_telefono.first_telefono_id = t1.id_telefono
     WHERE t1.entidad_tipo = \'empresa_contacto\'
   ) t ON t.id_entidad = fc.id_empresa_contacto
+  LEFT JOIN (
+    SELECT
+      t2.id_entidad,
+      t2.telefono
+    FROM telefonos t2
+    INNER JOIN (
+      SELECT id_entidad, MIN(id_telefono) AS first_telefono_id
+      FROM telefonos
+      WHERE entidad_tipo = \'empresa\'
+      GROUP BY id_entidad
+    ) first_empresa_telefono
+      ON first_empresa_telefono.first_telefono_id = t2.id_telefono
+    WHERE t2.entidad_tipo = \'empresa\'
+  ) te ON te.id_entidad = e.id_empresa
   LEFT JOIN (
     SELECT
       c1.id_entidad,
@@ -120,8 +134,16 @@ function render_company_rows(array $companies): string
         </td>
         <td><?php echo htmlspecialchars($cif, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($contacto, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td>
+          <?php if ($telefono !== ''): ?>
+            <span data-copy="<?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></span>
+          <?php endif; ?>
+        </td>
+        <td>
+          <?php if ($correo !== ''): ?>
+            <span data-copy="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></span>
+          <?php endif; ?>
+        </td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -257,6 +279,66 @@ $active_page = 'empresas';
     searchInput.addEventListener('input', () => {
       updateResults(true);
     });
+
+
+    const copyUsingFallback = (text) => {
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', 'readonly');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      helper.style.pointerEvents = 'none';
+      document.body.appendChild(helper);
+      helper.select();
+      helper.setSelectionRange(0, helper.value.length);
+      document.execCommand('copy');
+      helper.remove();
+    };
+
+    const copyText = (text) => {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).catch(() => {
+          copyUsingFallback(text);
+        });
+      }
+
+      copyUsingFallback(text);
+      return Promise.resolve();
+    };
+
+    const showCopied = (element) => {
+      const originalText = element.dataset.originalText ?? element.textContent;
+      const textToCopy = element.dataset.copy ?? '';
+      if (textToCopy === '') {
+        return;
+      }
+
+      element.dataset.originalText = originalText;
+
+      if (element.dataset.copyTimerId) {
+        window.clearTimeout(Number(element.dataset.copyTimerId));
+      }
+
+      element.textContent = 'Copiado!';
+      copyText(textToCopy);
+
+      const timerId = window.setTimeout(() => {
+        element.textContent = element.dataset.originalText ?? originalText;
+        delete element.dataset.copyTimerId;
+      }, 1000);
+
+      element.dataset.copyTimerId = String(timerId);
+    };
+
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-copy]');
+      if (!target) {
+        return;
+      }
+
+      showCopied(target);
+    });
+
 
   </script>
 </body>
