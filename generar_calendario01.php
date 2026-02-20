@@ -155,7 +155,54 @@ function append_class(DOMElement $element, string $className): void { // MODIFIC
   } // MODIFICADO
 } // MODIFICADO
 
-function postprocess_calendar_html(string $html, array $scheduleByDay, string $institutoNombre, string $templateDir): string { // MODIFICADO
+function as_file_uri(string $absolutePath): string {
+  $normalized = str_replace(DIRECTORY_SEPARATOR, '/', $absolutePath);
+  if (preg_match('/^[A-Za-z]:\//', $normalized) === 1) {
+    return 'file:///' . $normalized;
+  }
+  return 'file://' . $normalized;
+}
+
+function resolve_logo_path(string $templateDir, ?string $configuredLogoPath = null): ?string {
+  $candidates = [];
+  $configuredLogoPath = trim((string) $configuredLogoPath);
+  if ($configuredLogoPath !== '') {
+    $candidates[] = $configuredLogoPath;
+  }
+
+  $envLogoPath = trim((string) getenv('CALENDARIO_LOGO_PATH'));
+  if ($envLogoPath !== '') {
+    $candidates[] = $envLogoPath;
+  }
+
+  $candidates[] = 'logo_IES.png';
+  $candidates[] = $templateDir . '/logo_IES.png';
+  $candidates[] = __DIR__ . '/logo_IES.png';
+  $candidates[] = __DIR__ . '/docs/logo_IES.png';
+
+  foreach ($candidates as $candidate) {
+    $candidate = trim((string) $candidate);
+    if ($candidate === '') {
+      continue;
+    }
+
+    $resolved = realpath($candidate);
+    if ($resolved === false && !str_starts_with($candidate, '/')) {
+      $resolved = realpath($templateDir . '/' . ltrim($candidate, '/'));
+    }
+    if ($resolved === false && !str_starts_with($candidate, '/')) {
+      $resolved = realpath(__DIR__ . '/' . ltrim($candidate, '/'));
+    }
+
+    if ($resolved !== false && is_file($resolved)) {
+      return $resolved;
+    }
+  }
+
+  return null;
+}
+
+function postprocess_calendar_html(string $html, array $scheduleByDay, string $institutoNombre, string $templateDir, ?string $configuredLogoPath = null): string { // MODIFICADO
   $dom = new DOMDocument(); // MODIFICADO
   $prevUseErrors = libxml_use_internal_errors(true); // MODIFICADO
   $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html); // MODIFICADO
@@ -175,31 +222,48 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
         continue;
       }
 
+      if (strcasecmp(basename($src), 'logo_IES.png') === 0) {
+        $logoPath = resolve_logo_path($templateDir, $configuredLogoPath);
+        if ($logoPath !== null) {
+          $imgNode->setAttribute('src', as_file_uri($logoPath));
+          continue;
+        }
+
+        $transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+2Q8AAAAASUVORK5CYII=';
+        $imgNode->setAttribute('src', 'data:image/png;base64,' . $transparentPixel);
+        continue;
+      }
+
       $absolutePath = realpath($templateDir . '/' . ltrim($src, '/'));
       if ($absolutePath === false) {
         $absolutePath = realpath(__DIR__ . '/' . ltrim($src, '/'));
       }
       if ($absolutePath !== false && is_file($absolutePath)) {
-        $imgNode->setAttribute('src', 'file://' . $absolutePath);
+        $imgNode->setAttribute('src', as_file_uri($absolutePath));
+      } else {
+        $transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+2Q8AAAAASUVORK5CYII=';
+        $imgNode->setAttribute('src', 'data:image/png;base64,' . $transparentPixel);
       }
     }
   }
 
   $headNode = $xpath->query('//head')->item(0);
   if ($headNode instanceof DOMElement) {
-    $styleNode = $dom->createElement('style', '\n'
-      . '.calendar-month thead { display: table-header-group !important; }\n'
-      . '.calendar-month th { display: table-cell !important; color: #000 !important; padding: 4px 3px !important; }\n'
-      . '.calendar-month .month-title { background: #f0f0f0 !important; color: #000 !important; font-weight: bold !important; text-align: center !important; }\n'
-      . '.calendar-month .dow { background: #fafafa !important; font-weight: bold !important; text-align: center !important; }\n'
-      . '.calendar-month .nolectivo { background: #f8d7da !important; }\n'
-      . '.calendar-month .tutoria { background: #cfe2ff !important; }\n'
-      . '.calendar-month .empresa { background: #d9f2d9 !important; }\n'
-      . '.legend .swatch, .legend-box { display: inline-block !important; width: 18px !important; height: 12px !important; border: 1px solid #000 !important; vertical-align: middle !important; }\n'
-      . '.legend .swatch-red, .legend-box.legend-red { background: #f8d7da !important; }\n'
-      . '.legend .swatch-blue, .legend-box.legend-blue { background: #cfe2ff !important; }\n'
-      . '.legend .swatch-green, .legend-box.legend-green { background: #d9f2d9 !important; }\n'
-    );
+    $styleNode = $dom->createElement('style');
+    $styleCss = ".calendar-month thead { display: table-header-group !important; visibility: visible !important; }\n"
+      . ".calendar-month thead tr { display: table-row !important; }\n"
+      . ".calendar-month thead th { display: table-cell !important; }\n"
+      . ".calendar-month th { color: #000 !important; padding: 4px 3px !important; }\n"
+      . ".calendar-month .month-title { background: #f0f0f0 !important; color: #000 !important; font-weight: bold !important; text-align: center !important; }\n"
+      . ".calendar-month .dow { background: #fafafa !important; font-weight: bold !important; text-align: center !important; }\n"
+      . ".calendar-month .nolectivo { background: #f8d7da !important; }\n"
+      . ".calendar-month .tutoria { background: #cfe2ff !important; }\n"
+      . ".calendar-month .empresa { background: #d9f2d9 !important; }\n"
+      . ".legend .swatch, .legend-box { display: inline-block !important; width: 18px !important; height: 12px !important; line-height: 12px !important; border: 1px solid #000 !important; vertical-align: middle !important; }\n"
+      . ".legend .swatch-red, .legend-box.legend-red { background: #f8d7da !important; }\n"
+      . ".legend .swatch-blue, .legend-box.legend-blue { background: #cfe2ff !important; }\n"
+      . ".legend .swatch-green, .legend-box.legend-green { background: #d9f2d9 !important; }\n";
+    $styleNode->appendChild($dom->createTextNode($styleCss));
     $headNode->appendChild($styleNode);
   }
 
@@ -317,6 +381,19 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
       $greenRow->appendChild($cell3);
 
       $legendTable->appendChild($greenRow);
+    }
+  }
+
+  $swatchNodes = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " swatch ")]');
+  if ($swatchNodes !== false) {
+    foreach ($swatchNodes as $swatchNode) {
+      if (!$swatchNode instanceof DOMElement) {
+        continue;
+      }
+
+      if (trim((string) $swatchNode->textContent) === '') {
+        $swatchNode->appendChild($dom->createTextNode("\u{00A0}"));
+      }
     }
   }
 
@@ -510,13 +587,23 @@ try {
   }
 
   $institutoNombre = ''; // MODIFICADO
+  $logoPathConfig = '';
   try { // MODIFICADO
-    $configStmt = $pdo->prepare('SELECT valor FROM config WHERE clave = :clave LIMIT 1'); // MODIFICADO
-    $configStmt->execute(['clave' => 'instituto_nombre']); // MODIFICADO
-    $configValue = $configStmt->fetchColumn(); // MODIFICADO
-    $institutoNombre = trim((string) ($configValue ?? '')); // MODIFICADO
+    $configStmt = $pdo->prepare('SELECT clave, valor FROM config WHERE clave IN ("instituto_nombre", "calendario_logo_path")');
+    $configStmt->execute();
+    foreach ($configStmt->fetchAll(PDO::FETCH_ASSOC) as $configRow) {
+      $clave = trim((string) ($configRow['clave'] ?? ''));
+      $valor = trim((string) ($configRow['valor'] ?? ''));
+      if ($clave === 'instituto_nombre') {
+        $institutoNombre = $valor;
+      }
+      if ($clave === 'calendario_logo_path') {
+        $logoPathConfig = $valor;
+      }
+    }
   } catch (Throwable $e) { // MODIFICADO
     $institutoNombre = ''; // MODIFICADO
+    $logoPathConfig = '';
   } // MODIFICADO
 
   $tutorias = [];
@@ -584,13 +671,18 @@ try {
   }
 
   $html = str_replace(array_keys($replacements), array_values($replacements), $template);
-  $html = postprocess_calendar_html($html, $scheduleByDay, $institutoNombre, dirname($templatePath)); // MODIFICADO
+  $html = postprocess_calendar_html($html, $scheduleByDay, $institutoNombre, dirname($templatePath), $logoPathConfig); // MODIFICADO
+
+  $debugFlag = $_GET['mpdf_debug'] ?? getenv('CALENDARIO_MPDF_DEBUG') ?? '0';
+  $mpdfDebug = in_array(strtolower(trim((string) $debugFlag)), ['1', 'true', 'yes', 'on'], true);
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
     'tempDir' => ensure_mpdf_temp_dir(),
+    'debug' => $mpdfDebug,
   ]);
+  $mpdf->showImageErrors = $mpdfDebug;
   $mpdf->SetBasePath(dirname($templatePath) . '/');
 
   $tempFilePath = $paths['calendar_file_path'] . '.tmp';
