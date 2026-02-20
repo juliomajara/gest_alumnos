@@ -417,10 +417,9 @@ function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, D
   $offset = (int) $month->format('N');
 
   $html = '<table class="month calendar-month">';
-  $html .= '<thead>';
   $html .= '<tr><th colspan="7" class="month-title">' . month_name_es($monthNum) . ' ' . $year . '</th></tr>';
   $html .= '<tr><th class="dow">L</th><th class="dow">M</th><th class="dow">X</th><th class="dow">J</th><th class="dow">V</th><th class="dow">S</th><th class="dow">D</th></tr>';
-  $html .= '</thead><tbody><tr>';
+  $html .= '<tr>';
 
   for ($i = 1; $i < $offset; $i++) {
     $html .= '<td class="day empty">&nbsp;</td>';
@@ -445,7 +444,7 @@ function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, D
     $col++;
   }
 
-  return $html . '</tr></tbody></table>';
+  return $html . '</tr></table>';
 }
 
 function build_schedule_tokens(array $scheduleByDay): array {
