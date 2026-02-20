@@ -104,10 +104,13 @@ function month_name_es(int $month): string {
 
 function day_css_class(DateTimeImmutable $date, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
   $key = $date->format('Y-m-d');
-  if ($key < $start->format('Y-m-d') || $key > $end->format('Y-m-d')) {
-    return 'day';
-  }
   $dayOfWeek = (int) $date->format('N');
+  if ($key < $start->format('Y-m-d') || $key > $end->format('Y-m-d')) {
+    if ($dayOfWeek >= 6) {
+      return 'day nolectivo day-outside';
+    }
+    return 'day day-outside';
+  }
   if ($dayOfWeek >= 6 || isset($noLectivos[$key])) {
     return 'day nolectivo';
   }
@@ -173,10 +176,31 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
       }
 
       $absolutePath = realpath($templateDir . '/' . ltrim($src, '/'));
+      if ($absolutePath === false) {
+        $absolutePath = realpath(__DIR__ . '/' . ltrim($src, '/'));
+      }
       if ($absolutePath !== false && is_file($absolutePath)) {
-        $imgNode->setAttribute('src', $absolutePath);
+        $imgNode->setAttribute('src', 'file://' . $absolutePath);
       }
     }
+  }
+
+  $headNode = $xpath->query('//head')->item(0);
+  if ($headNode instanceof DOMElement) {
+    $styleNode = $dom->createElement('style', '\n'
+      . '.calendar-month thead { display: table-header-group !important; }\n'
+      . '.calendar-month th { display: table-cell !important; color: #000 !important; padding: 4px 3px !important; }\n'
+      . '.calendar-month .month-title { background: #f0f0f0 !important; color: #000 !important; font-weight: bold !important; text-align: center !important; }\n'
+      . '.calendar-month .dow { background: #fafafa !important; font-weight: bold !important; text-align: center !important; }\n'
+      . '.calendar-month .nolectivo { background: #f8d7da !important; }\n'
+      . '.calendar-month .tutoria { background: #cfe2ff !important; }\n'
+      . '.calendar-month .empresa { background: #d9f2d9 !important; }\n'
+      . '.legend .swatch, .legend-box { display: inline-block !important; width: 18px !important; height: 12px !important; border: 1px solid #000 !important; vertical-align: middle !important; }\n'
+      . '.legend .swatch-red, .legend-box.legend-red { background: #f8d7da !important; }\n'
+      . '.legend .swatch-blue, .legend-box.legend-blue { background: #cfe2ff !important; }\n'
+      . '.legend .swatch-green, .legend-box.legend-green { background: #d9f2d9 !important; }\n'
+    );
+    $headNode->appendChild($styleNode);
   }
 
   if (trim($institutoNombre) !== '') { // MODIFICADO
@@ -251,6 +275,51 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
     } // MODIFICADO
   } // MODIFICADO
 
+  $legendTable = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " legend ")]')->item(0);
+  if ($legendTable instanceof DOMElement) {
+    $legendRows = $legendTable->getElementsByTagName('tr');
+    if ($legendRows->length >= 2) {
+      $legendSecondRow = $legendRows->item(1);
+      $firstRowCells = $legendSecondRow instanceof DOMElement ? $legendSecondRow->getElementsByTagName('td') : null;
+      if ($firstRowCells instanceof DOMNodeList && $firstRowCells->length >= 2) {
+        $targetCell = $firstRowCells->item(1);
+        if ($targetCell instanceof DOMElement) {
+          $targetCell->nodeValue = 'No lectivo / fin de semana';
+        }
+      }
+    }
+
+    $alreadyHasGreen = false;
+    foreach ($legendTable->getElementsByTagName('div') as $div) {
+      if (strpos(' ' . $div->getAttribute('class') . ' ', ' swatch-green ') !== false) {
+        $alreadyHasGreen = true;
+        break;
+      }
+    }
+
+    if (!$alreadyHasGreen) {
+      $greenRow = $dom->createElement('tr');
+
+      $cell1 = $dom->createElement('td');
+      $greenSwatch = $dom->createElement('span');
+      $greenSwatch->setAttribute('class', 'legend-box legend-green');
+      $greenSwatch->appendChild($dom->createTextNode(' '));
+      $cell1->appendChild($greenSwatch);
+
+      $cell2 = $dom->createElement('td');
+      $strong = $dom->createElement('strong', 'Día de prácticas en empresa');
+      $cell2->appendChild($strong);
+
+      $cell3 = $dom->createElement('td', 'Día asignado para la realización de prácticas en la empresa.');
+
+      $greenRow->appendChild($cell1);
+      $greenRow->appendChild($cell2);
+      $greenRow->appendChild($cell3);
+
+      $legendTable->appendChild($greenRow);
+    }
+  }
+
   $fieldNodes = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " outer ")]//*[self::td or self::th][not(contains(concat(" ", normalize-space(@class), " "), " section-title "))]'); // MODIFICADO
   if ($fieldNodes !== false) { // MODIFICADO
     foreach ($fieldNodes as $node) { // MODIFICADO
@@ -270,9 +339,11 @@ function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, D
   $days = (int) $month->format('t');
   $offset = (int) $month->format('N');
 
-  $html = '<table class="month">';
+  $html = '<table class="month calendar-month">';
+  $html .= '<thead>';
   $html .= '<tr><th colspan="7" class="month-title">' . month_name_es($monthNum) . ' ' . $year . '</th></tr>';
-  $html .= '<tr><th class="dow">L</th><th class="dow">M</th><th class="dow">X</th><th class="dow">J</th><th class="dow">V</th><th class="dow">S</th><th class="dow">D</th></tr><tr>';
+  $html .= '<tr><th class="dow">L</th><th class="dow">M</th><th class="dow">X</th><th class="dow">J</th><th class="dow">V</th><th class="dow">S</th><th class="dow">D</th></tr>';
+  $html .= '</thead><tbody><tr>';
 
   for ($i = 1; $i < $offset; $i++) {
     $html .= '<td class="day empty">&nbsp;</td>';
@@ -297,7 +368,7 @@ function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, D
     $col++;
   }
 
-  return $html . '</tr></table>';
+  return $html . '</tr></tbody></table>';
 }
 
 function build_schedule_tokens(array $scheduleByDay): array {
