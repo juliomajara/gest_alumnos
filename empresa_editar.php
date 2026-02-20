@@ -471,9 +471,10 @@ if ($id_empresa <= 0) {
       'etiqueta' => (string) ($row['etiqueta'] ?? ''),
     ], $stmt->fetchAll());
 
-    $stmt = $pdo->prepare('SELECT etiqueta, id_via, nombre_via, numero, bloque, escalera, planta, puerta, cp, otros, id_pais, id_provincia, id_localidad FROM direcciones WHERE id_empresa = :id_empresa ORDER BY id_direccion');
+    $stmt = $pdo->prepare('SELECT id_direccion, etiqueta, id_via, nombre_via, numero, bloque, escalera, planta, puerta, cp, otros, id_pais, id_provincia, id_localidad FROM direcciones WHERE id_empresa = :id_empresa ORDER BY id_direccion');
     $stmt->execute(['id_empresa' => $id_empresa]);
     $form_values['direcciones'] = array_map(static fn(array $row): array => [
+      'id_direccion' => $row['id_direccion'] !== null ? (string) $row['id_direccion'] : '',
       'etiqueta' => (string) ($row['etiqueta'] ?? ''),
       'id_via' => $row['id_via'] !== null ? (string) $row['id_via'] : '',
       'nombre_via' => (string) ($row['nombre_via'] ?? ''),
@@ -613,6 +614,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
     }
 
     $entry = [
+      'id_direccion' => normalize_text($direccion['id_direccion'] ?? null),
       'etiqueta' => normalize_text($direccion['etiqueta'] ?? null),
       'id_via' => normalize_text($direccion['id_via'] ?? null),
       'nombre_via' => normalize_text($direccion['nombre_via'] ?? null),
@@ -630,7 +632,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
     ];
 
     $has_any_value = false;
-    foreach ($entry as $value) {
+    foreach ($entry as $key => $value) {
+      if ($key === 'id_direccion') {
+        continue;
+      }
       if ($value !== null) {
         $has_any_value = true;
         break;
@@ -722,7 +727,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         'entidad_tipo' => 'empresa',
         'id_entidad' => $id_empresa,
       ]);
-      $pdo->prepare('DELETE FROM direcciones WHERE id_empresa = :id_empresa')->execute(['id_empresa' => $id_empresa]);
+      // MODIFICADO: mantener id_direccion existentes usando UPDATE/INSERT en lugar de DELETE.
+      $direccionIdsStmt = $pdo->prepare('SELECT id_direccion FROM direcciones WHERE id_empresa = :id_empresa ORDER BY id_direccion');
+      $direccionIdsStmt->execute(['id_empresa' => $id_empresa]);
+      $direccion_ids_disponibles = [];
+      foreach ($direccionIdsStmt->fetchAll() as $direccionRow) {
+        $idDireccion = (int) ($direccionRow['id_direccion'] ?? 0);
+        if ($idDireccion > 0) {
+          $direccion_ids_disponibles[(string) $idDireccion] = true;
+        }
+      }
 
       $contactoIds = $pdo->prepare('SELECT id_empresa_contacto FROM empresas_contactos WHERE id_empresa = :id_empresa');
       $contactoIds->execute(['id_empresa' => $id_empresa]);
@@ -796,8 +810,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         )'
       );
 
+      $update_direccion = $pdo->prepare(
+        'UPDATE direcciones
+         SET id_pais = :id_pais,
+             id_provincia = :id_provincia,
+             id_localidad = :id_localidad,
+             id_via = :id_via,
+             nombre_via = :nombre_via,
+             numero = :numero,
+             bloque = :bloque,
+             escalera = :escalera,
+             planta = :planta,
+             puerta = :puerta,
+             etiqueta = :etiqueta,
+             cp = :cp,
+             otros = :otros,
+             principal = :principal
+         WHERE id_direccion = :id_direccion AND id_empresa = :id_empresa'
+      );
+
       foreach ($direcciones as $direccion) {
-        $insert_direccion->execute([
+        $direccion_params = [
           'id_empresa' => $id_empresa,
           'id_pais' => $direccion['id_pais'] !== null ? (int) $direccion['id_pais'] : null,
           'id_provincia' => $direccion['id_provincia'] !== null ? (int) $direccion['id_provincia'] : null,
@@ -813,7 +846,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
           'cp' => $direccion['cp'],
           'otros' => $direccion['otros'],
           'principal' => strtolower((string) ($direccion['etiqueta'] ?? '')) === 'principal' ? 1 : 0,
-        ]);
+        ];
+
+        $id_direccion = $direccion['id_direccion'] !== null ? (int) $direccion['id_direccion'] : 0;
+        if ($id_direccion > 0 && isset($direccion_ids_disponibles[(string) $id_direccion])) {
+          $update_direccion->execute($direccion_params + ['id_direccion' => $id_direccion]);
+          continue;
+        }
+
+        $insert_direccion->execute($direccion_params);
       }
 
       $insert_contacto = $pdo->prepare(
@@ -1085,6 +1126,8 @@ $active_page = 'empresas';
 
         <template id="direccionTemplate">
           <div class="entity-repeatable-item empresa-direccion-item">
+            <!-- MODIFICADO: mantener id_direccion para actualizar sin recrear la dirección -->
+            <input type="hidden" name="direcciones[__INDEX__][id_direccion]">
             <div class="entity-grid empresa-direccion-grid">
               <div class="entity-grid entity-grid--3">
                 <label class="direccion-etiqueta">
