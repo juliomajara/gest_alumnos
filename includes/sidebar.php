@@ -49,6 +49,12 @@ $nav_items = [
     'href' => 'utilidades.php',
     'icon' => 'assets/icons/utilidades.svg',
   ],
+  [
+    'key' => 'configuracion',
+    'label' => 'Configuración',
+    'href' => 'configuracion.php',
+    'icon' => 'assets/icons/configuracion.svg',
+  ],
 ];
 ?>
 <aside class="sidebar" id="appSidebar">
