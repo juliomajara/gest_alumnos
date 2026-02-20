@@ -856,6 +856,7 @@ $active_page = 'alumnos';
           <p class="subheading">Actualiza todos los datos del alumno y sus medios de contacto.</p>
         </div>
         <div class="header-actions">
+          <?php if ($idAlumno > 0 && $student): ?><button type="submit" class="primary-button" form="alumnoEditarForm"><?php // MODIFICADO ?>Guardar cambios</button><?php endif; ?>
           <a class="ghost-button" href="alumno_detalle.php?id_alumno=<?php echo (int) $idAlumno; ?>">Cancelar y volver</a>
         </div>
       </header>
@@ -1093,16 +1094,7 @@ $active_page = 'alumnos';
               </section>
             </section>
 
-            <section class="panel empresa-block empresa-block-direcciones">
-              <div class="panel-header">
-                <h3>Acciones</h3>
-                <p>Guarda los cambios del alumno o vuelve a la ficha.</p>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="primary-button">Guardar cambios</button>
-                <a class="ghost-button" href="alumno_detalle.php?id_alumno=<?php echo (int) $idAlumno; ?>">Cancelar</a>
-              </div>
-            </section>
+            <?php // MODIFICADO: eliminado bloque inferior de acciones (Guardar cambios / Cancelar) ?>
           </div>
         </form>
       <?php endif; ?>
