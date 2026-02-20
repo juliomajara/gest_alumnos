@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calendario de prácticas</title>
+  <style>
+    /* Plantilla pensada para mPDF: maquetación con tablas, sin flex/grid, sin posiciones raras */
+    body { font-family: Arial, sans-serif; font-size: 11pt; margin: 18px; }
+    table { width: 100%; border-collapse: collapse; margin: 0 0 10px 0; }
+    td, th { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+    .outer { border: 2px solid #000; }
+    .section-title { font-weight: bold; background: #f0f0f0; text-align: left; }
+    .muted { color: #333; font-size: 9pt; }
+    .center { text-align: center; }
+    .right { text-align: right; }
+    .no-border { border: 0 !important; }
+    .tight td, .tight th { padding: 3px 4px; }
+
+    /* Cabecera */
+    .header-wrap td { vertical-align: middle; }
+    .logo { width: 95px; height: auto; }
+    .inst-name { font-size: 14pt; font-weight: bold; }
+    .doc-title { font-size: 12pt; font-weight: bold; }
+
+    /* Bloques de datos */
+    .label { width: 22%; font-weight: bold; white-space: nowrap; }
+    .value { width: 28%; }
+    .value-wide { width: 78%; }
+
+    /* Horario */
+    .schedule th { background: #f0f0f0; text-align: center; }
+    .schedule td { text-align: center; }
+
+    /* Calendarios */
+    .months-grid td { border: 0 !important; padding: 0 0 10px 0; }
+    .month { width: 100%; border: 2px solid #000; border-collapse: collapse; }
+    .month th, .month td { border: 1px solid #000; padding: 3px; font-size: 9pt; }
+    .month .month-title { background: #f0f0f0; font-weight: bold; text-align: center; padding: 6px 0; }
+    .dow { background: #fafafa; font-weight: bold; text-align: center; }
+    .day { height: 18px; text-align: right; vertical-align: top; }
+    .nolectivo { background: #f8d7da; }  /* rojo suave */
+    .tutoria { background: #cfe2ff; }    /* azul suave */
+    .empty { background: #fff; color: #fff; } /* celdas vacías del mes */
+
+    /* Leyenda */
+    .legend td { vertical-align: middle; }
+    .swatch { width: 18px; height: 12px; border: 1px solid #000; }
+    .swatch-red { background: #f8d7da; }
+    .swatch-blue { background: #cfe2ff; }
+
+    /* Observaciones */
+    .obs-box { height: 90px; }
+
+    /* Evitar cortes feos en tablas */
+    tr, td, th { page-break-inside: avoid; }
+  </style>
+</head>
+
+<body>
+
+<!-- CABECERA -->
+<table class="outer header-wrap">
+  <tr>
+    <td style="width: 120px;" class="center">
+      <!-- Sustituye la ruta por tu logo. Para mPDF suele ir bien ruta relativa o absoluta accesible -->
+      <img src="logo_IES.png" alt="Logo" class="logo">
+    </td>
+    <td>
+      <div class="inst-name">NOMBRE DEL INSTITUTO</div>
+      <div class="doc-title">Calendario de prácticas y tutorías</div>
+      <div class="muted">Curso: <span>{{CURSO}}</span> &nbsp;&nbsp;|&nbsp;&nbsp; Periodo: <span>{{FECHA_INICIO}}</span> - <span>{{FECHA_FIN}}</span></div>
+    </td>
+  </tr>
+</table>
+
+<!-- DATOS DEL ALUMNO -->
+<table class="outer">
+  <tr><td colspan="4" class="section-title">Datos del alumno/a</td></tr>
+  <tr>
+    <td class="label">Nombre</td><td class="value">{{ALUMNO_NOMBRE}}</td>
+    <td class="label">Teléfono</td><td class="value">{{ALUMNO_TELEFONO}}</td>
+  </tr>
+  <tr>
+    <td class="label">Correo</td><td colspan="3">{{ALUMNO_CORREO}}</td>
+  </tr>
+</table>
+
+<!-- DATOS DE LA EMPRESA -->
+<table class="outer">
+  <tr><td colspan="4" class="section-title">Datos de la empresa</td></tr>
+  <tr>
+    <td class="label">Empresa</td><td class="value">{{EMPRESA_NOMBRE}}</td>
+    <td class="label">Centro de trabajo</td><td class="value">{{EMPRESA_CENTRO}}</td>
+  </tr>
+  <tr>
+    <td class="label">Dirección</td><td colspan="3">{{EMPRESA_DIRECCION}}</td>
+  </tr>
+</table>
+
+<!-- CONTACTO EN LA EMPRESA -->
+<table class="outer">
+  <tr><td colspan="4" class="section-title">Persona de contacto en la empresa</td></tr>
+  <tr>
+    <td class="label">Nombre</td><td class="value">{{CONTACTO_NOMBRE}}</td>
+    <td class="label">Teléfono</td><td class="value">{{CONTACTO_TELEFONO}}</td>
+  </tr>
+  <tr>
+    <td class="label">Correo</td><td colspan="3">{{CONTACTO_CORREO}}</td>
+  </tr>
+</table>
+
+<!-- TUTOR EN LA EMPRESA -->
+<table class="outer">
+  <tr><td colspan="4" class="section-title">Tutor/a en la empresa</td></tr>
+  <tr>
+    <td class="label">Nombre</td><td class="value">{{TUTOR_EMPRESA_NOMBRE}}</td>
+    <td class="label">Teléfono</td><td class="value">{{TUTOR_EMPRESA_TELEFONO}}</td>
+  </tr>
+  <tr>
+    <td class="label">Correo</td><td colspan="3">{{TUTOR_EMPRESA_CORREO}}</td>
+  </tr>
+</table>
+
+<!-- HORARIO -->
+<table class="outer schedule tight">
+  <tr><td colspan="6" class="section-title">Horario del alumno/a en la empresa</td></tr>
+  <tr>
+    <th style="width: 16%;">Día</th>
+    <th style="width: 17%;">Mañana (entrada)</th>
+    <th style="width: 17%;">Mañana (salida)</th>
+    <th style="width: 17%;">Tarde (entrada)</th>
+    <th style="width: 17%;">Tarde (salida)</th>
+    <th style="width: 16%;">Horas/día</th>
+  </tr>
+  <tr><td>Lunes</td><td>{{LUN_AM_ENT}}</td><td>{{LUN_AM_SAL}}</td><td>{{LUN_PM_ENT}}</td><td>{{LUN_PM_SAL}}</td><td>{{LUN_H}}</td></tr>
+  <tr><td>Martes</td><td>{{MAR_AM_ENT}}</td><td>{{MAR_AM_SAL}}</td><td>{{MAR_PM_ENT}}</td><td>{{MAR_PM_SAL}}</td><td>{{MAR_H}}</td></tr>
+  <tr><td>Miércoles</td><td>{{MIE_AM_ENT}}</td><td>{{MIE_AM_SAL}}</td><td>{{MIE_PM_ENT}}</td><td>{{MIE_PM_SAL}}</td><td>{{MIE_H}}</td></tr>
+  <tr><td>Jueves</td><td>{{JUE_AM_ENT}}</td><td>{{JUE_AM_SAL}}</td><td>{{JUE_PM_ENT}}</td><td>{{JUE_PM_SAL}}</td><td>{{JUE_H}}</td></tr>
+  <tr><td>Viernes</td><td>{{VIE_AM_ENT}}</td><td>{{VIE_AM_SAL}}</td><td>{{VIE_PM_ENT}}</td><td>{{VIE_PM_SAL}}</td><td>{{VIE_H}}</td></tr>
+  <tr><td>Sábado</td><td>{{SAB_AM_ENT}}</td><td>{{SAB_AM_SAL}}</td><td>{{SAB_PM_ENT}}</td><td>{{SAB_PM_SAL}}</td><td>{{SAB_H}}</td></tr>
+  <tr><td>Domingo</td><td>{{DOM_AM_ENT}}</td><td>{{DOM_AM_SAL}}</td><td>{{DOM_PM_ENT}}</td><td>{{DOM_PM_SAL}}</td><td>{{DOM_H}}</td></tr>
+</table>
+
+<!-- CALENDARIO (12 meses) -->
+<table class="months-grid">
+  <tr>
+    <td style="width: 33.33%; padding-right: 8px;">{{MES_01}}</td>
+    <td style="width: 33.33%; padding: 0 4px;">{{MES_02}}</td>
+    <td style="width: 33.33%; padding-left: 8px;">{{MES_03}}</td>
+  </tr>
+  <tr>
+    <td style="padding-right: 8px;">{{MES_04}}</td>
+    <td style="padding: 0 4px;">{{MES_05}}</td>
+    <td style="padding-left: 8px;">{{MES_06}}</td>
+  </tr>
+  <tr>
+    <td style="padding-right: 8px;">{{MES_07}}</td>
+    <td style="padding: 0 4px;">{{MES_08}}</td>
+    <td style="padding-left: 8px;">{{MES_09}}</td>
+  </tr>
+  <tr>
+    <td style="padding-right: 8px;">{{MES_10}}</td>
+    <td style="padding: 0 4px;">{{MES_11}}</td>
+    <td style="padding-left: 8px;">{{MES_12}}</td>
+  </tr>
+</table>
+
+<!-- PLANTILLA DE MES (cópiala y rellena desde PHP/tu generador)
+     - Recomendación: generar el HTML real de cada mes sustituyendo {{MES_XX}} por una tabla "month".
+     - Pinta:
+         * día no lectivo: class="day nolectivo"
+         * tutoría:       class="day tutoria"
+         * día normal:    class="day"
+         * huecos:        class="day empty" y contenido &nbsp;
+-->
+<!--
+<table class="month">
+  <tr><th colspan="7" class="month-title">ENERO 2026</th></tr>
+  <tr>
+    <th class="dow">L</th><th class="dow">M</th><th class="dow">X</th><th class="dow">J</th><th class="dow">V</th><th class="dow">S</th><th class="dow">D</th>
+  </tr>
+  <tr>
+    <td class="day empty">&nbsp;</td><td class="day empty">&nbsp;</td><td class="day">1</td><td class="day">2</td><td class="day nolectivo">3</td><td class="day">4</td><td class="day tutoria">5</td>
+  </tr>
+  ...
+</table>
+-->
+
+<!-- LEYENDA -->
+<table class="outer legend">
+  <tr><td colspan="3" class="section-title">Leyenda</td></tr>
+  <tr>
+    <td style="width: 26px;"><div class="swatch swatch-red"></div></td>
+    <td style="width: 22%"><strong>No lectivo</strong></td>
+    <td>Día no lectivo (no se realizan prácticas).</td>
+  </tr>
+  <tr>
+    <td><div class="swatch swatch-blue"></div></td>
+    <td><strong>Tutoría</strong></td>
+    <td>Día con tutoría de seguimiento (en el instituto).</td>
+  </tr>
+</table>
+
+<!-- OBSERVACIONES -->
+<table class="outer">
+  <tr><td class="section-title">Observaciones</td></tr>
+  <tr><td class="obs-box">{{OBSERVACIONES}}</td></tr>
+</table>
+
+<!-- MENSAJE -->
+<table class="outer">
+  <tr><td class="section-title">Información sobre tutorías y ausencias</td></tr>
+  <tr>
+    <td>
+      En las tutorías se realizará el seguimiento de las actividades que el alumnado haya desarrollado en la empresa.
+      Estas tutorías se llevarán a cabo de forma presencial en el instituto, y la empresa facilitará la asistencia del alumnado
+      en la fecha y horario establecidos.<br><br>
+
+      Las ausencias del alumnado deberán justificarse ante el tutor o tutora de empresa, aportando el justificante correspondiente,
+      en los mismos supuestos en los que se justificaría una ausencia en el puesto de trabajo. Además, cuando se produzca una ausencia,
+      el alumnado deberá comunicarla también por correo electrónico al tutor o tutora del centro educativo, con el fin de llevar un control
+      de asistencia.
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
