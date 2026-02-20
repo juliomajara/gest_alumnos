@@ -30,6 +30,10 @@ $active_page = 'configuracion';
           <h3>Configuración</h3>
           <p>Página de configuración del sistema.</p>
         </div>
+        <div class="panel-grid">
+          <a class="panel-link" href="datos_centro.php"><span>Datos del centro</span></a> <?php // MODIFICADO ?>
+          <a class="panel-link" href="calendario.php"><span>Calendario</span></a> <?php // MODIFICADO ?>
+        </div>
       </section>
     </main>
   </div>
