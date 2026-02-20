@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-02-2026 a las 14:02:39
+-- Tiempo de generación: 20-02-2026 a las 18:16:27
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -107,6 +107,17 @@ CREATE TABLE `ciclos` (
   `ciclo` varchar(60) NOT NULL,
   `abreviatura` varchar(60) NOT NULL,
   `codigo` varchar(10) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `config`
+--
+
+CREATE TABLE `config` (
+  `clave` varchar(64) NOT NULL,
+  `valor` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -564,6 +575,12 @@ ALTER TABLE `asistencia_mensual`
 --
 ALTER TABLE `ciclos`
   ADD PRIMARY KEY (`id_ciclo`);
+
+--
+-- Indices de la tabla `config`
+--
+ALTER TABLE `config`
+  ADD PRIMARY KEY (`clave`);
 
 --
 -- Indices de la tabla `correos`

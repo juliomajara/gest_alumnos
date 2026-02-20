@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-02-2026 a las 14:02:26
+-- Tiempo de generación: 20-02-2026 a las 18:15:55
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -711,6 +711,29 @@ INSERT INTO `ciclos` (`id_ciclo`, `ciclo`, `abreviatura`, `codigo`) VALUES
 (2, 'Administración de Sistemas Informáticos en Red', 'ASIR', 'IFCS01'),
 (3, 'Desarrollo de Aplicaciones Multiplataforma', 'DAM', 'IFCS02'),
 (4, 'Desarrollo de Aplicaciones Web', 'DAW', 'IFCS03');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `config`
+--
+
+CREATE TABLE `config` (
+  `clave` varchar(64) NOT NULL,
+  `valor` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `config`
+--
+
+INSERT INTO `config` (`clave`, `valor`) VALUES
+('instituto_codigo_centro', '28039827'),
+('instituto_direccion', 'Av. de las Vascongadas, s/n, 28903 Getafe, Madrid'),
+('instituto_email', 'ies.lagunadejoatzel.getafe@educa.madrid.org'),
+('instituto_nombre', 'IES Laguna de Joatzel'),
+('instituto_telefono', '916837197'),
+('instituto_web', 'https://site.educa.madrid.org/ies.lagunadejoatzel.getafe/');
 
 -- --------------------------------------------------------
 
@@ -1551,7 +1574,7 @@ CREATE TABLE `direcciones` (
 --
 
 INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provincia`, `id_localidad`, `id_via`, `nombre_via`, `numero`, `bloque`, `escalera`, `planta`, `puerta`, `otros`, `etiqueta`, `cp`, `principal`) VALUES
-(1, 1, 1, 28, NULL, 10, 'Lima', '25', NULL, NULL, NULL, NULL, 'Local', 'Principal', '28945', 1),
+(1, 1, 1, 28, 5, 10, 'Lima', '25', NULL, NULL, NULL, NULL, 'Local', 'Principal', '28945', 1),
 (2, 2, 1, 28, 1, 10, 'Miguel Faraday', '20', NULL, NULL, NULL, NULL, 'Edificio Symbco, A101', 'Principal', '28906', 1),
 (4, 3, 1, 28, 4, 5, 'San Diego', '1', NULL, NULL, NULL, NULL, NULL, 'Principal', '28053', 1),
 (5, 3, 1, 28, 1, 10, 'Bell', '24', NULL, NULL, NULL, NULL, NULL, 'Centro de Trabajo', '28906', 0),
@@ -1573,7 +1596,6 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (21, 17, 1, 28, NULL, 5, 'Atenas', 's/n', NULL, NULL, NULL, NULL, 'Campus URJC Alcorcón - Edificio Clínica Universitaria - 2ª planta', 'Principal', '28922', 1),
 (22, 18, 1, 28, 1, 10, 'Progreso', '2', NULL, NULL, NULL, NULL, 'Oficina 214', 'Principal', '28906', 1),
 (23, 19, 1, 28, NULL, 10, 'Reyes Católicos', '5', NULL, NULL, '4', 'B', NULL, 'Principal', '28802', 1),
-(24, 1, 1, 28, 5, 10, 'Lima', '25', NULL, NULL, NULL, NULL, 'Local', 'Principal', '28945', 1),
 (25, 10, 1, 28, 4, 10, 'Resina', '13-15', NULL, NULL, NULL, NULL, 'Nave 2-14', 'Principal', '28021', 1),
 (26, 13, 1, 28, 4, 10, 'Amaltea', '1', NULL, 'F', '1', 'A', NULL, 'Principal', '28045', 1),
 (27, 13, 1, 28, 4, 5, 'Marconi', '9', NULL, NULL, NULL, NULL, 'Edificio 7, Nave 3', 'Centro de Trabajo', '28021', 0);
@@ -2870,6 +2892,15 @@ CREATE TABLE `tutorias` (
   `fecha` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `tutorias`
+--
+
+INSERT INTO `tutorias` (`id_tutoria`, `fecha`) VALUES
+(2, '2026-03-25'),
+(3, '2026-04-24'),
+(4, '2026-05-20');
+
 -- --------------------------------------------------------
 
 --
@@ -3005,6 +3036,12 @@ ALTER TABLE `asistencia_mensual`
 --
 ALTER TABLE `ciclos`
   ADD PRIMARY KEY (`id_ciclo`);
+
+--
+-- Indices de la tabla `config`
+--
+ALTER TABLE `config`
+  ADD PRIMARY KEY (`clave`);
 
 --
 -- Indices de la tabla `correos`
@@ -3334,7 +3371,7 @@ ALTER TABLE `niveles`
 -- AUTO_INCREMENT de la tabla `no_lectivos`
 --
 ALTER TABLE `no_lectivos`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT de la tabla `paises`
@@ -3406,7 +3443,7 @@ ALTER TABLE `telefonos`
 -- AUTO_INCREMENT de la tabla `tutorias`
 --
 ALTER TABLE `tutorias`
-  MODIFY `id_tutoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_tutoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
