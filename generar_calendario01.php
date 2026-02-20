@@ -102,17 +102,20 @@ function month_name_es(int $month): string {
   return $months[$month] ?? '';
 }
 
-function day_css_class(DateTimeImmutable $date, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias): string {
+function day_css_class(DateTimeImmutable $date, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
   $key = $date->format('Y-m-d');
   if ($key < $start->format('Y-m-d') || $key > $end->format('Y-m-d')) {
     return 'day';
   }
-  $dayOfWeek = (int) $date->format('N'); // MODIFICADO
-  if ($dayOfWeek >= 6 || isset($noLectivos[$key])) { // MODIFICADO
+  $dayOfWeek = (int) $date->format('N');
+  if ($dayOfWeek >= 6 || isset($noLectivos[$key])) {
     return 'day nolectivo';
   }
-  if (isset($tutorias[$key])) { // MODIFICADO
-    return 'day tutoria'; // MODIFICADO
+  if (isset($tutorias[$key])) {
+    return 'day tutoria';
+  }
+  if (has_assigned_schedule_for_day($scheduleByDay[$dayOfWeek] ?? [])) {
+    return 'day empresa';
   }
   return 'day';
 }
@@ -128,35 +131,12 @@ function has_assigned_schedule_for_day(array $rows): bool { // MODIFICADO
   return false; // MODIFICADO
 } // MODIFICADO
 
-function month_has_practice_days(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $scheduleByDay): bool { // MODIFICADO
-  $monthStart = $month; // MODIFICADO
-  $monthEnd = $month->modify('last day of this month'); // MODIFICADO
-  $checkStart = $monthStart > $start ? $monthStart : $start; // MODIFICADO
-  $checkEnd = $monthEnd < $end ? $monthEnd : $end; // MODIFICADO
-
-  if ($checkStart > $checkEnd) { // MODIFICADO
-    return false; // MODIFICADO
-  } // MODIFICADO
-
-  for ($current = $checkStart; $current <= $checkEnd; $current = $current->modify('+1 day')) { // MODIFICADO
-    $day = (int) $current->format('N'); // MODIFICADO
-    if (has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) { // MODIFICADO
-      return true; // MODIFICADO
-    } // MODIFICADO
-  } // MODIFICADO
-
-  return false; // MODIFICADO
-} // MODIFICADO
-
-function build_practice_month_index(DateTimeImmutable $start, DateTimeImmutable $end, array $scheduleByDay): array {
+function build_practice_month_index(DateTimeImmutable $start, DateTimeImmutable $end): array {
   $months = [];
 
-  for ($current = $start; $current <= $end; $current = $current->modify('+1 day')) {
-    $day = (int) $current->format('N');
-    if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) {
-      continue;
-    }
-
+  $firstMonth = new DateTimeImmutable($start->format('Y-m-01'));
+  $lastMonth = new DateTimeImmutable($end->format('Y-m-01'));
+  for ($current = $firstMonth; $current <= $lastMonth; $current = $current->modify('+1 month')) {
     $months[$current->format('Y-m')] = true;
   }
 
@@ -172,7 +152,7 @@ function append_class(DOMElement $element, string $className): void { // MODIFIC
   } // MODIFICADO
 } // MODIFICADO
 
-function postprocess_calendar_html(string $html, array $scheduleByDay, string $institutoNombre): string { // MODIFICADO
+function postprocess_calendar_html(string $html, array $scheduleByDay, string $institutoNombre, string $templateDir): string { // MODIFICADO
   $dom = new DOMDocument(); // MODIFICADO
   $prevUseErrors = libxml_use_internal_errors(true); // MODIFICADO
   $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html); // MODIFICADO
@@ -180,6 +160,24 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
   libxml_use_internal_errors($prevUseErrors); // MODIFICADO
 
   $xpath = new DOMXPath($dom); // MODIFICADO
+
+  $imgNodes = $xpath->query('//img[@src]');
+  if ($imgNodes !== false) {
+    foreach ($imgNodes as $imgNode) {
+      if (!$imgNode instanceof DOMElement) {
+        continue;
+      }
+      $src = trim((string) $imgNode->getAttribute('src'));
+      if ($src === '' || preg_match('#^(?:https?:)?//#i', $src) || str_starts_with($src, 'data:')) {
+        continue;
+      }
+
+      $absolutePath = realpath($templateDir . '/' . ltrim($src, '/'));
+      if ($absolutePath !== false && is_file($absolutePath)) {
+        $imgNode->setAttribute('src', $absolutePath);
+      }
+    }
+  }
 
   if (trim($institutoNombre) !== '') { // MODIFICADO
     $instNode = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " inst-name ")]')->item(0); // MODIFICADO
@@ -266,7 +264,7 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
   return $result !== false ? $result : $html; // MODIFICADO
 } // MODIFICADO
 
-function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias): string {
+function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
   $year = (int) $month->format('Y');
   $monthNum = (int) $month->format('n');
   $days = (int) $month->format('t');
@@ -283,7 +281,12 @@ function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, D
   $col = $offset;
   for ($d = 1; $d <= $days; $d++, $col++) {
     $date = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $year, $monthNum, $d));
-    $html .= '<td class="' . day_css_class($date, $start, $end, $noLectivos, $tutorias) . '">' . $d . '</td>';
+    $class = day_css_class($date, $start, $end, $noLectivos, $tutorias, $scheduleByDay);
+    $attrs = '';
+    if (strpos(' ' . $class . ' ', ' empresa ') !== false) {
+      $attrs = ' bgcolor="#d9f2d9"';
+    }
+    $html .= '<td class="' . $class . '"' . $attrs . '>' . $d . '</td>';
     if ($col % 7 === 0 && $d < $days) {
       $html .= '</tr><tr>';
     }
@@ -493,14 +496,14 @@ try {
 
   $replacements += build_schedule_tokens($scheduleByDay);
 
-  $practiceMonths = build_practice_month_index($startDate, $endDate, $scheduleByDay);
+  $practiceMonths = build_practice_month_index($startDate, $endDate);
 
   $monthBase = new DateTimeImmutable($startDate->format('Y-m-01'));
   for ($i = 1; $i <= 12; $i++) {
     $monthDate = $monthBase->modify('+' . ($i - 1) . ' month');
     $monthKey = $monthDate->format('Y-m');
-    $shouldRender = isset($practiceMonths[$monthKey]) && month_has_practice_days($monthDate, $startDate, $endDate, $scheduleByDay);
-    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = $shouldRender ? build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias) : ''; // MODIFICADO
+    $shouldRender = isset($practiceMonths[$monthKey]);
+    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = $shouldRender ? build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias, $scheduleByDay) : '';
   }
 
   foreach ($templateMarkers as $marker) {
@@ -510,13 +513,14 @@ try {
   }
 
   $html = str_replace(array_keys($replacements), array_values($replacements), $template);
-  $html = postprocess_calendar_html($html, $scheduleByDay, $institutoNombre); // MODIFICADO
+  $html = postprocess_calendar_html($html, $scheduleByDay, $institutoNombre, dirname($templatePath)); // MODIFICADO
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
     'tempDir' => ensure_mpdf_temp_dir(),
   ]);
+  $mpdf->SetBasePath(dirname($templatePath) . '/');
 
   $tempFilePath = $paths['calendar_file_path'] . '.tmp';
   if (file_exists($tempFilePath)) {
