@@ -33,6 +33,8 @@ $active_page = 'configuracion';
         <div class="panel-grid">
           <a class="panel-link" href="datos_centro.php"><span>Datos del centro</span></a> <?php // MODIFICADO ?>
           <a class="panel-link" href="calendario.php"><span>Calendario</span></a> <?php // MODIFICADO ?>
+          <a class="panel-link" href="alumnos_importar.php"><span>Importar alumnos</span></a>
+          <a class="panel-link" href="practicas_ras.php"><span>Porcentaje RA/CE en empresa</span></a>
         </div>
       </section>
     </main>
