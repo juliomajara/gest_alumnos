@@ -107,14 +107,149 @@ function day_css_class(DateTimeImmutable $date, DateTimeImmutable $start, DateTi
   if ($key < $start->format('Y-m-d') || $key > $end->format('Y-m-d')) {
     return 'day';
   }
-  if (isset($tutorias[$key])) {
-    return 'day tutoria';
-  }
-  if (isset($noLectivos[$key])) {
+  $dayOfWeek = (int) $date->format('N'); // MODIFICADO
+  if ($dayOfWeek >= 6 || isset($noLectivos[$key])) { // MODIFICADO
     return 'day nolectivo';
+  }
+  if (isset($tutorias[$key])) { // MODIFICADO
+    return 'day tutoria'; // MODIFICADO
   }
   return 'day';
 }
+
+function has_assigned_schedule_for_day(array $rows): bool { // MODIFICADO
+  foreach ($rows as $row) { // MODIFICADO
+    $entrada = trim((string) ($row['hora_entrada'] ?? '')); // MODIFICADO
+    $salida = trim((string) ($row['hora_salida'] ?? '')); // MODIFICADO
+    if ($entrada !== '' || $salida !== '') { // MODIFICADO
+      return true; // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+  return false; // MODIFICADO
+} // MODIFICADO
+
+function month_has_practice_days(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $scheduleByDay): bool { // MODIFICADO
+  $monthStart = $month; // MODIFICADO
+  $monthEnd = $month->modify('last day of this month'); // MODIFICADO
+  $checkStart = $monthStart > $start ? $monthStart : $start; // MODIFICADO
+  $checkEnd = $monthEnd < $end ? $monthEnd : $end; // MODIFICADO
+
+  if ($checkStart > $checkEnd) { // MODIFICADO
+    return false; // MODIFICADO
+  } // MODIFICADO
+
+  for ($current = $checkStart; $current <= $checkEnd; $current = $current->modify('+1 day')) { // MODIFICADO
+    $day = (int) $current->format('N'); // MODIFICADO
+    if (has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) { // MODIFICADO
+      return true; // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+
+  return false; // MODIFICADO
+} // MODIFICADO
+
+function append_class(DOMElement $element, string $className): void { // MODIFICADO
+  $current = trim((string) $element->getAttribute('class')); // MODIFICADO
+  $classes = $current === '' ? [] : (preg_split('/\s+/', $current) ?: []); // MODIFICADO
+  if (!in_array($className, $classes, true)) { // MODIFICADO
+    $classes[] = $className; // MODIFICADO
+    $element->setAttribute('class', trim(implode(' ', $classes))); // MODIFICADO
+  } // MODIFICADO
+} // MODIFICADO
+
+function postprocess_calendar_html(string $html, array $scheduleByDay, string $institutoNombre): string { // MODIFICADO
+  $dom = new DOMDocument(); // MODIFICADO
+  $prevUseErrors = libxml_use_internal_errors(true); // MODIFICADO
+  $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html); // MODIFICADO
+  libxml_clear_errors(); // MODIFICADO
+  libxml_use_internal_errors($prevUseErrors); // MODIFICADO
+
+  $xpath = new DOMXPath($dom); // MODIFICADO
+
+  if (trim($institutoNombre) !== '') { // MODIFICADO
+    $instNode = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " inst-name ")]')->item(0); // MODIFICADO
+    if ($instNode instanceof DOMElement) { // MODIFICADO
+      while ($instNode->firstChild) { // MODIFICADO
+        $instNode->removeChild($instNode->firstChild); // MODIFICADO
+      } // MODIFICADO
+      $instNode->appendChild($dom->createTextNode($institutoNombre)); // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+
+  $dayNames = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo']; // MODIFICADO
+  $scheduleTable = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " schedule ")]')->item(0); // MODIFICADO
+  if ($scheduleTable instanceof DOMElement) { // MODIFICADO
+    $rows = []; // MODIFICADO
+    foreach ($scheduleTable->getElementsByTagName('tr') as $tr) { // MODIFICADO
+      $rows[] = $tr; // MODIFICADO
+    } // MODIFICADO
+
+    for ($day = 1; $day <= 7; $day++) { // MODIFICADO
+      $rowIndex = $day + 1; // MODIFICADO
+      if (!isset($rows[$rowIndex]) || !$rows[$rowIndex] instanceof DOMElement) { // MODIFICADO
+        continue; // MODIFICADO
+      } // MODIFICADO
+
+      if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) { // MODIFICADO
+        if ($rows[$rowIndex]->parentNode !== null) { // MODIFICADO
+          $rows[$rowIndex]->parentNode->removeChild($rows[$rowIndex]); // MODIFICADO
+        } // MODIFICADO
+      } else { // MODIFICADO
+        $firstCell = $rows[$rowIndex]->getElementsByTagName('td')->item(0); // MODIFICADO
+        if ($firstCell instanceof DOMElement) { // MODIFICADO
+          $firstCell->nodeValue = $dayNames[$day]; // MODIFICADO
+        } // MODIFICADO
+      } // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+
+  $monthsGrid = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " months-grid ")]')->item(0); // MODIFICADO
+  if ($monthsGrid instanceof DOMElement) { // MODIFICADO
+    $rows = []; // MODIFICADO
+    foreach ($monthsGrid->getElementsByTagName('tr') as $tr) { // MODIFICADO
+      $rows[] = $tr; // MODIFICADO
+    } // MODIFICADO
+    foreach ($rows as $tr) { // MODIFICADO
+      $cells = []; // MODIFICADO
+      foreach ($tr->getElementsByTagName('td') as $td) { // MODIFICADO
+        $cells[] = $td; // MODIFICADO
+      } // MODIFICADO
+      foreach ($cells as $td) { // MODIFICADO
+        $hasMonth = false; // MODIFICADO
+        foreach ($td->getElementsByTagName('table') as $innerTable) { // MODIFICADO
+          if (strpos(' ' . $innerTable->getAttribute('class') . ' ', ' month ') !== false) { // MODIFICADO
+            $hasMonth = true; // MODIFICADO
+            break; // MODIFICADO
+          } // MODIFICADO
+        } // MODIFICADO
+        if (!$hasMonth && trim((string) $td->textContent) === '') { // MODIFICADO
+          if ($td->parentNode !== null) { // MODIFICADO
+            $td->parentNode->removeChild($td); // MODIFICADO
+          } // MODIFICADO
+        } // MODIFICADO
+      } // MODIFICADO
+
+      $remainingCells = $tr->getElementsByTagName('td'); // MODIFICADO
+      if ($remainingCells->length === 0) { // MODIFICADO
+        if ($tr->parentNode !== null) { // MODIFICADO
+          $tr->parentNode->removeChild($tr); // MODIFICADO
+        } // MODIFICADO
+      } // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+
+  $fieldNodes = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " outer ")]//*[self::td or self::th][not(contains(concat(" ", normalize-space(@class), " "), " section-title "))]'); // MODIFICADO
+  if ($fieldNodes !== false) { // MODIFICADO
+    foreach ($fieldNodes as $node) { // MODIFICADO
+      if ($node instanceof DOMElement) { // MODIFICADO
+        append_class($node, 'muted'); // MODIFICADO
+      } // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+
+  $result = $dom->saveHTML(); // MODIFICADO
+  return $result !== false ? $result : $html; // MODIFICADO
+} // MODIFICADO
 
 function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias): string {
   $year = (int) $month->format('Y');
@@ -285,6 +420,16 @@ try {
   } catch (Throwable $e) {
   }
 
+  $institutoNombre = ''; // MODIFICADO
+  try { // MODIFICADO
+    $configStmt = $pdo->prepare('SELECT valor FROM config WHERE clave = :clave LIMIT 1'); // MODIFICADO
+    $configStmt->execute(['clave' => 'instituto_nombre']); // MODIFICADO
+    $configValue = $configStmt->fetchColumn(); // MODIFICADO
+    $institutoNombre = trim((string) ($configValue ?? '')); // MODIFICADO
+  } catch (Throwable $e) { // MODIFICADO
+    $institutoNombre = ''; // MODIFICADO
+  } // MODIFICADO
+
   $tutorias = [];
   try {
     $tutoriasStmt = $pdo->prepare('SELECT fecha FROM tutorias WHERE fecha BETWEEN :fi AND :ff');
@@ -336,7 +481,7 @@ try {
   $monthBase = new DateTimeImmutable($startDate->format('Y-m-01'));
   for ($i = 1; $i <= 12; $i++) {
     $monthDate = $monthBase->modify('+' . ($i - 1) . ' month');
-    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias);
+    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = month_has_practice_days($monthDate, $startDate, $endDate, $scheduleByDay) ? build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias) : ''; // MODIFICADO
   }
 
   foreach ($templateMarkers as $marker) {
@@ -346,6 +491,7 @@ try {
   }
 
   $html = str_replace(array_keys($replacements), array_values($replacements), $template);
+  $html = postprocess_calendar_html($html, $scheduleByDay, $institutoNombre); // MODIFICADO
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
