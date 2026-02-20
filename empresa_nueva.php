@@ -344,6 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'nombre' => normalize_text($_POST['empresa']['nombre'] ?? null),
     'apellido1' => normalize_text($_POST['empresa']['apellido1'] ?? null),
     'apellido2' => normalize_text($_POST['empresa']['apellido2'] ?? null),
+    'nombre_comercial' => normalize_text($_POST['empresa']['nombre_comercial'] ?? null), // MODIFICADO
     'numero_convenio' => normalize_text($_POST['empresa']['numero_convenio'] ?? null),
   ];
 
@@ -452,15 +453,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
       $pdo->beginTransaction();
 
-      $insert_empresa = $pdo->prepare(
-        'INSERT INTO empresas (cif, nombre, apellido1, apellido2, convenio)
-         VALUES (:cif, :nombre, :apellido1, :apellido2, :convenio)'
+      $insert_empresa = $pdo->prepare( // MODIFICADO
+        'INSERT INTO empresas (cif, nombre, apellido1, apellido2, nombre_comercial, convenio)
+         VALUES (:cif, :nombre, :apellido1, :apellido2, :nombre_comercial, :convenio)'
       );
       $insert_empresa->execute([
         'cif' => $empresa['cif'],
         'nombre' => $empresa['nombre'],
         'apellido1' => $empresa['apellido1'],
         'apellido2' => $empresa['apellido2'],
+        'nombre_comercial' => $empresa['nombre_comercial'], // MODIFICADO
         'convenio' => $empresa['numero_convenio'] !== null ? (int) $empresa['numero_convenio'] : null,
       ]);
 
@@ -668,6 +670,10 @@ $active_page = 'empresas';
               <label>
                 Apellido 2
                 <input type="text" name="empresa[apellido2]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['apellido2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
+              </label>
+              <label> <?php // MODIFICADO ?>
+                Nombre comercial
+                <input type="text" name="empresa[nombre_comercial]" value="<?php echo htmlspecialchars((string) ($form_values['empresa']['nombre_comercial'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"> <?php // MODIFICADO ?>
               </label>
               <label>
                 CIF
@@ -883,6 +889,47 @@ $active_page = 'empresas';
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
+
+    const empresaNombreInput = document.querySelector('input[name="empresa[nombre]"]'); // MODIFICADO
+    const empresaApellido1Input = document.querySelector('input[name="empresa[apellido1]"]'); // MODIFICADO
+    const empresaApellido2Input = document.querySelector('input[name="empresa[apellido2]"]'); // MODIFICADO
+    const empresaNombreComercialInput = document.querySelector('input[name="empresa[nombre_comercial]"]'); // MODIFICADO
+
+    const composeNombreComercial = () => [ // MODIFICADO
+      empresaNombreInput?.value?.trim() || '', // MODIFICADO
+      empresaApellido1Input?.value?.trim() || '', // MODIFICADO
+      empresaApellido2Input?.value?.trim() || '', // MODIFICADO
+    ].filter(Boolean).join(' ').trim(); // MODIFICADO
+
+    const syncNombreComercial = () => { // MODIFICADO
+      if (!empresaNombreComercialInput || empresaNombreComercialInput.dataset.userEdited === '1') { // MODIFICADO
+        return; // MODIFICADO
+      }
+
+      empresaNombreComercialInput.value = composeNombreComercial(); // MODIFICADO
+    };
+
+    if (empresaNombreComercialInput) { // MODIFICADO
+      const initialAutoValue = composeNombreComercial(); // MODIFICADO
+      const initialCurrentValue = (empresaNombreComercialInput.value || '').trim(); // MODIFICADO
+      if (initialCurrentValue !== '' && initialCurrentValue !== initialAutoValue) { // MODIFICADO
+        empresaNombreComercialInput.dataset.userEdited = '1'; // MODIFICADO
+      }
+
+      empresaNombreComercialInput.addEventListener('input', () => { // MODIFICADO
+        empresaNombreComercialInput.dataset.userEdited = '1'; // MODIFICADO
+      });
+    }
+
+    [empresaNombreInput, empresaApellido1Input, empresaApellido2Input].forEach((input) => { // MODIFICADO
+      if (!input) { // MODIFICADO
+        return; // MODIFICADO
+      }
+
+      input.addEventListener('input', syncNombreComercial); // MODIFICADO
+    });
+
+    syncNombreComercial(); // MODIFICADO
 
     const paisIdToCode = <?php echo json_encode($pais_id_to_code, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
