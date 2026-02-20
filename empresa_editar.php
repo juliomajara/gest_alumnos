@@ -557,6 +557,7 @@ if ($id_empresa <= 0) {
     foreach ($tutores_db as $tutor_db) {
       $id_tutor = (int) ($tutor_db['id_empresas_tutor'] ?? 0);
       $tutor = [
+        'id_empresas_tutor' => (string) $id_tutor, // MODIFICADO
         'nombre' => (string) ($tutor_db['nombre'] ?? ''),
         'apellido1' => (string) ($tutor_db['apellido1'] ?? ''),
         'apellido2' => (string) ($tutor_db['apellido2'] ?? ''),
@@ -682,6 +683,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
     }
 
     $entry = [
+      'id_empresas_tutor' => normalize_text($tutor['id_empresas_tutor'] ?? null), // MODIFICADO
       'nombre' => normalize_text($tutor['nombre'] ?? null),
       'apellido1' => normalize_text($tutor['apellido1'] ?? null),
       'apellido2' => normalize_text($tutor['apellido2'] ?? null),
@@ -696,6 +698,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
 
     if ($entry['nombre'] === null || $entry['apellido1'] === null) {
       $errors[] = 'Cada tutor debe tener al menos nombre y apellido1.';
+    }
+
+    if ($entry['id_empresas_tutor'] !== null && !ctype_digit($entry['id_empresas_tutor'])) { // MODIFICADO
+      $errors[] = 'El identificador del tutor no es válido.';
     }
 
     $tutores[] = $entry;
@@ -755,22 +761,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
       }
       $pdo->prepare('DELETE FROM empresas_contactos WHERE id_empresa = :id_empresa')->execute(['id_empresa' => $id_empresa]);
 
-      $tutorIds = $pdo->prepare('SELECT id_empresas_tutor FROM empresas_tutores WHERE id_empresa = :id_empresa');
+      $tutorIds = $pdo->prepare('SELECT id_empresas_tutor FROM empresas_tutores WHERE id_empresa = :id_empresa'); // MODIFICADO
       $tutorIds->execute(['id_empresa' => $id_empresa]);
+      $tutor_ids_existentes = [];
       foreach ($tutorIds->fetchAll() as $row) {
         $idTutor = (int) ($row['id_empresas_tutor'] ?? 0);
         if ($idTutor > 0) {
-          $pdo->prepare('DELETE FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad')->execute([
-            'entidad_tipo' => 'empresa_tutor',
-            'id_entidad' => $idTutor,
-          ]);
-          $pdo->prepare('DELETE FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad')->execute([
-            'entidad_tipo' => 'empresa_tutor',
-            'id_entidad' => $idTutor,
-          ]);
+          $tutor_ids_existentes[(string) $idTutor] = true;
         }
       }
-      $pdo->prepare('DELETE FROM empresas_tutores WHERE id_empresa = :id_empresa')->execute(['id_empresa' => $id_empresa]);
 
       $insert_telefono = $pdo->prepare(
         'INSERT INTO telefonos (entidad_tipo, id_entidad, telefono, etiqueta)
@@ -896,17 +895,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         'INSERT INTO empresas_tutores (id_empresa, apellido1, apellido2, nombre, dni)
          VALUES (:id_empresa, :apellido1, :apellido2, :nombre, :dni)'
       );
+      $update_tutor = $pdo->prepare( // MODIFICADO
+        'UPDATE empresas_tutores
+         SET apellido1 = :apellido1, apellido2 = :apellido2, nombre = :nombre, dni = :dni
+         WHERE id_empresas_tutor = :id_empresas_tutor AND id_empresa = :id_empresa'
+      );
+
+      $delete_tutor_telefonos = $pdo->prepare('DELETE FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad'); // MODIFICADO
+      $delete_tutor_correos = $pdo->prepare('DELETE FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad');
+      $tutor_ids_mantenidos = [];
 
       foreach ($tutores as $tutor) {
-        $insert_tutor->execute([
-          'id_empresa' => $id_empresa,
-          'apellido1' => $tutor['apellido1'] ?? '',
-          'apellido2' => $tutor['apellido2'],
-          'nombre' => $tutor['nombre'] ?? '',
-          'dni' => $tutor['dni'],
-        ]);
+        $id_tutor = 0;
+        $id_tutor_post = $tutor['id_empresas_tutor'] ?? null;
 
-        $id_tutor = (int) $pdo->lastInsertId();
+        if ($id_tutor_post !== null && isset($tutor_ids_existentes[$id_tutor_post])) {
+          $id_tutor = (int) $id_tutor_post;
+          $update_tutor->execute([
+            'id_empresa' => $id_empresa,
+            'id_empresas_tutor' => $id_tutor,
+            'apellido1' => $tutor['apellido1'] ?? '',
+            'apellido2' => $tutor['apellido2'],
+            'nombre' => $tutor['nombre'] ?? '',
+            'dni' => $tutor['dni'],
+          ]);
+        } else {
+          $insert_tutor->execute([
+            'id_empresa' => $id_empresa,
+            'apellido1' => $tutor['apellido1'] ?? '',
+            'apellido2' => $tutor['apellido2'],
+            'nombre' => $tutor['nombre'] ?? '',
+            'dni' => $tutor['dni'],
+          ]);
+          $id_tutor = (int) $pdo->lastInsertId();
+        }
+
+        if ($id_tutor <= 0) {
+          continue;
+        }
+
+        $tutor_ids_mantenidos[(string) $id_tutor] = $id_tutor;
+
+        $delete_tutor_telefonos->execute([
+          'entidad_tipo' => 'empresa_tutor',
+          'id_entidad' => $id_tutor,
+        ]);
+        $delete_tutor_correos->execute([
+          'entidad_tipo' => 'empresa_tutor',
+          'id_entidad' => $id_tutor,
+        ]);
 
         foreach ($tutor['telefonos'] as $telefono) {
           $insert_telefono->execute([
@@ -925,6 +962,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
             'etiqueta' => $correo['etiqueta'],
           ]);
         }
+      }
+
+      if ($tutor_ids_mantenidos) { // MODIFICADO
+        $ids_mantenidos = array_values($tutor_ids_mantenidos);
+        $placeholders = implode(',', array_fill(0, count($ids_mantenidos), '?'));
+        $delete_sql =
+          'DELETE FROM empresas_tutores
+           WHERE id_empresa = ?
+             AND id_empresas_tutor NOT IN (' . $placeholders . ')
+             AND NOT EXISTS (
+               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = empresas_tutores.id_empresas_tutor
+             )';
+        $delete_stmt = $pdo->prepare($delete_sql);
+        $delete_stmt->execute(array_merge([$id_empresa], $ids_mantenidos));
+      } else {
+        $delete_stmt = $pdo->prepare(
+          'DELETE FROM empresas_tutores
+           WHERE id_empresa = ?
+             AND NOT EXISTS (
+               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = empresas_tutores.id_empresas_tutor
+             )'
+        );
+        $delete_stmt->execute([$id_empresa]);
       }
 
       $pdo->commit();
@@ -1581,6 +1641,7 @@ $active_page = 'empresas';
     const createEntityCard = (entityType, entityIndex, extraFieldLabel, extraFieldName) => {
       const card = document.createElement('div');
       card.className = 'entity-repeatable-item entity-card';
+      // MODIFICADO: mantener id_empresas_tutor en tutores existentes.
       card.innerHTML = `
         <div class="entity-section-header">
           <h4>${entityType === 'contactos' ? 'Persona de contacto' : 'Tutor de empresa'} #${entityIndex + 1}</h4>
@@ -1603,6 +1664,7 @@ $active_page = 'empresas';
             ${extraFieldLabel}
             <input type="text" name="${entityType}[${entityIndex}][${extraFieldName}]">
           </label>
+          ${entityType === 'tutores' ? `<input type="hidden" name="tutores[${entityIndex}][id_empresas_tutor]">` : ''}
         </div>
         <div class="grid empresa-medios-grid">
           <section class="entity-nested-section">
@@ -1739,6 +1801,7 @@ $active_page = 'empresas';
           return;
         }
 
+        setInputValue(card, 'input[name$="[id_empresas_tutor]"]', tutor?.id_empresas_tutor || ''); // MODIFICADO
         setInputValue(card, 'input[name$="[nombre]"]', tutor?.nombre || '');
         setInputValue(card, 'input[name$="[apellido1]"]', tutor?.apellido1 || '');
         setInputValue(card, 'input[name$="[apellido2]"]', tutor?.apellido2 || '');
