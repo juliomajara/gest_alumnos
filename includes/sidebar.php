@@ -38,12 +38,6 @@ $nav_items = [
     'icon' => 'assets/icons/profesores.svg',
   ],
   [
-    'key' => 'calendario',
-    'label' => 'Calendario',
-    'href' => 'calendario.php',
-    'icon' => 'assets/icons/calendario.svg',
-  ],
-  [
     'key' => 'utilidades',
     'label' => 'Utilidades',
     'href' => 'utilidades.php',
