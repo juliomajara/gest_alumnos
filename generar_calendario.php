@@ -187,9 +187,10 @@ function is_no_attendance_day(DateTimeImmutable $date, array $nonSchoolDays, arr
   return !isset($scheduleByDay[$dayOfWeek]) || $scheduleByDay[$dayOfWeek] === [];
 }
 
-function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): string {
+function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay, array $tutorias): string {
   $startKey = $startDate->format('Y-m-d');
   $endKey = $endDate->format('Y-m-d');
+  $tutoriasLookup = array_fill_keys($tutorias, true); // MODIFICADO
   $monthHtmlChunks = [];
   $firstMonth = new DateTimeImmutable($startDate->format('Y-m-01'));
   $lastMonth = new DateTimeImmutable($endDate->format('Y-m-01'));
@@ -216,8 +217,10 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
     for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
       $currentDate = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
       $curKey = $currentDate->format('Y-m-d');
+      $isTutoria = isset($tutoriasLookup[$curKey]); // MODIFICADO
 
       $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt; border:1px solid #333333;';
+      $class = $isTutoria ? ' class="dia-tutoria"' : ''; // MODIFICADO
       if ($curKey < $startKey || $curKey > $endKey) {
         // Fuera de rango: sin color.
       } elseif ($curKey === $startKey) {
@@ -230,7 +233,11 @@ function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $en
         $style .= ' background-color:' . CALENDAR_COLOR_ATTENDANCE . ';';
       }
 
-      $monthHtml .= '<td style="' . $style . '">' . $day . '</td>';
+      if ($isTutoria && !($curKey < $startKey || $curKey > $endKey)) { // MODIFICADO
+        $style .= ' background-color:#1e73be; color:#fff;'; // MODIFICADO
+      }
+
+      $monthHtml .= '<td' . $class . ' style="' . $style . '">' . $day . '</td>'; // MODIFICADO
 
       if ($column % 7 === 0 && $day < $daysInMonth) {
         $monthHtml .= '</tr><tr>';
@@ -324,6 +331,20 @@ try {
     $nonSchoolSourceNote = 'Nota: no hay no lectivos configurados en el sistema para esta instalación.';
   }
 
+  $tutorias = []; // MODIFICADO
+  try { // MODIFICADO
+    $tutoriasStmt = $pdo->prepare('SELECT fecha FROM tutorias WHERE fecha BETWEEN :fi AND :ff'); // MODIFICADO
+    $tutoriasStmt->execute(['fi' => $startDate->format('Y-m-d'), 'ff' => $endDate->format('Y-m-d')]); // MODIFICADO
+    foreach ($tutoriasStmt->fetchAll(PDO::FETCH_ASSOC) as $row) { // MODIFICADO
+      if (!empty($row['fecha'])) { // MODIFICADO
+        $tutorias[] = (new DateTimeImmutable((string) $row['fecha']))->format('Y-m-d'); // MODIFICADO
+      } // MODIFICADO
+    } // MODIFICADO
+    $tutorias = array_values(array_unique($tutorias)); // MODIFICADO
+  } catch (Throwable $error) {
+    // MODIFICADO
+  }
+
   $diasSemana = [
     1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo',
   ];
@@ -341,7 +362,7 @@ try {
   if ($nonSchoolSourceNote !== '') {
     $pdfHtml .= '<p style="font-size:9pt; color:#666666;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
   }
-  $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay);
+  $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay, $tutorias); // MODIFICADO
   $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Observaciones</h3>';
   if (($practice['observaciones'] ?? null) !== null && trim((string) $practice['observaciones']) !== '') {
     $pdfHtml .= '<p>' . nl2br(htmlspecialchars((string) $practice['observaciones'], ENT_QUOTES, 'UTF-8')) . '</p>';
@@ -357,7 +378,7 @@ try {
     'tempDir' => ensure_mpdf_temp_dir(),
   ]);
 
-  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; }</style>';
+  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; } .dia-tutoria { background-color: #1e73be; color: #fff; }</style>'; // MODIFICADO
   $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
   $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
 
