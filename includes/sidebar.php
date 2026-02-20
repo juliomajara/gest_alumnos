@@ -46,7 +46,7 @@ $nav_items = [
   [
     'key' => 'configuracion',
     'label' => 'Configuración',
-    'href' => 'configuracion.php',
+    'href' => 'utilidades.php', // MODIFICADO,
     'icon' => 'assets/icons/configuracion.svg',
   ],
 ];
