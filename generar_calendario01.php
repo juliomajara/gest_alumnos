@@ -96,8 +96,8 @@ function ensure_mpdf_temp_dir(): string {
 
 function month_name_es(int $month): string {
   $months = [
-    1 => 'ENERO', 2 => 'FEBRERO', 3 => 'MARZO', 4 => 'ABRIL', 5 => 'MAYO', 6 => 'JUNIO',
-    7 => 'JULIO', 8 => 'AGOSTO', 9 => 'SEPTIEMBRE', 10 => 'OCTUBRE', 11 => 'NOVIEMBRE', 12 => 'DICIEMBRE',
+    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
+    7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
   ];
   return $months[$month] ?? '';
 }
@@ -147,6 +147,21 @@ function month_has_practice_days(DateTimeImmutable $month, DateTimeImmutable $st
 
   return false; // MODIFICADO
 } // MODIFICADO
+
+function build_practice_month_index(DateTimeImmutable $start, DateTimeImmutable $end, array $scheduleByDay): array {
+  $months = [];
+
+  for ($current = $start; $current <= $end; $current = $current->modify('+1 day')) {
+    $day = (int) $current->format('N');
+    if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) {
+      continue;
+    }
+
+    $months[$current->format('Y-m')] = true;
+  }
+
+  return $months;
+}
 
 function append_class(DOMElement $element, string $className): void { // MODIFICADO
   $current = trim((string) $element->getAttribute('class')); // MODIFICADO
@@ -478,10 +493,14 @@ try {
 
   $replacements += build_schedule_tokens($scheduleByDay);
 
+  $practiceMonths = build_practice_month_index($startDate, $endDate, $scheduleByDay);
+
   $monthBase = new DateTimeImmutable($startDate->format('Y-m-01'));
   for ($i = 1; $i <= 12; $i++) {
     $monthDate = $monthBase->modify('+' . ($i - 1) . ' month');
-    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = month_has_practice_days($monthDate, $startDate, $endDate, $scheduleByDay) ? build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias) : ''; // MODIFICADO
+    $monthKey = $monthDate->format('Y-m');
+    $shouldRender = isset($practiceMonths[$monthKey]) && month_has_practice_days($monthDate, $startDate, $endDate, $scheduleByDay);
+    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = $shouldRender ? build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias) : ''; // MODIFICADO
   }
 
   foreach ($templateMarkers as $marker) {
