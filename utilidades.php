@@ -32,10 +32,6 @@ $active_page = 'configuracion';
             <p>Accesos rápidos para la gestión de importaciones y utilidades.</p>
           </div>
           <div class="panel-grid">
-            <a class="panel-link" href="alumnos_importar.php">
-              <span>Importar alumnos</span>
-              <small>Carga masiva de alumnado desde archivos compatibles.</small>
-            </a>
             <a class="panel-link" href="empresas_importar.php">
               <span>Importar empresas</span>
               <small>Actualiza los datos de empresas colaboradoras.</small>
@@ -43,10 +39,6 @@ $active_page = 'configuracion';
             <a class="panel-link" href="#" aria-disabled="true">
               <span>Acceso a FFE</span>
               <small>Próximamente (enlace en preparación).</small>
-            </a>
-            <a class="panel-link" href="practicas_ras.php">
-              <span>Porcentaje RA/CE en empresa</span>
-              <small>Configura la cesión de evaluación por RA para prácticas en empresa.</small>
             </a>
           </div>
         </article>
