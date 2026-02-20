@@ -24,6 +24,7 @@ $centerFieldOrder = [
   'instituto_email',
   'instituto_direccion',
   'instituto_web',
+  'instituto_director',
 ];
 // MODIFICADO
 $centerFieldLabels = [
@@ -33,6 +34,7 @@ $centerFieldLabels = [
   'instituto_email' => 'Correo',
   'instituto_direccion' => 'Dirección',
   'instituto_web' => 'Web',
+  'instituto_director' => 'Director',
 ];
 
 function h(?string $value): string {
@@ -335,12 +337,13 @@ $active_page = 'configuracion';
               <?php endforeach; ?>
             </div>
 
-            <div class="entity-grid entity-grid--full">
-              <?php $key = 'instituto_web'; ?>
-              <label>
-                <?php echo h($centerFieldLabels[$key]); ?>
-                <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>" readonly>
-              </label>
+            <div class="entity-grid entity-grid--2">
+              <?php foreach (['instituto_web', 'instituto_director'] as $key): ?>
+                <label>
+                  <?php echo h($centerFieldLabels[$key]); ?>
+                  <input type="text" name="values[<?php echo h($key); ?>]" value="<?php echo h($formValues[$key] ?? ''); ?>" readonly>
+                </label>
+              <?php endforeach; ?>
             </div>
           </section>
         <?php else: ?>
@@ -366,14 +369,14 @@ $active_page = 'configuracion';
               <?php endforeach; ?>
             </div>
 
-            <div class="entity-grid entity-grid--full">
-              <?php $field = 'instituto_web'; ?>
-              <?php if (isset($columnMap[$field])): ?>
+            <div class="entity-grid entity-grid--2">
+              <?php foreach (['instituto_web', 'instituto_director'] as $field): ?>
+                <?php if (!isset($columnMap[$field])) { continue; } ?>
                 <label>
                   <?php echo h($centerFieldLabels[$field]); ?>
                   <input type="text" name="row[<?php echo h($field); ?>]" value="<?php echo h($formValues[$field] ?? ''); ?>" readonly>
                 </label>
-              <?php endif; ?>
+              <?php endforeach; ?>
             </div>
           </section>
         <?php endif; ?>
