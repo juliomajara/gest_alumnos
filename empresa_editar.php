@@ -1078,6 +1078,7 @@ $active_page = 'empresas';
           <p class="subheading">Actualiza los datos de la empresa, sus medios de contacto, direcciones, contactos y tutores.</p>
         </div>
         <div class="header-actions">
+          <button type="submit" form="empresaForm" class="primary-button">Guardar cambios</button><?php // MODIFICADO ?>
           <a class="ghost-button" href="empresa_detalle.php?id_empresa=<?php echo (int) $id_empresa; ?>">Volver</a>
         </div>
       </header>
@@ -1333,10 +1334,8 @@ $active_page = 'empresas';
           </div>
         </template>
 
-        <div class="form-actions">
-          <button type="submit" class="primary-button">Guardar cambios</button>
-          <a class="ghost-button" href="empresa_detalle.php?id_empresa=<?php echo (int) $id_empresa; ?>">Cancelar</a>
-        </div>
+        <?php // MODIFICADO: eliminado botón "Cancelar" ?>
+        <?php // MODIFICADO: eliminado bloque inferior .form-actions ?>
       </form>
       <?php endif; ?>
     </main>
