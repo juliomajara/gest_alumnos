@@ -33,21 +33,52 @@ $companies_stmt = $pdo->prepare(
     e.apellido2,
     e.convenio,
     e.notas,
+    TRIM(CONCAT_WS(" ", fc.nombre, fc.apellido1)) AS contacto,
     t.telefono,
     c.direccion_correo AS correo
   FROM empresas e
   LEFT JOIN (
-    SELECT id_entidad, MIN(telefono) AS telefono
-    FROM telefonos
-    WHERE entidad_tipo = \'empresa\'
-    GROUP BY id_entidad
-  ) t ON t.id_entidad = e.id_empresa
+    SELECT
+      ec.id_empresa,
+      ec.id_empresa_contacto,
+      ec.nombre,
+      ec.apellido1
+    FROM empresas_contactos ec
+    INNER JOIN (
+      SELECT id_empresa, MIN(id_empresa_contacto) AS first_contacto_id
+      FROM empresas_contactos
+      GROUP BY id_empresa
+    ) first_contacto
+      ON first_contacto.first_contacto_id = ec.id_empresa_contacto
+  ) fc ON fc.id_empresa = e.id_empresa
   LEFT JOIN (
-    SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
-    FROM correos
-    WHERE entidad_tipo = \'empresa\'
-    GROUP BY id_entidad
-  ) c ON c.id_entidad = e.id_empresa
+    SELECT
+      t1.id_entidad,
+      t1.telefono
+    FROM telefonos t1
+    INNER JOIN (
+      SELECT id_entidad, MIN(id_telefono) AS first_telefono_id
+      FROM telefonos
+      WHERE entidad_tipo = \'empresa_contacto\'
+      GROUP BY id_entidad
+    ) first_telefono
+      ON first_telefono.first_telefono_id = t1.id_telefono
+    WHERE t1.entidad_tipo = \'empresa_contacto\'
+  ) t ON t.id_entidad = fc.id_empresa_contacto
+  LEFT JOIN (
+    SELECT
+      c1.id_entidad,
+      c1.direccion_correo
+    FROM correos c1
+    INNER JOIN (
+      SELECT id_entidad, MIN(id_correo) AS first_correo_id
+      FROM correos
+      WHERE entidad_tipo = \'empresa_contacto\'
+      GROUP BY id_entidad
+    ) first_correo
+      ON first_correo.first_correo_id = c1.id_correo
+    WHERE c1.entidad_tipo = \'empresa_contacto\'
+  ) c ON c.id_entidad = fc.id_empresa_contacto
   ' . $where_clause . '
   ORDER BY e.nombre, e.apellido1, e.apellido2'
 );
@@ -65,19 +96,19 @@ function render_company_rows(array $companies): string
   <?php else: ?>
     <?php foreach ($companies as $company): ?>
       <?php
-        $cif = $company['cif'] ?: 'No disponible';
+        $cif = (string) ($company['cif'] ?? '');
         $nombreCompleto = trim(implode(' ', array_filter([
           $company['nombre'] ?? '',
           $company['apellido1'] ?? '',
           $company['apellido2'] ?? ''
         ], static fn ($value) => trim((string) $value) !== '')));
         $nombre = $nombreCompleto !== '' ? $nombreCompleto : 'No disponible';
+        $contacto = (string) ($company['contacto'] ?? '');
         $idEmpresa = (int) ($company['id_empresa'] ?? 0);
         $detalleUrl = 'empresa_detalle.php?id_empresa=' . $idEmpresa;
-        $editarUrl = 'empresa_editar.php?id_empresa=' . $idEmpresa;
-        $telefono = $company['telefono'] ?: 'No disponible';
-        $correo = $company['correo'] ?: 'No disponible';
-        $convenio = $company['convenio'] ? (string) $company['convenio'] : 'No disponible';
+        $telefono = (string) ($company['telefono'] ?? '');
+        $correo = (string) ($company['correo'] ?? '');
+        $convenio = (string) ($company['convenio'] ?? '');
       ?>
       <tr>
         <td><?php echo htmlspecialchars($convenio, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -88,9 +119,9 @@ function render_company_rows(array $companies): string
           ><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></a>
         </td>
         <td><?php echo htmlspecialchars($cif, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($contacto, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><a href="<?php echo htmlspecialchars($editarUrl, ENT_QUOTES, 'UTF-8'); ?>">Editar</a></td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -167,9 +198,9 @@ $active_page = 'empresas';
                 <th>Convenio</th>
                 <th>Nombre</th>
                 <th>CIF</th>
+                <th>Contacto</th>
                 <th>Teléfono</th>
                 <th>Correo</th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
