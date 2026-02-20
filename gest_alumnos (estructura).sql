@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-02-2026 a las 08:55:10
+-- Tiempo de generación: 20-02-2026 a las 14:02:39
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -498,6 +498,17 @@ CREATE TABLE `telefonos` (
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `tutorias`
+--
+
+CREATE TABLE `tutorias` (
+  `id_tutoria` int(10) UNSIGNED NOT NULL,
+  `fecha` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `vias`
 --
 
@@ -755,6 +766,12 @@ ALTER TABLE `telefonos`
   ADD PRIMARY KEY (`id_telefono`);
 
 --
+-- Indices de la tabla `tutorias`
+--
+ALTER TABLE `tutorias`
+  ADD PRIMARY KEY (`id_tutoria`);
+
+--
 -- Indices de la tabla `vias`
 --
 ALTER TABLE `vias`
@@ -943,6 +960,12 @@ ALTER TABLE `resultados_aprendizaje`
 --
 ALTER TABLE `telefonos`
   MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `tutorias`
+--
+ALTER TABLE `tutorias`
+  MODIFY `id_tutoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`

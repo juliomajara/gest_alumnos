@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-02-2026 a las 23:15:48
+-- Tiempo de generación: 20-02-2026 a las 14:02:26
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -865,9 +865,6 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (132, 'alumno', 133, 'carlosutreroduran@gmail.com', 'Personal'),
 (133, 'alumno', 134, 'yaizav210907@gmail.com', 'Personal'),
 (134, 'alumno', 135, 'zhoujj.081@gmail.com', 'Personal'),
-(135, 'empresa', 1, 'info@gtpsistemas.com', 'Trabajo'),
-(136, 'empresa_contacto', 1, 'administracion@gtpsistemas.es', 'Trabajo'),
-(137, 'empresa_tutor', 1, 'epulido@gtpsistemas.es', 'Trabajo'),
 (138, 'profesor', 1, 'julio.sanchezfernandez@educa.madrid.org', NULL),
 (139, 'empresa', 2, 'info@whitewatergroup.ie', 'Trabajo'),
 (140, 'empresa_contacto', 2, 'pablosastre@whitewatergroup.es', 'Trabajo'),
@@ -897,9 +894,6 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (167, 'empresa_contacto', 11, 'raul@memorysistemas.com', 'Trabajo'),
 (168, 'alumno', 47, 'francisco.velazquezorgaz@educa.madrid.org', 'EducaMadrid'),
 (169, 'alumno', 48, 'cz4601@educa.madrid.org', 'EducaMadrid'),
-(170, 'empresa', 10, 'lti@ltisistemas.net', 'Trabajo'),
-(171, 'empresa_contacto', 12, 'bdiaz@ltisistemas.net', 'Trabajo'),
-(172, 'empresa_tutor', 11, 'pdiaz@ltisistemas.net', 'Trabajo'),
 (173, 'empresa_contacto', 13, 'andres.aranguren@idbmp.es', 'Trabajo'),
 (174, 'empresa_contacto', 14, 'franciscojavier.lopez@idbmp.es', 'Trabajo'),
 (175, 'empresa_tutor', 12, 'ricardo.blecua@idbmp.es', 'Trabajo'),
@@ -907,9 +901,6 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (177, 'empresa', 12, 'info@institutoidem.es', 'Trabajo'),
 (178, 'empresa_contacto', 15, 'info@institutoidem.es', 'Trabajo'),
 (179, 'empresa_tutor', 13, 'info@institutoidem.es', 'Trabajo'),
-(180, 'empresa_contacto', 17, 'laura@magaversa.com', 'Trabajo'),
-(181, 'empresa_contacto', 18, 'hola@creativersion.com', 'Trabajo'),
-(182, 'empresa_tutor', 14, 'laura@magaversa.com', 'Trabajo'),
 (183, 'empresa', 14, 'ana@calicantoarq.com', 'Trabajo'),
 (184, 'empresa_contacto', 19, 'ana@calicantoarq.com', 'Trabajo'),
 (185, 'empresa_tutor', 15, 'ana@calicantoarq.com', 'Trabajo'),
@@ -927,7 +918,17 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (197, 'empresa_contacto', 24, 'juliangrande@infoneri.com', 'Trabajo'),
 (198, 'empresa_tutor', 20, 'juliangrande@infoneri.com', 'Trabajo'),
 (199, 'alumno', 27, 'sebastian.moncada1@educa.madrid.org', 'EducaMadrid'),
-(200, 'alumno', 33, 'julio.sanchezfernandez@educa.madrid.org', NULL);
+(200, 'alumno', 33, 'julio.sanchezfernandez@educa.madrid.org', NULL),
+(201, 'empresa', 1, 'info@gtpsistemas.com', 'Trabajo'),
+(202, 'empresa_contacto', 25, 'administracion@gtpsistemas.es', 'Trabajo'),
+(203, 'empresa_tutor', 1, 'epulido@gtpsistemas.es', 'Trabajo'),
+(204, 'empresa', 10, 'lti@ltisistemas.net', 'Trabajo'),
+(205, 'empresa_contacto', 26, 'bdiaz@ltisistemas.net', 'Trabajo'),
+(206, 'empresa_contacto', 27, 'arioja@ltisistemas.net', 'Trabajo'),
+(207, 'empresa_tutor', 11, 'pdiaz@ltisistemas.net', 'Trabajo'),
+(208, 'empresa_contacto', 28, 'laura@magaversa.com', 'Trabajo'),
+(209, 'empresa_contacto', 29, 'hola@creativersion.com', 'Trabajo'),
+(210, 'empresa_tutor', 14, 'laura@magaversa.com', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -1571,7 +1572,11 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (20, 16, 1, 28, 4, 5, 'de los Rosales', '42', '3', NULL, NULL, NULL, 'Nave 210, 211, 212', 'Principal', '28021', 1),
 (21, 17, 1, 28, NULL, 5, 'Atenas', 's/n', NULL, NULL, NULL, NULL, 'Campus URJC Alcorcón - Edificio Clínica Universitaria - 2ª planta', 'Principal', '28922', 1),
 (22, 18, 1, 28, 1, 10, 'Progreso', '2', NULL, NULL, NULL, NULL, 'Oficina 214', 'Principal', '28906', 1),
-(23, 19, 1, 28, NULL, 10, 'Reyes Católicos', '5', NULL, NULL, '4', 'B', NULL, 'Principal', '28802', 1);
+(23, 19, 1, 28, NULL, 10, 'Reyes Católicos', '5', NULL, NULL, '4', 'B', NULL, 'Principal', '28802', 1),
+(24, 1, 1, 28, 5, 10, 'Lima', '25', NULL, NULL, NULL, NULL, 'Local', 'Principal', '28945', 1),
+(25, 10, 1, 28, 4, 10, 'Resina', '13-15', NULL, NULL, NULL, NULL, 'Nave 2-14', 'Principal', '28021', 1),
+(26, 13, 1, 28, 4, 10, 'Amaltea', '1', NULL, 'F', '1', 'A', NULL, 'Principal', '28045', 1),
+(27, 13, 1, 28, 4, 5, 'Marconi', '9', NULL, NULL, NULL, NULL, 'Edificio 7, Nave 3', 'Centro de Trabajo', '28021', 0);
 
 -- --------------------------------------------------------
 
@@ -1636,7 +1641,6 @@ CREATE TABLE `empresas_contactos` (
 --
 
 INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido1`, `apellido2`, `nombre`, `cargo`, `comentarios`) VALUES
-(1, 1, 'Cimarra', NULL, 'Elena', 'Dpto. Administración', NULL),
 (2, 2, 'Sastre', 'Pacheco', 'Pablo Francisco', NULL, NULL),
 (4, 3, 'Hernández', 'Martín', 'Soraya', 'Responsable Área de Selección', NULL),
 (5, 4, 'de la Vieja', 'Ruiz', 'Jesús', NULL, NULL),
@@ -1646,19 +1650,21 @@ INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido
 (9, 7, 'Calero', 'Romero', 'Alejandra Yamilex', NULL, NULL),
 (10, 8, 'Lara', 'Bastidas', 'César Martín', NULL, NULL),
 (11, 9, 'Navarro', 'Flor de Lis', 'Raúl', NULL, NULL),
-(12, 10, 'Díaz', 'Tena', 'Beatriz', NULL, NULL),
 (13, 11, 'Aranguren', 'Jiménez', 'Andrés', NULL, NULL),
 (14, 11, 'López', 'Muñoz', 'Francisco Javier', NULL, NULL),
 (15, 12, 'Pérez', 'Lara', 'Erik', NULL, NULL),
 (16, 12, 'Díez', 'Merino', 'Ester', NULL, NULL),
-(17, 13, 'Gómez', 'Alique', 'Laura', NULL, NULL),
-(18, 13, 'Torrijos', 'Azores', 'Javier', NULL, NULL),
 (19, 14, 'Alfageme', 'Langdon', 'Ana', NULL, NULL),
 (20, 15, 'Hernando', 'Herrero', 'Teresa', NULL, NULL),
 (21, 16, 'Ramiro', NULL, 'Ana', NULL, NULL),
 (22, 17, 'Meitín', 'Quelle', 'Nuria', NULL, NULL),
 (23, 18, 'Ruiz', 'Mora', 'Daniel', NULL, NULL),
-(24, 19, 'Grande', 'Santamaría', 'Julián', NULL, NULL);
+(24, 19, 'Grande', 'Santamaría', 'Julián', NULL, NULL),
+(25, 1, 'Cimarra', NULL, 'Elena', 'Dpto. Administración', NULL),
+(26, 10, 'Díaz', 'Tena', 'Beatriz', NULL, NULL),
+(27, 10, 'Rioja', NULL, 'Alfonso', NULL, NULL),
+(28, 13, 'Gómez', 'Alique', 'Laura', NULL, NULL),
+(29, 13, 'Torrijos', 'Azores', 'Javier', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -2795,9 +2801,6 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (132, 'alumno', 133, '630416206', 'Personal'),
 (133, 'alumno', 134, '647727693', 'Personal'),
 (134, 'alumno', 135, '624890110', 'Personal'),
-(135, 'empresa', 1, '914920990', 'Trabajo'),
-(136, 'empresa_contacto', 1, '914920991', 'Trabajo'),
-(137, 'empresa_tutor', 1, '620294909', 'Trabajo'),
 (138, 'profesor', 1, '916832026', NULL),
 (139, 'empresa', 2, '674325023', 'Trabajo'),
 (140, 'empresa_contacto', 2, '664171886', 'Trabajo'),
@@ -2822,9 +2825,6 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (162, 'empresa', 9, '917230177', 'Trabajo'),
 (163, 'empresa', 9, '917230567', 'Trabajo'),
 (164, 'empresa_contacto', 11, '669703997', 'Trabajo'),
-(165, 'empresa', 10, '917230258', 'Trabajo'),
-(166, 'empresa', 10, '917230328', 'Trabajo'),
-(167, 'empresa_tutor', 11, '917230258', 'Trabajo'),
 (168, 'empresa', 11, '915742200', 'Trabajo'),
 (169, 'empresa_contacto', 13, '918726421', 'Trabajo'),
 (170, 'empresa_tutor', 12, '919077000', 'Trabajo'),
@@ -2832,9 +2832,6 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (172, 'empresa_contacto', 15, '646917725', 'Trabajo'),
 (173, 'empresa_contacto', 16, '655828542', 'Trabajo'),
 (174, 'empresa_tutor', 13, '646917725', 'Trabajo'),
-(175, 'empresa_contacto', 17, '687467235', 'Trabajo'),
-(176, 'empresa_contacto', 18, '609601322', 'Trabajo'),
-(177, 'empresa_tutor', 14, '687467235', 'Trabajo'),
 (178, 'empresa', 14, '669113805', 'Trabajo'),
 (179, 'empresa_contacto', 19, '669113805', 'Trabajo'),
 (180, 'empresa_tutor', 15, '669113805', 'Trabajo'),
@@ -2851,7 +2848,27 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (191, 'empresa_tutor', 19, '620541219', 'Trabajo'),
 (192, 'empresa', 19, '607419044', 'Trabajo'),
 (193, 'empresa_contacto', 24, '607419044', 'Trabajo'),
-(194, 'empresa_tutor', 20, '607419044', 'Trabajo');
+(194, 'empresa_tutor', 20, '607419044', 'Trabajo'),
+(195, 'empresa', 1, '914920990', 'Trabajo'),
+(196, 'empresa_contacto', 25, '914920991', 'Trabajo'),
+(197, 'empresa_tutor', 1, '620294909', 'Trabajo'),
+(198, 'empresa', 10, '917230258', 'Trabajo'),
+(199, 'empresa', 10, '917230328', 'Trabajo'),
+(200, 'empresa_tutor', 11, '917230258', 'Trabajo'),
+(201, 'empresa_contacto', 28, '687467235', 'Trabajo'),
+(202, 'empresa_contacto', 29, '609601322', 'Trabajo'),
+(203, 'empresa_tutor', 14, '687467235', 'Trabajo');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tutorias`
+--
+
+CREATE TABLE `tutorias` (
+  `id_tutoria` int(10) UNSIGNED NOT NULL,
+  `fecha` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -3190,6 +3207,12 @@ ALTER TABLE `telefonos`
   ADD PRIMARY KEY (`id_telefono`);
 
 --
+-- Indices de la tabla `tutorias`
+--
+ALTER TABLE `tutorias`
+  ADD PRIMARY KEY (`id_tutoria`);
+
+--
 -- Indices de la tabla `vias`
 --
 ALTER TABLE `vias`
@@ -3221,7 +3244,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=201;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=211;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
@@ -3245,19 +3268,19 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
 --
 ALTER TABLE `empresas`
-  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
@@ -3311,7 +3334,7 @@ ALTER TABLE `niveles`
 -- AUTO_INCREMENT de la tabla `no_lectivos`
 --
 ALTER TABLE `no_lectivos`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de la tabla `paises`
@@ -3377,7 +3400,13 @@ ALTER TABLE `resultados_aprendizaje`
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=195;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=204;
+
+--
+-- AUTO_INCREMENT de la tabla `tutorias`
+--
+ALTER TABLE `tutorias`
+  MODIFY `id_tutoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
