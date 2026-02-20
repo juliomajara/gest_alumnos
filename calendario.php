@@ -36,6 +36,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     exit;
   }
 
+  // MODIFICADO
+  if ($action === 'toggle_tutoria') {
+    $date = $_POST['date'] ?? '';
+    $date_obj = DateTime::createFromFormat('Y-m-d', $date);
+    $valid_date = $date_obj && $date_obj->format('Y-m-d') === $date;
+
+    if (!$valid_date) {
+      echo json_encode(['ok' => false, 'message' => 'Fecha inválida.']);
+      exit;
+    }
+
+    $stmt = $pdo->prepare('SELECT id FROM tutorias WHERE fecha = ?');
+    $stmt->execute([$date]);
+    $existing = $stmt->fetchColumn();
+
+    if ($existing) {
+      $delete = $pdo->prepare('DELETE FROM tutorias WHERE fecha = ?');
+      $delete->execute([$date]);
+      echo json_encode(['ok' => true, 'selected' => false]);
+      exit;
+    }
+
+    $insert = $pdo->prepare('INSERT INTO tutorias (fecha) VALUES (?)');
+    $insert->execute([$date]);
+    echo json_encode(['ok' => true, 'selected' => true]);
+    exit;
+  }
+
   echo json_encode(['ok' => false, 'message' => 'Acción no permitida.']);
   exit;
 }
@@ -65,6 +93,10 @@ $end_year = $years[1] ?? ($start_year + 1);
 $months = $pdo->query('SELECT id_mes, mes FROM meses ORDER BY orden')->fetchAll();
 $no_lectivos = $pdo->query('SELECT fecha FROM no_lectivos')->fetchAll(PDO::FETCH_COLUMN);
 $no_lectivos_lookup = array_fill_keys($no_lectivos, true);
+// MODIFICADO
+$tutorias = $pdo->query('SELECT fecha FROM tutorias')->fetchAll(PDO::FETCH_COLUMN);
+// MODIFICADO
+$tutorias_lookup = array_fill_keys($tutorias, true);
 
 function course_year_for_month(int $month_number, int $start_year, int $end_year): int {
   return $month_number >= 9 ? $start_year : $end_year;
@@ -107,6 +139,10 @@ $active_page = 'calendario';
         </div>
         <div class="header-actions">
           <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
+          <!-- MODIFICADO -->
+          <button class="edit-toggle is-active" type="button" id="modeNonLectivo" hidden>No lectivo</button>
+          <!-- MODIFICADO -->
+          <button class="edit-toggle" type="button" id="modeTutoria" hidden>Tutoría</button>
         </div>
       </header>
 
@@ -143,18 +179,27 @@ $active_page = 'calendario';
                   $day_of_week = (int) (new DateTime($date_value))->format('N');
                   $is_weekend = $day_of_week >= 6;
                   $is_no_lectivo = isset($no_lectivos_lookup[$date_value]);
+                  // MODIFICADO
+                  $is_tutoria = isset($tutorias_lookup[$date_value]);
                   $classes = ['calendar-day'];
                   if ($is_weekend) {
                     $classes[] = 'is-weekend';
                   }
-                  if ($is_no_lectivo) {
+                  // MODIFICADO
+                  if ($is_no_lectivo && !$is_tutoria) {
                     $classes[] = 'is-nonlectivo';
+                  }
+                  // MODIFICADO
+                  if ($is_tutoria) {
+                    $classes[] = 'is-tutoria';
                   }
                 ?>
                 <button
                   class="<?php echo implode(' ', $classes); ?>"
                   type="button"
                   data-date="<?php echo $date_value; ?>"
+                  data-nonlectivo="<?php echo $is_no_lectivo ? '1' : '0'; ?>"
+                  data-tutoria="<?php echo $is_tutoria ? '1' : '0'; ?>"
                   aria-label="<?php echo $date_value; ?>"
                 >
                   <?php echo $day; ?>
@@ -169,15 +214,31 @@ $active_page = 'calendario';
 
   <script>
     const editToggle = document.getElementById('editToggle');
+    // MODIFICADO
+    const modeNonLectivo = document.getElementById('modeNonLectivo');
+    // MODIFICADO
+    const modeTutoria = document.getElementById('modeTutoria');
     const storageKey = 'calendarEditMode';
     let editMode = localStorage.getItem(storageKey) === 'true';
+    // MODIFICADO
+    let markMode = 'nonlectivo';
+
+    // MODIFICADO
+    const updateModeButtons = () => {
+      modeNonLectivo.classList.toggle('is-active', markMode === 'nonlectivo');
+      modeTutoria.classList.toggle('is-active', markMode === 'tutoria');
+    };
 
     const updateEditButton = () => {
       editToggle.classList.toggle('is-active', editMode);
       editToggle.textContent = editMode ? 'Modo edición activado' : 'Modo edición';
+      modeNonLectivo.hidden = !editMode;
+      modeTutoria.hidden = !editMode;
     };
 
     updateEditButton();
+    // MODIFICADO
+    updateModeButtons();
 
     editToggle.addEventListener('click', () => {
       editMode = !editMode;
@@ -185,12 +246,26 @@ $active_page = 'calendario';
       updateEditButton();
     });
 
+    // MODIFICADO
+    modeNonLectivo.addEventListener('click', () => {
+      markMode = 'nonlectivo';
+      updateModeButtons();
+    });
+
+    // MODIFICADO
+    modeTutoria.addEventListener('click', () => {
+      markMode = 'tutoria';
+      updateModeButtons();
+    });
+
     document.querySelectorAll('.calendar-day[data-date]').forEach((day) => {
       day.addEventListener('click', async () => {
         if (!editMode) return;
         const date = day.dataset.date;
+        // MODIFICADO
+        const action = markMode === 'tutoria' ? 'toggle_tutoria' : 'toggle_non_lectivo';
         const formData = new FormData();
-        formData.append('action', 'toggle_non_lectivo');
+        formData.append('action', action);
         formData.append('date', date);
 
         try {
@@ -203,7 +278,43 @@ $active_page = 'calendario';
             alert(data.message || 'No se pudo guardar el cambio.');
             return;
           }
-          day.classList.toggle('is-nonlectivo', data.selected);
+          if (markMode === 'tutoria') {
+            day.dataset.tutoria = data.selected ? '1' : '0';
+            day.classList.toggle('is-tutoria', data.selected);
+            if (data.selected) {
+              if (day.dataset.nonlectivo === '1') {
+                const nonLectivoData = new FormData();
+                nonLectivoData.append('action', 'toggle_non_lectivo');
+                nonLectivoData.append('date', date);
+                const nonLectivoResponse = await fetch('calendario.php', {
+                  method: 'POST',
+                  body: nonLectivoData,
+                });
+                const nonLectivoResult = await nonLectivoResponse.json();
+                if (nonLectivoResult.ok) {
+                  day.dataset.nonlectivo = '0';
+                }
+              }
+              day.classList.remove('is-nonlectivo');
+            }
+          } else {
+            day.dataset.nonlectivo = data.selected ? '1' : '0';
+            day.classList.toggle('is-nonlectivo', data.selected);
+            if (data.selected && day.dataset.tutoria === '1') {
+              const tutoriaData = new FormData();
+              tutoriaData.append('action', 'toggle_tutoria');
+              tutoriaData.append('date', date);
+              const tutoriaResponse = await fetch('calendario.php', {
+                method: 'POST',
+                body: tutoriaData,
+              });
+              const tutoriaResult = await tutoriaResponse.json();
+              if (tutoriaResult.ok) {
+                day.dataset.tutoria = '0';
+                day.classList.remove('is-tutoria');
+              }
+            }
+          }
         } catch (error) {
           console.error(error);
           alert('No se pudo guardar el cambio.');

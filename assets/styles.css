@@ -1226,6 +1226,12 @@ a.edit-toggle:active {
   border-color: #f6bcbc;
 }
 
+.calendar-day.is-tutoria {
+  background: #3c63dd;
+  color: #fff;
+  border-color: #3559c7;
+}
+
 @media (max-width: 980px) {
   .page {
     grid-template-columns: 1fr;
