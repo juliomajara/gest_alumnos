@@ -10,58 +10,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
   $action = $_POST['action'];
 
   if ($action === 'toggle_non_lectivo') {
-    $date = $_POST['date'] ?? '';
-    $date_obj = DateTime::createFromFormat('Y-m-d', $date);
-    $valid_date = $date_obj && $date_obj->format('Y-m-d') === $date;
+    try {
+      $date = $_POST['date'] ?? '';
+      $date_obj = DateTime::createFromFormat('Y-m-d', $date);
+      $valid_date = $date_obj && $date_obj->format('Y-m-d') === $date;
 
-    if (!$valid_date) {
-      echo json_encode(['ok' => false, 'message' => 'Fecha inválida.']);
+      if (!$valid_date) {
+        echo json_encode(['ok' => false, 'message' => 'Fecha inválida.']);
+        exit;
+      }
+
+      $stmt = $pdo->prepare('SELECT id FROM no_lectivos WHERE fecha = ?');
+      $stmt->execute([$date]);
+      $existing = $stmt->fetchColumn();
+
+      if ($existing) {
+        $delete = $pdo->prepare('DELETE FROM no_lectivos WHERE fecha = ?');
+        $delete->execute([$date]);
+        echo json_encode(['ok' => true, 'selected' => false]);
+        exit;
+      }
+
+      $insert = $pdo->prepare('INSERT INTO no_lectivos (fecha) VALUES (?)');
+      $insert->execute([$date]);
+      echo json_encode(['ok' => true, 'selected' => true]);
+      exit;
+    } catch (Throwable $exception) {
+      echo json_encode(['ok' => false, 'message' => 'Error al actualizar día no lectivo: ' . $exception->getMessage()]);
       exit;
     }
-
-    $stmt = $pdo->prepare('SELECT id FROM no_lectivos WHERE fecha = ?');
-    $stmt->execute([$date]);
-    $existing = $stmt->fetchColumn();
-
-    if ($existing) {
-      $delete = $pdo->prepare('DELETE FROM no_lectivos WHERE fecha = ?');
-      $delete->execute([$date]);
-      echo json_encode(['ok' => true, 'selected' => false]);
-      exit;
-    }
-
-    $insert = $pdo->prepare('INSERT INTO no_lectivos (fecha) VALUES (?)');
-    $insert->execute([$date]);
-    echo json_encode(['ok' => true, 'selected' => true]);
-    exit;
   }
 
   // MODIFICADO
   if ($action === 'toggle_tutoria') {
-    $date = $_POST['date'] ?? '';
-    $date_obj = DateTime::createFromFormat('Y-m-d', $date);
-    $valid_date = $date_obj && $date_obj->format('Y-m-d') === $date;
+    try {
+      $date = $_POST['date'] ?? '';
+      $date_obj = DateTime::createFromFormat('Y-m-d', $date);
+      $valid_date = $date_obj && $date_obj->format('Y-m-d') === $date;
 
-    if (!$valid_date) {
-      echo json_encode(['ok' => false, 'message' => 'Fecha inválida.']);
+      if (!$valid_date) {
+        echo json_encode(['ok' => false, 'message' => 'Fecha inválida.']);
+        exit;
+      }
+
+      $stmt = $pdo->prepare('SELECT id_tutoria FROM tutorias WHERE fecha = ?');
+      $stmt->execute([$date]);
+      $existing = $stmt->fetchColumn();
+
+      if ($existing) {
+        $delete = $pdo->prepare('DELETE FROM tutorias WHERE fecha = ?');
+        $delete->execute([$date]);
+        echo json_encode(['ok' => true, 'selected' => false]);
+        exit;
+      }
+
+      $insert = $pdo->prepare('INSERT INTO tutorias (fecha) VALUES (?)');
+      $insert->execute([$date]);
+      echo json_encode(['ok' => true, 'selected' => true]);
+      exit;
+    } catch (Throwable $exception) {
+      echo json_encode(['ok' => false, 'message' => 'Error al actualizar tutoría: ' . $exception->getMessage()]);
       exit;
     }
-
-    $stmt = $pdo->prepare('SELECT id FROM tutorias WHERE fecha = ?');
-    $stmt->execute([$date]);
-    $existing = $stmt->fetchColumn();
-
-    if ($existing) {
-      $delete = $pdo->prepare('DELETE FROM tutorias WHERE fecha = ?');
-      $delete->execute([$date]);
-      echo json_encode(['ok' => true, 'selected' => false]);
-      exit;
-    }
-
-    $insert = $pdo->prepare('INSERT INTO tutorias (fecha) VALUES (?)');
-    $insert->execute([$date]);
-    echo json_encode(['ok' => true, 'selected' => true]);
-    exit;
   }
 
   echo json_encode(['ok' => false, 'message' => 'Acción no permitida.']);
