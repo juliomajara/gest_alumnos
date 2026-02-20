@@ -22,6 +22,7 @@ function sanitize_phone_entries(array $items): array {
       continue;
     }
 
+    $id_telefono = normalize_text($item['id_telefono'] ?? null);
     $telefono = normalize_text($item['telefono'] ?? null);
     $etiqueta = normalize_text($item['etiqueta'] ?? null);
 
@@ -30,6 +31,7 @@ function sanitize_phone_entries(array $items): array {
     }
 
     $clean[] = [
+      'id_telefono' => $id_telefono,
       'telefono' => $telefono,
       'etiqueta' => $etiqueta,
     ];
@@ -46,6 +48,7 @@ function sanitize_email_entries(array $items): array {
       continue;
     }
 
+    $id_correo = normalize_text($item['id_correo'] ?? null);
     $correo = normalize_text($item['correo'] ?? null);
     $etiqueta = normalize_text($item['etiqueta'] ?? null);
 
@@ -54,6 +57,7 @@ function sanitize_email_entries(array $items): array {
     }
 
     $clean[] = [
+      'id_correo' => $id_correo,
       'correo' => $correo,
       'etiqueta' => $etiqueta,
     ];
@@ -459,16 +463,18 @@ if ($id_empresa <= 0) {
       'numero_convenio' => $empresa_db['convenio'] !== null ? (string) $empresa_db['convenio'] : '',
     ];
 
-    $stmt = $pdo->prepare('SELECT telefono, etiqueta FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_telefono');
+    $stmt = $pdo->prepare('SELECT id_telefono, telefono, etiqueta FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_telefono'); // MODIFICADO
     $stmt->execute(['entidad_tipo' => 'empresa', 'id_entidad' => $id_empresa]);
     $form_values['telefonos_empresa'] = array_map(static fn(array $row): array => [
+      'id_telefono' => $row['id_telefono'] !== null ? (string) $row['id_telefono'] : '', // MODIFICADO
       'telefono' => (string) ($row['telefono'] ?? ''),
       'etiqueta' => (string) ($row['etiqueta'] ?? ''),
     ], $stmt->fetchAll());
 
-    $stmt = $pdo->prepare('SELECT direccion_correo AS correo, etiqueta FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_correo');
+    $stmt = $pdo->prepare('SELECT id_correo, direccion_correo AS correo, etiqueta FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_correo'); // MODIFICADO
     $stmt->execute(['entidad_tipo' => 'empresa', 'id_entidad' => $id_empresa]);
     $form_values['correos_empresa'] = array_map(static fn(array $row): array => [
+      'id_correo' => $row['id_correo'] !== null ? (string) $row['id_correo'] : '', // MODIFICADO
       'correo' => (string) ($row['correo'] ?? ''),
       'etiqueta' => (string) ($row['etiqueta'] ?? ''),
     ], $stmt->fetchAll());
@@ -525,6 +531,7 @@ if ($id_empresa <= 0) {
     foreach ($contactos_db as $contacto_db) {
       $id_contacto = (int) ($contacto_db['id_empresa_contacto'] ?? 0);
       $contacto = [
+        'id_empresa_contacto' => (string) ($contacto_db['id_empresa_contacto'] ?? ''), // MODIFICADO
         'nombre' => (string) ($contacto_db['nombre'] ?? ''),
         'apellido1' => (string) ($contacto_db['apellido1'] ?? ''),
         'apellido2' => (string) ($contacto_db['apellido2'] ?? ''),
@@ -534,16 +541,18 @@ if ($id_empresa <= 0) {
       ];
 
       if ($id_contacto > 0) {
-        $stmt = $pdo->prepare('SELECT telefono, etiqueta FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_telefono');
+        $stmt = $pdo->prepare('SELECT id_telefono, telefono, etiqueta FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_telefono'); // MODIFICADO
         $stmt->execute(['entidad_tipo' => 'empresa_contacto', 'id_entidad' => $id_contacto]);
         $contacto['telefonos'] = array_map(static fn(array $row): array => [
+          'id_telefono' => $row['id_telefono'] !== null ? (string) $row['id_telefono'] : '', // MODIFICADO
           'telefono' => (string) ($row['telefono'] ?? ''),
           'etiqueta' => (string) ($row['etiqueta'] ?? ''),
         ], $stmt->fetchAll());
 
-        $stmt = $pdo->prepare('SELECT direccion_correo AS correo, etiqueta FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_correo');
+        $stmt = $pdo->prepare('SELECT id_correo, direccion_correo AS correo, etiqueta FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_correo'); // MODIFICADO
         $stmt->execute(['entidad_tipo' => 'empresa_contacto', 'id_entidad' => $id_contacto]);
         $contacto['correos'] = array_map(static fn(array $row): array => [
+          'id_correo' => $row['id_correo'] !== null ? (string) $row['id_correo'] : '', // MODIFICADO
           'correo' => (string) ($row['correo'] ?? ''),
           'etiqueta' => (string) ($row['etiqueta'] ?? ''),
         ], $stmt->fetchAll());
@@ -569,16 +578,18 @@ if ($id_empresa <= 0) {
       ];
 
       if ($id_tutor > 0) {
-        $stmt = $pdo->prepare('SELECT telefono, etiqueta FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_telefono');
+        $stmt = $pdo->prepare('SELECT id_telefono, telefono, etiqueta FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_telefono'); // MODIFICADO
         $stmt->execute(['entidad_tipo' => 'empresa_tutor', 'id_entidad' => $id_tutor]);
         $tutor['telefonos'] = array_map(static fn(array $row): array => [
+          'id_telefono' => $row['id_telefono'] !== null ? (string) $row['id_telefono'] : '', // MODIFICADO
           'telefono' => (string) ($row['telefono'] ?? ''),
           'etiqueta' => (string) ($row['etiqueta'] ?? ''),
         ], $stmt->fetchAll());
 
-        $stmt = $pdo->prepare('SELECT direccion_correo AS correo, etiqueta FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_correo');
+        $stmt = $pdo->prepare('SELECT id_correo, direccion_correo AS correo, etiqueta FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad ORDER BY id_correo'); // MODIFICADO
         $stmt->execute(['entidad_tipo' => 'empresa_tutor', 'id_entidad' => $id_tutor]);
         $tutor['correos'] = array_map(static fn(array $row): array => [
+          'id_correo' => $row['id_correo'] !== null ? (string) $row['id_correo'] : '', // MODIFICADO
           'correo' => (string) ($row['correo'] ?? ''),
           'etiqueta' => (string) ($row['etiqueta'] ?? ''),
         ], $stmt->fetchAll());
@@ -660,6 +671,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
     }
 
     $entry = [
+      'id_empresa_contacto' => normalize_text($contacto['id_empresa_contacto'] ?? null), // MODIFICADO
       'nombre' => normalize_text($contacto['nombre'] ?? null),
       'apellido1' => normalize_text($contacto['apellido1'] ?? null),
       'apellido2' => normalize_text($contacto['apellido2'] ?? null),
@@ -674,6 +686,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
 
     if ($entry['nombre'] === null || $entry['apellido1'] === null) {
       $errors[] = 'Cada persona de contacto debe tener al menos nombre y apellido1.';
+    }
+
+    if ($entry['id_empresa_contacto'] !== null && !ctype_digit($entry['id_empresa_contacto'])) { // MODIFICADO
+      $errors[] = 'El identificador del contacto no es válido.';
     }
 
     $contactos[] = $entry;
@@ -729,78 +745,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         'id_empresa' => $id_empresa,
       ]);
 
-      $pdo->prepare('DELETE FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad')->execute([
-        'entidad_tipo' => 'empresa',
-        'id_entidad' => $id_empresa,
-      ]);
-      $pdo->prepare('DELETE FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad')->execute([
-        'entidad_tipo' => 'empresa',
-        'id_entidad' => $id_empresa,
-      ]);
-      // MODIFICADO: mantener id_direccion existentes usando UPDATE/INSERT en lugar de DELETE.
-      $direccionIdsStmt = $pdo->prepare('SELECT id_direccion FROM direcciones WHERE id_empresa = :id_empresa ORDER BY id_direccion');
-      $direccionIdsStmt->execute(['id_empresa' => $id_empresa]);
-      $direccion_ids_disponibles = [];
-      foreach ($direccionIdsStmt->fetchAll() as $direccionRow) {
-        $idDireccion = (int) ($direccionRow['id_direccion'] ?? 0);
-        if ($idDireccion > 0) {
-          $direccion_ids_disponibles[(string) $idDireccion] = true;
-        }
-      }
-
-      $contactoIds = $pdo->prepare('SELECT id_empresa_contacto FROM empresas_contactos WHERE id_empresa = :id_empresa');
-      $contactoIds->execute(['id_empresa' => $id_empresa]);
-      foreach ($contactoIds->fetchAll() as $row) {
-        $idContacto = (int) ($row['id_empresa_contacto'] ?? 0);
-        if ($idContacto > 0) {
-          $pdo->prepare('DELETE FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad')->execute([
-            'entidad_tipo' => 'empresa_contacto',
-            'id_entidad' => $idContacto,
-          ]);
-          $pdo->prepare('DELETE FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad')->execute([
-            'entidad_tipo' => 'empresa_contacto',
-            'id_entidad' => $idContacto,
-          ]);
-        }
-      }
-      $pdo->prepare('DELETE FROM empresas_contactos WHERE id_empresa = :id_empresa')->execute(['id_empresa' => $id_empresa]);
-
-      $tutorIds = $pdo->prepare('SELECT id_empresas_tutor FROM empresas_tutores WHERE id_empresa = :id_empresa'); // MODIFICADO
-      $tutorIds->execute(['id_empresa' => $id_empresa]);
-      $tutor_ids_existentes = [];
-      foreach ($tutorIds->fetchAll() as $row) {
-        $idTutor = (int) ($row['id_empresas_tutor'] ?? 0);
-        if ($idTutor > 0) {
-          $tutor_ids_existentes[(string) $idTutor] = true;
-        }
-      }
+      // MODIFICADO: reconciliación por ID para teléfonos/correos/direcciones/contactos/tutores.
+      $select_telefonos_ids = $pdo->prepare('SELECT id_telefono FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad');
+      $select_correos_ids = $pdo->prepare('SELECT id_correo FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad');
 
       $insert_telefono = $pdo->prepare(
         'INSERT INTO telefonos (entidad_tipo, id_entidad, telefono, etiqueta)
          VALUES (:entidad_tipo, :id_entidad, :telefono, :etiqueta)'
       );
-
-      foreach ($telefonos_empresa as $telefono) {
-        $insert_telefono->execute([
-          'entidad_tipo' => 'empresa',
-          'id_entidad' => $id_empresa,
-          'telefono' => $telefono['telefono'],
-          'etiqueta' => $telefono['etiqueta'],
-        ]);
-      }
+      $update_telefono = $pdo->prepare(
+        'UPDATE telefonos
+         SET telefono = :telefono, etiqueta = :etiqueta
+         WHERE id_telefono = :id_telefono AND entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad'
+      );
+      $delete_telefono_by_id = $pdo->prepare(
+        'DELETE FROM telefonos
+         WHERE id_telefono = :id_telefono AND entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad'
+      );
 
       $insert_correo = $pdo->prepare(
         'INSERT INTO correos (entidad_tipo, id_entidad, direccion_correo, etiqueta)
          VALUES (:entidad_tipo, :id_entidad, :direccion_correo, :etiqueta)'
       );
+      $update_correo = $pdo->prepare(
+        'UPDATE correos
+         SET direccion_correo = :direccion_correo, etiqueta = :etiqueta
+         WHERE id_correo = :id_correo AND entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad'
+      );
+      $delete_correo_by_id = $pdo->prepare(
+        'DELETE FROM correos
+         WHERE id_correo = :id_correo AND entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad'
+      );
 
-      foreach ($correos_empresa as $correo) {
-        $insert_correo->execute([
-          'entidad_tipo' => 'empresa',
-          'id_entidad' => $id_empresa,
-          'direccion_correo' => $correo['correo'],
-          'etiqueta' => $correo['etiqueta'],
-        ]);
+      $reconcile_telefonos = static function (string $entidad_tipo, int $id_entidad, array $telefonos) use (
+        $select_telefonos_ids,
+        $update_telefono,
+        $insert_telefono,
+        $delete_telefono_by_id
+      ): void {
+        $select_telefonos_ids->execute(['entidad_tipo' => $entidad_tipo, 'id_entidad' => $id_entidad]);
+        $existentes = [];
+        foreach ($select_telefonos_ids->fetchAll(PDO::FETCH_COLUMN) as $idTelefono) {
+          $idTelefono = (int) $idTelefono;
+          if ($idTelefono > 0) {
+            $existentes[(string) $idTelefono] = $idTelefono;
+          }
+        }
+
+        $mantenidos = [];
+        foreach ($telefonos as $telefono) {
+          $idTelefonoPost = isset($telefono['id_telefono']) ? (string) $telefono['id_telefono'] : '';
+          if ($idTelefonoPost !== '' && isset($existentes[$idTelefonoPost])) {
+            $update_telefono->execute([
+              'id_telefono' => (int) $idTelefonoPost,
+              'entidad_tipo' => $entidad_tipo,
+              'id_entidad' => $id_entidad,
+              'telefono' => $telefono['telefono'],
+              'etiqueta' => $telefono['etiqueta'],
+            ]);
+            $mantenidos[$idTelefonoPost] = true;
+            continue;
+          }
+
+          $insert_telefono->execute([
+            'entidad_tipo' => $entidad_tipo,
+            'id_entidad' => $id_entidad,
+            'telefono' => $telefono['telefono'],
+            'etiqueta' => $telefono['etiqueta'],
+          ]);
+        }
+
+        foreach ($existentes as $idTelefono => $idReal) {
+          if (!isset($mantenidos[$idTelefono])) {
+            $delete_telefono_by_id->execute([
+              'id_telefono' => $idReal,
+              'entidad_tipo' => $entidad_tipo,
+              'id_entidad' => $id_entidad,
+            ]);
+          }
+        }
+      };
+
+      $reconcile_correos = static function (string $entidad_tipo, int $id_entidad, array $correos) use (
+        $select_correos_ids,
+        $update_correo,
+        $insert_correo,
+        $delete_correo_by_id
+      ): void {
+        $select_correos_ids->execute(['entidad_tipo' => $entidad_tipo, 'id_entidad' => $id_entidad]);
+        $existentes = [];
+        foreach ($select_correos_ids->fetchAll(PDO::FETCH_COLUMN) as $idCorreo) {
+          $idCorreo = (int) $idCorreo;
+          if ($idCorreo > 0) {
+            $existentes[(string) $idCorreo] = $idCorreo;
+          }
+        }
+
+        $mantenidos = [];
+        foreach ($correos as $correo) {
+          $idCorreoPost = isset($correo['id_correo']) ? (string) $correo['id_correo'] : '';
+          if ($idCorreoPost !== '' && isset($existentes[$idCorreoPost])) {
+            $update_correo->execute([
+              'id_correo' => (int) $idCorreoPost,
+              'entidad_tipo' => $entidad_tipo,
+              'id_entidad' => $id_entidad,
+              'direccion_correo' => $correo['correo'],
+              'etiqueta' => $correo['etiqueta'],
+            ]);
+            $mantenidos[$idCorreoPost] = true;
+            continue;
+          }
+
+          $insert_correo->execute([
+            'entidad_tipo' => $entidad_tipo,
+            'id_entidad' => $id_entidad,
+            'direccion_correo' => $correo['correo'],
+            'etiqueta' => $correo['etiqueta'],
+          ]);
+        }
+
+        foreach ($existentes as $idCorreo => $idReal) {
+          if (!isset($mantenidos[$idCorreo])) {
+            $delete_correo_by_id->execute([
+              'id_correo' => $idReal,
+              'entidad_tipo' => $entidad_tipo,
+              'id_entidad' => $id_entidad,
+            ]);
+          }
+        }
+      };
+
+      $reconcile_telefonos('empresa', $id_empresa, $telefonos_empresa);
+      $reconcile_correos('empresa', $id_empresa, $correos_empresa);
+
+      // MODIFICADO: reconciliación de direcciones con UPDATE/INSERT/DELETE por id_direccion.
+      $direccionIdsStmt = $pdo->prepare('SELECT id_direccion FROM direcciones WHERE id_empresa = :id_empresa ORDER BY id_direccion');
+      $direccionIdsStmt->execute(['id_empresa' => $id_empresa]);
+      $direccion_ids_disponibles = [];
+      foreach ($direccionIdsStmt->fetchAll(PDO::FETCH_COLUMN) as $idDireccion) {
+        $idDireccion = (int) $idDireccion;
+        if ($idDireccion > 0) {
+          $direccion_ids_disponibles[(string) $idDireccion] = $idDireccion;
+        }
       }
 
       $insert_direccion = $pdo->prepare(
@@ -832,6 +918,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
          WHERE id_direccion = :id_direccion AND id_empresa = :id_empresa'
       );
 
+      $delete_direccion = $pdo->prepare('DELETE FROM direcciones WHERE id_direccion = :id_direccion AND id_empresa = :id_empresa');
+      $direcciones_mantenidas = [];
+
       foreach ($direcciones as $direccion) {
         $direccion_params = [
           'id_empresa' => $id_empresa,
@@ -854,44 +943,118 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
         $id_direccion = $direccion['id_direccion'] !== null ? (int) $direccion['id_direccion'] : 0;
         if ($id_direccion > 0 && isset($direccion_ids_disponibles[(string) $id_direccion])) {
           $update_direccion->execute($direccion_params + ['id_direccion' => $id_direccion]);
+          $direcciones_mantenidas[(string) $id_direccion] = true;
           continue;
         }
 
         $insert_direccion->execute($direccion_params);
       }
 
+      foreach ($direccion_ids_disponibles as $idDireccionKey => $idDireccion) {
+        if (isset($direcciones_mantenidas[$idDireccionKey])) {
+          continue;
+        }
+
+        try {
+          $delete_direccion->execute([
+            'id_direccion' => $idDireccion,
+            'id_empresa' => $id_empresa,
+          ]);
+        } catch (PDOException $exception) {
+          if (($exception->errorInfo[1] ?? null) === 1451) {
+            $errors[] = 'No se puede eliminar una dirección porque está referenciada en otros registros.';
+            continue;
+          }
+          throw $exception;
+        }
+      }
+
+      // MODIFICADO: reconciliar contactos por id_empresa_contacto, sin recrearlos.
+      $contactoIdsStmt = $pdo->prepare('SELECT id_empresa_contacto FROM empresas_contactos WHERE id_empresa = :id_empresa');
+      $contactoIdsStmt->execute(['id_empresa' => $id_empresa]);
+      $contacto_ids_existentes = [];
+      foreach ($contactoIdsStmt->fetchAll(PDO::FETCH_COLUMN) as $idContacto) {
+        $idContacto = (int) $idContacto;
+        if ($idContacto > 0) {
+          $contacto_ids_existentes[(string) $idContacto] = $idContacto;
+        }
+      }
+
       $insert_contacto = $pdo->prepare(
         'INSERT INTO empresas_contactos (id_empresa, apellido1, apellido2, nombre, cargo)
          VALUES (:id_empresa, :apellido1, :apellido2, :nombre, :cargo)'
       );
+      $update_contacto = $pdo->prepare(
+        'UPDATE empresas_contactos
+         SET apellido1 = :apellido1, apellido2 = :apellido2, nombre = :nombre, cargo = :cargo
+         WHERE id_empresa_contacto = :id_empresa_contacto AND id_empresa = :id_empresa'
+      );
+      $delete_contacto = $pdo->prepare('DELETE FROM empresas_contactos WHERE id_empresa_contacto = :id_empresa_contacto AND id_empresa = :id_empresa');
+      $contactos_mantenidos = [];
 
       foreach ($contactos as $contacto) {
-        $insert_contacto->execute([
-          'id_empresa' => $id_empresa,
-          'apellido1' => $contacto['apellido1'] ?? '',
-          'apellido2' => $contacto['apellido2'],
-          'nombre' => $contacto['nombre'] ?? '',
-          'cargo' => $contacto['cargo'],
-        ]);
+        $id_contacto = 0;
+        $id_contacto_post = $contacto['id_empresa_contacto'] ?? null;
 
-        $id_contacto = (int) $pdo->lastInsertId();
-
-        foreach ($contacto['telefonos'] as $telefono) {
-          $insert_telefono->execute([
-            'entidad_tipo' => 'empresa_contacto',
-            'id_entidad' => $id_contacto,
-            'telefono' => $telefono['telefono'],
-            'etiqueta' => $telefono['etiqueta'],
+        if ($id_contacto_post !== null && isset($contacto_ids_existentes[$id_contacto_post])) {
+          $id_contacto = (int) $id_contacto_post;
+          $update_contacto->execute([
+            'id_empresa' => $id_empresa,
+            'id_empresa_contacto' => $id_contacto,
+            'apellido1' => $contacto['apellido1'] ?? '',
+            'apellido2' => $contacto['apellido2'],
+            'nombre' => $contacto['nombre'] ?? '',
+            'cargo' => $contacto['cargo'],
           ]);
+        } else {
+          $insert_contacto->execute([
+            'id_empresa' => $id_empresa,
+            'apellido1' => $contacto['apellido1'] ?? '',
+            'apellido2' => $contacto['apellido2'],
+            'nombre' => $contacto['nombre'] ?? '',
+            'cargo' => $contacto['cargo'],
+          ]);
+          $id_contacto = (int) $pdo->lastInsertId();
         }
 
-        foreach ($contacto['correos'] as $correo) {
-          $insert_correo->execute([
-            'entidad_tipo' => 'empresa_contacto',
-            'id_entidad' => $id_contacto,
-            'direccion_correo' => $correo['correo'],
-            'etiqueta' => $correo['etiqueta'],
+        if ($id_contacto <= 0) {
+          continue;
+        }
+
+        $contactos_mantenidos[(string) $id_contacto] = true;
+        $reconcile_telefonos('empresa_contacto', $id_contacto, $contacto['telefonos']);
+        $reconcile_correos('empresa_contacto', $id_contacto, $contacto['correos']);
+      }
+
+      foreach ($contacto_ids_existentes as $idContactoKey => $idContacto) {
+        if (isset($contactos_mantenidos[$idContactoKey])) {
+          continue;
+        }
+
+        $reconcile_telefonos('empresa_contacto', $idContacto, []);
+        $reconcile_correos('empresa_contacto', $idContacto, []);
+        try {
+          $delete_contacto->execute([
+            'id_empresa_contacto' => $idContacto,
+            'id_empresa' => $id_empresa,
           ]);
+        } catch (PDOException $exception) {
+          if (($exception->errorInfo[1] ?? null) === 1451) {
+            $errors[] = 'No se puede eliminar un contacto porque está referenciado en otros registros.';
+            continue;
+          }
+          throw $exception;
+        }
+      }
+
+      // MODIFICADO: reconciliar tutores por id_empresas_tutor y bloquear borrado si existen prácticas.
+      $tutorIds = $pdo->prepare('SELECT id_empresas_tutor FROM empresas_tutores WHERE id_empresa = :id_empresa'); // MODIFICADO
+      $tutorIds->execute(['id_empresa' => $id_empresa]);
+      $tutor_ids_existentes = [];
+      foreach ($tutorIds->fetchAll(PDO::FETCH_COLUMN) as $idTutor) {
+        $idTutor = (int) $idTutor;
+        if ($idTutor > 0) {
+          $tutor_ids_existentes[(string) $idTutor] = $idTutor;
         }
       }
 
@@ -904,9 +1067,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
          SET apellido1 = :apellido1, apellido2 = :apellido2, nombre = :nombre, dni = :dni
          WHERE id_empresas_tutor = :id_empresas_tutor AND id_empresa = :id_empresa'
       );
-
-      $delete_tutor_telefonos = $pdo->prepare('DELETE FROM telefonos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad'); // MODIFICADO
-      $delete_tutor_correos = $pdo->prepare('DELETE FROM correos WHERE entidad_tipo = :entidad_tipo AND id_entidad = :id_entidad');
+      $delete_tutor = $pdo->prepare('DELETE FROM empresas_tutores WHERE id_empresas_tutor = :id_empresas_tutor AND id_empresa = :id_empresa');
+      $count_practicas_tutor = $pdo->prepare('SELECT COUNT(*) FROM practicas WHERE id_empresa_tutor = :id_tutor'); // MODIFICADO
       $tutor_ids_mantenidos = [];
 
       foreach ($tutores as $tutor) {
@@ -938,107 +1100,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $load_error === null) {
           continue;
         }
 
-        $tutor_ids_mantenidos[(string) $id_tutor] = $id_tutor;
+        $tutor_ids_mantenidos[(string) $id_tutor] = true;
+        $reconcile_telefonos('empresa_tutor', $id_tutor, $tutor['telefonos']);
+        $reconcile_correos('empresa_tutor', $id_tutor, $tutor['correos']);
+      }
 
-        $delete_tutor_telefonos->execute([
-          'entidad_tipo' => 'empresa_tutor',
-          'id_entidad' => $id_tutor,
+      foreach ($tutor_ids_existentes as $idTutorKey => $idTutor) {
+        if (isset($tutor_ids_mantenidos[$idTutorKey])) {
+          continue;
+        }
+
+        $count_practicas_tutor->execute(['id_tutor' => $idTutor]);
+        $totalPracticas = (int) $count_practicas_tutor->fetchColumn();
+        if ($totalPracticas > 0) {
+          $errors[] = 'No se puede eliminar el tutor con ID ' . $idTutor . ' porque está asignado a prácticas.';
+          continue;
+        }
+
+        $reconcile_telefonos('empresa_tutor', $idTutor, []);
+        $reconcile_correos('empresa_tutor', $idTutor, []);
+        $delete_tutor->execute([
+          'id_empresas_tutor' => $idTutor,
+          'id_empresa' => $id_empresa,
         ]);
-        $delete_tutor_correos->execute([
-          'entidad_tipo' => 'empresa_tutor',
-          'id_entidad' => $id_tutor,
-        ]);
-
-        foreach ($tutor['telefonos'] as $telefono) {
-          $insert_telefono->execute([
-            'entidad_tipo' => 'empresa_tutor',
-            'id_entidad' => $id_tutor,
-            'telefono' => $telefono['telefono'],
-            'etiqueta' => $telefono['etiqueta'],
-          ]);
-        }
-
-        foreach ($tutor['correos'] as $correo) {
-          $insert_correo->execute([
-            'entidad_tipo' => 'empresa_tutor',
-            'id_entidad' => $id_tutor,
-            'direccion_correo' => $correo['correo'],
-            'etiqueta' => $correo['etiqueta'],
-          ]);
-        }
       }
 
-      $ids_borrables = []; // MODIFICADO
-      if ($tutor_ids_mantenidos) { // MODIFICADO
-        $ids_mantenidos = array_values($tutor_ids_mantenidos);
-        $placeholders = implode(',', array_fill(0, count($ids_mantenidos), '?'));
-        $select_borrables_sql =
-          'SELECT et.id_empresas_tutor
-           FROM empresas_tutores et
-           WHERE et.id_empresa = ?
-             AND et.id_empresas_tutor NOT IN (' . $placeholders . ')
-             AND NOT EXISTS (
-               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = et.id_empresas_tutor
-             )';
-        $select_borrables_stmt = $pdo->prepare($select_borrables_sql);
-        $select_borrables_stmt->execute(array_merge([$id_empresa], $ids_mantenidos));
-      } else {
-        $select_borrables_stmt = $pdo->prepare(
-          'SELECT et.id_empresas_tutor
-           FROM empresas_tutores et
-           WHERE et.id_empresa = ?
-             AND NOT EXISTS (
-               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = et.id_empresas_tutor
-             )'
-        );
-        $select_borrables_stmt->execute([$id_empresa]);
-      }
-
-      foreach ($select_borrables_stmt->fetchAll(PDO::FETCH_COLUMN) as $id_borrable) { // MODIFICADO
-        $id_borrable = (int) $id_borrable;
-        if ($id_borrable > 0) {
-          $ids_borrables[] = $id_borrable;
-        }
-      }
-
-      if ($ids_borrables) { // MODIFICADO
-        $placeholders = implode(',', array_fill(0, count($ids_borrables), '?'));
-        $delete_tutor_medios_stmt = $pdo->prepare(
-          'DELETE FROM telefonos
-           WHERE entidad_tipo = ?
-             AND id_entidad IN (' . $placeholders . ')'
-        );
-        $delete_tutor_medios_stmt->execute(array_merge(['empresa_tutor'], $ids_borrables));
-
-        $delete_tutor_correos_stmt = $pdo->prepare(
-          'DELETE FROM correos
-           WHERE entidad_tipo = ?
-             AND id_entidad IN (' . $placeholders . ')'
-        );
-        $delete_tutor_correos_stmt->execute(array_merge(['empresa_tutor'], $ids_borrables));
-      }
-
-      if ($tutor_ids_mantenidos) { // MODIFICADO
-        $ids_mantenidos = array_values($tutor_ids_mantenidos);
-        $placeholders = implode(',', array_fill(0, count($ids_mantenidos), '?'));
-        $delete_sql =
-          'DELETE FROM empresas_tutores
-           WHERE id_empresa = ?
-             AND id_empresas_tutor NOT IN (' . $placeholders . ')
-             AND NOT EXISTS (
-               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = empresas_tutores.id_empresas_tutor
-             )';
-        $delete_stmt = $pdo->prepare($delete_sql);
-        $delete_stmt->execute(array_merge([$id_empresa], $ids_mantenidos));
-      } else {
-        $delete_stmt = $pdo->prepare(
-          'DELETE FROM empresas_tutores
-           WHERE id_empresa = ?
-             AND NOT EXISTS (
-               SELECT 1 FROM practicas p WHERE p.id_empresa_tutor = empresas_tutores.id_empresas_tutor
-             )'
-        );
-        $delete_stmt->execute([$id_empresa]);
+      if ($errors) {
+        throw new RuntimeException(implode(' | ', $errors));
       }
 
       $pdo->commit();
@@ -1205,6 +1293,7 @@ $active_page = 'empresas';
 
         <template id="telefonoEmpresaTemplate">
           <div class="entity-repeatable-item empresa-inline-item">
+            <input type="hidden" name="telefonos_empresa[__INDEX__][id_telefono]"> <!-- MODIFICADO -->
             <div class="entity-inline-grid empresa-contact-item-grid">
               <label>
                 Número
@@ -1225,6 +1314,7 @@ $active_page = 'empresas';
 
         <template id="correoEmpresaTemplate">
           <div class="entity-repeatable-item empresa-inline-item">
+            <input type="hidden" name="correos_empresa[__INDEX__][id_correo]"> <!-- MODIFICADO -->
             <div class="entity-inline-grid empresa-contact-item-grid">
               <label>
                 Correo
@@ -1677,6 +1767,7 @@ $active_page = 'empresas';
         <div class="entity-inline-grid empresa-contact-item-grid">
           <label>
             Número
+            <input type="hidden" name="${namePrefix}[telefonos][__INDEX__][id_telefono]"> <!-- MODIFICADO -->
             <input type="text" name="${namePrefix}[telefonos][__INDEX__][telefono]">
           </label>
           <label>
@@ -1700,6 +1791,7 @@ $active_page = 'empresas';
         <div class="entity-inline-grid empresa-contact-item-grid">
           <label>
             Correo
+            <input type="hidden" name="${namePrefix}[correos][__INDEX__][id_correo]"> <!-- MODIFICADO -->
             <input type="email" name="${namePrefix}[correos][__INDEX__][correo]">
           </label>
           <label>
@@ -1762,6 +1854,7 @@ $active_page = 'empresas';
             ${extraFieldLabel}
             <input type="text" name="${entityType}[${entityIndex}][${extraFieldName}]">
           </label>
+          ${entityType === 'contactos' ? `<input type="hidden" name="contactos[${entityIndex}][id_empresa_contacto]">` : ''} <!-- MODIFICADO -->
           ${entityType === 'tutores' ? `<input type="hidden" name="tutores[${entityIndex}][id_empresas_tutor]">` : ''}
         </div>
         <div class="grid empresa-medios-grid">
@@ -1825,6 +1918,8 @@ $active_page = 'empresas';
           return;
         }
 
+        const idFieldName = fieldName === 'telefono' ? 'id_telefono' : 'id_correo'; // MODIFICADO
+        setInputValue(nestedItem, `input[name$="[${idFieldName}]"]`, item?.[idFieldName] || ''); // MODIFICADO
         setInputValue(nestedItem, `input[name$="[${fieldName}]"]`, item?.[fieldName] || '');
         setInputValue(nestedItem, 'select[name$="[etiqueta]"]', item?.etiqueta || '');
       });
@@ -1843,6 +1938,7 @@ $active_page = 'empresas';
           return;
         }
 
+        setInputValue(item, 'input[name$="[id_telefono]"]', telefono?.id_telefono || ''); // MODIFICADO
         setInputValue(item, 'input[name$="[telefono]"]', telefono?.telefono || '');
         setInputValue(item, 'select[name$="[etiqueta]"]', telefono?.etiqueta || '');
       });
@@ -1853,6 +1949,7 @@ $active_page = 'empresas';
           return;
         }
 
+        setInputValue(item, 'input[name$="[id_correo]"]', correo?.id_correo || ''); // MODIFICADO
         setInputValue(item, 'input[name$="[correo]"]', correo?.correo || '');
         setInputValue(item, 'select[name$="[etiqueta]"]', correo?.etiqueta || '');
       });
@@ -1863,6 +1960,7 @@ $active_page = 'empresas';
           return;
         }
 
+        setInputValue(item, 'input[name$="[id_direccion]"]', direccion?.id_direccion || ''); // MODIFICADO
         setInputValue(item, 'select[name$="[etiqueta]"]', direccion?.etiqueta || '');
         setInputValue(item, 'select[name$="[id_via]"]', direccion?.id_via || '');
         setInputValue(item, 'input[name$="[nombre_via]"]', direccion?.nombre_via || '');
@@ -1885,6 +1983,7 @@ $active_page = 'empresas';
           return;
         }
 
+        setInputValue(card, 'input[name$="[id_empresa_contacto]"]', contacto?.id_empresa_contacto || ''); // MODIFICADO
         setInputValue(card, 'input[name$="[nombre]"]', contacto?.nombre || '');
         setInputValue(card, 'input[name$="[apellido1]"]', contacto?.apellido1 || '');
         setInputValue(card, 'input[name$="[apellido2]"]', contacto?.apellido2 || '');
