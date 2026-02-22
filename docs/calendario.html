@@ -44,10 +44,10 @@
 
     /* Leyenda */
     .legend td { vertical-align: middle; }
-    .swatch { width: 18px; height: 12px; border: 1px solid #000; }
-    .swatch-red { background: #f8d7da; }
-    .swatch-blue { background: #cfe2ff; }
-    .swatch-green { background: #d9f2d9; }
+    .swatch { width: 25px; border: 1px solid #000; }
+    .swatch-red { background-color: #f8d7da; }
+    .swatch-blue { background-color: #cfe2ff; }
+    .swatch-green { background-color: #d9f2d9; }
 
     /* Observaciones */
     .obs-box { height: 90px; }
@@ -146,25 +146,32 @@
 </table>
 
 
-
 <!-- LEYENDA -->
 <table class="outer legend">
   <tr><td colspan="3" class="section-title">Leyenda</td></tr>
   <tr>
-    <td style="width: 26px;"><div class="swatch swatch-red"></div></td>
-    <td style="width: 22%"><strong>No lectivo / fin de semana</strong></td>
-    <td>Día no lectivo (no se realizan prácticas).</td>
+    <td>
+      <span class="swatch swatch-green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      &nbsp;<strong>Día de prácticas:</strong>
+      día asignado para la realización de prácticas en la empresa.
+    </td>
   </tr>
   <tr>
-    <td><div class="swatch swatch-blue"></div></td>
-    <td><strong>Tutoría</strong></td>
-    <td>Día con tutoría de seguimiento (en el instituto).</td>
+    <td colspan="3">
+      <span class="swatch swatch-blue">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      &nbsp;<strong>Tutoría:</strong>
+      día con tutoría de seguimiento en el instituto.
+    </td>
   </tr>
   <tr>
-    <td><span class="swatch swatch-green"></span></td>
-    <td><strong>Día de prácticas en empresa</strong></td>
-    <td>Día asignado para la realización de prácticas en la empresa.</td>
+    <td colspan="3">
+      <span class="swatch swatch-red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      &nbsp;<strong>No lectivo:</strong>
+      no se realizan prácticas.
+    </td>
   </tr>
+  
+  
 </table>
 
 <!-- HORARIO -->
