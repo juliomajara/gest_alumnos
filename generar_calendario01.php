@@ -106,9 +106,6 @@ function day_css_class(DateTimeImmutable $date, DateTimeImmutable $start, DateTi
   $key = $date->format('Y-m-d');
   $dayOfWeek = (int) $date->format('N');
   if ($key < $start->format('Y-m-d') || $key > $end->format('Y-m-d')) {
-    if ($dayOfWeek >= 6) {
-      return 'day nolectivo day-outside';
-    }
     return 'day day-outside';
   }
   if ($dayOfWeek >= 6 || isset($noLectivos[$key])) {
@@ -148,21 +145,45 @@ function build_practice_month_index(DateTimeImmutable $start, DateTimeImmutable 
 
 function build_schedule_rows(array $scheduleByDay): string {
   $dayNames = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
-  $codes = [1 => 'LUN', 2 => 'MAR', 3 => 'MIE', 4 => 'JUE', 5 => 'VIE', 6 => 'SAB', 7 => 'DOM'];
 
   $rowsHtml = '';
-  foreach ($codes as $day => $code) {
+  foreach ($dayNames as $day => $dayName) {
     if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) {
       continue;
     }
 
+    $rows = $scheduleByDay[$day] ?? [];
+    $am = $rows[0] ?? null;
+    $pm = $rows[1] ?? null;
+
+    $amEnt = format_time_es($am['hora_entrada'] ?? null, '--:--');
+    $amSal = format_time_es($am['hora_salida'] ?? null, '--:--');
+    $pmEnt = format_time_es($pm['hora_entrada'] ?? null, '--:--');
+    $pmSal = format_time_es($pm['hora_salida'] ?? null, '--:--');
+
+    $seconds = 0;
+    foreach ($rows as $r) {
+      $in = to_seconds((string) ($r['hora_entrada'] ?? ''));
+      $out = to_seconds((string) ($r['hora_salida'] ?? ''));
+      if ($out > $in) {
+        $seconds += ($out - $in);
+      }
+    }
+
+    $hoursLabel = '--';
+    if ($seconds > 0) {
+      $h = intdiv($seconds, 3600);
+      $m = intdiv($seconds % 3600, 60);
+      $hoursLabel = $m > 0 ? sprintf('%d:%02d', $h, $m) : (string) $h;
+    }
+
     $rowsHtml .= '<tr>'
-      . '<td>' . $dayNames[$day] . '</td>'
-      . '<td>{{' . $code . '_AM_ENT}}</td>'
-      . '<td>{{' . $code . '_AM_SAL}}</td>'
-      . '<td>{{' . $code . '_PM_ENT}}</td>'
-      . '<td>{{' . $code . '_PM_SAL}}</td>'
-      . '<td>{{' . $code . '_H}}</td>'
+      . '<td>' . $dayName . '</td>'
+      . '<td>' . $amEnt . '</td>'
+      . '<td>' . $amSal . '</td>'
+      . '<td>' . $pmEnt . '</td>'
+      . '<td>' . $pmSal . '</td>'
+      . '<td>' . $hoursLabel . '</td>'
       . '</tr>';
   }
 
