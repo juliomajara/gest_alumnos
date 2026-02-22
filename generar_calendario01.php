@@ -277,6 +277,11 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
     } // MODIFICADO
   } // MODIFICADO
 
+  $headerTextCell = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " header-wrap ")]//tr[1]/td[2]')->item(0);
+  if ($headerTextCell instanceof DOMElement) {
+    append_class($headerTextCell, 'center');
+  }
+
   $dayNames = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo']; // MODIFICADO
   $scheduleTable = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " schedule ")]')->item(0); // MODIFICADO
   if ($scheduleTable instanceof DOMElement) { // MODIFICADO
@@ -394,6 +399,19 @@ function postprocess_calendar_html(string $html, array $scheduleByDay, string $i
       $greenRow->appendChild($cell3);
 
       $legendTable->appendChild($greenRow);
+    }
+  }
+
+  $scheduleTableNode = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " schedule ")]')->item(0);
+  if ($legendTable instanceof DOMElement && $scheduleTableNode instanceof DOMElement) {
+    $parent = $legendTable->parentNode;
+    if ($parent !== null && $scheduleTableNode->parentNode === $parent) {
+      $parent->removeChild($scheduleTableNode);
+      if ($legendTable->nextSibling !== null) {
+        $parent->insertBefore($scheduleTableNode, $legendTable->nextSibling);
+      } else {
+        $parent->appendChild($scheduleTableNode);
+      }
     }
   }
 
