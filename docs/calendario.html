@@ -66,10 +66,10 @@
       <img src="logo_IES.png" alt="Logo" class="logo">
     </td>
     <td>
-      <div class="inst-name">{{INSTITUTO_NOMBRE}}</div>
-      <div class="doc-title">Calendario de prácticas y tutorías</div>
+      <div class="inst-name" style="text-align: center;">{{INSTITUTO_NOMBRE}}</div>
+      <div class="doc-title" style="text-align: center;">Calendario de prácticas y tutorías</div>
       <br>
-      <div class="muted">Curso: <span>{{CURSO}}</span> &nbsp;&nbsp;|&nbsp;&nbsp; Periodo: <span>{{FECHA_INICIO}}</span> - <span>{{FECHA_FIN}}</span></div>
+      <div class="muted" style="text-align: center;">Curso: <span>{{CURSO}}</span> &nbsp;&nbsp;|&nbsp;&nbsp; Periodo: <span>{{FECHA_INICIO}}</span> - <span>{{FECHA_FIN}}</span></div>
     </td>
   </tr>
 </table>
@@ -79,7 +79,7 @@
   <tr><td colspan="4" class="section-title">Datos del alumno/a</td></tr>
   <tr>
     <td class="label" style="width: 7%;">Nombre</td><td class="value">{{ALUMNO_NOMBRE}}</td>
-    <td class="label" style="width: 5%;">Teléfono</td><td class="value"  style="width: 5%;">{{ALUMNO_TELEFONO}}</td>
+    <td class="label" style="width: 100px;">Teléfono</td><td class="value"  style="width: 100px;">{{ALUMNO_TELEFONO}}</td>
   </tr>
   <tr>
     <td class="label" style="width: 7%;">Correo</td><td colspan="3">{{ALUMNO_CORREO}}</td>
@@ -147,8 +147,7 @@
 
 
 <!-- LEYENDA -->
-<table class="outer legend">
-  <tr><td colspan="3" class="section-title">Leyenda</td></tr>
+<table class="outer">
   <tr>
     <td>
       <span class="swatch swatch-green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
@@ -167,7 +166,7 @@
     <td colspan="3">
       <span class="swatch swatch-red">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
       &nbsp;<strong>No lectivo:</strong>
-      no se realizan prácticas.
+      no se realizan prácticas (el alumno no está cubierto por el seguro escolar).
     </td>
   </tr>
   
