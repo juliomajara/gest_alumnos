@@ -47,6 +47,7 @@
     .swatch { width: 18px; height: 12px; border: 1px solid #000; }
     .swatch-red { background: #f8d7da; }
     .swatch-blue { background: #cfe2ff; }
+    .swatch-green { background: #d9f2d9; }
 
     /* Observaciones */
     .obs-box { height: 90px; }
@@ -65,7 +66,7 @@
       <img src="logo_IES.png" alt="Logo" class="logo">
     </td>
     <td>
-      <div class="inst-name">NOMBRE DEL INSTITUTO</div>
+      <div class="inst-name">{{INSTITUTO_NOMBRE}}</div>
       <div class="doc-title">Calendario de prácticas y tutorías</div>
       <br>
       <div class="muted">Curso: <span>{{CURSO}}</span> &nbsp;&nbsp;|&nbsp;&nbsp; Periodo: <span>{{FECHA_INICIO}}</span> - <span>{{FECHA_FIN}}</span></div>
@@ -120,26 +121,6 @@
   </tr>
 </table>
 
-<!-- HORARIO -->
-<table class="outer schedule tight">
-  <tr><td colspan="6" class="section-title">Horario del alumno/a en la empresa</td></tr>
-  <tr>
-    <th style="width: 16%;">Día</th>
-    <th style="width: 17%;">Mañana (entrada)</th>
-    <th style="width: 17%;">Mañana (salida)</th>
-    <th style="width: 17%;">Tarde (entrada)</th>
-    <th style="width: 17%;">Tarde (salida)</th>
-    <th style="width: 16%;">Horas/día</th>
-  </tr>
-  <tr><td>Lunes</td><td>{{LUN_AM_ENT}}</td><td>{{LUN_AM_SAL}}</td><td>{{LUN_PM_ENT}}</td><td>{{LUN_PM_SAL}}</td><td>{{LUN_H}}</td></tr>
-  <tr><td>Martes</td><td>{{MAR_AM_ENT}}</td><td>{{MAR_AM_SAL}}</td><td>{{MAR_PM_ENT}}</td><td>{{MAR_PM_SAL}}</td><td>{{MAR_H}}</td></tr>
-  <tr><td>Miércoles</td><td>{{MIE_AM_ENT}}</td><td>{{MIE_AM_SAL}}</td><td>{{MIE_PM_ENT}}</td><td>{{MIE_PM_SAL}}</td><td>{{MIE_H}}</td></tr>
-  <tr><td>Jueves</td><td>{{JUE_AM_ENT}}</td><td>{{JUE_AM_SAL}}</td><td>{{JUE_PM_ENT}}</td><td>{{JUE_PM_SAL}}</td><td>{{JUE_H}}</td></tr>
-  <tr><td>Viernes</td><td>{{VIE_AM_ENT}}</td><td>{{VIE_AM_SAL}}</td><td>{{VIE_PM_ENT}}</td><td>{{VIE_PM_SAL}}</td><td>{{VIE_H}}</td></tr>
-  <tr><td>Sábado</td><td>{{SAB_AM_ENT}}</td><td>{{SAB_AM_SAL}}</td><td>{{SAB_PM_ENT}}</td><td>{{SAB_PM_SAL}}</td><td>{{SAB_H}}</td></tr>
-  <tr><td>Domingo</td><td>{{DOM_AM_ENT}}</td><td>{{DOM_AM_SAL}}</td><td>{{DOM_PM_ENT}}</td><td>{{DOM_PM_SAL}}</td><td>{{DOM_H}}</td></tr>
-</table>
-
 <!-- CALENDARIO (12 meses) -->
 <table class="months-grid">
   <tr>
@@ -171,7 +152,7 @@
   <tr><td colspan="3" class="section-title">Leyenda</td></tr>
   <tr>
     <td style="width: 26px;"><div class="swatch swatch-red"></div></td>
-    <td style="width: 22%"><strong>No lectivo</strong></td>
+    <td style="width: 22%"><strong>No lectivo / fin de semana</strong></td>
     <td>Día no lectivo (no se realizan prácticas).</td>
   </tr>
   <tr>
@@ -179,6 +160,25 @@
     <td><strong>Tutoría</strong></td>
     <td>Día con tutoría de seguimiento (en el instituto).</td>
   </tr>
+  <tr>
+    <td><span class="swatch swatch-green"></span></td>
+    <td><strong>Día de prácticas en empresa</strong></td>
+    <td>Día asignado para la realización de prácticas en la empresa.</td>
+  </tr>
+</table>
+
+<!-- HORARIO -->
+<table class="outer schedule tight">
+  <tr><td colspan="6" class="section-title">Horario del alumno/a en la empresa</td></tr>
+  <tr>
+    <th style="width: 16%;">Día</th>
+    <th style="width: 17%;">Mañana (entrada)</th>
+    <th style="width: 17%;">Mañana (salida)</th>
+    <th style="width: 17%;">Tarde (entrada)</th>
+    <th style="width: 17%;">Tarde (salida)</th>
+    <th style="width: 16%;">Horas/día</th>
+  </tr>
+  {{HORARIO_FILAS}}
 </table>
 
 <!-- OBSERVACIONES -->
