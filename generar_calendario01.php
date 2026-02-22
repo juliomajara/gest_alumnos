@@ -146,300 +146,28 @@ function build_practice_month_index(DateTimeImmutable $start, DateTimeImmutable 
   return $months;
 }
 
-function append_class(DOMElement $element, string $className): void { // MODIFICADO
-  $current = trim((string) $element->getAttribute('class')); // MODIFICADO
-  $classes = $current === '' ? [] : (preg_split('/\s+/', $current) ?: []); // MODIFICADO
-  if (!in_array($className, $classes, true)) { // MODIFICADO
-    $classes[] = $className; // MODIFICADO
-    $element->setAttribute('class', trim(implode(' ', $classes))); // MODIFICADO
-  } // MODIFICADO
-} // MODIFICADO
+function build_schedule_rows(array $scheduleByDay): string {
+  $dayNames = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
+  $codes = [1 => 'LUN', 2 => 'MAR', 3 => 'MIE', 4 => 'JUE', 5 => 'VIE', 6 => 'SAB', 7 => 'DOM'];
 
-function as_file_uri(string $absolutePath): string {
-  $normalized = str_replace(DIRECTORY_SEPARATOR, '/', $absolutePath);
-  if (preg_match('/^[A-Za-z]:\//', $normalized) === 1) {
-    return 'file:///' . $normalized;
-  }
-  return 'file://' . $normalized;
-}
-
-function resolve_logo_path(string $templateDir, ?string $configuredLogoPath = null): ?string {
-  $candidates = [];
-  $configuredLogoPath = trim((string) $configuredLogoPath);
-  if ($configuredLogoPath !== '') {
-    $candidates[] = $configuredLogoPath;
-  }
-
-  $envLogoPath = trim((string) getenv('CALENDARIO_LOGO_PATH'));
-  if ($envLogoPath !== '') {
-    $candidates[] = $envLogoPath;
-  }
-
-  $candidates[] = 'logo_IES.png';
-  $candidates[] = $templateDir . '/logo_IES.png';
-  $candidates[] = __DIR__ . '/logo_IES.png';
-  $candidates[] = __DIR__ . '/docs/logo_IES.png';
-
-  foreach ($candidates as $candidate) {
-    $candidate = trim((string) $candidate);
-    if ($candidate === '') {
+  $rowsHtml = '';
+  foreach ($codes as $day => $code) {
+    if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) {
       continue;
     }
 
-    $resolved = realpath($candidate);
-    if ($resolved === false && !str_starts_with($candidate, '/')) {
-      $resolved = realpath($templateDir . '/' . ltrim($candidate, '/'));
-    }
-    if ($resolved === false && !str_starts_with($candidate, '/')) {
-      $resolved = realpath(__DIR__ . '/' . ltrim($candidate, '/'));
-    }
-
-    if ($resolved !== false && is_file($resolved)) {
-      return $resolved;
-    }
+    $rowsHtml .= '<tr>'
+      . '<td>' . $dayNames[$day] . '</td>'
+      . '<td>{{' . $code . '_AM_ENT}}</td>'
+      . '<td>{{' . $code . '_AM_SAL}}</td>'
+      . '<td>{{' . $code . '_PM_ENT}}</td>'
+      . '<td>{{' . $code . '_PM_SAL}}</td>'
+      . '<td>{{' . $code . '_H}}</td>'
+      . '</tr>';
   }
 
-  return null;
+  return $rowsHtml;
 }
-
-function postprocess_calendar_html(string $html, array $scheduleByDay, string $institutoNombre, string $templateDir, ?string $configuredLogoPath = null): string { // MODIFICADO
-  $dom = new DOMDocument(); // MODIFICADO
-  $prevUseErrors = libxml_use_internal_errors(true); // MODIFICADO
-  $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html); // MODIFICADO
-  libxml_clear_errors(); // MODIFICADO
-  libxml_use_internal_errors($prevUseErrors); // MODIFICADO
-
-  $xpath = new DOMXPath($dom); // MODIFICADO
-
-  $imgNodes = $xpath->query('//img[@src]');
-  if ($imgNodes !== false) {
-    foreach ($imgNodes as $imgNode) {
-      if (!$imgNode instanceof DOMElement) {
-        continue;
-      }
-      $src = trim((string) $imgNode->getAttribute('src'));
-      if ($src === '' || preg_match('#^(?:https?:)?//#i', $src) || str_starts_with($src, 'data:')) {
-        continue;
-      }
-
-      if (strcasecmp(basename($src), 'logo_IES.png') === 0) {
-        $logoPath = resolve_logo_path($templateDir, $configuredLogoPath);
-        if ($logoPath !== null) {
-          $imgNode->setAttribute('src', as_file_uri($logoPath));
-          continue;
-        }
-
-        $transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+2Q8AAAAASUVORK5CYII=';
-        $imgNode->setAttribute('src', 'data:image/png;base64,' . $transparentPixel);
-        continue;
-      }
-
-      $absolutePath = realpath($templateDir . '/' . ltrim($src, '/'));
-      if ($absolutePath === false) {
-        $absolutePath = realpath(__DIR__ . '/' . ltrim($src, '/'));
-      }
-      if ($absolutePath !== false && is_file($absolutePath)) {
-        $imgNode->setAttribute('src', as_file_uri($absolutePath));
-      } else {
-        $transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+2Q8AAAAASUVORK5CYII=';
-        $imgNode->setAttribute('src', 'data:image/png;base64,' . $transparentPixel);
-      }
-    }
-  }
-
-  $headNode = $xpath->query('//head')->item(0);
-  if ($headNode instanceof DOMElement) {
-    $styleNode = $dom->createElement('style');
-    $styleCss = ".calendar-month thead { display: table-header-group !important; visibility: visible !important; }\n"
-      . ".calendar-month thead tr { display: table-row !important; }\n"
-      . ".calendar-month thead th { display: table-cell !important; }\n"
-      . ".calendar-month th { color: #000 !important; padding: 4px 3px !important; }\n"
-      . ".calendar-month .month-title { background: #f0f0f0 !important; color: #000 !important; font-weight: bold !important; text-align: center !important; }\n"
-      . ".calendar-month .dow { background: #fafafa !important; font-weight: bold !important; text-align: center !important; }\n"
-      . ".calendar-month .nolectivo { background: #f8d7da !important; }\n"
-      . ".calendar-month .tutoria { background: #cfe2ff !important; }\n"
-      . ".calendar-month .empresa { background: #d9f2d9 !important; }\n"
-      . ".legend .swatch, .legend-box { display: inline-block !important; width: 18px !important; height: 12px !important; line-height: 12px !important; border: 1px solid #000 !important; vertical-align: middle !important; }\n"
-      . ".legend .swatch-red, .legend-box.legend-red { background: #f8d7da !important; }\n"
-      . ".legend .swatch-blue, .legend-box.legend-blue { background: #cfe2ff !important; }\n"
-      . ".legend .swatch-green, .legend-box.legend-green { background: #d9f2d9 !important; }\n";
-    $styleNode->appendChild($dom->createTextNode($styleCss));
-    $headNode->appendChild($styleNode);
-  }
-
-  if (trim($institutoNombre) !== '') { // MODIFICADO
-    $instNode = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " inst-name ")]')->item(0); // MODIFICADO
-    if ($instNode instanceof DOMElement) { // MODIFICADO
-      while ($instNode->firstChild) { // MODIFICADO
-        $instNode->removeChild($instNode->firstChild); // MODIFICADO
-      } // MODIFICADO
-      $instNode->appendChild($dom->createTextNode($institutoNombre)); // MODIFICADO
-    } // MODIFICADO
-  } // MODIFICADO
-
-  $headerTextCell = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " header-wrap ")]//tr[1]/td[2]')->item(0);
-  if ($headerTextCell instanceof DOMElement) {
-    append_class($headerTextCell, 'center');
-  }
-
-  $dayNames = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo']; // MODIFICADO
-  $scheduleTable = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " schedule ")]')->item(0); // MODIFICADO
-  if ($scheduleTable instanceof DOMElement) { // MODIFICADO
-    $rows = []; // MODIFICADO
-    foreach ($scheduleTable->getElementsByTagName('tr') as $tr) { // MODIFICADO
-      $rows[] = $tr; // MODIFICADO
-    } // MODIFICADO
-
-    for ($day = 1; $day <= 7; $day++) { // MODIFICADO
-      $rowIndex = $day + 1; // MODIFICADO
-      if (!isset($rows[$rowIndex]) || !$rows[$rowIndex] instanceof DOMElement) { // MODIFICADO
-        continue; // MODIFICADO
-      } // MODIFICADO
-
-      if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) { // MODIFICADO
-        if ($rows[$rowIndex]->parentNode !== null) { // MODIFICADO
-          $rows[$rowIndex]->parentNode->removeChild($rows[$rowIndex]); // MODIFICADO
-        } // MODIFICADO
-      } else { // MODIFICADO
-        $firstCell = $rows[$rowIndex]->getElementsByTagName('td')->item(0); // MODIFICADO
-        if ($firstCell instanceof DOMElement) { // MODIFICADO
-          $firstCell->nodeValue = $dayNames[$day]; // MODIFICADO
-        } // MODIFICADO
-      } // MODIFICADO
-    } // MODIFICADO
-  } // MODIFICADO
-
-  $monthsGrid = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " months-grid ")]')->item(0); // MODIFICADO
-  if ($monthsGrid instanceof DOMElement) { // MODIFICADO
-    $rows = $xpath->query('./tbody/tr | ./tr', $monthsGrid); // MODIFICADO
-    if ($rows instanceof DOMNodeList) { // MODIFICADO
-      $rowsToRemove = []; // MODIFICADO
-      foreach ($rows as $trNode) { // MODIFICADO
-        if (!$trNode instanceof DOMElement) { // MODIFICADO
-          continue; // MODIFICADO
-        } // MODIFICADO
-
-        $cells = $xpath->query('./td', $trNode); // MODIFICADO
-        if (!$cells instanceof DOMNodeList) { // MODIFICADO
-          continue; // MODIFICADO
-        } // MODIFICADO
-
-        $cellsToRemove = []; // MODIFICADO
-        foreach ($cells as $tdNode) { // MODIFICADO
-          if (!$tdNode instanceof DOMElement) { // MODIFICADO
-            continue; // MODIFICADO
-          } // MODIFICADO
-
-          $monthTables = $xpath->query('./table[contains(concat(" ", normalize-space(@class), " "), " month ")]', $tdNode); // MODIFICADO
-          $hasMonth = $monthTables instanceof DOMNodeList && $monthTables->length > 0; // MODIFICADO
-          if (!$hasMonth && trim((string) $tdNode->textContent) === '') { // MODIFICADO
-            $cellsToRemove[] = $tdNode; // MODIFICADO
-          } // MODIFICADO
-        } // MODIFICADO
-
-        foreach ($cellsToRemove as $cellToRemove) { // MODIFICADO
-          if ($cellToRemove->parentNode !== null) { // MODIFICADO
-            $cellToRemove->parentNode->removeChild($cellToRemove); // MODIFICADO
-          } // MODIFICADO
-        } // MODIFICADO
-
-        $remainingCells = $xpath->query('./td', $trNode); // MODIFICADO
-        if ($remainingCells instanceof DOMNodeList && $remainingCells->length === 0) { // MODIFICADO
-          $rowsToRemove[] = $trNode; // MODIFICADO
-        } // MODIFICADO
-      } // MODIFICADO
-
-      foreach ($rowsToRemove as $rowToRemove) { // MODIFICADO
-        if ($rowToRemove->parentNode !== null) { // MODIFICADO
-          $rowToRemove->parentNode->removeChild($rowToRemove); // MODIFICADO
-        } // MODIFICADO
-      } // MODIFICADO
-    } // MODIFICADO
-  } // MODIFICADO
-
-  $legendTable = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " legend ")]')->item(0);
-  if ($legendTable instanceof DOMElement) {
-    $legendRows = $legendTable->getElementsByTagName('tr');
-    if ($legendRows->length >= 2) {
-      $legendSecondRow = $legendRows->item(1);
-      $firstRowCells = $legendSecondRow instanceof DOMElement ? $legendSecondRow->getElementsByTagName('td') : null;
-      if ($firstRowCells instanceof DOMNodeList && $firstRowCells->length >= 2) {
-        $targetCell = $firstRowCells->item(1);
-        if ($targetCell instanceof DOMElement) {
-          $targetCell->nodeValue = 'No lectivo / fin de semana';
-        }
-      }
-    }
-
-    $alreadyHasGreen = false;
-    foreach ($legendTable->getElementsByTagName('div') as $div) {
-      if (strpos(' ' . $div->getAttribute('class') . ' ', ' swatch-green ') !== false) {
-        $alreadyHasGreen = true;
-        break;
-      }
-    }
-
-    if (!$alreadyHasGreen) {
-      $greenRow = $dom->createElement('tr');
-
-      $cell1 = $dom->createElement('td');
-      $greenSwatch = $dom->createElement('span');
-      $greenSwatch->setAttribute('class', 'legend-box legend-green');
-      $greenSwatch->appendChild($dom->createTextNode(' '));
-      $cell1->appendChild($greenSwatch);
-
-      $cell2 = $dom->createElement('td');
-      $strong = $dom->createElement('strong', 'Día de prácticas en empresa');
-      $cell2->appendChild($strong);
-
-      $cell3 = $dom->createElement('td', 'Día asignado para la realización de prácticas en la empresa.');
-
-      $greenRow->appendChild($cell1);
-      $greenRow->appendChild($cell2);
-      $greenRow->appendChild($cell3);
-
-      $legendTable->appendChild($greenRow);
-    }
-  }
-
-  $scheduleTableNode = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " schedule ")]')->item(0);
-  if ($legendTable instanceof DOMElement && $scheduleTableNode instanceof DOMElement) {
-    $parent = $legendTable->parentNode;
-    if ($parent !== null && $scheduleTableNode->parentNode === $parent) {
-      $parent->removeChild($scheduleTableNode);
-      if ($legendTable->nextSibling !== null) {
-        $parent->insertBefore($scheduleTableNode, $legendTable->nextSibling);
-      } else {
-        $parent->appendChild($scheduleTableNode);
-      }
-    }
-  }
-
-  $swatchNodes = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " swatch ")]');
-  if ($swatchNodes !== false) {
-    foreach ($swatchNodes as $swatchNode) {
-      if (!$swatchNode instanceof DOMElement) {
-        continue;
-      }
-
-      if (trim((string) $swatchNode->textContent) === '') {
-        $swatchNode->appendChild($dom->createTextNode("\u{00A0}"));
-      }
-    }
-  }
-
-  $fieldNodes = $xpath->query('//table[contains(concat(" ", normalize-space(@class), " "), " outer ")]//*[self::td or self::th][not(contains(concat(" ", normalize-space(@class), " "), " section-title "))]'); // MODIFICADO
-  if ($fieldNodes !== false) { // MODIFICADO
-    foreach ($fieldNodes as $node) { // MODIFICADO
-      if ($node instanceof DOMElement) { // MODIFICADO
-        append_class($node, 'muted'); // MODIFICADO
-      } // MODIFICADO
-    } // MODIFICADO
-  } // MODIFICADO
-
-  $result = $dom->saveHTML(); // MODIFICADO
-  return $result !== false ? $result : $html; // MODIFICADO
-} // MODIFICADO
 
 function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
   $year = (int) $month->format('Y');
@@ -616,10 +344,9 @@ try {
   } catch (Throwable $e) {
   }
 
-  $institutoNombre = ''; // MODIFICADO
-  $logoPathConfig = '';
-  try { // MODIFICADO
-    $configStmt = $pdo->prepare('SELECT clave, valor FROM config WHERE clave IN ("instituto_nombre", "calendario_logo_path")');
+  $institutoNombre = 'NOMBRE DEL INSTITUTO';
+  try {
+    $configStmt = $pdo->prepare('SELECT clave, valor FROM config WHERE clave IN ("instituto_nombre")');
     $configStmt->execute();
     foreach ($configStmt->fetchAll(PDO::FETCH_ASSOC) as $configRow) {
       $clave = trim((string) ($configRow['clave'] ?? ''));
@@ -627,14 +354,10 @@ try {
       if ($clave === 'instituto_nombre') {
         $institutoNombre = $valor;
       }
-      if ($clave === 'calendario_logo_path') {
-        $logoPathConfig = $valor;
-      }
     }
-  } catch (Throwable $e) { // MODIFICADO
-    $institutoNombre = ''; // MODIFICADO
-    $logoPathConfig = '';
-  } // MODIFICADO
+  } catch (Throwable $e) {
+    $institutoNombre = 'NOMBRE DEL INSTITUTO';
+  }
 
   $tutorias = [];
   try {
@@ -680,6 +403,8 @@ try {
     '{{TUTOR_EMPRESA_TELEFONO}}' => fallback_text($practice['tutor_empresa_telefono'] ?? null),
     '{{TUTOR_EMPRESA_CORREO}}' => fallback_text($practice['tutor_empresa_email'] ?? null),
     '{{OBSERVACIONES}}' => trim((string) ($practice['observaciones'] ?? '')),
+    '{{INSTITUTO_NOMBRE}}' => fallback_text($institutoNombre, 'NOMBRE DEL INSTITUTO'),
+    '{{HORARIO_FILAS}}' => build_schedule_rows($scheduleByDay),
   ];
 
   $replacements += build_schedule_tokens($scheduleByDay);
@@ -700,8 +425,7 @@ try {
     }
   }
 
-  $html = str_replace(array_keys($replacements), array_values($replacements), $template);
-  $html = postprocess_calendar_html($html, $scheduleByDay, $institutoNombre, dirname($templatePath), $logoPathConfig); // MODIFICADO
+  $html = strtr($template, $replacements);
 
   $debugFlag = $_GET['mpdf_debug'] ?? getenv('CALENDARIO_MPDF_DEBUG') ?? '0';
   $mpdfDebug = in_array(strtolower(trim((string) $debugFlag)), ['1', 'true', 'yes', 'on'], true);
