@@ -34,11 +34,9 @@
     .schedule td { text-align: center; }
 
     /* Calendarios */
-    .months-grid { margin: 0; table-layout: fixed; }
-    .months-grid td { border: 0 !important; padding: 0 4px 4px 4px; }
-    .months-grid td.first-col { padding-left: 0; padding-right: 8px; }
-    .months-grid td.mid-col { padding-left: 4px; padding-right: 4px; }
-    .months-grid td.last-col { padding-left: 8px; padding-right: 0; }
+    .calendar-body { padding: 8px; }
+    .months-grid { margin: 0; width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .months-grid td { width: 33.333%; border: 0 !important; padding: 0 4px 8px 4px; box-sizing: border-box; }
     .months-grid tr:last-child td { padding-bottom: 0; }
     .month { width: 100%; border: 2px solid #000; border-collapse: collapse; }
     .month th, .month td { border: 1px solid #000; padding: 3px; }
@@ -132,33 +130,9 @@
 <table class="outer calendar-frame">
   <tr><td class="section-title">Calendario del alumno en la empresa</td></tr>
   <tr>
-    <td>
+    <td class="calendar-body">
       <table class="months-grid">
-        <colgroup>
-          <col style="width: 33.33%;">
-          <col style="width: 33.33%;">
-          <col style="width: 33.33%;">
-        </colgroup>
-        <tr>
-          <td class="first-col">{{MES_01}}</td>
-          <td class="mid-col">{{MES_02}}</td>
-          <td class="last-col">{{MES_03}}</td>
-        </tr>
-        <tr>
-          <td class="first-col">{{MES_04}}</td>
-          <td class="mid-col">{{MES_05}}</td>
-          <td class="last-col">{{MES_06}}</td>
-        </tr>
-        <tr>
-          <td class="first-col">{{MES_07}}</td>
-          <td class="mid-col">{{MES_08}}</td>
-          <td class="last-col">{{MES_09}}</td>
-        </tr>
-        <tr>
-          <td class="first-col">{{MES_10}}</td>
-          <td class="mid-col">{{MES_11}}</td>
-          <td class="last-col">{{MES_12}}</td>
-        </tr>
+        {{MESES_GRID}}
       </table>
     </td>
   </tr>

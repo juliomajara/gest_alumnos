@@ -139,16 +139,28 @@ function has_assigned_schedule_for_day(array $rows): bool { // MODIFICADO
   return false; // MODIFICADO
 } // MODIFICADO
 
-function build_practice_month_index(DateTimeImmutable $start, DateTimeImmutable $end): array {
-  $months = [];
 
+function build_months_grid_html(DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
+  $monthsHtml = [];
   $firstMonth = new DateTimeImmutable($start->format('Y-m-01'));
   $lastMonth = new DateTimeImmutable($end->format('Y-m-01'));
+
   for ($current = $firstMonth; $current <= $lastMonth; $current = $current->modify('+1 month')) {
-    $months[$current->format('Y-m')] = true;
+    $monthsHtml[] = build_month_table($current, $start, $end, $noLectivos, $tutorias, $scheduleByDay);
   }
 
-  return $months;
+  $rowsHtml = '';
+  $total = count($monthsHtml);
+  for ($i = 0; $i < $total; $i += 3) {
+    $rowsHtml .= '<tr>';
+    for ($j = 0; $j < 3; $j++) {
+      $monthHtml = $monthsHtml[$i + $j] ?? '';
+      $rowsHtml .= '<td>' . $monthHtml . '</td>';
+    }
+    $rowsHtml .= '</tr>';
+  }
+
+  return $rowsHtml;
 }
 
 function build_schedule_rows(array $scheduleByDay): string {
@@ -439,15 +451,7 @@ try {
 
   $replacements += build_schedule_tokens($scheduleByDay);
 
-  $practiceMonths = build_practice_month_index($startDate, $endDate);
-
-  $monthBase = new DateTimeImmutable($startDate->format('Y-m-01'));
-  for ($i = 1; $i <= 12; $i++) {
-    $monthDate = $monthBase->modify('+' . ($i - 1) . ' month');
-    $monthKey = $monthDate->format('Y-m');
-    $shouldRender = isset($practiceMonths[$monthKey]);
-    $replacements['{{MES_' . str_pad((string) $i, 2, '0', STR_PAD_LEFT) . '}}'] = $shouldRender ? build_month_table($monthDate, $startDate, $endDate, $noLectivos, $tutorias, $scheduleByDay) : '';
-  }
+  $replacements['{{MESES_GRID}}'] = build_months_grid_html($startDate, $endDate, $noLectivos, $tutorias, $scheduleByDay);
 
   foreach ($templateMarkers as $marker) {
     if (!array_key_exists($marker, $replacements)) {
