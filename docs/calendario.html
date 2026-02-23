@@ -34,8 +34,12 @@
     .schedule td { text-align: center; }
 
     /* Calendarios */
-    .months-grid { margin: 0 0 4px 0; }
-    .months-grid td { border: 0 !important; padding: 0 0 4px 0; }
+    .months-grid { margin: 0; table-layout: fixed; }
+    .months-grid td { border: 0 !important; padding: 0 4px 4px 4px; }
+    .months-grid td.first-col { padding-left: 0; padding-right: 8px; }
+    .months-grid td.mid-col { padding-left: 4px; padding-right: 4px; }
+    .months-grid td.last-col { padding-left: 8px; padding-right: 0; }
+    .months-grid tr:last-child td { padding-bottom: 0; }
     .month { width: 100%; border: 2px solid #000; border-collapse: collapse; }
     .month th, .month td { border: 1px solid #000; padding: 3px; }
     .month .month-title { background: #f0f0f0; font-weight: bold; text-align: center; padding: 6px 0; }
@@ -130,25 +134,30 @@
   <tr>
     <td>
       <table class="months-grid">
+        <colgroup>
+          <col style="width: 33.33%;">
+          <col style="width: 33.33%;">
+          <col style="width: 33.33%;">
+        </colgroup>
         <tr>
-          <td style="width: 33.33%; padding-right: 8px;">{{MES_01}}</td>
-          <td style="width: 33.33%; padding: 0 4px;">{{MES_02}}</td>
-          <td style="width: 33.33%; padding-left: 8px;">{{MES_03}}</td>
+          <td class="first-col">{{MES_01}}</td>
+          <td class="mid-col">{{MES_02}}</td>
+          <td class="last-col">{{MES_03}}</td>
         </tr>
         <tr>
-          <td style="padding-right: 8px;">{{MES_04}}</td>
-          <td style="padding: 0 4px;">{{MES_05}}</td>
-          <td style="padding-left: 8px;">{{MES_06}}</td>
+          <td class="first-col">{{MES_04}}</td>
+          <td class="mid-col">{{MES_05}}</td>
+          <td class="last-col">{{MES_06}}</td>
         </tr>
         <tr>
-          <td style="padding-right: 8px;">{{MES_07}}</td>
-          <td style="padding: 0 4px;">{{MES_08}}</td>
-          <td style="padding-left: 8px;">{{MES_09}}</td>
+          <td class="first-col">{{MES_07}}</td>
+          <td class="mid-col">{{MES_08}}</td>
+          <td class="last-col">{{MES_09}}</td>
         </tr>
         <tr>
-          <td style="padding-right: 8px;">{{MES_10}}</td>
-          <td style="padding: 0 4px;">{{MES_11}}</td>
-          <td style="padding-left: 8px;">{{MES_12}}</td>
+          <td class="first-col">{{MES_10}}</td>
+          <td class="mid-col">{{MES_11}}</td>
+          <td class="last-col">{{MES_12}}</td>
         </tr>
       </table>
     </td>
@@ -159,7 +168,7 @@
 <!-- LEYENDA -->
 <table class="outer">
   <tr>
-    <td>
+    <td colspan="3">
       <span class="swatch swatch-green">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
       &nbsp;<strong>Día de prácticas:</strong>
       jornada de formación en la entidad colaboradora.
