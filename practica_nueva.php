@@ -1102,7 +1102,7 @@ $dias_semana = [
                 <textarea class="practica-notes-textarea" name="observaciones" id="observaciones" rows="5" style="width: 100%;"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
               </label>
               <label>
-                Instrucciones
+                Instrucciones (Se mostrarán en el calendario del alumno y de la empresa)
                 <textarea class="practica-notes-textarea" name="instrucciones" id="instrucciones" rows="5" style="width: 100%;"><?php echo htmlspecialchars((string) ($form_values['instrucciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
               </label>
             </div>
