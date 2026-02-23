@@ -82,13 +82,19 @@ function build_address(array $practice): string {
   return $parts ? implode(', ', $parts) : 'No disponible';
 }
 
-function build_obs_complemento_direccion(?string $otros): string {
-  $otros = trim((string) $otros);
-  if ($otros === '') {
-    return '';
+function build_observaciones(?string $complementoDireccion, ?string $observacionesPractica): string {
+  $complementoDireccion = trim((string) $complementoDireccion);
+  $observacionesPractica = trim((string) $observacionesPractica);
+
+  $partes = [];
+  if ($complementoDireccion !== '') {
+    $partes[] = 'Complemento a la dirección: ' . $complementoDireccion;
+  }
+  if ($observacionesPractica !== '') {
+    $partes[] = $observacionesPractica;
   }
 
-  return '<br>Complemento a la dirección: ' . $otros;
+  return implode('<br>', $partes);
 }
 
 function ensure_mpdf_temp_dir(): string {
@@ -443,8 +449,7 @@ try {
     '{{TUTOR_EMPRESA_NOMBRE}}' => $contactoNombre,
     '{{TUTOR_EMPRESA_TELEFONO}}' => fallback_text($practice['tutor_empresa_telefono'] ?? null),
     '{{TUTOR_EMPRESA_CORREO}}' => fallback_text($practice['tutor_empresa_email'] ?? null),
-    '{{OBSERVACIONES}}' => trim((string) ($practice['observaciones'] ?? '')),
-    '{{OBS_COMPLEMENTO_DIRECCION}}' => build_obs_complemento_direccion($practice['direccion_otros'] ?? null),
+    '{{OBSERVACIONES}}' => build_observaciones($practice['direccion_otros'] ?? null, $practice['observaciones'] ?? null),
     '{{INSTITUTO_NOMBRE}}' => fallback_text($institutoNombre, 'NOMBRE DEL INSTITUTO'),
     '{{HORARIO_FILAS}}' => build_schedule_rows($scheduleByDay),
   ];
