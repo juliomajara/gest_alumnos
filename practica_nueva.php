@@ -459,6 +459,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $dias_extra_raw = normalize_text($_POST['dias_extra'] ?? null);
   $dias_extra = 0;
   $observaciones = normalize_text($_POST['observaciones'] ?? null);
+  $instrucciones = normalize_text($_POST['instrucciones'] ?? null);
   $horario = is_array($_POST['horario'] ?? null) ? $_POST['horario'] : [];
   $confirm_circ_excep = ($_POST['confirm_circ_excep'] ?? '') === '1';
   $confirm_minor_age = ($_POST['confirm_minor_age'] ?? '') === '1';
@@ -621,10 +622,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
             id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, cancelada,
-            fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, circ_excep, mayor_edad
+            fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, instrucciones, circ_excep, mayor_edad
           ) VALUES (
             :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :cancelada,
-            :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :circ_excep, :mayor_edad
+            :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :instrucciones, :circ_excep, :mayor_edad
           )'
         );
 
@@ -641,6 +642,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'horas' => $horas,
           'dias_extra' => $dias_extra,
           'observaciones' => $observaciones,
+          'instrucciones' => $instrucciones,
           'circ_excep' => $requires_circ_excep ? 1 : 0,
           'mayor_edad' => $mayor_edad,
         ]);
@@ -1098,6 +1100,10 @@ $dias_semana = [
               <label>
                 Observaciones
                 <textarea name="observaciones" id="observaciones"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+              </label>
+              <label>
+                Instrucciones
+                <textarea name="instrucciones" id="instrucciones"><?php echo htmlspecialchars((string) ($form_values['instrucciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
               </label>
             </div>
           </div>
