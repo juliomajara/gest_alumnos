@@ -10,6 +10,7 @@
     td, th { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
     .outer { border: 2px solid #000; }
     .section-title { font-weight: bold; background: #f0f0f0; text-align: left; font-size: 11pt; }
+    .section-title-center { text-align: center; }
     .muted { color: #333; }
     .value-text { color: #333; font-weight: normal; }
     .center { text-align: center; }
@@ -36,9 +37,8 @@
     /* Calendarios */
     .calendar-body { padding: 8px; }
     .months-grid { margin: 0; width: 100%; table-layout: fixed; border-collapse: collapse; }
-    .months-grid td { width: 33.333%; border: 0 !important; padding: 0 4px 8px 4px; box-sizing: border-box; }
-    .months-grid tr:last-child td { padding-bottom: 0; }
-    .month { width: 100%; border: 2px solid #000; border-collapse: collapse; }
+    .months-grid td { width: 33.333%; border: 0 !important; padding: 4px; box-sizing: border-box; }
+    .month { width: 100%; margin: 0; border: 2px solid #000; border-collapse: collapse; }
     .month th, .month td { border: 1px solid #000; padding: 3px; }
     .month .month-title { background: #f0f0f0; font-weight: bold; text-align: center; padding: 6px 0; }
     .dow { background: #fafafa; font-weight: bold; text-align: center; }
@@ -128,7 +128,7 @@
 
 <!-- CALENDARIO (12 meses) -->
 <table class="outer calendar-frame">
-  <tr><td class="section-title">Calendario del alumno en la entidad colaboradora</td></tr>
+  <tr><td class="section-title section-title-center">Calendario del alumno en la entidad colaboradora</td></tr>
   <tr>
     <td class="calendar-body">
       <table class="months-grid">
