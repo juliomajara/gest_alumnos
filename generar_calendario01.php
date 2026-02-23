@@ -161,7 +161,7 @@ function build_months_grid_html(DateTimeImmutable $start, DateTimeImmutable $end
     $rowsHtml .= '<tr>';
     for ($j = 0; $j < 3; $j++) {
       $monthHtml = $monthsHtml[$i + $j] ?? '';
-      $rowsHtml .= '<td>' . $monthHtml . '</td>';
+      $rowsHtml .= '<td style="width:33.333%;">' . $monthHtml . '</td>';
     }
     $rowsHtml .= '</tr>';
   }
