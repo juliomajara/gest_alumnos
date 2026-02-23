@@ -6,59 +6,67 @@ require_once __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/includes/practicas_pdfs.php';
 
 use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 
-const CALENDAR_COLOR_HEADER = '#d9d9d9';
-const CALENDAR_COLOR_ATTENDANCE = '#cce5ff';
-const CALENDAR_COLOR_START = '#4a90e2';
-const CALENDAR_COLOR_END = '#ccffcc';
-const CALENDAR_COLOR_NO_ATTENDANCE = '#ffcccc';
-
-function format_value($value, string $fallback = 'No disponible'): string {
-  return ($value === null || $value === '') ? $fallback : (string) $value;
+function fallback_text($value, string $fallback = 'No disponible'): string {
+  $value = trim((string) ($value ?? ''));
+  return $value === '' ? $fallback : $value;
 }
 
-function format_date(?string $value, string $fallback = 'No disponible'): string {
-  if ($value === null || $value === '') {
+function format_date_es(?string $value, string $fallback = 'No disponible'): string {
+  $value = trim((string) $value);
+  if ($value === '') {
     return $fallback;
   }
 
-  $date = DateTime::createFromFormat('Y-m-d', $value);
-  if ($date && $date->format('Y-m-d') === $value) {
-    return $date->format('d/m/Y');
-  }
-
-  return $value;
+  $dt = DateTimeImmutable::createFromFormat('Y-m-d', $value);
+  return $dt ? $dt->format('d/m/Y') : $value;
 }
 
-function format_time(?string $value, string $fallback = '—'): string {
-  if ($value === null || $value === '') {
+function format_time_es(?string $value, string $fallback = '--:--'): string {
+  $value = trim((string) $value);
+  if ($value === '') {
     return $fallback;
   }
 
-  $time = DateTime::createFromFormat('H:i:s', $value);
-  if ($time && $time->format('H:i:s') === $value) {
-    return $time->format('H:i');
-  }
+  $dt = DateTimeImmutable::createFromFormat('H:i:s', $value)
+    ?: DateTimeImmutable::createFromFormat('H:i', $value);
 
-  return $value;
+  return $dt ? $dt->format('H:i') : $value;
 }
 
-function full_name(array $row, string $prefix): string {
-  $parts = array_filter([
-    trim((string) ($row[$prefix . '_apellido1'] ?? '')),
-    trim((string) ($row[$prefix . '_apellido2'] ?? '')),
-  ], static fn (string $value): bool => $value !== '');
-  $name = trim((string) ($row[$prefix . '_nombre'] ?? ''));
+function to_seconds(?string $value): int {
+  $value = trim((string) $value);
+  if ($value === '') {
+    return 0;
+  }
 
-  return ($parts === [] && $name === '') ? 'No disponible' : trim(implode(' ', $parts) . ', ' . $name, ' ,');
+  $parts = explode(':', $value);
+  if (count($parts) < 2) {
+    return 0;
+  }
+
+  return ((int) $parts[0] * 3600) + ((int) $parts[1] * 60) + (int) ($parts[2] ?? 0);
+}
+
+function build_person_name(array $row, string $prefix): string {
+  $apellido1 = trim((string) ($row[$prefix . '_apellido1'] ?? ''));
+  $apellido2 = trim((string) ($row[$prefix . '_apellido2'] ?? ''));
+  $nombre = trim((string) ($row[$prefix . '_nombre'] ?? ''));
+
+  $apellidos = trim($apellido1 . ' ' . $apellido2);
+  $full = trim(($apellidos !== '' ? $apellidos . ', ' : '') . $nombre, ' ,');
+
+  return $full === '' ? 'No disponible' : $full;
 }
 
 function build_address(array $practice): string {
   $via = trim(implode(' ', array_filter([
     trim((string) ($practice['direccion_via_tipo'] ?? '')),
     trim((string) ($practice['direccion_nombre_via'] ?? '')),
-  ], static fn (string $value): bool => $value !== '')));
+  ])));
 
+  $provincia = trim((string) ($practice['direccion_provincia'] ?? ''));
   $parts = array_filter([
     $via,
     trim((string) ($practice['direccion_numero'] ?? '')),
@@ -66,330 +74,447 @@ function build_address(array $practice): string {
     ($practice['direccion_escalera'] ?? '') !== '' ? 'Esc. ' . $practice['direccion_escalera'] : '',
     ($practice['direccion_planta'] ?? '') !== '' ? 'Planta ' . $practice['direccion_planta'] : '',
     ($practice['direccion_puerta'] ?? '') !== '' ? 'Puerta ' . $practice['direccion_puerta'] : '',
-    trim((string) ($practice['direccion_otros'] ?? '')),
-  ], static fn (string $value): bool => $value !== '');
-
-  $cp = trim(implode(' ', array_filter([
     trim((string) ($practice['direccion_cp'] ?? '')),
     trim((string) ($practice['direccion_localidad'] ?? '')),
-  ], static fn (string $value): bool => $value !== '')));
-
-  if ($cp !== '') {
-    $parts[] = $cp;
-  }
-
-  foreach (['direccion_provincia', 'direccion_pais'] as $field) {
-    $value = trim((string) ($practice[$field] ?? ''));
-    if ($value !== '') {
-      $parts[] = $value;
-    }
-  }
+    $provincia !== '' ? '(' . $provincia . ')' : '',
+  ], static fn (string $item): bool => $item !== '');
 
   return $parts ? implode(', ', $parts) : 'No disponible';
 }
 
+function build_observaciones(?string $complementoDireccion, ?string $observacionesPractica): string {
+  $complementoDireccion = trim((string) $complementoDireccion);
+  $observacionesPractica = trim((string) $observacionesPractica);
+
+  $partes = [];
+  if ($complementoDireccion !== '') {
+    $partes[] = 'Complemento a la dirección: ' . $complementoDireccion;
+  }
+  if ($observacionesPractica !== '') {
+    $partes[] = $observacionesPractica;
+  }
+
+  return implode('<br>', $partes);
+}
+
 function ensure_mpdf_temp_dir(): string {
   $tempDir = __DIR__ . '/docs/.mpdf_tmp';
-
   if (!is_dir($tempDir) && !mkdir($tempDir, 0755, true) && !is_dir($tempDir)) {
-    throw new RuntimeException('No se pudo crear el directorio temporal para PDFs.');
+    throw new RuntimeException('No se pudo crear el directorio temporal de mPDF.');
   }
-
   if (!is_writable($tempDir)) {
-    throw new RuntimeException('El directorio temporal para PDFs no tiene permisos de escritura.');
+    throw new RuntimeException('El directorio temporal de mPDF no tiene permisos de escritura.');
   }
-
   return $tempDir;
 }
 
 function month_name_es(int $month): string {
-  $names = [
+  $months = [
     1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
     7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
   ];
-
-  return $names[$month] ?? '';
+  return $months[$month] ?? '';
 }
 
-function time_to_seconds(?string $value): ?int {
-  if ($value === null || $value === '') {
-    return null;
-  }
-
-  $parts = explode(':', $value);
-  if (count($parts) < 2) {
-    return null;
-  }
-
-  return ((int) $parts[0]) * 3600 + ((int) $parts[1]) * 60 + ((int) ($parts[2] ?? 0));
-}
-
-function build_weekly_schedule_pdf_table(array $scheduleByDay, array $diasSemana): string {
-  $html = '<table width="100%" border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; font-size: 10pt; margin-bottom: 14px;">';
-  $html .= '<thead><tr>';
-  $html .= '<th rowspan="2" style="background-color:#d9d9d9; text-align:left;">Día</th>';
-  $html .= '<th colspan="2" style="background-color:#d9d9d9; text-align:center;">Horario Mañana</th>';
-  $html .= '<th colspan="2" style="background-color:#d9d9d9; text-align:center;">Horario tarde</th>';
-  $html .= '<th rowspan="2" style="background-color:#d9d9d9; text-align:center;">Total</th>';
-  $html .= '</tr><tr>';
-  $html .= '<th style="background-color:#d9d9d9; text-align:center;">Inicio</th>';
-  $html .= '<th style="background-color:#d9d9d9; text-align:center;">Fin</th>';
-  $html .= '<th style="background-color:#d9d9d9; text-align:center;">Inicio</th>';
-  $html .= '<th style="background-color:#d9d9d9; text-align:center;">Fin</th>';
-  $html .= '</tr></thead><tbody>';
-
-  foreach ($diasSemana as $dayNumber => $dayName) {
-    $segments = $scheduleByDay[$dayNumber] ?? [];
-    $morning = $segments[0] ?? null;
-    $afternoon = $segments[1] ?? null;
-
-    $morningStart = $morning ? format_time($morning['hora_entrada'] ?? null, '--:--') : '--:--';
-    $morningEnd = $morning ? format_time($morning['hora_salida'] ?? null, '--:--') : '--:--';
-    $afternoonStart = $afternoon ? format_time($afternoon['hora_entrada'] ?? null, '--:--') : '--:--';
-    $afternoonEnd = $afternoon ? format_time($afternoon['hora_salida'] ?? null, '--:--') : '--:--';
-
-    $totalSeconds = 0;
-    foreach ($segments as $segment) {
-      $entrada = time_to_seconds((string) ($segment['hora_entrada'] ?? ''));
-      $salida = time_to_seconds((string) ($segment['hora_salida'] ?? ''));
-      if ($entrada !== null && $salida !== null && $salida > $entrada) {
-        $totalSeconds += ($salida - $entrada);
-      }
-    }
-
-    $totalLabel = '--';
-    if ($totalSeconds > 0) {
-      $hours = intdiv($totalSeconds, 3600);
-      $minutes = intdiv($totalSeconds % 3600, 60);
-      $totalLabel = $minutes > 0 ? sprintf('%d:%02d horas', $hours, $minutes) : $hours . ' horas';
-    }
-
-    $html .= '<tr>';
-    $html .= '<td>' . htmlspecialchars($dayName, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td style="text-align:center;">' . htmlspecialchars($morningStart, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td style="text-align:center;">' . htmlspecialchars($morningEnd, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td style="text-align:center;">' . htmlspecialchars($afternoonStart, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td style="text-align:center;">' . htmlspecialchars($afternoonEnd, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td style="text-align:center;">' . htmlspecialchars($totalLabel, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '</tr>';
-  }
-
-  return $html . '</tbody></table>';
-}
-
-function is_no_attendance_day(DateTimeImmutable $date, array $nonSchoolDays, array $scheduleByDay): bool {
-  $dateKey = $date->format('Y-m-d');
-  if (isset($nonSchoolDays[$dateKey])) {
-    return true;
-  }
-
+function day_css_class(DateTimeImmutable $date, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
+  $key = $date->format('Y-m-d');
   $dayOfWeek = (int) $date->format('N');
-  return !isset($scheduleByDay[$dayOfWeek]) || $scheduleByDay[$dayOfWeek] === [];
+  if ($key < $start->format('Y-m-d') || $key > $end->format('Y-m-d')) {
+    return 'day day-outside';
+  }
+  if ($dayOfWeek >= 6 || isset($noLectivos[$key])) {
+    return 'day nolectivo';
+  }
+  if (isset($tutorias[$key])) {
+    return 'day tutoria';
+  }
+  if (has_assigned_schedule_for_day($scheduleByDay[$dayOfWeek] ?? [])) {
+    return 'day empresa';
+  }
+  return 'day';
 }
 
-function build_calendar_html(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay, array $tutorias): string {
-  $startKey = $startDate->format('Y-m-d');
-  $endKey = $endDate->format('Y-m-d');
-  $tutoriasLookup = array_fill_keys($tutorias, true); // MODIFICADO
-  $monthHtmlChunks = [];
-  $firstMonth = new DateTimeImmutable($startDate->format('Y-m-01'));
-  $lastMonth = new DateTimeImmutable($endDate->format('Y-m-01'));
+function has_assigned_schedule_for_day(array $rows): bool { // MODIFICADO
+  foreach ($rows as $row) { // MODIFICADO
+    $entrada = trim((string) ($row['hora_entrada'] ?? '')); // MODIFICADO
+    $salida = trim((string) ($row['hora_salida'] ?? '')); // MODIFICADO
+    if ($entrada !== '' || $salida !== '') { // MODIFICADO
+      return true; // MODIFICADO
+    } // MODIFICADO
+  } // MODIFICADO
+  return false; // MODIFICADO
+} // MODIFICADO
 
-  for ($month = $firstMonth; $month <= $lastMonth; $month = $month->modify('+1 month')) {
-    $monthNum = (int) $month->format('n');
-    $yearNum = (int) $month->format('Y');
-    $daysInMonth = (int) $month->format('t');
-    $startOffset = (int) $month->format('N');
 
-    $monthHtml = '<h3 style="text-align:center; margin: 10px 0 6px 0;">' . strtoupper(month_name_es($monthNum)) . ' ' . $yearNum . '</h3>';
-    $monthHtml .= '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; table-layout: fixed; margin-bottom: 14px;">';
-    $monthHtml .= '<thead><tr>';
-    foreach (['L', 'M', 'X', 'J', 'V', 'S', 'D'] as $dayLabel) {
-      $monthHtml .= '<th style="background-color:' . CALENDAR_COLOR_HEADER . '; border:1px solid #333333; text-align:center; padding:4px; font-size:10pt;">' . $dayLabel . '</th>';
-    }
-    $monthHtml .= '</tr></thead><tbody><tr>';
+function build_months_grid_html(DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
+  $monthsHtml = [];
+  $firstMonth = new DateTimeImmutable($start->format('Y-m-01'));
+  $lastMonth = new DateTimeImmutable($end->format('Y-m-01'));
 
-    for ($blank = 1; $blank < $startOffset; $blank++) {
-      $monthHtml .= '<td style="border:1px solid #333333; height:28px;">&nbsp;</td>';
-    }
-
-    $column = $startOffset;
-    for ($day = 1; $day <= $daysInMonth; $day++, $column++) {
-      $currentDate = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $yearNum, $monthNum, $day));
-      $curKey = $currentDate->format('Y-m-d');
-      $isTutoria = isset($tutoriasLookup[$curKey]); // MODIFICADO
-
-      $style = 'text-align:center; height:28px; vertical-align:middle; font-size:10pt; border:1px solid #333333;';
-      $class = $isTutoria ? ' class="dia-tutoria"' : ''; // MODIFICADO
-      if ($curKey < $startKey || $curKey > $endKey) {
-        // Fuera de rango: sin color.
-      } elseif ($curKey === $startKey) {
-        $style .= ' background-color:' . CALENDAR_COLOR_START . '; color:#ffffff; font-weight:bold;';
-      } elseif ($curKey === $endKey) {
-        $style .= ' background-color:' . CALENDAR_COLOR_END . '; font-weight:bold;';
-      } elseif (is_no_attendance_day($currentDate, $nonSchoolDays, $scheduleByDay)) {
-        $style .= ' background-color:' . CALENDAR_COLOR_NO_ATTENDANCE . ';';
-      } else {
-        $style .= ' background-color:' . CALENDAR_COLOR_ATTENDANCE . ';';
-      }
-
-      if ($isTutoria && !($curKey < $startKey || $curKey > $endKey)) { // MODIFICADO
-        $style .= ' background-color:#1e73be; color:#fff;'; // MODIFICADO
-      }
-
-      $monthHtml .= '<td' . $class . ' style="' . $style . '">' . $day . '</td>'; // MODIFICADO
-
-      if ($column % 7 === 0 && $day < $daysInMonth) {
-        $monthHtml .= '</tr><tr>';
-      }
-    }
-
-    while ($column % 7 !== 1) {
-      $monthHtml .= '<td style="border:1px solid #333333; height:28px;">&nbsp;</td>';
-      $column++;
-    }
-
-    $monthHtml .= '</tr></tbody></table>';
-    $monthHtmlChunks[] = $monthHtml;
+  for ($current = $firstMonth; $current <= $lastMonth; $current = $current->modify('+1 month')) {
+    $monthsHtml[] = build_month_table($current, $start, $end, $noLectivos, $tutorias, $scheduleByDay);
   }
 
-  $html = '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">';
-  for ($index = 0; $index < count($monthHtmlChunks); $index += 2) {
-    $html .= '<tr>';
-    $html .= '<td width="50%" style="vertical-align:top; padding-right:8px;">' . $monthHtmlChunks[$index] . '</td>';
-    $html .= '<td width="50%" style="vertical-align:top; padding-left:8px;">' . ($monthHtmlChunks[$index + 1] ?? '&nbsp;') . '</td>';
-    $html .= '</tr>';
+  $rowsHtml = '';
+  $total = count($monthsHtml);
+  for ($i = 0; $i < $total; $i += 3) {
+    $rowsHtml .= '<tr>';
+    for ($j = 0; $j < 3; $j++) {
+      $monthHtml = $monthsHtml[$i + $j] ?? '';
+      $rowsHtml .= '<td style="width:33.333%;">' . $monthHtml . '</td>';
+    }
+    $rowsHtml .= '</tr>';
   }
 
-  return $html . '</table>';
+  return $rowsHtml;
 }
 
-function count_attendance_days(DateTimeImmutable $startDate, DateTimeImmutable $endDate, array $nonSchoolDays, array $scheduleByDay): int {
-  $count = 0;
+function build_schedule_rows(array $scheduleByDay): string {
+  $dayNames = [1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo'];
 
-  for ($current = $startDate; $current <= $endDate; $current = $current->modify('+1 day')) {
-    if (!is_no_attendance_day($current, $nonSchoolDays, $scheduleByDay)) {
-      $count++;
+  $rowsHtml = '';
+  foreach ($dayNames as $day => $dayName) {
+    if (!has_assigned_schedule_for_day($scheduleByDay[$day] ?? [])) {
+      continue;
+    }
+
+    $rows = $scheduleByDay[$day] ?? [];
+    $am = $rows[0] ?? null;
+    $pm = $rows[1] ?? null;
+
+    $amEnt = format_time_es($am['hora_entrada'] ?? null, '--:--');
+    $amSal = format_time_es($am['hora_salida'] ?? null, '--:--');
+    $pmEnt = format_time_es($pm['hora_entrada'] ?? null, '--:--');
+    $pmSal = format_time_es($pm['hora_salida'] ?? null, '--:--');
+
+    $seconds = 0;
+    foreach ($rows as $r) {
+      $in = to_seconds((string) ($r['hora_entrada'] ?? ''));
+      $out = to_seconds((string) ($r['hora_salida'] ?? ''));
+      if ($out > $in) {
+        $seconds += ($out - $in);
+      }
+    }
+
+    $hoursLabel = '--';
+    if ($seconds > 0) {
+      $h = intdiv($seconds, 3600);
+      $m = intdiv($seconds % 3600, 60);
+      $hoursLabel = $m > 0 ? sprintf('%d:%02d', $h, $m) : (string) $h;
+    }
+
+    $rowsHtml .= '<tr>'
+      . '<td>' . $dayName . '</td>'
+      . '<td>' . $amEnt . '</td>'
+      . '<td>' . $amSal . '</td>'
+      . '<td>' . $pmEnt . '</td>'
+      . '<td>' . $pmSal . '</td>'
+      . '<td>' . $hoursLabel . '</td>'
+      . '</tr>';
+  }
+
+  return $rowsHtml;
+}
+
+function build_month_table(DateTimeImmutable $month, DateTimeImmutable $start, DateTimeImmutable $end, array $noLectivos, array $tutorias, array $scheduleByDay): string {
+  $year = (int) $month->format('Y');
+  $monthNum = (int) $month->format('n');
+  $days = (int) $month->format('t');
+  $offset = (int) $month->format('N');
+
+  $html = '<table class="month calendar-month">';
+  $html .= '<tr><th colspan="7" class="month-title">' . month_name_es($monthNum) . ' ' . $year . '</th></tr>';
+  $html .= '<tr><th class="dow">L</th><th class="dow">M</th><th class="dow">X</th><th class="dow">J</th><th class="dow">V</th><th class="dow">S</th><th class="dow">D</th></tr>';
+  $html .= '<tr>';
+
+  for ($i = 1; $i < $offset; $i++) {
+    $html .= '<td class="day empty">&nbsp;</td>';
+  }
+
+  $col = $offset;
+  for ($d = 1; $d <= $days; $d++, $col++) {
+    $date = new DateTimeImmutable(sprintf('%04d-%02d-%02d', $year, $monthNum, $d));
+    $class = day_css_class($date, $start, $end, $noLectivos, $tutorias, $scheduleByDay);
+    $attrs = '';
+    if (strpos(' ' . $class . ' ', ' empresa ') !== false) {
+      $attrs = ' bgcolor="#d9f2d9"';
+    }
+    $html .= '<td class="' . $class . '"' . $attrs . '>' . $d . '</td>';
+    if ($col % 7 === 0 && $d < $days) {
+      $html .= '</tr><tr>';
     }
   }
 
-  return $count;
+  while ($col % 7 !== 1) {
+    $html .= '<td class="day empty">&nbsp;</td>';
+    $col++;
+  }
+
+  return $html . '</tr></table>';
 }
 
-$idRaw = $_GET['id_practica'] ?? ($_POST['id_practica'] ?? ($_GET['id'] ?? ($_POST['id'] ?? null)));
+function build_schedule_tokens(array $scheduleByDay): array {
+  $codes = [1 => 'LUN', 2 => 'MAR', 3 => 'MIE', 4 => 'JUE', 5 => 'VIE', 6 => 'SAB', 7 => 'DOM'];
+  $tokens = [];
+
+  foreach ($codes as $day => $code) {
+    $rows = $scheduleByDay[$day] ?? [];
+    $am = $rows[0] ?? null;
+    $pm = $rows[1] ?? null;
+
+    $amEnt = format_time_es($am['hora_entrada'] ?? null);
+    $amSal = format_time_es($am['hora_salida'] ?? null);
+    $pmEnt = format_time_es($pm['hora_entrada'] ?? null);
+    $pmSal = format_time_es($pm['hora_salida'] ?? null);
+
+    $seconds = 0;
+    foreach ($rows as $r) {
+      $in = to_seconds((string) ($r['hora_entrada'] ?? ''));
+      $out = to_seconds((string) ($r['hora_salida'] ?? ''));
+      if ($out > $in) {
+        $seconds += ($out - $in);
+      }
+    }
+
+    $hoursLabel = '--';
+    if ($seconds > 0) {
+      $h = intdiv($seconds, 3600);
+      $m = intdiv($seconds % 3600, 60);
+      $hoursLabel = $m > 0 ? sprintf('%d:%02d', $h, $m) : (string) $h;
+    }
+
+    $tokens['{{' . $code . '_AM_ENT}}'] = $amEnt;
+    $tokens['{{' . $code . '_AM_SAL}}'] = $amSal;
+    $tokens['{{' . $code . '_PM_ENT}}'] = $pmEnt;
+    $tokens['{{' . $code . '_PM_SAL}}'] = $pmSal;
+    $tokens['{{' . $code . '_H}}'] = $hoursLabel;
+  }
+
+  return $tokens;
+}
+
+function build_course_label(array $practice): string {
+  $curso = trim((string) ($practice['curso'] ?? ''));
+  if ($curso !== '') {
+    return $curso;
+  }
+
+  $start = trim((string) ($practice['fecha_inicio'] ?? ''));
+  if ($start === '') {
+    return 'No disponible';
+  }
+
+  $dt = DateTimeImmutable::createFromFormat('Y-m-d', $start);
+  if (!$dt) {
+    return 'No disponible';
+  }
+
+  $year = (int) $dt->format('n') >= 9 ? (int) $dt->format('Y') : (int) $dt->format('Y') - 1;
+  return $year . '/' . ($year + 1);
+}
+
+function redirect_back_or_detail(int $practiceId, ?string $status = null, ?string $error = null): void {
+  $ref = trim((string) ($_SERVER['HTTP_REFERER'] ?? ''));
+  if ($ref !== '') {
+    $parts = parse_url($ref);
+    if ($parts !== false && isset($parts['host'], $_SERVER['HTTP_HOST']) && strcasecmp((string) $parts['host'], (string) $_SERVER['HTTP_HOST']) === 0) {
+      $query = [];
+      if (isset($parts['query'])) {
+        parse_str($parts['query'], $query);
+      }
+      if ($status !== null) {
+        $query['doc_status'] = $status;
+      }
+      if ($error !== null) {
+        $query['doc_error'] = $error;
+      }
+      $path = ($parts['path'] ?? 'practica_detalle.php');
+      $newUrl = $path . ($query ? '?' . http_build_query($query) : '');
+      if (isset($parts['fragment'])) {
+        $newUrl .= '#' . $parts['fragment'];
+      }
+      header('Location: ' . $newUrl);
+      exit;
+    }
+  }
+
+  practicas_redirect_to_detail($practiceId, $status, $error);
+}
+
+$idRaw = $_GET['id_practica'] ?? null;
 $id = filter_var($idRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 if ($id === false || $id === null) {
-  practicas_redirect_to_detail(0, null, 'Calendario: No se ha indicado un identificador de práctica válido.');
+  redirect_back_or_detail(0, null, 'Calendario: No se ha indicado un identificador de práctica válido.');
 }
+
+$debugFlag = $_GET['mpdf_debug'] ?? getenv('CALENDARIO_MPDF_DEBUG') ?? '0';
+$mpdfDebug = in_array(strtolower(trim((string) $debugFlag)), ['1', 'true', 'yes', 'on'], true);
 
 $tempFilePath = null;
 
 try {
   $pdo = db();
+
   $stmt = $pdo->prepare('SELECT p.*,a.nombre AS alumno_nombre,a.apellido1 AS alumno_apellido1,a.apellido2 AS alumno_apellido2,e.convenio AS empresa_convenio,e.nombre AS empresa_nombre,e.nombre_comercial AS empresa_nombre_comercial,et.nombre AS tutor_empresa_nombre,et.apellido1 AS tutor_empresa_apellido1,(SELECT t1.telefono FROM telefonos t1 WHERE t1.entidad_tipo = "alumno" AND t1.id_entidad = a.id_alumno ORDER BY t1.id_telefono ASC LIMIT 1) AS alumno_telefono,(SELECT c1.direccion_correo FROM correos c1 WHERE c1.entidad_tipo = "alumno" AND c1.id_entidad = a.id_alumno ORDER BY CASE WHEN TRIM(COALESCE(c1.etiqueta, "")) = "EducaMadrid" THEN 1 WHEN TRIM(COALESCE(c1.etiqueta, "")) = "Personal" THEN 2 ELSE 3 END, c1.id_correo ASC LIMIT 1) AS alumno_email,(SELECT t2.telefono FROM telefonos t2 WHERE t2.entidad_tipo = "empresa_tutor" AND t2.id_entidad = et.id_empresas_tutor ORDER BY t2.id_telefono ASC LIMIT 1) AS tutor_empresa_telefono,(SELECT c2.direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email,d.nombre_via AS direccion_nombre_via,d.numero AS direccion_numero,d.bloque AS direccion_bloque,d.escalera AS direccion_escalera,d.planta AS direccion_planta,d.puerta AS direccion_puerta,d.otros AS direccion_otros,d.cp AS direccion_cp,v.via AS direccion_via_tipo,ld.nombre AS direccion_localidad,pd.nombre AS direccion_provincia,pa.pais AS direccion_pais FROM practicas p LEFT JOIN alumnos a ON a.id_alumno=p.id_alumno LEFT JOIN empresas e ON e.id_empresa=p.id_empresa LEFT JOIN empresas_tutores et ON et.id_empresas_tutor=p.id_empresa_tutor LEFT JOIN direcciones d ON d.id_direccion=p.id_direccion LEFT JOIN vias v ON v.id_via=d.id_via LEFT JOIN localidades ld ON ld.id_localidad=d.id_localidad LEFT JOIN provincias pd ON pd.id_provincia=d.id_provincia LEFT JOIN paises pa ON pa.id_pais=d.id_pais WHERE p.id_practica=:id LIMIT 1');
   $stmt->execute(['id' => $id]);
-  $practice = $stmt->fetch();
+  $practice = $stmt->fetch(PDO::FETCH_ASSOC);
 
   if (!$practice) {
-    practicas_redirect_to_detail((int) $id, null, 'Calendario: No se encontró la práctica solicitada.');
+    redirect_back_or_detail((int) $id, null, 'Calendario: No se encontró la práctica solicitada.');
   }
 
   $scheduleByDay = [];
   $scheduleStmt = $pdo->prepare('SELECT dia_semana, hora_entrada, hora_salida FROM practicas_horario WHERE id_practica=:id ORDER BY dia_semana ASC, hora_entrada ASC');
   $scheduleStmt->execute(['id' => $id]);
-  foreach ($scheduleStmt->fetchAll() as $row) {
-    $day = (int) $row['dia_semana'];
-    $scheduleByDay[$day][] = $row;
+  foreach ($scheduleStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    $scheduleByDay[(int) $row['dia_semana']][] = $row;
   }
+
+  $startRaw = (string) ($practice['fecha_inicio'] ?? '');
+  $endRaw = (string) ($practice['fecha_fin_real'] ?? '');
+  if (trim($endRaw) === '') {
+    $endRaw = (string) ($practice['fecha_fin'] ?? '');
+  }
+
+  $startDate = DateTimeImmutable::createFromFormat('Y-m-d', $startRaw);
+  $endDate = DateTimeImmutable::createFromFormat('Y-m-d', $endRaw);
+  if (!$startDate || !$endDate || $startDate > $endDate) {
+    redirect_back_or_detail((int) $id, null, 'Calendario: No se puede generar el calendario porque las fechas de inicio/fin son inválidas.');
+  }
+
+  $noLectivos = [];
+  try {
+    $noLectivosStmt = $pdo->prepare('SELECT fecha FROM no_lectivos WHERE fecha BETWEEN :fi AND :ff');
+    $noLectivosStmt->execute(['fi' => $startDate->format('Y-m-d'), 'ff' => $endDate->format('Y-m-d')]);
+    foreach ($noLectivosStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+      if (!empty($row['fecha'])) {
+        $noLectivos[(string) $row['fecha']] = true;
+      }
+    }
+  } catch (Throwable $e) {
+  }
+
+  $institutoNombre = 'NOMBRE DEL INSTITUTO';
+  try {
+    $configStmt = $pdo->prepare('SELECT clave, valor FROM config WHERE clave IN ("instituto_nombre")');
+    $configStmt->execute();
+    foreach ($configStmt->fetchAll(PDO::FETCH_ASSOC) as $configRow) {
+      $clave = trim((string) ($configRow['clave'] ?? ''));
+      $valor = trim((string) ($configRow['valor'] ?? ''));
+      if ($clave === 'instituto_nombre') {
+        $institutoNombre = $valor;
+      }
+    }
+  } catch (Throwable $e) {
+    $institutoNombre = 'NOMBRE DEL INSTITUTO';
+  }
+
+  $tutorias = [];
+  try {
+    $tutoriasStmt = $pdo->prepare('SELECT fecha FROM tutorias WHERE fecha BETWEEN :fi AND :ff');
+    $tutoriasStmt->execute(['fi' => $startDate->format('Y-m-d'), 'ff' => $endDate->format('Y-m-d')]);
+    foreach ($tutoriasStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+      if (!empty($row['fecha'])) {
+        $tutorias[(string) $row['fecha']] = true;
+      }
+    }
+  } catch (Throwable $e) {
+  }
+
+  $templateCandidates = [
+    __DIR__ . '/docs/calendario.html',
+    __DIR__ . '/calendario.html',
+  ];
+  $templatePath = null;
+  $template = false;
+  foreach ($templateCandidates as $candidate) {
+    if (!is_file($candidate) || !is_readable($candidate)) {
+      continue;
+    }
+    $content = file_get_contents($candidate);
+    if ($content !== false) {
+      $templatePath = $candidate;
+      $template = $content;
+      break;
+    }
+  }
+  if ($template === false || $templatePath === null) {
+    throw new RuntimeException('No se pudo leer la plantilla del calendario. Rutas probadas: ' . implode(', ', $templateCandidates));
+  }
+
+  preg_match_all('/\{\{[A-Z0-9_]+\}\}/', $template, $matches);
+  $templateMarkers = array_unique($matches[0] ?? []);
 
   $practiceForPaths = $practice;
   unset($practiceForPaths['empresa_nombre_comercial']);
   $paths = practicas_get_document_paths($practiceForPaths);
-  $startDateRaw = (string) ($practice['fecha_inicio'] ?? '');
-  $endDateRaw = (string) ($practice['fecha_fin_real'] ?? '');
-  if ($endDateRaw === '') {
-    $endDateRaw = (string) ($practice['fecha_fin'] ?? '');
-  }
 
-  $startDate = $startDateRaw !== '' ? (new DateTimeImmutable($startDateRaw))->setTime(0, 0, 0) : false;
-  $endDate = $endDateRaw !== '' ? (new DateTimeImmutable($endDateRaw))->setTime(0, 0, 0) : false;
-  if (!$startDate || !$endDate || $startDate > $endDate) {
-    practicas_redirect_to_detail((int) $id, null, 'Calendario: No se puede generar el calendario porque las fechas de inicio/fin son inválidas.');
-  }
+  $contactoNombre = fallback_text(trim((string) ($practice['tutor_empresa_nombre'] ?? '') . ' ' . (string) ($practice['tutor_empresa_apellido1'] ?? '')));
 
-  $nonSchoolDays = [];
-  $nonSchoolSourceNote = '';
-  try {
-    $nonSchoolStmt = $pdo->prepare('SELECT fecha FROM no_lectivos WHERE fecha BETWEEN :fi AND :ff');
-    $nonSchoolStmt->execute(['fi' => $startDate->format('Y-m-d'), 'ff' => $endDate->format('Y-m-d')]);
-    foreach ($nonSchoolStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-      if (!empty($row['fecha'])) {
-        $nonSchoolDays[(string) $row['fecha']] = true;
-      }
-    }
-  } catch (Throwable $error) {
-    $nonSchoolSourceNote = 'Nota: no hay no lectivos configurados en el sistema para esta instalación.';
-  }
-
-  $tutorias = []; // MODIFICADO
-  try { // MODIFICADO
-    $tutoriasStmt = $pdo->prepare('SELECT fecha FROM tutorias WHERE fecha BETWEEN :fi AND :ff'); // MODIFICADO
-    $tutoriasStmt->execute(['fi' => $startDate->format('Y-m-d'), 'ff' => $endDate->format('Y-m-d')]); // MODIFICADO
-    foreach ($tutoriasStmt->fetchAll(PDO::FETCH_ASSOC) as $row) { // MODIFICADO
-      if (!empty($row['fecha'])) { // MODIFICADO
-        $tutorias[] = (new DateTimeImmutable((string) $row['fecha']))->format('Y-m-d'); // MODIFICADO
-      } // MODIFICADO
-    } // MODIFICADO
-    $tutorias = array_values(array_unique($tutorias)); // MODIFICADO
-  } catch (Throwable $error) {
-    // MODIFICADO
-  }
-
-  $diasSemana = [
-    1 => 'Lunes', 2 => 'Martes', 3 => 'Miércoles', 4 => 'Jueves', 5 => 'Viernes', 6 => 'Sábado', 7 => 'Domingo',
+  $replacements = [
+    '{{CURSO}}' => build_course_label($practice),
+    '{{FECHA_INICIO}}' => format_date_es($startDate->format('Y-m-d')),
+    '{{FECHA_FIN}}' => format_date_es($endDate->format('Y-m-d')),
+    '{{ALUMNO_NOMBRE}}' => build_person_name($practice, 'alumno'),
+    '{{ALUMNO_TELEFONO}}' => fallback_text($practice['alumno_telefono'] ?? null),
+    '{{ALUMNO_CORREO}}' => fallback_text($practice['alumno_email'] ?? null),
+    '{{EMPRESA_NOMBRE}}' => fallback_text($practice['empresa_nombre_comercial'] ?? ($practice['empresa_nombre'] ?? null)),
+    '{{EMPRESA_CENTRO}}' => fallback_text($practice['empresa_nombre'] ?? null),
+    '{{DIR_CENTRO_TRABAJO_FMT}}' => build_address($practice),
+    '{{CONTACTO_NOMBRE}}' => $contactoNombre,
+    '{{CONTACTO_TELEFONO}}' => fallback_text($practice['tutor_empresa_telefono'] ?? null),
+    '{{CONTACTO_CORREO}}' => fallback_text($practice['tutor_empresa_email'] ?? null),
+    '{{TUTOR_EMPRESA_NOMBRE}}' => $contactoNombre,
+    '{{TUTOR_EMPRESA_TELEFONO}}' => fallback_text($practice['tutor_empresa_telefono'] ?? null),
+    '{{TUTOR_EMPRESA_CORREO}}' => fallback_text($practice['tutor_empresa_email'] ?? null),
+    '{{OBSERVACIONES}}' => build_observaciones($practice['direccion_otros'] ?? null, $practice['observaciones'] ?? null),
+    '{{INSTITUTO_NOMBRE}}' => fallback_text($institutoNombre, 'NOMBRE DEL INSTITUTO'),
+    '{{HORARIO_FILAS}}' => build_schedule_rows($scheduleByDay),
   ];
 
-  $pdfHtml = '<h1 style="margin-bottom:8px;">Calendario de prácticas</h1>';
-  $pdfHtml .= '<p><strong>Alumno:</strong> ' . htmlspecialchars(full_name($practice, 'alumno'), ENT_QUOTES, 'UTF-8') . '</p>';
-  $pdfHtml .= '<p>' . htmlspecialchars((string) ($practice['alumno_telefono'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . ' / ' . htmlspecialchars((string) ($practice['alumno_email'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
-  $pdfHtml .= '<p><strong>Empresa:</strong> ' . htmlspecialchars((string) ($practice['empresa_nombre_comercial'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
-  $pdfHtml .= '<p><strong>Dirección Centro de Trabajo:</strong> ' . htmlspecialchars(build_address($practice), ENT_QUOTES, 'UTF-8') . '</p>';
-  $pdfHtml .= '<p>' . htmlspecialchars(trim((string) ($practice['tutor_empresa_nombre'] ?? '') . ' ' . (string) ($practice['tutor_empresa_apellido1'] ?? '')) !== '' ? trim((string) ($practice['tutor_empresa_nombre'] ?? '') . ' ' . (string) ($practice['tutor_empresa_apellido1'] ?? '')) : 'No disponible', ENT_QUOTES, 'UTF-8') . ': ' . htmlspecialchars((string) ($practice['tutor_empresa_telefono'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . ' / ' . htmlspecialchars((string) ($practice['tutor_empresa_email'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8') . '</p>';
-  $pdfHtml .= '<p><strong>Fecha inicio:</strong> ' . htmlspecialchars(format_date((string) ($practice['fecha_inicio'] ?? '')), ENT_QUOTES, 'UTF-8') . ' &nbsp;&nbsp; <strong>Fecha fin:</strong> ' . htmlspecialchars(format_date($endDateRaw), ENT_QUOTES, 'UTF-8') . '</p>';
-  $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Horario semanal</h3>';
-  $pdfHtml .= build_weekly_schedule_pdf_table($scheduleByDay, $diasSemana);
-  $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Calendario mensual</h3>';
-  if ($nonSchoolSourceNote !== '') {
-    $pdfHtml .= '<p style="font-size:9pt; color:#666666;">' . htmlspecialchars($nonSchoolSourceNote, ENT_QUOTES, 'UTF-8') . '</p>';
+  $replacements += build_schedule_tokens($scheduleByDay);
+
+  $replacements['{{MESES_GRID}}'] = build_months_grid_html($startDate, $endDate, $noLectivos, $tutorias, $scheduleByDay);
+
+  foreach ($templateMarkers as $marker) {
+    if (!array_key_exists($marker, $replacements)) {
+      $replacements[$marker] = '';
+    }
   }
-  $pdfHtml .= build_calendar_html($startDate, $endDate, $nonSchoolDays, $scheduleByDay, $tutorias); // MODIFICADO
-  $pdfHtml .= '<h3 style="margin: 12px 0 6px 0;">Observaciones</h3>';
-  if (($practice['observaciones'] ?? null) !== null && trim((string) $practice['observaciones']) !== '') {
-    $pdfHtml .= '<p>' . nl2br(htmlspecialchars((string) $practice['observaciones'], ENT_QUOTES, 'UTF-8')) . '</p>';
-  }
+
+  $html = strtr($template, $replacements);
 
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
-    'margin_left' => 12,
-    'margin_right' => 12,
-    'margin_top' => 12,
-    'margin_bottom' => 12,
     'tempDir' => ensure_mpdf_temp_dir(),
+    'debug' => $mpdfDebug,
   ]);
-
-  $css = '<style>html, body, .container { width: 100% !important; overflow: hidden; } table { table-layout: fixed !important; width: 100% !important; border-collapse: collapse; } td, th { word-break: break-all !important; overflow-wrap: break-word !important; } img { max-width: 150px !important; } .dia-tutoria { background-color: #1e73be; color: #fff; }</style>'; // MODIFICADO
-  $mpdf->WriteHTML($css, \Mpdf\HTMLParserMode::HEADER_CSS);
-  $mpdf->WriteHTML($pdfHtml, \Mpdf\HTMLParserMode::HTML_BODY);
+  $mpdf->showImageErrors = $mpdfDebug;
+  $mpdf->SetBasePath(dirname($templatePath) . '/');
 
   $tempFilePath = $paths['calendar_file_path'] . '.tmp';
-  if (file_exists($tempFilePath) && !@unlink($tempFilePath)) {
-    throw new RuntimeException('No se pudo limpiar el archivo temporal previo del calendario.');
+  $htmlDebugPath = $paths['calendar_file_path'] . '.html.tmp';
+  $targetDir = dirname($paths['calendar_file_path']);
+
+  if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+    throw new RuntimeException('No se pudo crear el directorio de destino del calendario: ' . $targetDir);
+  }
+  if (!is_writable($targetDir)) {
+    throw new RuntimeException('El directorio de destino del calendario no tiene permisos de escritura: ' . $targetDir);
   }
 
-  $mpdf->Output($tempFilePath, \Mpdf\Output\Destination::FILE);
+  if (file_exists($tempFilePath)) {
+    @unlink($tempFilePath);
+  }
+  if ($mpdfDebug && @file_put_contents($htmlDebugPath, $html) === false) {
+    throw new RuntimeException('No se pudo guardar el HTML de depuración del calendario: ' . $htmlDebugPath);
+  }
 
-  if (!file_exists($tempFilePath) || filesize($tempFilePath) === 0) {
+  $mpdf->WriteHTML($html);
+  $mpdf->Output($tempFilePath, Destination::FILE);
+
+  if (!file_exists($tempFilePath) || filesize($tempFilePath) <= 0) {
     throw new RuntimeException('No se ha podido crear el PDF del calendario.');
   }
 
@@ -397,11 +522,19 @@ try {
     throw new RuntimeException('No se ha podido guardar el PDF del calendario.');
   }
 
-  practicas_redirect_to_detail((int) $id, 'calendar_generated', null);
-} catch (Throwable $error) {
+  redirect_back_or_detail((int) $id, 'calendar_generated', null);
+} catch (Throwable $e) {
   if ($tempFilePath !== null && file_exists($tempFilePath)) {
     @unlink($tempFilePath);
   }
-
-  practicas_redirect_to_detail((int) ($id ?: 0), null, 'Calendario: No se pudo generar el PDF del calendario en este momento.');
+  if ($mpdfDebug) {
+    error_log(sprintf(
+      'Calendario mPDF error: %s in %s:%d',
+      $e->getMessage(),
+      $e->getFile(),
+      $e->getLine()
+    ));
+    redirect_back_or_detail((int) ($id ?: 0), null, 'Calendario: ' . $e->getMessage());
+  }
+  redirect_back_or_detail((int) ($id ?: 0), null, 'Calendario: No se pudo generar el PDF del calendario en este momento.');
 }
