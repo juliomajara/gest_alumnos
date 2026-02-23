@@ -96,7 +96,7 @@
     <td class="label" style="width: 7%;">Empresa</td><td colspan="3" class="value"><span class="value-text">{{EMPRESA_NOMBRE}}</span></td>
   </tr>
   <tr>
-    <td class="label">Centro de trabajo</td><td colspan="3"><span class="value-text">{{EMPRESA_DIRECCION}}</span></td>
+    <td class="label">Centro de trabajo</td><td colspan="3"><span class="value-text">{{DIR_CENTRO_TRABAJO_FMT}}</span></td>
   </tr>
 </table>
 
@@ -125,26 +125,33 @@
 </table>
 
 <!-- CALENDARIO (12 meses) -->
-<table class="months-grid">
+<table class="outer calendar-frame">
+  <tr><td class="section-title">Calendario del alumno en la empresa</td></tr>
   <tr>
-    <td style="width: 33.33%; padding-right: 8px;">{{MES_01}}</td>
-    <td style="width: 33.33%; padding: 0 4px;">{{MES_02}}</td>
-    <td style="width: 33.33%; padding-left: 8px;">{{MES_03}}</td>
-  </tr>
-  <tr>
-    <td style="padding-right: 8px;">{{MES_04}}</td>
-    <td style="padding: 0 4px;">{{MES_05}}</td>
-    <td style="padding-left: 8px;">{{MES_06}}</td>
-  </tr>
-  <tr>
-    <td style="padding-right: 8px;">{{MES_07}}</td>
-    <td style="padding: 0 4px;">{{MES_08}}</td>
-    <td style="padding-left: 8px;">{{MES_09}}</td>
-  </tr>
-  <tr>
-    <td style="padding-right: 8px;">{{MES_10}}</td>
-    <td style="padding: 0 4px;">{{MES_11}}</td>
-    <td style="padding-left: 8px;">{{MES_12}}</td>
+    <td>
+      <table class="months-grid">
+        <tr>
+          <td style="width: 33.33%; padding-right: 8px;">{{MES_01}}</td>
+          <td style="width: 33.33%; padding: 0 4px;">{{MES_02}}</td>
+          <td style="width: 33.33%; padding-left: 8px;">{{MES_03}}</td>
+        </tr>
+        <tr>
+          <td style="padding-right: 8px;">{{MES_04}}</td>
+          <td style="padding: 0 4px;">{{MES_05}}</td>
+          <td style="padding-left: 8px;">{{MES_06}}</td>
+        </tr>
+        <tr>
+          <td style="padding-right: 8px;">{{MES_07}}</td>
+          <td style="padding: 0 4px;">{{MES_08}}</td>
+          <td style="padding-left: 8px;">{{MES_09}}</td>
+        </tr>
+        <tr>
+          <td style="padding-right: 8px;">{{MES_10}}</td>
+          <td style="padding: 0 4px;">{{MES_11}}</td>
+          <td style="padding-left: 8px;">{{MES_12}}</td>
+        </tr>
+      </table>
+    </td>
   </tr>
 </table>
 
@@ -193,7 +200,7 @@
 <!-- OBSERVACIONES -->
 <table class="outer">
   <tr><td class="section-title">Observaciones</td></tr>
-  <tr><td class="obs-box"><span class="value-text">{{OBSERVACIONES}}</span></td></tr>
+  <tr><td class="obs-box"><span class="value-text">{{OBSERVACIONES}}{{OBS_COMPLEMENTO_DIRECCION}}</span></td></tr>
 </table>
 
 <!-- MENSAJE -->

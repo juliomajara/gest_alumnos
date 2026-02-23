@@ -66,6 +66,7 @@ function build_address(array $practice): string {
     trim((string) ($practice['direccion_nombre_via'] ?? '')),
   ])));
 
+  $provincia = trim((string) ($practice['direccion_provincia'] ?? ''));
   $parts = array_filter([
     $via,
     trim((string) ($practice['direccion_numero'] ?? '')),
@@ -73,14 +74,21 @@ function build_address(array $practice): string {
     ($practice['direccion_escalera'] ?? '') !== '' ? 'Esc. ' . $practice['direccion_escalera'] : '',
     ($practice['direccion_planta'] ?? '') !== '' ? 'Planta ' . $practice['direccion_planta'] : '',
     ($practice['direccion_puerta'] ?? '') !== '' ? 'Puerta ' . $practice['direccion_puerta'] : '',
-    trim((string) ($practice['direccion_otros'] ?? '')),
     trim((string) ($practice['direccion_cp'] ?? '')),
     trim((string) ($practice['direccion_localidad'] ?? '')),
-    trim((string) ($practice['direccion_provincia'] ?? '')),
-    trim((string) ($practice['direccion_pais'] ?? '')),
+    $provincia !== '' ? '(' . $provincia . ')' : '',
   ], static fn (string $item): bool => $item !== '');
 
   return $parts ? implode(', ', $parts) : 'No disponible';
+}
+
+function build_obs_complemento_direccion(?string $otros): string {
+  $otros = trim((string) $otros);
+  if ($otros === '') {
+    return '';
+  }
+
+  return '<br>Complemento a la dirección: ' . $otros;
 }
 
 function ensure_mpdf_temp_dir(): string {
@@ -416,7 +424,7 @@ try {
     '{{ALUMNO_CORREO}}' => fallback_text($practice['alumno_email'] ?? null),
     '{{EMPRESA_NOMBRE}}' => fallback_text($practice['empresa_nombre_comercial'] ?? ($practice['empresa_nombre'] ?? null)),
     '{{EMPRESA_CENTRO}}' => fallback_text($practice['empresa_nombre'] ?? null),
-    '{{EMPRESA_DIRECCION}}' => build_address($practice),
+    '{{DIR_CENTRO_TRABAJO_FMT}}' => build_address($practice),
     '{{CONTACTO_NOMBRE}}' => $contactoNombre,
     '{{CONTACTO_TELEFONO}}' => fallback_text($practice['tutor_empresa_telefono'] ?? null),
     '{{CONTACTO_CORREO}}' => fallback_text($practice['tutor_empresa_email'] ?? null),
@@ -424,6 +432,7 @@ try {
     '{{TUTOR_EMPRESA_TELEFONO}}' => fallback_text($practice['tutor_empresa_telefono'] ?? null),
     '{{TUTOR_EMPRESA_CORREO}}' => fallback_text($practice['tutor_empresa_email'] ?? null),
     '{{OBSERVACIONES}}' => trim((string) ($practice['observaciones'] ?? '')),
+    '{{OBS_COMPLEMENTO_DIRECCION}}' => build_obs_complemento_direccion($practice['direccion_otros'] ?? null),
     '{{INSTITUTO_NOMBRE}}' => fallback_text($institutoNombre, 'NOMBRE DEL INSTITUTO'),
     '{{HORARIO_FILAS}}' => build_schedule_rows($scheduleByDay),
   ];
