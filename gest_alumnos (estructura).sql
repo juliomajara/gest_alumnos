@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-02-2026 a las 18:16:27
+-- Tiempo de generación: 23-02-2026 a las 12:10:13
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -383,6 +383,7 @@ CREATE TABLE `practicas` (
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `cancelada` tinyint(1) NOT NULL DEFAULT 0,
   `mayor_edad` tinyint(1) NOT NULL DEFAULT 0,
+  `instrucciones` text DEFAULT NULL,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 20-02-2026 a las 18:15:55
+-- Tiempo de generación: 23-02-2026 a las 12:10:01
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -730,6 +730,7 @@ CREATE TABLE `config` (
 INSERT INTO `config` (`clave`, `valor`) VALUES
 ('instituto_codigo_centro', '28039827'),
 ('instituto_direccion', 'Av. de las Vascongadas, s/n, 28903 Getafe, Madrid'),
+('instituto_director', 'Miguel Ángel Amores Galisteo'),
 ('instituto_email', 'ies.lagunadejoatzel.getafe@educa.madrid.org'),
 ('instituto_nombre', 'IES Laguna de Joatzel'),
 ('instituto_telefono', '916837197'),
@@ -1590,13 +1591,12 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (15, 11, 1, 28, 4, 5, 'Daroca', '294', NULL, NULL, NULL, NULL, NULL, 'Principal', '28032', 1),
 (16, 12, 1, 28, 4, 10, 'Luna', '19', NULL, NULL, NULL, NULL, 'Local 2', 'Principal', '28004', 1),
 (17, 13, 1, 28, 4, 10, 'Amaltea', '1', NULL, 'F', '1', 'A', NULL, 'Principal', '28045', 1),
-(18, 14, 1, 28, 1, 10, 'Garcilaso', '14', NULL, NULL, '2', NULL, NULL, 'Principal', '28904', 1),
+(18, 14, 1, 28, 1, 10, 'Garcilaso', '14', NULL, NULL, '2', NULL, 'Nave 25, local 3. Polígono Industrial Marconi', 'Principal', '28904', 1),
 (19, 15, 1, 28, NULL, 10, 'Capitan Angosto Gómez Castrillón', '18', NULL, NULL, 'Bajo', 'Derecha', NULL, 'Principal', '28300', 1),
 (20, 16, 1, 28, 4, 5, 'de los Rosales', '42', '3', NULL, NULL, NULL, 'Nave 210, 211, 212', 'Principal', '28021', 1),
 (21, 17, 1, 28, NULL, 5, 'Atenas', 's/n', NULL, NULL, NULL, NULL, 'Campus URJC Alcorcón - Edificio Clínica Universitaria - 2ª planta', 'Principal', '28922', 1),
 (22, 18, 1, 28, 1, 10, 'Progreso', '2', NULL, NULL, NULL, NULL, 'Oficina 214', 'Principal', '28906', 1),
 (23, 19, 1, 28, NULL, 10, 'Reyes Católicos', '5', NULL, NULL, '4', 'B', NULL, 'Principal', '28802', 1),
-(25, 10, 1, 28, 4, 10, 'Resina', '13-15', NULL, NULL, NULL, NULL, 'Nave 2-14', 'Principal', '28021', 1),
 (26, 13, 1, 28, 4, 10, 'Amaltea', '1', NULL, 'F', '1', 'A', NULL, 'Principal', '28045', 1),
 (27, 13, 1, 28, 4, 5, 'Marconi', '9', NULL, NULL, NULL, NULL, 'Edificio 7, Nave 3', 'Centro de Trabajo', '28021', 0);
 
@@ -2150,6 +2150,7 @@ CREATE TABLE `practicas` (
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `cancelada` tinyint(1) NOT NULL DEFAULT 0,
   `mayor_edad` tinyint(1) NOT NULL DEFAULT 0,
+  `instrucciones` text DEFAULT NULL,
   `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -2157,34 +2158,34 @@ CREATE TABLE `practicas` (
 -- Volcado de datos para la tabla `practicas`
 --
 
-INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `fecha_fin_real`, `horas`, `circ_excep`, `cancelada`, `mayor_edad`, `observaciones`) VALUES
-(1, 23, 1, 1, 1, 59, '2026-02-23', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
-(2, 25, 2, 2, 2, 95, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
-(3, 28, 3, 5, 4, 64, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL),
-(4, 30, 4, 7, 5, 60, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(5, 31, 5, 8, 6, 154, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, 0, 0, NULL),
-(6, 39, 6, 9, 7, 61, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, 0, 0, NULL),
-(7, 44, 7, 11, 8, 143, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(8, 46, 8, 12, 9, 153, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, 0, 0, NULL),
-(10, 48, 8, 12, 9, 63, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, 0, 0, NULL),
-(11, 2, 10, 14, 11, 93, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(12, 11, 11, 15, 12, 94, '2026-02-23', '2026-05-28', 1, '2026-05-29', 440, 0, 0, 0, NULL),
-(13, 42, 17, 21, 18, 21, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, 0, 0, NULL),
-(14, 16, 8, 12, 9, 18, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 1, 0, 0, NULL),
-(15, 17, 9, 13, 10, 26, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, 0, 0, NULL),
-(16, 40, 16, 20, 17, 27, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, 0, 0, NULL),
-(17, 43, 18, 22, 19, 17, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 0, 0, 0, NULL),
-(18, 1, 19, 23, 20, 16, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, 0, 0, NULL),
-(19, 26, 13, 17, 14, 166, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(20, 27, 13, 17, 14, 166, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL),
-(23, 35, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
-(24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL),
-(25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL),
-(26, 47, 9, 13, 10, 175, '2026-02-26', '2026-05-13', 0, '2026-05-13', 370, 0, 0, 0, NULL),
-(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, 0, 0, NULL),
-(28, 33, 14, 18, 15, 900, '2026-02-23', '2026-06-03', 2, '2026-06-05', 500, 0, 0, 1, 'Preguntar por Ana al llegar.\r\nNo llamar al telefonillo.');
+INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `fecha_inicio`, `fecha_fin`, `dias_extra`, `fecha_fin_real`, `horas`, `circ_excep`, `cancelada`, `mayor_edad`, `instrucciones`, `observaciones`) VALUES
+(1, 23, 1, 1, 1, 59, '2026-02-23', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
+(2, 25, 2, 2, 2, 95, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
+(3, 28, 3, 5, 4, 64, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL, NULL),
+(4, 30, 4, 7, 5, 60, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(5, 31, 5, 8, 6, 154, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, 0, 0, NULL, NULL),
+(6, 39, 6, 9, 7, 61, '2026-02-23', '2026-05-08', 0, '2026-05-08', 370, 0, 0, 0, NULL, NULL),
+(7, 44, 7, 11, 8, 143, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(8, 46, 8, 12, 9, 153, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, 0, 0, NULL, NULL),
+(10, 48, 8, 12, 9, 63, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 1, 0, 0, NULL, NULL),
+(11, 2, 10, 14, 11, 93, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(12, 11, 11, 15, 12, 94, '2026-02-23', '2026-05-28', 1, '2026-05-29', 440, 0, 0, 0, NULL, NULL),
+(13, 42, 17, 21, 18, 21, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, 0, 0, NULL, NULL),
+(14, 16, 8, 12, 9, 18, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 1, 0, 0, NULL, NULL),
+(15, 17, 9, 13, 10, 26, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, 0, 0, NULL, NULL),
+(16, 40, 16, 20, 17, 27, '2025-10-22', '2026-01-15', 0, '2026-01-15', 370, 0, 0, 0, NULL, NULL),
+(17, 43, 18, 22, 19, 17, '2025-10-14', '2025-12-19', 0, '2025-12-19', 370, 0, 0, 0, NULL, NULL),
+(18, 1, 19, 23, 20, 16, '2025-10-01', '2025-12-17', 0, '2025-12-17', 370, 0, 0, 0, NULL, NULL),
+(19, 26, 13, 17, 14, 166, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(20, 27, 13, 17, 14, 166, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
+(23, 35, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
+(24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
+(25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', 0, '2026-06-03', 500, 0, 0, 0, NULL, NULL),
+(26, 47, 9, 13, 10, 175, '2026-02-26', '2026-05-13', 0, '2026-05-13', 370, 0, 0, 0, NULL, NULL),
+(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', 0, '2026-06-08', 500, 0, 0, 0, NULL, NULL),
+(28, 33, 14, 18, 15, 900, '2026-02-23', '2026-06-03', 2, '2026-06-05', 500, 0, 0, 1, NULL, 'Preguntar por Ana al llegar.\r\nNo llamar al telefonillo.');
 
 -- --------------------------------------------------------
 
@@ -3371,7 +3372,7 @@ ALTER TABLE `niveles`
 -- AUTO_INCREMENT de la tabla `no_lectivos`
 --
 ALTER TABLE `no_lectivos`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT de la tabla `paises`
@@ -3443,7 +3444,7 @@ ALTER TABLE `telefonos`
 -- AUTO_INCREMENT de la tabla `tutorias`
 --
 ALTER TABLE `tutorias`
-  MODIFY `id_tutoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_tutoria` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `vias`
