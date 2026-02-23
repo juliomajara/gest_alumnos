@@ -1096,14 +1096,14 @@ $dias_semana = [
           </div>
 
           <div class="practica-nueva-block practica-nueva-block--observaciones">
-            <div class="entity-grid entity-grid--full">
+            <div class="entity-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch;">
               <label>
                 Observaciones
-                <textarea name="observaciones" id="observaciones"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <textarea class="practica-notes-textarea" name="observaciones" id="observaciones" rows="5" style="width: 100%;"><?php echo htmlspecialchars((string) ($form_values['observaciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
               </label>
               <label>
                 Instrucciones
-                <textarea name="instrucciones" id="instrucciones"><?php echo htmlspecialchars((string) ($form_values['instrucciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <textarea class="practica-notes-textarea" name="instrucciones" id="instrucciones" rows="5" style="width: 100%;"><?php echo htmlspecialchars((string) ($form_values['instrucciones'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></textarea>
               </label>
             </div>
           </div>
