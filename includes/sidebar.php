@@ -1,5 +1,35 @@
 <?php
 $active_page = $active_page ?? '';
+
+$current_page = basename((string) ($_SERVER['PHP_SELF'] ?? $_SERVER['SCRIPT_NAME'] ?? ''));
+
+$section_pages = [
+  'utilidades' => [
+    'utilidades.php',
+    'empresas_importar.php',
+    'dump_db.php',
+    'practicas_ras.php',
+    'enviar_correos.php',
+  ],
+  'configuracion' => [
+    'configuracion.php',
+    'datos_centro.php',
+    'calendario.php',
+  ],
+];
+
+$detected_active_page = '';
+foreach ($section_pages as $section_key => $pages) {
+  if (in_array($current_page, $pages, true)) {
+    $detected_active_page = $section_key;
+    break;
+  }
+}
+
+if ($detected_active_page !== '') {
+  $active_page = $detected_active_page;
+}
+
 $nav_items = [
   [
     'key' => 'dashboard',
