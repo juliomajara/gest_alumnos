@@ -286,11 +286,10 @@ if (isset($_GET['action'])) {
         }
       }
 
-      $insert = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, cp) VALUES (:id_provincia, :nombre, :cp)');
+      $insert = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre) VALUES (:id_provincia, :nombre)');
       $insert->execute([
         'id_provincia' => $idProvincia,
         'nombre' => $nombreLocalidad,
-        'cp' => $cp !== '' ? $cp : null,
       ]);
 
       echo json_encode([
