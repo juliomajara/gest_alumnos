@@ -393,6 +393,8 @@ if (($_GET['action'] ?? '') !== '') {
               d.cp,
               v.via,
               l.nombre AS localidad,
+              l.km_desde_getafe,
+              l.abono_desde_getafe,
               p.nombre AS provincia
        FROM direcciones d
        LEFT JOIN vias v ON v.id_via = d.id_via
@@ -407,6 +409,8 @@ if (($_GET['action'] ?? '') !== '') {
       $direcciones[] = [
         'id_direccion' => (int) $address['id_direccion'],
         'label' => practice_address_label($address),
+        'km_desde_getafe' => $address['km_desde_getafe'] !== null ? (string) $address['km_desde_getafe'] : '',
+        'abono_desde_getafe' => $address['abono_desde_getafe'] !== null ? (string) $address['abono_desde_getafe'] : '',
       ];
     }
 
@@ -804,7 +808,7 @@ $company_addresses = [];
 $company_tutors = [];
 if ($selected_company > 0) {
   $address_stmt = $pdo->prepare(
-    'SELECT d.id_direccion,
+     'SELECT d.id_direccion,
             d.etiqueta,
             d.principal,
             d.nombre_via,
@@ -816,6 +820,8 @@ if ($selected_company > 0) {
             d.cp,
             v.via,
             l.nombre AS localidad,
+            l.km_desde_getafe,
+            l.abono_desde_getafe,
             p.nombre AS provincia
      FROM direcciones d
      LEFT JOIN vias v ON v.id_via = d.id_via
@@ -835,6 +841,18 @@ if ($selected_company > 0) {
   );
   $tutor_stmt->execute(['id_empresa' => $selected_company]);
   $company_tutors = $tutor_stmt->fetchAll();
+}
+
+$km_desde_getafe = '';
+$abono_desde_getafe = '';
+if ($selected_address > 0 && $company_addresses) {
+  foreach ($company_addresses as $address) {
+    if ((int) $address['id_direccion'] === $selected_address) {
+      $km_desde_getafe = $address['km_desde_getafe'] !== null ? (string) $address['km_desde_getafe'] : '';
+      $abono_desde_getafe = $address['abono_desde_getafe'] !== null ? (string) $address['abono_desde_getafe'] : '';
+      break;
+    }
+  }
 }
 
 $page_title = 'Nueva práctica | Gestor de Alumnos';
@@ -1091,6 +1109,14 @@ $dias_semana = [
                   Horas último día
                   <input type="text" id="horas_ultimo_dia" value="" readonly>
                 </label>
+                <label>
+                  Kilometraje
+                  <input type="text" id="km_desde_getafe" value="<?php echo htmlspecialchars($km_desde_getafe, ENT_QUOTES, 'UTF-8'); ?>" readonly>
+                </label>
+                <label>
+                  Abono
+                  <input type="text" id="abono_desde_getafe" value="<?php echo htmlspecialchars($abono_desde_getafe, ENT_QUOTES, 'UTF-8'); ?>" readonly>
+                </label>
               </div>
             </div>
           </div>
@@ -1135,6 +1161,8 @@ $dias_semana = [
     const extraDaysInput = document.getElementById('dias_extra');
     const computedDaysInput = document.getElementById('dias_computados');
     const lastDayHoursInput = document.getElementById('horas_ultimo_dia');
+    const kmDesdeGetafeInput = document.getElementById('km_desde_getafe');
+    const abonoDesdeGetafeInput = document.getElementById('abono_desde_getafe');
     const scheduleContainer = document.querySelector('[data-schedule-container]');
     const nonTeachingDays = new Set(<?php echo json_encode(array_values($no_lectivos), JSON_UNESCAPED_UNICODE); ?>);
     const nonTeachingConfigured = <?php echo $non_teaching_configured ? 'true' : 'false'; ?>;
@@ -1418,6 +1446,8 @@ $dias_semana = [
       tutorSelect.disabled = companyId <= 0;
 
       if (companyId <= 0) {
+        kmDesdeGetafeInput.value = '';
+        abonoDesdeGetafeInput.value = '';
         return;
       }
 
@@ -1433,10 +1463,17 @@ $dias_semana = [
           const option = document.createElement('option');
           option.value = String(address.id_direccion);
           option.textContent = address.label;
+          option.dataset.kmDesdeGetafe = address.km_desde_getafe || '';
+          option.dataset.abonoDesdeGetafe = address.abono_desde_getafe || '';
           addressSelect.appendChild(option);
         });
         if (direcciones.length === 1) {
           addressSelect.value = String(direcciones[0].id_direccion);
+          kmDesdeGetafeInput.value = direcciones[0].km_desde_getafe || '';
+          abonoDesdeGetafeInput.value = direcciones[0].abono_desde_getafe || '';
+        } else {
+          kmDesdeGetafeInput.value = '';
+          abonoDesdeGetafeInput.value = '';
         }
 
         resetSelect(tutorSelect, 'Selecciona un tutor');
@@ -1456,6 +1493,12 @@ $dias_semana = [
 
       addressSelect.disabled = false;
       tutorSelect.disabled = false;
+    });
+
+    addressSelect.addEventListener('change', () => {
+      const selectedOption = addressSelect.options[addressSelect.selectedIndex];
+      kmDesdeGetafeInput.value = selectedOption?.dataset?.kmDesdeGetafe || '';
+      abonoDesdeGetafeInput.value = selectedOption?.dataset?.abonoDesdeGetafe || '';
     });
 
     if (scheduleContainer) {
