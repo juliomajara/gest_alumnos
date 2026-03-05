@@ -177,9 +177,6 @@ function format_modules(mixed $modules): string
     $compact_cycle = preg_replace('/\s+/', '', $normalized_cycle . trim((string) $curso));
     $visible_name = $nombre_completo !== '' ? $nombre_completo : $abreviatura;
     $visible_label = $visible_name;
-    if ($compact_cycle !== '') {
-      $visible_label .= ' (' . $compact_cycle . ')';
-    }
 
     $renderedItems[] = '<span '
       . 'class="empresa-name-trigger empresa-name-trigger--practicas" '
