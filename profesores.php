@@ -184,7 +184,8 @@ function format_modules(mixed $modules): string
     $renderedItems[] = '<span '
       . 'class="empresa-name-trigger empresa-name-trigger--practicas" '
       . 'role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" '
-      . 'data-modulo-nombre="' . htmlspecialchars($visible_name, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-id="' . htmlspecialchars((string) $id_modulo, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-nombre="' . htmlspecialchars($visible_label, ENT_QUOTES, 'UTF-8') . '" '
       . 'data-modulo-ciclo="' . htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8') . '" '
       . 'data-modulo-curso="' . htmlspecialchars($curso, ENT_QUOTES, 'UTF-8') . '" '
       . 'data-modulo-codigo="' . htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8') . '" '
@@ -192,7 +193,7 @@ function format_modules(mixed $modules): string
       . 'data-modulo-horas-totales="' . htmlspecialchars((string) $horas_totales, ENT_QUOTES, 'UTF-8') . '" '
       . 'data-modulo-compact="' . htmlspecialchars((string) $compact_cycle, ENT_QUOTES, 'UTF-8') . '" '
       . '>'
-      . htmlspecialchars($visible_label, ENT_QUOTES, 'UTF-8')
+      . htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8')
       . '</span>';
   }
 
@@ -317,7 +318,7 @@ $active_page = 'profesores';
     <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
     <div class="practicas-ras-popover" id="modulo-detail-popover" role="dialog" aria-modal="false" aria-labelledby="modulo-detail-title" hidden>
       <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del módulo">×</button>
-      <h3 id="modulo-detail-title" class="practicas-ras-popover__title"></h3>
+      <a id="modulo-detail-title" class="practicas-ras-popover__title" href="#"></a>
       <ul class="practicas-ras-popover__criteria" id="modulo-detail-data"></ul>
     </div>
   </div>
@@ -431,6 +432,12 @@ $active_page = 'profesores';
         }
 
         title.textContent = trigger.dataset.moduloNombre || 'Módulo';
+        const moduloId = (trigger.dataset.moduloId || '').trim();
+        if (moduloId !== '') {
+          title.setAttribute('href', `modulo_detalle.php?id_modulo=${encodeURIComponent(moduloId)}`);
+        } else {
+          title.setAttribute('href', '#');
+        }
         detailList.innerHTML = '';
 
         addInfoItem('Ciclo', getValueOrFallback(trigger.dataset.moduloCiclo));
