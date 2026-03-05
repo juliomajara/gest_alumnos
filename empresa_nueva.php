@@ -260,7 +260,7 @@ if (isset($_GET['action'])) {
         exit;
       }
 
-      $stmt = $pdo->prepare('SELECT codigo_postal, municipio, provincia FROM codigos_postales WHERE codigo_postal = :cp LIMIT 1');
+      $stmt = $pdo->prepare('SELECT cod_postal, poblacion, provincia FROM codigos_postales WHERE cod_postal = :cp LIMIT 1');
       $stmt->execute(['cp' => $cp]);
       $row = $stmt->fetch();
 
@@ -269,7 +269,7 @@ if (isset($_GET['action'])) {
         exit;
       }
 
-      $nombreLocalidad = trim((string) ($row['municipio'] ?? ''));
+      $nombreLocalidad = trim((string) ($row['poblacion'] ?? ''));
       $nombreProvincia = trim((string) ($row['provincia'] ?? ''));
       $idProvincia = null;
       $idLocalidad = null;
@@ -301,7 +301,7 @@ if (isset($_GET['action'])) {
         }
 
         if ($idLocalidad === null) {
-          $insertLocalidad = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, km_desde_getafe, abono_desde_getafe) VALUES (:id_provincia, :nombre, NULL, NULL)');
+          $insertLocalidad = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre) VALUES (:id_provincia, :nombre)');
           $insertLocalidad->execute([
             'id_provincia' => $idProvincia,
             'nombre' => $nombreLocalidad,
@@ -1096,18 +1096,11 @@ $active_page = 'empresas';
 
       const forceRefresh = options.forceRefresh === true;
 
-      const paisSelect = direccionItem.querySelector('select[name*="[id_pais]"]');
-      const cpInput = direccionItem.querySelector('input[name*="[cp]"]');
-      const direccionNamePrefix = cpInput?.name ? cpInput.name.replace(/\[cp\]$/, '') : '';
-      const provinciaSelect = direccionNamePrefix
-        ? direccionItem.querySelector(`select[name="${direccionNamePrefix}[id_provincia]"]`)
-        : direccionItem.querySelector('select[name*="[id_provincia]"]');
-      const localidadInput = direccionNamePrefix
-        ? direccionItem.querySelector(`input[name="${direccionNamePrefix}[localidad]"]`)
-        : direccionItem.querySelector('input[name*="[localidad]"]');
-      const idLocalidadInput = direccionNamePrefix
-        ? direccionItem.querySelector(`input[name="${direccionNamePrefix}[id_localidad]"]`)
-        : direccionItem.querySelector('input[name*="[id_localidad]"]');
+      const paisSelect = direccionItem.querySelector('select[name$="[id_pais]"]');
+      const cpInput = direccionItem.querySelector('input[name$="[cp]"]');
+      const provinciaSelect = direccionItem.querySelector('select[name$="[id_provincia]"]');
+      const localidadInput = direccionItem.querySelector('input[name$="[localidad]"]');
+      const idLocalidadInput = direccionItem.querySelector('input[type="hidden"][name$="[id_localidad]"]');
 
       const postalCode = normalizePostalCode(cpInput?.value || '');
       const idPais = (paisSelect?.value || '').trim();
@@ -1144,8 +1137,8 @@ $active_page = 'empresas';
         }
 
         const idProvincia = cpData.id_provincia ? String(cpData.id_provincia) : '';
-        if (provinciaSelect && idProvincia) {
-          provinciaSelect.value = idProvincia;
+        if (provinciaSelect && cpData.id_provincia) {
+          provinciaSelect.value = String(cpData.id_provincia);
         } else if (provinciaSelect && cpData.provincia) {
           const provinciaNombre = String(cpData.provincia || '').trim().toLowerCase();
           if (provinciaNombre) {
@@ -1160,8 +1153,8 @@ $active_page = 'empresas';
           localidadInput.value = String(cpData.localidad);
         }
 
-        if (idLocalidadInput && cpData.id_localidad) {
-          idLocalidadInput.value = String(cpData.id_localidad);
+        if (idLocalidadInput) {
+          idLocalidadInput.value = String(cpData.id_localidad || '');
         }
       } catch (_) {
         // Silencio intencional para no mostrar errores técnicos.
@@ -1205,11 +1198,16 @@ $active_page = 'empresas';
 
     document.addEventListener('blur', (event) => {
       const target = event.target;
-      if (!(target instanceof Element) || !target.matches('input[name*="[cp]"]')) {
+      if (!(target instanceof Element)) {
         return;
       }
 
-      const direccionItem = target.closest('.empresa-direccion-item');
+      const cpInput = event.target.closest('.empresa-direccion-item input[name$="[cp]"]');
+      if (!cpInput) {
+        return;
+      }
+
+      const direccionItem = cpInput.closest('.empresa-direccion-item');
       if (direccionItem) {
         fetchAddressFromPostalCode(direccionItem);
       }
