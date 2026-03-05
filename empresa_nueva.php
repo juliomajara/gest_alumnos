@@ -1098,9 +1098,16 @@ $active_page = 'empresas';
 
       const paisSelect = direccionItem.querySelector('select[name*="[id_pais]"]');
       const cpInput = direccionItem.querySelector('input[name*="[cp]"]');
-      const provinciaSelect = direccionItem.querySelector('select[name*="[id_provincia]"]');
-      const localidadInput = direccionItem.querySelector('input[name*="[localidad]"]');
-      const idLocalidadInput = direccionItem.querySelector('input[name*="[id_localidad]"]');
+      const direccionNamePrefix = cpInput?.name ? cpInput.name.replace(/\[cp\]$/, '') : '';
+      const provinciaSelect = direccionNamePrefix
+        ? direccionItem.querySelector(`select[name="${direccionNamePrefix}[id_provincia]"]`)
+        : direccionItem.querySelector('select[name*="[id_provincia]"]');
+      const localidadInput = direccionNamePrefix
+        ? direccionItem.querySelector(`input[name="${direccionNamePrefix}[localidad]"]`)
+        : direccionItem.querySelector('input[name*="[localidad]"]');
+      const idLocalidadInput = direccionNamePrefix
+        ? direccionItem.querySelector(`input[name="${direccionNamePrefix}[id_localidad]"]`)
+        : direccionItem.querySelector('input[name*="[id_localidad]"]');
 
       const postalCode = normalizePostalCode(cpInput?.value || '');
       const idPais = (paisSelect?.value || '').trim();
@@ -1137,29 +1144,24 @@ $active_page = 'empresas';
         }
 
         const idProvincia = cpData.id_provincia ? String(cpData.id_provincia) : '';
-        if (idProvincia && provinciaSelect && provinciaSelect.value !== idProvincia) {
+        if (provinciaSelect && idProvincia) {
           provinciaSelect.value = idProvincia;
         } else if (provinciaSelect && cpData.provincia) {
           const provinciaNombre = String(cpData.provincia || '').trim().toLowerCase();
           if (provinciaNombre) {
             const provinciaOption = Array.from(provinciaSelect.options).find((option) => String(option.textContent || '').trim().toLowerCase() === provinciaNombre);
-            if (provinciaOption && provinciaSelect.value !== provinciaOption.value) {
+            if (provinciaOption) {
               provinciaSelect.value = provinciaOption.value;
             }
           }
         }
 
-        const localidadName = String(cpData.localidad || '').trim();
-        if (!localidadName) {
-          return;
+        if (localidadInput && cpData.localidad) {
+          localidadInput.value = String(cpData.localidad);
         }
 
-        if (localidadInput) {
-          localidadInput.value = localidadName;
-        }
-
-        if (idLocalidadInput) {
-          idLocalidadInput.value = cpData.id_localidad ? String(cpData.id_localidad) : '';
+        if (idLocalidadInput && cpData.id_localidad) {
+          idLocalidadInput.value = String(cpData.id_localidad);
         }
       } catch (_) {
         // Silencio intencional para no mostrar errores técnicos.
@@ -1202,9 +1204,14 @@ $active_page = 'empresas';
     });
 
     document.addEventListener('blur', (event) => {
-      const cpInput = event.target.closest('.empresa-direccion-item input[name*="[cp]"]');
-      if (cpInput) {
-        fetchAddressFromPostalCode(cpInput.closest('.empresa-direccion-item'));
+      const target = event.target;
+      if (!(target instanceof Element) || !target.matches('input[name*="[cp]"]')) {
+        return;
+      }
+
+      const direccionItem = target.closest('.empresa-direccion-item');
+      if (direccionItem) {
+        fetchAddressFromPostalCode(direccionItem);
       }
     }, true);
 
