@@ -1112,7 +1112,6 @@ $active_page = 'empresas';
 
       if (cpChanged) {
         direccionItem.dataset.lastCp = postalCode;
-        resetDireccionLocalidad(direccionItem);
         delete direccionItem.dataset.lastLookupKey;
       }
 
@@ -1140,6 +1139,14 @@ $active_page = 'empresas';
         const idProvincia = cpData.id_provincia ? String(cpData.id_provincia) : '';
         if (idProvincia && provinciaSelect && provinciaSelect.value !== idProvincia) {
           provinciaSelect.value = idProvincia;
+        } else if (provinciaSelect && cpData.provincia) {
+          const provinciaNombre = String(cpData.provincia || '').trim().toLowerCase();
+          if (provinciaNombre) {
+            const provinciaOption = Array.from(provinciaSelect.options).find((option) => String(option.textContent || '').trim().toLowerCase() === provinciaNombre);
+            if (provinciaOption && provinciaSelect.value !== provinciaOption.value) {
+              provinciaSelect.value = provinciaOption.value;
+            }
+          }
         }
 
         const localidadName = String(cpData.localidad || '').trim();
