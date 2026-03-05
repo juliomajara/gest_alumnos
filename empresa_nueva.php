@@ -251,6 +251,76 @@ if (isset($_GET['action'])) {
       exit;
     }
 
+    if ($action === 'cp_data_es') {
+      $cpRaw = trim((string) ($_GET['cp'] ?? ''));
+      $cp = preg_replace('/\D+/', '', $cpRaw) ?? '';
+
+      if ($cp === '') {
+        echo json_encode(['ok' => true, 'found' => false], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $stmt = $pdo->prepare('SELECT codigo_postal, municipio, provincia FROM codigos_postales WHERE codigo_postal = :cp LIMIT 1');
+      $stmt->execute(['cp' => $cp]);
+      $row = $stmt->fetch();
+
+      if (!$row) {
+        echo json_encode(['ok' => true, 'found' => false], JSON_UNESCAPED_UNICODE);
+        exit;
+      }
+
+      $nombreLocalidad = trim((string) ($row['municipio'] ?? ''));
+      $nombreProvincia = trim((string) ($row['provincia'] ?? ''));
+      $idProvincia = null;
+      $idLocalidad = null;
+      $nombreLocalidadFinal = $nombreLocalidad;
+
+      if ($nombreProvincia !== '') {
+        $provinciaStmt = $pdo->prepare('SELECT id_provincia, nombre FROM provincias ORDER BY nombre');
+        $provinciaStmt->execute();
+        $provinciaRows = $provinciaStmt->fetchAll();
+        $bestProvincia = pick_best_lookup_match($nombreProvincia, $provinciaRows, 'nombre');
+        if ($bestProvincia) {
+          $idProvincia = (int) $bestProvincia['id_provincia'];
+          $nombreProvincia = (string) $bestProvincia['nombre'];
+        }
+      }
+
+      if ($idProvincia && $nombreLocalidad !== '') {
+        $nombreLocalidadLookup = normalize_localidad_lookup_value($nombreLocalidad);
+        $stmtLocalidad = $pdo->prepare('SELECT id_localidad, nombre FROM localidades WHERE id_provincia = :id_provincia ORDER BY nombre');
+        $stmtLocalidad->execute(['id_provincia' => $idProvincia]);
+
+        foreach ($stmtLocalidad->fetchAll() as $localidadRow) {
+          $dbLookup = normalize_localidad_lookup_value((string) ($localidadRow['nombre'] ?? ''));
+          if ($dbLookup !== '' && $dbLookup === $nombreLocalidadLookup) {
+            $idLocalidad = (int) $localidadRow['id_localidad'];
+            $nombreLocalidadFinal = (string) $localidadRow['nombre'];
+            break;
+          }
+        }
+
+        if ($idLocalidad === null) {
+          $insertLocalidad = $pdo->prepare('INSERT INTO localidades (id_provincia, nombre, km_desde_getafe, abono_desde_getafe) VALUES (:id_provincia, :nombre, NULL, NULL)');
+          $insertLocalidad->execute([
+            'id_provincia' => $idProvincia,
+            'nombre' => $nombreLocalidad,
+          ]);
+          $idLocalidad = (int) $pdo->lastInsertId();
+        }
+      }
+
+      echo json_encode([
+        'ok' => true,
+        'found' => true,
+        'id_provincia' => $idProvincia,
+        'provincia' => $nombreProvincia,
+        'localidad' => $nombreLocalidadFinal,
+        'id_localidad' => $idLocalidad,
+      ], JSON_UNESCAPED_UNICODE);
+      exit;
+    }
+
     if ($action === 'localidad_get_or_create') {
       $idProvinciaRaw = $_POST['id_provincia'] ?? $_GET['id_provincia'] ?? null;
       $cpRaw = (string) ($_POST['cp'] ?? $_GET['cp'] ?? '');
@@ -988,34 +1058,14 @@ $active_page = 'empresas';
       status.textContent = isLoading ? '⏳ Cargando datos de dirección…' : '';
     };
 
-    const fetchProvinciaPorCpPrefix = async (prefix) => {
-      if (!prefix || prefix.length < 2) {
+    const fetchDireccionPorCpEspana = async (cp) => {
+      if (!cp || cp.length < 2) {
         return null;
       }
 
       const data = await fetchJson(
-        `empresa_nueva.php?action=provincia_por_cp_prefix&prefix=${encodeURIComponent(prefix)}`
+        `empresa_nueva.php?action=cp_data_es&cp=${encodeURIComponent(cp)}`
       );
-
-      return data?.ok ? data.id_provincia : null;
-    };
-
-    const getOrCreateLocalidad = async (idProvincia, cp, nombreLocalidad) => {
-      if (!idProvincia || !nombreLocalidad) {
-        return null;
-      }
-
-      const body = new URLSearchParams({
-        id_provincia: String(idProvincia),
-        cp: String(cp || ''),
-        nombre_localidad: String(nombreLocalidad || ''),
-      });
-
-      const data = await fetchJson('empresa_nueva.php?action=localidad_get_or_create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-        body: body.toString(),
-      });
 
       return data?.ok ? data : null;
     };
@@ -1054,7 +1104,6 @@ $active_page = 'empresas';
 
       const postalCode = normalizePostalCode(cpInput?.value || '');
       const idPais = (paisSelect?.value || '').trim();
-      const prefix = postalCode.slice(0, 2);
       const cpChanged = direccionItem.dataset.lastCp !== postalCode;
 
       if (!idPais || !postalCode || postalCode.length < 2) {
@@ -1071,7 +1120,7 @@ $active_page = 'empresas';
 
       try {
         const countryCode = await resolveCountryCode(paisSelect);
-        if (!countryCode) {
+        if (!countryCode || countryCode !== 'ES') {
           return;
         }
 
@@ -1083,24 +1132,17 @@ $active_page = 'empresas';
         direccionItem.dataset.lastLookupKey = lookupKey;
         direccionItem.dataset.lookupKey = lookupKey;
 
-        const provinciaWasEmpty = provinciaSelect ? !provinciaSelect.value : false;
-        const idProvincia = await fetchProvinciaPorCpPrefix(prefix);
-        if (idProvincia && provinciaSelect && (provinciaWasEmpty || provinciaSelect.value !== String(idProvincia))) {
-          provinciaSelect.value = String(idProvincia);
-        }
-
-        const response = await fetch(`https://api.zippopotam.us/${encodeURIComponent(countryCode)}/${encodeURIComponent(postalCode)}`);
-        if (!response.ok || direccionItem.dataset.lookupKey !== lookupKey) {
+        const cpData = await fetchDireccionPorCpEspana(postalCode);
+        if (!cpData || !cpData.found || direccionItem.dataset.lookupKey !== lookupKey) {
           return;
         }
 
-        const data = await response.json();
-        const place = Array.isArray(data.places) && data.places.length > 0 ? data.places[0] : null;
-        if (!place || direccionItem.dataset.lookupKey !== lookupKey) {
-          return;
+        const idProvincia = cpData.id_provincia ? String(cpData.id_provincia) : '';
+        if (idProvincia && provinciaSelect && provinciaSelect.value !== idProvincia) {
+          provinciaSelect.value = idProvincia;
         }
 
-        const localidadName = String(place['place name'] || '').trim();
+        const localidadName = String(cpData.localidad || '').trim();
         if (!localidadName) {
           return;
         }
@@ -1109,22 +1151,8 @@ $active_page = 'empresas';
           localidadInput.value = localidadName;
         }
 
-        const provinciaParaLocalidad = provinciaSelect?.value ? Number(provinciaSelect.value) : 0;
-        if (!provinciaParaLocalidad) {
-          return;
-        }
-
-        const localidadDb = await getOrCreateLocalidad(provinciaParaLocalidad, postalCode, localidadName);
-        if (!localidadDb || direccionItem.dataset.lookupKey !== lookupKey) {
-          return;
-        }
-
         if (idLocalidadInput) {
-          idLocalidadInput.value = localidadDb.id_localidad ? String(localidadDb.id_localidad) : '';
-        }
-
-        if (localidadInput && localidadDb.nombre) {
-          localidadInput.value = String(localidadDb.nombre);
+          idLocalidadInput.value = cpData.id_localidad ? String(cpData.id_localidad) : '';
         }
       } catch (_) {
         // Silencio intencional para no mostrar errores técnicos.
