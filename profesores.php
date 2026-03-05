@@ -37,12 +37,24 @@ $teachers_stmt = $pdo->prepare(
     GROUP_CONCAT(DISTINCT g.grupo ORDER BY g.grupo SEPARATOR ", ") AS grupos_tutor,
     GROUP_CONCAT(
       DISTINCT CONCAT(
+        m.id_modulo,
+        "||",
         m.abreviatura,
-        " - ",
-        COALESCE(NULLIF(m.materia_propia, ""), m.materia_general)
+        "||",
+        COALESCE(NULLIF(m.materia_propia, ""), m.materia_general),
+        "||",
+        COALESCE(ci.ciclo, ""),
+        "||",
+        COALESCE(cu.curso, ""),
+        "||",
+        m.codigo,
+        "||",
+        m.horas_semanales,
+        "||",
+        m.horas_totales
       )
       ORDER BY m.abreviatura
-      SEPARATOR ", "
+      SEPARATOR "§§"
     ) AS modulos
     ,t.telefonos
     ,c.correos
@@ -55,6 +67,8 @@ $teachers_stmt = $pdo->prepare(
     ON mp.id_profesor = p.id_profesor
     AND mp.id_curso_escolar = :active_course_id_modulos
   LEFT JOIN modulos m ON m.id_modulo = mp.id_modulo
+  LEFT JOIN ciclos ci ON ci.id_ciclo = m.id_ciclo
+  LEFT JOIN cursos cu ON cu.id_curso = m.id_curso
   LEFT JOIN (
     SELECT
       id_entidad,
@@ -128,14 +142,48 @@ function format_modules(mixed $modules): string
     return '';
   }
 
-  $items = array_filter(array_map('trim', explode(',', $cleanModules)), static fn (string $item): bool => $item !== '');
+  $items = array_filter(array_map('trim', explode('§§', $cleanModules)), static fn (string $item): bool => $item !== '');
 
   if (!$items) {
     return '';
   }
 
-  $escapedItems = array_map(static fn (string $item): string => htmlspecialchars($item, ENT_QUOTES, 'UTF-8'), $items);
-  return implode('<br>', $escapedItems);
+  $renderedItems = [];
+  foreach ($items as $item) {
+    $parts = array_map('trim', explode('||', $item));
+
+    $id_modulo = (int) ($parts[0] ?? 0);
+    $abreviatura = $parts[1] ?? '';
+    $nombre_completo = $parts[2] ?? '';
+    $ciclo = $parts[3] ?? '';
+    $curso = $parts[4] ?? '';
+    $codigo = $parts[5] ?? '';
+    $horas_semanales = $parts[6] ?? '';
+    $horas_totales = $parts[7] ?? '';
+
+    if ($abreviatura === '') {
+      continue;
+    }
+
+    $renderedItems[] = '<details><summary>'
+      . htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8')
+      . '</summary>'
+      . '<div><a href="modulo_detalle.php?id_modulo=' . $id_modulo . '">'
+      . htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8')
+      . '</a><br>Ciclo: '
+      . htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8')
+      . '<br>Curso: '
+      . htmlspecialchars($curso, ENT_QUOTES, 'UTF-8')
+      . '<br>Código: '
+      . htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8')
+      . '<br>Horas semanales: '
+      . htmlspecialchars((string) $horas_semanales, ENT_QUOTES, 'UTF-8')
+      . '<br>Horas totales: '
+      . htmlspecialchars((string) $horas_totales, ENT_QUOTES, 'UTF-8')
+      . '</div></details>';
+  }
+
+  return implode('<br>', $renderedItems);
 }
 
 function render_teacher_rows(array $teachers): string
