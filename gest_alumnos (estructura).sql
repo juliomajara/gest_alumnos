@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-03-2026 a las 18:01:58
+-- Tiempo de generación: 05-03-2026 a las 14:15:36
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -108,6 +108,19 @@ CREATE TABLE `ciclos` (
   `abreviatura` varchar(60) NOT NULL,
   `codigo` varchar(10) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `codigos_postales`
+--
+
+CREATE TABLE `codigos_postales` (
+  `id` int(11) NOT NULL,
+  `provincia` varchar(100) DEFAULT NULL,
+  `poblacion` varchar(150) NOT NULL,
+  `cod_postal` varchar(5) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 -- --------------------------------------------------------
 
@@ -280,7 +293,9 @@ CREATE TABLE `grupos_tutores` (
 CREATE TABLE `localidades` (
   `id_localidad` int(10) UNSIGNED NOT NULL,
   `id_provincia` int(10) UNSIGNED NOT NULL,
-  `nombre` varchar(60) NOT NULL
+  `nombre` varchar(60) NOT NULL,
+  `km_desde_getafe` smallint(5) UNSIGNED DEFAULT NULL,
+  `abono_desde_getafe` varchar(20) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -476,7 +491,7 @@ CREATE TABLE `profesores` (
 CREATE TABLE `provincias` (
   `id_provincia` int(10) UNSIGNED NOT NULL,
   `id_pais` int(10) UNSIGNED DEFAULT NULL,
-  `nombre` varchar(60) NOT NULL,
+  `nombre` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_spanish_ci DEFAULT NULL,
   `cp_prefijo` tinyint(2) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -576,6 +591,15 @@ ALTER TABLE `asistencia_mensual`
 --
 ALTER TABLE `ciclos`
   ADD PRIMARY KEY (`id_ciclo`);
+
+--
+-- Indices de la tabla `codigos_postales`
+--
+ALTER TABLE `codigos_postales`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_cp` (`cod_postal`),
+  ADD KEY `idx_poblacion` (`poblacion`),
+  ADD KEY `idx_provincia` (`provincia`);
 
 --
 -- Indices de la tabla `config`
@@ -816,6 +840,12 @@ ALTER TABLE `asistencia_mensual`
 --
 ALTER TABLE `ciclos`
   MODIFY `id_ciclo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `codigos_postales`
+--
+ALTER TABLE `codigos_postales`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `correos`
