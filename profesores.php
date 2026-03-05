@@ -165,25 +165,38 @@ function format_modules(mixed $modules): string
       continue;
     }
 
-    $renderedItems[] = '<details><summary>'
-      . htmlspecialchars($abreviatura, ENT_QUOTES, 'UTF-8')
-      . '</summary>'
-      . '<div><a href="modulo_detalle.php?id_modulo=' . $id_modulo . '">'
-      . htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8')
-      . '</a><br>Ciclo: '
-      . htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8')
-      . '<br>Curso: '
-      . htmlspecialchars($curso, ENT_QUOTES, 'UTF-8')
-      . '<br>Código: '
-      . htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8')
-      . '<br>Horas semanales: '
-      . htmlspecialchars((string) $horas_semanales, ENT_QUOTES, 'UTF-8')
-      . '<br>Horas totales: '
-      . htmlspecialchars((string) $horas_totales, ENT_QUOTES, 'UTF-8')
-      . '</div></details>';
+    $normalized_cycle = mb_strtoupper(trim((string) $ciclo), 'UTF-8');
+    if ($normalized_cycle === 'SISTEMAS MICROINFORMÁTICOS Y REDES' || $normalized_cycle === 'SISTEMAS MICROINFORMATICOS Y REDES') {
+      $normalized_cycle = 'SMR';
+    } elseif ($normalized_cycle === 'DESARROLLO DE APLICACIONES WEB') {
+      $normalized_cycle = 'DAW';
+    } elseif ($normalized_cycle === 'DESARROLLO DE APLICACIONES MULTIPLATAFORMA') {
+      $normalized_cycle = 'DAM';
+    }
+
+    $compact_cycle = preg_replace('/\s+/', '', $normalized_cycle . trim((string) $curso));
+    $visible_name = $nombre_completo !== '' ? $nombre_completo : $abreviatura;
+    $visible_label = $visible_name;
+    if ($compact_cycle !== '') {
+      $visible_label .= ' (' . $compact_cycle . ')';
+    }
+
+    $renderedItems[] = '<span '
+      . 'class="empresa-name-trigger empresa-name-trigger--practicas" '
+      . 'role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false" '
+      . 'data-modulo-nombre="' . htmlspecialchars($visible_name, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-ciclo="' . htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-curso="' . htmlspecialchars($curso, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-codigo="' . htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-horas-semanales="' . htmlspecialchars((string) $horas_semanales, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-horas-totales="' . htmlspecialchars((string) $horas_totales, ENT_QUOTES, 'UTF-8') . '" '
+      . 'data-modulo-compact="' . htmlspecialchars((string) $compact_cycle, ENT_QUOTES, 'UTF-8') . '" '
+      . '>'
+      . htmlspecialchars($visible_label, ENT_QUOTES, 'UTF-8')
+      . '</span>';
   }
 
-  return implode('<br>', $renderedItems);
+  return implode(', ', $renderedItems);
 }
 
 function render_teacher_rows(array $teachers): string
@@ -299,11 +312,26 @@ $active_page = 'profesores';
       </section>
     </main>
   </div>
+
+  <div class="practicas-ras-popover-layer" id="modulo-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover" id="modulo-detail-popover" role="dialog" aria-modal="false" aria-labelledby="modulo-detail-title" hidden>
+      <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del módulo">×</button>
+      <h3 id="modulo-detail-title" class="practicas-ras-popover__title"></h3>
+      <ul class="practicas-ras-popover__criteria" id="modulo-detail-data"></ul>
+    </div>
+  </div>
+
   <script>
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
     const tableBody = document.querySelector('tbody');
+    const layer = document.getElementById('modulo-detail-layer');
+    const popover = document.getElementById('modulo-detail-popover');
+    const title = document.getElementById('modulo-detail-title');
+    const detailList = document.getElementById('modulo-detail-data');
     let debounceTimer = null;
+    let activeTrigger = null;
 
     const updateResults = (withDebounce = false) => {
       if (debounceTimer) {
@@ -345,6 +373,122 @@ $active_page = 'profesores';
     searchInput.addEventListener('input', () => {
       updateResults(true);
     });
+
+    if (layer && popover && title && detailList) {
+      const setPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        popover.style.top = `${Math.max(gutter, top)}px`;
+        popover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closePopover = () => {
+        popover.hidden = true;
+        layer.hidden = true;
+        if (activeTrigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeTrigger = null;
+      };
+
+      const getValueOrFallback = (value) => {
+        const normalized = (value || '').trim();
+        return normalized !== '' ? normalized : 'No disponible';
+      };
+
+      const addInfoItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = `${label}: `;
+        item.appendChild(strong);
+        item.appendChild(document.createTextNode(value));
+        detailList.appendChild(item);
+      };
+
+      const openPopover = (trigger) => {
+        if (activeTrigger && activeTrigger !== trigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+
+        title.textContent = trigger.dataset.moduloNombre || 'Módulo';
+        detailList.innerHTML = '';
+
+        addInfoItem('Ciclo', getValueOrFallback(trigger.dataset.moduloCiclo));
+        addInfoItem('Curso', getValueOrFallback(trigger.dataset.moduloCurso));
+        addInfoItem('Código', getValueOrFallback(trigger.dataset.moduloCodigo));
+        addInfoItem('Horas semanales', getValueOrFallback(trigger.dataset.moduloHorasSemanales));
+        addInfoItem('Horas totales', getValueOrFallback(trigger.dataset.moduloHorasTotales));
+
+        activeTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        layer.hidden = false;
+        popover.hidden = false;
+        setPopoverPosition(trigger);
+      };
+
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger');
+        if (trigger && tableBody.contains(trigger)) {
+          if (activeTrigger === trigger && !popover.hidden) {
+            closePopover();
+            return;
+          }
+
+          openPopover(trigger);
+          return;
+        }
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger');
+        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
+
+      layer.querySelectorAll('[data-popover-close]').forEach((element) => {
+        element.addEventListener('click', closePopover);
+      });
+
+      window.addEventListener('resize', () => {
+        if (activeTrigger && !popover.hidden) {
+          setPopoverPosition(activeTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeTrigger && !popover.hidden) {
+          setPopoverPosition(activeTrigger);
+        }
+      }, true);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !popover.hidden) {
+          closePopover();
+        }
+      });
+    }
   </script>
 </body>
 </html>
