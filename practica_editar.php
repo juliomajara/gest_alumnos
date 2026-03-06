@@ -467,7 +467,6 @@ if ($id_practica === false || $id_practica === null) {
       'SELECT ac.id_grupo
        FROM alumno_curso ac
        WHERE ac.id_alumno = :id_alumno AND ac.id_curso_escolar = :id_curso_escolar
-       ORDER BY ac.id_alumno_curso DESC
        LIMIT 1'
     );
     $group_stmt->execute([
