@@ -31,10 +31,42 @@ $active_page = 'configuracion';
           <p>Página de configuración del sistema.</p>
         </div>
         <div class="panel-grid">
-          <a class="panel-link" href="datos_centro.php"><span>Datos del centro</span></a> <?php // MODIFICADO ?>
-          <a class="panel-link" href="calendario.php"><span>Calendario</span></a> <?php // MODIFICADO ?>
-          <a class="panel-link" href="alumnos_importar.php"><span>Importar alumnos</span></a>
-          <a class="panel-link" href="practicas_ras.php"><span>Porcentaje RA/CE en empresa</span></a>
+          <a class="panel-link panel-link-with-icon" href="datos_centro.php">
+            <span class="nav-icon" aria-hidden="true">
+              <img class="nav-icon-image" src="assets/icons/datos_centro.svg" alt="">
+            </span>
+            <span class="panel-link-text">
+              <span>Datos del centro</span>
+              <small>Configuración de la información general del centro educativo.</small>
+            </span>
+          </a>
+          <a class="panel-link panel-link-with-icon" href="calendario.php">
+            <span class="nav-icon" aria-hidden="true">
+              <img class="nav-icon-image" src="assets/icons/calendario.svg" alt="">
+            </span>
+            <span class="panel-link-text">
+              <span>Calendario</span>
+              <small>Gestión del calendario académico y días no lectivos.</small>
+            </span>
+          </a>
+          <a class="panel-link panel-link-with-icon" href="alumnos_importar.php">
+            <span class="nav-icon" aria-hidden="true">
+              <img class="nav-icon-image" src="assets/icons/importar_alumnos.svg" alt="">
+            </span>
+            <span class="panel-link-text">
+              <span>Importar alumnos</span>
+              <small>Importación de alumnos desde archivos externos.</small>
+            </span>
+          </a>
+          <a class="panel-link panel-link-with-icon" href="practicas_ras.php">
+            <span class="nav-icon" aria-hidden="true">
+              <img class="nav-icon-image" src="assets/icons/porcentaje_ra.svg" alt="">
+            </span>
+            <span class="panel-link-text">
+              <span>Porcentaje RA/CE en empresa</span>
+              <small>Configuración del reparto de resultados de aprendizaje y criterios de evaluación en empresa.</small>
+            </span>
+          </a>
         </div>
       </section>
     </main>
