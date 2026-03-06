@@ -644,12 +644,24 @@ if ($practice_found) {
             <div class="practica-detalle-campos">
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="empresa_detalle.php?id_empresa=<?php echo (int) $practice['id_empresa']; ?>"><?php echo htmlspecialchars($company_summary_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">CIF</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_cif']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Persona de contacto</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email PC</span><span class="practica-detalle-campo-valor"><?php $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? '')); ?><?php if ($empresa_contacto_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono PC</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Tutor CT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(full_name_name_first($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email TCT</span><span class="practica-detalle-campo-valor"><?php $tutor_empresa_email = trim((string) ($practice['tutor_empresa_email'] ?? '')); ?><?php if ($tutor_empresa_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono TCT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Persona de contacto</span>
+                <span class="practica-detalle-campo-valor">
+                  <div><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <?php $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? '')); ?>
+                  <div><?php if ($empresa_contacto_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></div>
+                  <div><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></div>
+                </span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Tutor en el Centro de Trabajo</span>
+                <span class="practica-detalle-campo-valor">
+                  <div><?php echo htmlspecialchars(full_name_name_first($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <?php $tutor_empresa_email = trim((string) ($practice['tutor_empresa_email'] ?? '')); ?>
+                  <div><?php if ($tutor_empresa_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></div>
+                  <div><?php echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); ?></div>
+                </span>
+              </div>
             </div>
           </section>
         </div>
@@ -719,6 +731,29 @@ if ($practice_found) {
         </div>
 
         <div class="practica-detalle-grid practica-detalle-grid--fila-3">
+          <section class="panel practica-detalle-bloque practica-detalle-bloque--observaciones">
+            <div class="panel-header">
+              <h3>Observaciones</h3>
+            </div>
+            <div class="panel-grid">
+              <p class="practica-observaciones"><?php echo nl2br(htmlspecialchars(format_value($practice['observaciones']), ENT_QUOTES, 'UTF-8')); ?></p>
+              <?php if (!empty($practice['tutor_comentarios'])): ?>
+                <p class="practica-observaciones-meta"><strong>Comentarios tutor empresa:</strong> <?php echo nl2br(htmlspecialchars((string) $practice['tutor_comentarios'], ENT_QUOTES, 'UTF-8')); ?></p>
+              <?php endif; ?>
+            </div>
+          </section>
+
+          <section class="panel practica-detalle-bloque practica-detalle-bloque--instrucciones">
+            <div class="panel-header">
+              <h3>Instrucciones</h3>
+            </div>
+            <div class="panel-grid">
+              <p class="practica-observaciones"><?php echo nl2br(htmlspecialchars(format_value($practice['instrucciones']), ENT_QUOTES, 'UTF-8')); ?></p>
+            </div>
+          </section>
+        </div>
+
+        <div class="practica-detalle-grid practica-detalle-grid--fila-4">
           <section class="panel practica-detalle-bloque practica-detalle-bloque--seguimiento">
             <div class="panel-header">
               <h3>Seguimiento</h3>
@@ -750,42 +785,30 @@ if ($practice_found) {
             </div>
           </section>
 
-          <section class="panel practica-detalle-bloque practica-detalle-bloque--observaciones">
+          <section class="panel practica-detalle-bloque practica-detalle-bloque--documentacion">
             <div class="panel-header">
-              <h3>Observaciones</h3>
+              <h3>Documentación</h3>
+              <p>Generación y descarga de calendario y plan de formación.</p>
             </div>
             <div class="panel-grid">
-              <p class="practica-observaciones"><?php echo nl2br(htmlspecialchars(format_value($practice['observaciones']), ENT_QUOTES, 'UTF-8')); ?></p>
-              <?php if (!empty($practice['tutor_comentarios'])): ?>
-                <p class="practica-observaciones-meta"><strong>Comentarios tutor empresa:</strong> <?php echo nl2br(htmlspecialchars((string) $practice['tutor_comentarios'], ENT_QUOTES, 'UTF-8')); ?></p>
-              <?php endif; ?>
+              <p><strong>Calendario</strong></p>
+              <div class="header-actions">
+                <a class="primary-button" href="generar_calendario.php?id_practica=<?php echo (int) $id_practica; ?>">Generar calendario</a>
+                <?php if ($calendar_exists && $calendar_file_name !== null): ?>
+                  <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_calendario">Descargar calendario</a>
+                <?php endif; ?>
+              </div>
+
+              <p><strong>Plan de formación</strong></p>
+              <div class="header-actions">
+                <a class="primary-button" href="generar_plan_formacion.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Plan Formación</a>
+                <?php if ($plan_exists && $plan_file_name !== null): ?>
+                  <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
+                <?php endif; ?>
+              </div>
             </div>
           </section>
         </div>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Documentos</h3>
-            <p>Generación y descarga de calendario y plan de formación.</p>
-          </div>
-          <div class="panel-grid">
-            <p><strong>Calendario</strong></p>
-            <div class="header-actions">
-              <a class="primary-button" href="generar_calendario.php?id_practica=<?php echo (int) $id_practica; ?>">Generar calendario</a>
-              <?php if ($calendar_exists && $calendar_file_name !== null): ?>
-                <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_calendario">Descargar calendario</a>
-              <?php endif; ?>
-            </div>
-
-            <p><strong>Plan de formación</strong></p>
-            <div class="header-actions">
-              <a class="primary-button" href="generar_plan_formacion.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Plan Formación</a>
-              <?php if ($plan_exists && $plan_file_name !== null): ?>
-                <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
-              <?php endif; ?>
-            </div>
-          </div>
-        </section>
 
       <?php endif; ?>
     </main>
