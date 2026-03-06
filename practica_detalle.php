@@ -573,13 +573,9 @@ if ($practice_found) {
       <header class="header">
         <div>
         <div class="header-actions">
-<<<<<<< Updated upstream
           <?php if ($practice_found): ?>
-            <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) $id_practica; ?>">Editar prÃ¡ctica</a>
+            <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) $id_practica; ?>">Editar práctica</a>
           <?php endif; ?>
-=======
-          <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) ($id_practica ?? 0); ?>">Editar práctica</a>
->>>>>>> Stashed changes
           <a class="ghost-button" href="practicas.php">Volver a prÃ¡cticas</a>
         </div>
       </header>
