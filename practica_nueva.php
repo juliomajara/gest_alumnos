@@ -538,10 +538,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $allow_saturday = has_schedule_for_day($horario, 6);
   $allow_sunday = has_schedule_for_day($horario, 7);
-  $fecha_fin_real = null;
+  $fecha_fin_extra = null;
   if ($fecha_fin !== null && valid_date($fecha_fin)) {
-    $fecha_fin_real = calculate_real_end_date($fecha_fin, $dias_extra, $non_teaching_lookup, $allow_saturday, $allow_sunday);
-    $form_values['fecha_fin_real'] = $fecha_fin_real;
+    $fecha_fin_extra = calculate_real_end_date($fecha_fin, $dias_extra, $non_teaching_lookup, $allow_saturday, $allow_sunday);
+    $form_values['fecha_fin_extra'] = $fecha_fin_extra;
   }
 
   $mayor_edad = 1;
@@ -564,8 +564,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($mayor_edad === 0) {
           $requires_minor_age_confirmation = true;
           $period_end = null;
-          if ($fecha_fin_real !== null && valid_date($fecha_fin_real)) {
-            $period_end = $fecha_fin_real;
+          if ($fecha_fin_extra !== null && valid_date($fecha_fin_extra)) {
+            $period_end = $fecha_fin_extra;
           } elseif ($fecha_fin !== null && valid_date($fecha_fin)) {
             $period_end = $fecha_fin;
           }
@@ -626,10 +626,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert_practice_stmt = $pdo->prepare(
           'INSERT INTO practicas (
             id_alumno, id_empresa, id_direccion, id_empresa_tutor, anexo, cancelada,
-            fecha_inicio, fecha_fin, fecha_fin_real, horas, dias_extra, observaciones, instrucciones, circ_excep, mayor_edad
+            fecha_inicio, fecha_fin, fecha_fin_extra, horas, dias_extra, observaciones, instrucciones, circ_excep, mayor_edad
           ) VALUES (
             :id_alumno, :id_empresa, :id_direccion, :id_empresa_tutor, :anexo, :cancelada,
-            :fecha_inicio, :fecha_fin, :fecha_fin_real, :horas, :dias_extra, :observaciones, :instrucciones, :circ_excep, :mayor_edad
+            :fecha_inicio, :fecha_fin, :fecha_fin_extra, :horas, :dias_extra, :observaciones, :instrucciones, :circ_excep, :mayor_edad
           )'
         );
 
@@ -642,7 +642,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           'cancelada' => 0,
           'fecha_inicio' => $fecha_inicio,
           'fecha_fin' => $fecha_fin,
-          'fecha_fin_real' => $fecha_fin_real,
+          'fecha_fin_extra' => $fecha_fin_extra,
           'horas' => $horas,
           'dias_extra' => $dias_extra,
           'observaciones' => $observaciones,
@@ -1099,7 +1099,7 @@ $dias_semana = [
                 </label>
                 <label>
                   Fecha fin real
-                  <input type="date" name="fecha_fin_real" id="fecha_fin_real" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin_real'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly>
+                  <input type="date" name="fecha_fin_extra" id="fecha_fin_extra" value="<?php echo htmlspecialchars((string) ($form_values['fecha_fin_extra'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" readonly>
                 </label>
                 <label>
                   Días
@@ -1157,7 +1157,7 @@ $dias_semana = [
     const hoursInput = document.getElementById('horas');
     const startDateInput = document.getElementById('fecha_inicio');
     const endDateInput = document.getElementById('fecha_fin');
-    const realEndDateInput = document.getElementById('fecha_fin_real');
+    const realEndDateInput = document.getElementById('fecha_fin_extra');
     const extraDaysInput = document.getElementById('dias_extra');
     const computedDaysInput = document.getElementById('dias_computados');
     const lastDayHoursInput = document.getElementById('horas_ultimo_dia');

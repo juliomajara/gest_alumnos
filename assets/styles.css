@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light;
   --bg: #f5f7fb;
   --card: #ffffff;
@@ -234,18 +234,59 @@ body {
   filter: saturate(0.35) brightness(0.9);
   transition: filter 0.2s ease;
 }
-
-.nav-icon-image--alumnos {
+.nav-icon-image[data-icon] {
+  filter: none;
   background-color: #4b77d1;
-  mask-image: url("icons/alumnos.svg");
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;
-  -webkit-mask-image: url("icons/alumnos.svg");
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
   -webkit-mask-size: contain;
 }
+
+.nav-icon-image[data-icon="dashboard"] {
+  mask-image: url("icons/dashboard.svg");
+  -webkit-mask-image: url("icons/dashboard.svg");
+}
+
+.nav-icon-image[data-icon="alumnos"] {
+  mask-image: url("icons/alumnos.svg");
+  -webkit-mask-image: url("icons/alumnos.svg");
+}
+
+.nav-icon-image[data-icon="modulos"] {
+  mask-image: url("icons/modulos.svg");
+  -webkit-mask-image: url("icons/modulos.svg");
+}
+
+.nav-icon-image[data-icon="empresas"] {
+  mask-image: url("icons/empresas.svg");
+  -webkit-mask-image: url("icons/empresas.svg");
+}
+
+.nav-icon-image[data-icon="practicas"] {
+  mask-image: url("icons/practicas.svg");
+  -webkit-mask-image: url("icons/practicas.svg");
+}
+
+.nav-icon-image[data-icon="profesores"] {
+  mask-image: url("icons/profesores.svg");
+  -webkit-mask-image: url("icons/profesores.svg");
+}
+
+.nav-icon-image[data-icon="utilidades"] {
+  mask-image: url("icons/utilidades.svg");
+  -webkit-mask-image: url("icons/utilidades.svg");
+}
+
+.nav-icon-image[data-icon="configuracion"] {
+  mask-image: url("icons/configuracion.svg");
+  -webkit-mask-image: url("icons/configuracion.svg");
+}
+
 
 .nav-text {
   white-space: nowrap;
@@ -273,10 +314,19 @@ body {
   background: #eef2ff;
 }
 
+
+
+
+
 .nav-link:hover .nav-icon-image,
 .nav-link.active .nav-icon-image {
   filter: saturate(1) brightness(0.85);
 }
+.nav-link:hover .nav-icon-image[data-icon],
+.nav-link.active .nav-icon-image[data-icon] {
+  opacity: 1;
+}
+
 
 .sidebar-footer {
   margin-top: auto;
@@ -1814,6 +1864,8 @@ a.edit-toggle:active {
   color: var(--muted);
   font-weight: 600;
 }
+
+
 
 
 

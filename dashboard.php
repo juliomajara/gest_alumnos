@@ -98,8 +98,8 @@ $practicas_activas = $has_practicas
      WHERE COALESCE(p.cancelada, 0) = 0
        AND p.fecha_inicio IS NOT NULL
        AND p.fecha_inicio <= CURDATE()
-       AND COALESCE(p.fecha_fin_real, p.fecha_fin) IS NOT NULL
-       AND COALESCE(p.fecha_fin_real, p.fecha_fin) >= CURDATE()'
+       AND COALESCE(p.fecha_fin_extra, p.fecha_fin) IS NOT NULL
+       AND COALESCE(p.fecha_fin_extra, p.fecha_fin) >= CURDATE()'
   )
   : null;
 
@@ -129,9 +129,9 @@ $practicas_por_estado = $has_practicas
     'SELECT
       CASE
         WHEN COALESCE(p.cancelada, 0) = 1 THEN "Cancelada"
-        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = "" OR COALESCE(p.fecha_fin_real, p.fecha_fin) IS NULL OR COALESCE(p.fecha_fin_real, p.fecha_fin) = "" THEN "No disponible"
+        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = "" OR COALESCE(p.fecha_fin_extra, p.fecha_fin) IS NULL OR COALESCE(p.fecha_fin_extra, p.fecha_fin) = "" THEN "No disponible"
         WHEN CURDATE() < p.fecha_inicio THEN "En espera"
-        WHEN CURDATE() <= COALESCE(p.fecha_fin_real, p.fecha_fin) THEN "En curso"
+        WHEN CURDATE() <= COALESCE(p.fecha_fin_extra, p.fecha_fin) THEN "En curso"
         ELSE "Finalizada"
       END AS estado,
       COUNT(*) AS total
@@ -150,9 +150,9 @@ $ultimas_practicas = ($has_practicas && $has_alumnos && $has_empresas)
       p.fecha_fin,
       CASE
         WHEN COALESCE(p.cancelada, 0) = 1 THEN "Cancelada"
-        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = "" OR COALESCE(p.fecha_fin_real, p.fecha_fin) IS NULL OR COALESCE(p.fecha_fin_real, p.fecha_fin) = "" THEN "No disponible"
+        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = "" OR COALESCE(p.fecha_fin_extra, p.fecha_fin) IS NULL OR COALESCE(p.fecha_fin_extra, p.fecha_fin) = "" THEN "No disponible"
         WHEN CURDATE() < p.fecha_inicio THEN "En espera"
-        WHEN CURDATE() <= COALESCE(p.fecha_fin_real, p.fecha_fin) THEN "En curso"
+        WHEN CURDATE() <= COALESCE(p.fecha_fin_extra, p.fecha_fin) THEN "En curso"
         ELSE "Finalizada"
       END AS estado,
       a.nombre AS alumno_nombre,

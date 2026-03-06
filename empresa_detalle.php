@@ -42,14 +42,14 @@ function calculate_practica_estado(array $practica): string {
   }
 
   $fecha_inicio = $practica['fecha_inicio'] ?? null;
-  $fecha_fin_real = $practica['fecha_fin_real'] ?? null;
+  $fecha_fin_extra = $practica['fecha_fin_extra'] ?? null;
 
-  if (!$fecha_inicio || !$fecha_fin_real) {
+  if (!$fecha_inicio || !$fecha_fin_extra) {
     return 'No disponible';
   }
 
   $inicio = DateTime::createFromFormat('Y-m-d', (string) $fecha_inicio);
-  $fin_real = DateTime::createFromFormat('Y-m-d', (string) $fecha_fin_real);
+  $fin_real = DateTime::createFromFormat('Y-m-d', (string) $fecha_fin_extra);
 
   if (!$inicio || !$fin_real) {
     return 'No disponible';
@@ -188,7 +188,7 @@ if ($company) {
     'SELECT pr.id_practica,
             pr.fecha_inicio,
             pr.fecha_fin,
-            pr.fecha_fin_real,
+            pr.fecha_fin_extra,
             pr.cancelada,
             pr.horas,
             pr.observaciones,

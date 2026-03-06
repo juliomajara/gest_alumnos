@@ -17,7 +17,7 @@ if ($id_practica === false || $id_practica === null) {
 try {
   $pdo = db();
   $sql = <<<'SQL'
-SELECT p.*, p.fecha_fin, p.fecha_fin_real, p.dias_extra, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
+SELECT p.*, p.fecha_fin, p.fecha_fin_extra, p.dias_extra, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
   e.convenio AS empresa_convenio, e.nombre AS empresa_nombre, e.cif AS empresa_cif, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
   d.id_provincia AS direccion_id_provincia, d.nombre_via AS direccion_nombre_via, d.numero AS direccion_numero, d.bloque AS direccion_bloque, d.escalera AS direccion_escalera,
   d.planta AS direccion_planta, d.puerta AS direccion_puerta, d.otros AS direccion_otros, d.cp AS direccion_cp, v.via AS direccion_via_tipo, ld.nombre AS direccion_localidad,
@@ -134,7 +134,7 @@ SQL;
       $missing[] = $label;
     }
   }
-  $endDateRaw = trim((string) ($practice['fecha_fin_real'] ?? ''));
+  $endDateRaw = trim((string) ($practice['fecha_fin_extra'] ?? ''));
   if ($endDateRaw === '') {
     $endDateRaw = trim((string) ($practice['fecha_fin'] ?? ''));
   }

@@ -90,16 +90,16 @@ $nav_items = [
   </div>
   <nav class="nav">
     <?php foreach ($nav_items as $item): ?>
+      <?php $icon_key = pathinfo((string) $item['icon'], PATHINFO_FILENAME); ?>
       <a
         class="nav-link<?php echo $item['key'] === $active_page ? ' active' : ''; ?>"
         href="<?php echo htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
       >
         <span class="nav-icon" aria-hidden="true">
-          <?php if ($item['key'] === 'alumnos'): ?>
-            <span class="nav-icon-image nav-icon-image--alumnos"></span>
-          <?php else: ?>
-            <img class="nav-icon-image" src="<?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" alt="">
-          <?php endif; ?>
+          <span
+            class="nav-icon-image"
+            data-icon="<?php echo htmlspecialchars((string) $icon_key, ENT_QUOTES, 'UTF-8'); ?>"
+          ></span>
         </span>
         <span class="nav-text"><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></span>
       </a>

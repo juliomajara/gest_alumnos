@@ -371,7 +371,7 @@ try {
   }
 
   $startRaw = (string) ($practice['fecha_inicio'] ?? '');
-  $endRaw = (string) ($practice['fecha_fin_real'] ?? '');
+  $endRaw = (string) ($practice['fecha_fin_extra'] ?? '');
   if (trim($endRaw) === '') {
     $endRaw = (string) ($practice['fecha_fin'] ?? '');
   }

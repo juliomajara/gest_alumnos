@@ -59,9 +59,9 @@ function calculate_practice_status(array $practice): string
   }
 
   $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
-  $fecha_fin_real = (string) ($practice['fecha_fin_real'] ?? '');
+  $fecha_fin_extra = (string) ($practice['fecha_fin_extra'] ?? '');
 
-  if ($fecha_inicio === '' || $fecha_fin_real === '') {
+  if ($fecha_inicio === '' || $fecha_fin_extra === '') {
     return 'No disponible';
   }
 
@@ -71,7 +71,7 @@ function calculate_practice_status(array $practice): string
     return 'En espera';
   }
 
-  if ($today <= $fecha_fin_real) {
+  if ($today <= $fecha_fin_extra) {
     return 'En curso';
   }
 
@@ -121,13 +121,13 @@ $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 $order_clause = match ($current_order) {
   'empresa' => 'ORDER BY e.nombre ASC, e.apellido1 ASC, e.apellido2 ASC, p.id_practica DESC',
   'fecha_inicio' => 'ORDER BY p.fecha_inicio ASC, p.id_practica DESC',
-  'fecha_fin' => 'ORDER BY COALESCE(p.fecha_fin_real, p.fecha_fin) ASC, p.id_practica DESC',
+  'fecha_fin' => 'ORDER BY COALESCE(p.fecha_fin_extra, p.fecha_fin) ASC, p.id_practica DESC',
   'anexo' => 'ORDER BY CAST(p.anexo AS UNSIGNED) ASC, p.id_practica DESC',
   'estado' => "ORDER BY CASE
     WHEN p.cancelada = 1 THEN 1
-    WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = '' OR p.fecha_fin_real IS NULL OR p.fecha_fin_real = '' THEN 2
+    WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = '' OR p.fecha_fin_extra IS NULL OR p.fecha_fin_extra = '' THEN 2
     WHEN CURDATE() < p.fecha_inicio THEN 3
-    WHEN CURDATE() <= p.fecha_fin_real THEN 4
+    WHEN CURDATE() <= p.fecha_fin_extra THEN 4
     ELSE 5
   END ASC, p.id_practica DESC",
   default => 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica DESC',
@@ -139,7 +139,7 @@ $practices_stmt = $pdo->prepare(
     p.anexo,
     p.fecha_inicio,
     p.fecha_fin,
-    p.fecha_fin_real,
+    p.fecha_fin_extra,
     p.cancelada,
     a.nombre AS alumno_nombre,
     a.apellido1 AS alumno_apellido1,

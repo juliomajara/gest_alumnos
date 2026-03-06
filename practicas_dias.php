@@ -36,9 +36,9 @@ function calculate_practice_status(array $practice): string
   }
 
   $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
-  $fecha_fin_real = (string) ($practice['fecha_fin_real'] ?? '');
+  $fecha_fin_extra = (string) ($practice['fecha_fin_extra'] ?? '');
 
-  if ($fecha_inicio === '' || $fecha_fin_real === '') {
+  if ($fecha_inicio === '' || $fecha_fin_extra === '') {
     return 'No disponible';
   }
 
@@ -48,7 +48,7 @@ function calculate_practice_status(array $practice): string
     return 'En espera';
   }
 
-  if ($today <= $fecha_fin_real) {
+  if ($today <= $fecha_fin_extra) {
     return 'En curso';
   }
 
@@ -89,7 +89,7 @@ try {
         p.id_practica,
         p.id_alumno,
         p.fecha_inicio,
-        p.fecha_fin_real,
+        p.fecha_fin_extra,
         p.cancelada,
         a.nombre AS alumno_nombre,
         a.apellido1 AS alumno_apellido1,
@@ -153,9 +153,9 @@ try {
         }
 
         $fecha_inicio = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
-        $fecha_fin_real = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_real'] ?? ''));
+        $fecha_fin_extra = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_extra'] ?? ''));
 
-        if ($fecha_inicio === false || $fecha_fin_real === false || $fecha_inicio > $fecha_fin_real) {
+        if ($fecha_inicio === false || $fecha_fin_extra === false || $fecha_inicio > $fecha_fin_extra) {
           continue;
         }
 
@@ -177,9 +177,9 @@ try {
           }
         }
 
-        $fecha_hasta_hoy = $hoy < $fecha_fin_real ? $hoy : $fecha_fin_real;
+        $fecha_hasta_hoy = $hoy < $fecha_fin_extra ? $hoy : $fecha_fin_extra;
 
-        for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_real; $cursor = $cursor->modify('+1 day')) {
+        for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_extra; $cursor = $cursor->modify('+1 day')) {
           $dia_semana = (int) $cursor->format('N');
           if (!isset($segundos_por_dia_semana[$dia_semana])) {
             continue;

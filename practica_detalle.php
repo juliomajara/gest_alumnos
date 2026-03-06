@@ -44,9 +44,9 @@ function calculate_practice_status(array $practice): string {
   }
 
   $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
-  $fecha_fin_real = (string) ($practice['fecha_fin_real'] ?? '');
+  $fecha_fin_extra = (string) ($practice['fecha_fin_extra'] ?? '');
 
-  if ($fecha_inicio === '' || $fecha_fin_real === '') {
+  if ($fecha_inicio === '' || $fecha_fin_extra === '') {
     return 'No disponible';
   }
 
@@ -56,7 +56,7 @@ function calculate_practice_status(array $practice): string {
     return 'En espera';
   }
 
-  if ($today <= $fecha_fin_real) {
+  if ($today <= $fecha_fin_extra) {
     return 'En curso';
   }
 
@@ -187,7 +187,7 @@ if ($id_practica === false || $id_practica === null) {
       'SELECT
         p.*,
         p.fecha_fin,
-        p.fecha_fin_real,
+        p.fecha_fin_extra,
         p.dias_extra,
         CASE
           WHEN COALESCE(p.cancelada, 0) = 1 THEN \'Cancelada\'
@@ -475,9 +475,9 @@ $seguimiento_horas_pendientes = '0,00';
 
 if ($practice_found) {
   $fecha_inicio = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
-  $fecha_fin_real = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_real'] ?? ''));
+  $fecha_fin_extra = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_extra'] ?? ''));
 
-  if ($fecha_inicio !== false && $fecha_fin_real !== false && $fecha_inicio <= $fecha_fin_real) {
+  if ($fecha_inicio !== false && $fecha_fin_extra !== false && $fecha_inicio <= $fecha_fin_extra) {
     $segundos_por_dia_semana = [];
     foreach ($schedule_by_day as $day_number => $segments) {
       $total_segundos = 0;
@@ -511,10 +511,10 @@ if ($practice_found) {
 
     $seguimiento_por_mes = [];
     $hoy = new DateTimeImmutable('today');
-    $fecha_hasta_hoy = $hoy < $fecha_fin_real ? $hoy : $fecha_fin_real;
+    $fecha_hasta_hoy = $hoy < $fecha_fin_extra ? $hoy : $fecha_fin_extra;
     $segundos_realizados = 0;
 
-    for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_real; $cursor = $cursor->modify('+1 day')) {
+    for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_extra; $cursor = $cursor->modify('+1 day')) {
       $dia_semana = (int) $cursor->format('N');
       if (!isset($segundos_por_dia_semana[$dia_semana])) {
         continue;
@@ -676,7 +676,7 @@ if ($practice_found) {
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de inicio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_inicio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin calculada</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Días extra</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) ((int) ($practice['dias_extra'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin_real'] ?? null, '—'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin_extra'] ?? null, '—'), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Horas totales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['horas']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Kilómetros al CT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_km_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Abono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_abono_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
