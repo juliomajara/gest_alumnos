@@ -203,6 +203,7 @@ if ($id_practica === false || $id_practica === null) {
         e.cif AS empresa_cif,
         e.convenio AS empresa_convenio,
         e.nombre AS empresa_nombre,
+        e.nombre_comercial AS empresa_nombre_comercial,
         e.apellido1 AS empresa_apellido1,
         e.apellido2 AS empresa_apellido2,
         et.nombre AS tutor_nombre,
@@ -223,6 +224,8 @@ if ($id_practica === false || $id_practica === null) {
         d.principal AS direccion_principal,
         v.via AS direccion_via_tipo,
         ld.nombre AS direccion_localidad,
+        ld.km_desde_getafe AS direccion_km_desde_getafe,
+        ld.abono_desde_getafe AS direccion_abono_desde_getafe,
         pd.nombre AS direccion_provincia,
         pa.pais AS direccion_pais,
         ac.id_curso_escolar,
@@ -442,6 +445,10 @@ if ($id_practica === false || $id_practica === null) {
 $practice_found = is_array($practice);
 $student_name = $practice_found ? full_name($practice, 'alumno') : 'Práctica no encontrada';
 $company_name = $practice_found ? full_name($practice, 'empresa') : 'Práctica no encontrada';
+$company_commercial_name = $practice_found ? trim((string) ($practice['empresa_nombre_comercial'] ?? '')) : '';
+$company_summary_name = $company_commercial_name !== ''
+  ? $company_commercial_name . ' (' . $company_name . ')'
+  : $company_name;
 $page_title = $practice_found
   ? 'Detalle de práctica #' . (int) $practice['id_practica'] . ' | Gestor de Alumnos'
   : 'Práctica no encontrada | Gestor de Alumnos';
@@ -457,6 +464,8 @@ $student_birth_date = $practice_found
   : 'No disponible';
 $seguimiento_rows = [];
 $seguimiento_horas_hoy = '0,00';
+$seguimiento_horas_hoy_valor = 0.0;
+$seguimiento_horas_pendientes = '0,00';
 
 if ($practice_found) {
   $fecha_inicio = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
@@ -510,11 +519,11 @@ if ($practice_found) {
         $mes_numero = (int) $cursor->format('n');
         $seguimiento_por_mes[$clave_mes] = [
           'mes' => ($meses[$mes_numero] ?? $cursor->format('F')) . ' ' . $cursor->format('Y'),
-          'dias' => [],
+          'dias' => 0,
         ];
       }
 
-      $seguimiento_por_mes[$clave_mes]['dias'][] = (int) $cursor->format('j');
+      $seguimiento_por_mes[$clave_mes]['dias']++;
 
       if ($cursor <= $fecha_hasta_hoy) {
         $segundos_realizados += $segundos_por_dia_semana[$dia_semana];
@@ -524,12 +533,20 @@ if ($practice_found) {
     foreach ($seguimiento_por_mes as $row) {
       $seguimiento_rows[] = [
         'mes' => $row['mes'],
-        'dias' => implode(', ', $row['dias']),
+        'dias' => (string) $row['dias'],
       ];
     }
 
-    $seguimiento_horas_hoy = number_format($segundos_realizados / 3600, 2, ',', '.');
+    $seguimiento_horas_hoy_valor = $segundos_realizados / 3600;
+    $seguimiento_horas_hoy = number_format($seguimiento_horas_hoy_valor, 2, ',', '.');
   }
+
+  $horas_totales_practica = is_numeric((string) ($practice['horas'] ?? null)) ? (float) $practice['horas'] : 0.0;
+  $horas_pendientes = $horas_totales_practica - $seguimiento_horas_hoy_valor;
+  if ($horas_pendientes < 0) {
+    $horas_pendientes = 0;
+  }
+  $seguimiento_horas_pendientes = number_format($horas_pendientes, 2, ',', '.');
 }
 ?>
 <!DOCTYPE html>
@@ -619,7 +636,7 @@ if ($practice_found) {
               <h3>Resumen de la empresa</h3>
             </div>
             <div class="practica-detalle-campos">
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre de la empresa</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="empresa_detalle.php?id_empresa=<?php echo (int) $practice['id_empresa']; ?>"><?php echo htmlspecialchars($company_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre de la empresa</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="empresa_detalle.php?id_empresa=<?php echo (int) $practice['id_empresa']; ?>"><?php echo htmlspecialchars($company_summary_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">CIF</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_cif']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nº Convenio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_convenio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Persona de contacto</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
@@ -645,6 +662,8 @@ if ($practice_found) {
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Días extra</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) ((int) ($practice['dias_extra'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin_real'] ?? null, '—'), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Horas totales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['horas']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Kilómetros al centro de trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_km_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Tipo de abono desde Getafe</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_abono_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Circunstancias excepcionales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(((isset($practice['circ_excep']) ? (int) $practice['circ_excep'] : 0) === 1 ? 'Requiere solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional.' : 'No'), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
@@ -693,6 +712,9 @@ if ($practice_found) {
             </div>
           </section>
 
+        </div>
+
+        <div class="practica-detalle-grid practica-detalle-grid--fila-3">
           <section class="panel practica-detalle-bloque practica-detalle-bloque--seguimiento">
             <div class="panel-header">
               <h3>Seguimiento</h3>
@@ -702,7 +724,7 @@ if ($practice_found) {
                 <thead>
                   <tr>
                     <th>Mes</th>
-                    <th>Días con prácticas</th>
+                    <th>Días de prácticas</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -720,22 +742,22 @@ if ($practice_found) {
                   <?php endif; ?>
                 </tbody>
               </table>
-              <p><strong>Horas realizadas a día de hoy:</strong> <?php echo htmlspecialchars($seguimiento_horas_hoy, ENT_QUOTES, 'UTF-8'); ?> h</p>
+              <p><strong>Horas realizadas a día de hoy:</strong> <?php echo htmlspecialchars($seguimiento_horas_hoy, ENT_QUOTES, 'UTF-8'); ?> (faltan <?php echo htmlspecialchars($seguimiento_horas_pendientes, ENT_QUOTES, 'UTF-8'); ?>)</p>
+            </div>
+          </section>
+
+          <section class="panel practica-detalle-bloque practica-detalle-bloque--observaciones">
+            <div class="panel-header">
+              <h3>Observaciones</h3>
+            </div>
+            <div class="panel-grid">
+              <p class="practica-observaciones"><?php echo nl2br(htmlspecialchars(format_value($practice['observaciones']), ENT_QUOTES, 'UTF-8')); ?></p>
+              <?php if (!empty($practice['tutor_comentarios'])): ?>
+                <p class="practica-observaciones-meta"><strong>Comentarios tutor empresa:</strong> <?php echo nl2br(htmlspecialchars((string) $practice['tutor_comentarios'], ENT_QUOTES, 'UTF-8')); ?></p>
+              <?php endif; ?>
             </div>
           </section>
         </div>
-
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Observaciones</h3>
-          </div>
-          <div class="panel-grid">
-            <p class="practica-observaciones"><?php echo nl2br(htmlspecialchars(format_value($practice['observaciones']), ENT_QUOTES, 'UTF-8')); ?></p>
-            <?php if (!empty($practice['tutor_comentarios'])): ?>
-              <p class="practica-observaciones-meta"><strong>Comentarios tutor empresa:</strong> <?php echo nl2br(htmlspecialchars((string) $practice['tutor_comentarios'], ENT_QUOTES, 'UTF-8')); ?></p>
-            <?php endif; ?>
-          </div>
-        </section>
 
         <section class="panel">
           <div class="panel-header">
