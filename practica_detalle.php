@@ -446,9 +446,14 @@ $practice_found = is_array($practice);
 $student_name = $practice_found ? full_name($practice, 'alumno') : 'Práctica no encontrada';
 $company_name = $practice_found ? format_value($practice['empresa_nombre'] ?? null) : 'Práctica no encontrada';
 $company_commercial_name = $practice_found ? trim((string) ($practice['empresa_nombre_comercial'] ?? '')) : '';
-$company_summary_name = $company_commercial_name !== ''
-  ? $company_commercial_name . ' (' . $company_name . ')'
-  : $company_name;
+$raw_company_name = $practice_found ? trim((string) ($practice['empresa_nombre'] ?? '')) : '';
+$company_summary_name = $company_name;
+if ($company_commercial_name !== '') {
+  $company_summary_name = $company_commercial_name;
+  if ($raw_company_name !== '' && $company_commercial_name !== $raw_company_name) {
+    $company_summary_name .= ' (' . $company_name . ')';
+  }
+}
 $page_title = $practice_found
   ? 'Detalle de práctica #' . (int) $practice['id_practica'] . ' | Gestor de Alumnos'
   : 'Práctica no encontrada | Gestor de Alumnos';
@@ -459,7 +464,7 @@ $plan_exists = $practice_found && $plan_file_path !== null && is_file($plan_file
 $plan_generated_at = $plan_exists ? date('d/m/Y H:i', (int) filemtime($plan_file_path)) : null;
 $practice_status = $practice_found ? calculate_practice_status($practice) : 'No disponible';
 $practice_header_title = $practice_found
-  ? $student_name . ' (' . format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']) . ') - ' . $practice_status
+  ? $student_name . ' - (' . format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']) . ') - ' . $practice_status
   : 'Práctica no encontrada';
 $student_age = $practice_found ? calculate_age($practice['alumno_fecha_nacimiento'] ?? null) : null;
 $student_birth_date = $practice_found
