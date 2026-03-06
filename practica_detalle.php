@@ -521,8 +521,8 @@ $student_birth_date = $practice_found
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre y apellidos</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="alumno_detalle.php?id_alumno=<?php echo (int) $practice['id_alumno']; ?>"><?php echo htmlspecialchars($student_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">NIA</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_nia']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">DNI</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_dni']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email personal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_email_personal']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email EducaMadrid</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_email_educamadrid']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email personal</span><span class="practica-detalle-campo-valor"><?php $alumno_email_personal = trim((string) ($practice['alumno_email_personal'] ?? '')); ?><?php if ($alumno_email_personal !== ''): ?><span data-copy="<?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email EducaMadrid</span><span class="practica-detalle-campo-valor"><?php $alumno_email_educamadrid = trim((string) ($practice['alumno_email_educamadrid'] ?? '')); ?><?php if ($alumno_email_educamadrid !== ''): ?><span data-copy="<?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de nacimiento</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($student_birth_date, ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
@@ -536,12 +536,12 @@ $student_birth_date = $practice_found
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre de la empresa</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="empresa_detalle.php?id_empresa=<?php echo (int) $practice['id_empresa']; ?>"><?php echo htmlspecialchars($company_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">CIF</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_cif']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nº Convenio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_convenio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Persona de contacto #1</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email persona de contacto #1</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_email']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono persona de contacto #1</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre del tutor en el centro de trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(full_name($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email del tutor en el centro de trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['tutor_empresa_email']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono del tutor en el centro de trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Persona de contacto</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email PC</span><span class="practica-detalle-campo-valor"><?php $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? '')); ?><?php if ($empresa_contacto_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono PC</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Tutor Centro de Trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(full_name($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email TCT</span><span class="practica-detalle-campo-valor"><?php $tutor_empresa_email = trim((string) ($practice['tutor_empresa_email'] ?? '')); ?><?php if ($tutor_empresa_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono TCT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
         </div>
@@ -567,32 +567,42 @@ $student_birth_date = $practice_found
             <div class="panel-header">
               <h3>Horario</h3>
             </div>
-            <div class="practica-detalle-horario-lista">
-              <?php foreach ($dias_semana as $day_number => $day_name): ?>
-                <?php
-                  $segments = $schedule_by_day[$day_number] ?? [];
-                  $morning = $segments[0] ?? null;
-                  $afternoon = $segments[1] ?? null;
-                  $total_seconds = 0;
-                  foreach ($segments as $segment) {
-                    $entrada = strtotime((string) $segment['hora_entrada']);
-                    $salida = strtotime((string) $segment['hora_salida']);
-                    if ($entrada !== false && $salida !== false && $salida > $entrada) {
-                      $total_seconds += ($salida - $entrada);
+            <table class="practica-horario-detalle-table">
+              <thead>
+                <tr>
+                  <th>Día</th>
+                  <th>Mañana</th>
+                  <th>Tarde</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($dias_semana as $day_number => $day_name): ?>
+                  <?php
+                    $segments = $schedule_by_day[$day_number] ?? [];
+                    $morning = $segments[0] ?? null;
+                    $afternoon = $segments[1] ?? null;
+                    $total_seconds = 0;
+                    foreach ($segments as $segment) {
+                      $entrada = strtotime((string) $segment['hora_entrada']);
+                      $salida = strtotime((string) $segment['hora_salida']);
+                      if ($entrada !== false && $salida !== false && $salida > $entrada) {
+                        $total_seconds += ($salida - $entrada);
+                      }
                     }
-                  }
-                  $hours = intdiv($total_seconds, 3600);
-                  $minutes = intdiv($total_seconds % 3600, 60);
-                  $total_label = $total_seconds > 0 ? sprintf('%02d:%02d', $hours, $minutes) : '—';
-                ?>
-                <div class="practica-detalle-horario-item">
-                  <p class="practica-detalle-horario-dia"><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></p>
-                  <p class="practica-detalle-horario-tramo">Mañana: <?php echo htmlspecialchars(format_time($morning['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($morning['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></p>
-                  <p class="practica-detalle-horario-tramo">Tarde: <?php echo htmlspecialchars(format_time($afternoon['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($afternoon['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></p>
-                  <p class="practica-detalle-horario-total">Total: <?php echo htmlspecialchars($total_label, ENT_QUOTES, 'UTF-8'); ?></p>
-                </div>
-              <?php endforeach; ?>
-            </div>
+                    $hours = intdiv($total_seconds, 3600);
+                    $minutes = intdiv($total_seconds % 3600, 60);
+                    $total_label = $total_seconds > 0 ? sprintf('%02d:%02d', $hours, $minutes) : '—';
+                  ?>
+                  <tr>
+                    <td><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars(format_time($morning['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($morning['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars(format_time($afternoon['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($afternoon['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($total_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
           </section>
         </div>
 
@@ -635,5 +645,64 @@ $student_birth_date = $practice_found
       <?php endif; ?>
     </main>
   </div>
+  <script>
+    const copyUsingFallback = (text) => {
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.setAttribute('readonly', 'readonly');
+      helper.style.position = 'fixed';
+      helper.style.opacity = '0';
+      helper.style.pointerEvents = 'none';
+      document.body.appendChild(helper);
+      helper.select();
+      helper.setSelectionRange(0, helper.value.length);
+      document.execCommand('copy');
+      helper.remove();
+    };
+
+    const copyText = (text) => {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(text).catch(() => {
+          copyUsingFallback(text);
+        });
+      }
+
+      copyUsingFallback(text);
+      return Promise.resolve();
+    };
+
+    const showCopied = (element) => {
+      const originalText = element.dataset.originalText ?? element.textContent;
+      const textToCopy = element.dataset.copy ?? '';
+      if (textToCopy === '') {
+        return;
+      }
+
+      element.dataset.originalText = originalText;
+
+      if (element.dataset.copyTimerId) {
+        window.clearTimeout(Number(element.dataset.copyTimerId));
+      }
+
+      element.textContent = 'Copiado!';
+      copyText(textToCopy);
+
+      const timerId = window.setTimeout(() => {
+        element.textContent = element.dataset.originalText ?? originalText;
+        delete element.dataset.copyTimerId;
+      }, 1000);
+
+      element.dataset.copyTimerId = String(timerId);
+    };
+
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-copy]');
+      if (!target) {
+        return;
+      }
+
+      showCopied(target);
+    });
+  </script>
 </body>
 </html>
