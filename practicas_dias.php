@@ -59,16 +59,16 @@ $page_title = 'Días de prácticas | Gestor de Alumnos';
 $active_page = 'utilidades';
 
 $months = [
-  9 => 'SEP',
-  10 => 'OCT',
-  11 => 'NOV',
-  12 => 'DIC',
-  1 => 'ENE',
-  2 => 'FEB',
-  3 => 'MAR',
-  4 => 'ABR',
-  5 => 'MAY',
-  6 => 'JUN',
+  9 => 'sep',
+  10 => 'oct',
+  11 => 'nov',
+  12 => 'dic',
+  1 => 'ene',
+  2 => 'feb',
+  3 => 'mar',
+  4 => 'abr',
+  5 => 'may',
+  6 => 'jun',
 ];
 
 $allowed_orders = ['default', 'alumno'];
@@ -146,6 +146,7 @@ try {
             'months' => array_fill_keys(array_keys($months), 0),
             'seconds' => 0,
             'current_month_seconds' => 0,
+            'had_current_month_in_course' => false,
             'status' => calculate_practice_status($practice),
           ];
         }
@@ -188,6 +189,10 @@ try {
             $student_rows[$student_id]['months'][$mes_numero]++;
           }
 
+          if ((int) $cursor->format('n') === $current_month && (int) $cursor->format('Y') === $current_year) {
+            $student_rows[$student_id]['had_current_month_in_course'] = true;
+          }
+
           if ($cursor <= $fecha_hasta_hoy) {
             $student_rows[$student_id]['seconds'] += $segundos_por_dia_semana[$dia_semana];
 
@@ -200,13 +205,13 @@ try {
 
       foreach (array_keys($months) as $month_number) {
         $month_year = $month_number >= 9 ? $course_start_year : $course_start_year + 1;
-        $months[$month_number] = sprintf("%s '%s", $months[$month_number], substr((string) $month_year, -2));
+        $months[$month_number] = sprintf('%s %s', $months[$month_number], substr((string) $month_year, -2));
       }
 
       if ($solo_activos) {
         $student_rows = array_filter(
           $student_rows,
-          static fn (array $student): bool => ($student['status'] ?? '') === 'En curso'
+          static fn (array $student): bool => (bool) ($student['had_current_month_in_course'] ?? false)
         );
       }
 
@@ -273,7 +278,7 @@ try {
               <tr>
                 <?php
                   $alumno_order_params = $_GET;
-                  $alumno_order_params['orden'] = 'alumno';
+                  $alumno_order_params['orden'] = $current_order === 'alumno' ? 'default' : 'alumno';
                   $alumno_order_query = http_build_query($alumno_order_params);
                 ?>
                 <th><a class="practice-link" href="practicas_dias.php<?php echo $alumno_order_query !== '' ? '?' . htmlspecialchars($alumno_order_query, ENT_QUOTES, 'UTF-8') : ''; ?>">Alumno</a></th>
@@ -302,7 +307,13 @@ try {
                       </a>
                     </td>
                     <?php foreach (array_keys($months) as $month_number): ?>
-                      <td><?php echo htmlspecialchars((string) $student_row['months'][$month_number], ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td>
+                        <?php if ($month_number === $current_month): ?>
+                          <strong><?php echo htmlspecialchars((string) $student_row['months'][$month_number], ENT_QUOTES, 'UTF-8'); ?></strong>
+                        <?php else: ?>
+                          <?php echo htmlspecialchars((string) $student_row['months'][$month_number], ENT_QUOTES, 'UTF-8'); ?>
+                        <?php endif; ?>
+                      </td>
                     <?php endforeach; ?>
                     <td><?php echo htmlspecialchars(number_format(((float) $student_row['seconds']) / 3600, 2, ',', '.'), ENT_QUOTES, 'UTF-8'); ?></td>
                     <td><?php echo htmlspecialchars((string) $student_row['status'], ENT_QUOTES, 'UTF-8'); ?></td>
