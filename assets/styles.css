@@ -235,6 +235,18 @@ body {
   transition: filter 0.2s ease;
 }
 
+.nav-icon-image--alumnos {
+  background-color: #4b77d1;
+  mask-image: url("icons/alumnos.svg");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-image: url("icons/alumnos.svg");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
 .nav-text {
   white-space: nowrap;
 }
@@ -1802,3 +1814,6 @@ a.edit-toggle:active {
   color: var(--muted);
   font-weight: 600;
 }
+
+
+

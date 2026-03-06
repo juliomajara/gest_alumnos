@@ -95,7 +95,11 @@ $nav_items = [
         href="<?php echo htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
       >
         <span class="nav-icon" aria-hidden="true">
-          <img class="nav-icon-image" src="<?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" alt="">
+          <?php if ($item['key'] === 'alumnos'): ?>
+            <span class="nav-icon-image nav-icon-image--alumnos"></span>
+          <?php else: ?>
+            <img class="nav-icon-image" src="<?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?>" alt="">
+          <?php endif; ?>
         </span>
         <span class="nav-text"><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></span>
       </a>
@@ -154,3 +158,4 @@ $nav_items = [
     window.addEventListener('scroll', updateScrollTopVisibility, { passive: true });
   })();
 </script>
+
