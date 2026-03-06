@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+header('Content-Type: text/html; charset=UTF-8');
+
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/includes/practicas_pdfs.php';
 
@@ -25,7 +27,7 @@ function format_date(?string $value, string $fallback = 'No disponible'): string
   return $value;
 }
 
-function format_time(?string $value, string $fallback = 'â€”'): string {
+function format_time(?string $value, string $fallback = '—'): string {
   if ($value === null || $value === '') {
     return $fallback;
   }
@@ -137,10 +139,10 @@ function build_address(array $practice): string {
 $dias_semana = [
   1 => 'Lunes',
   2 => 'Martes',
-  3 => 'MiÃ©rcoles',
+  3 => 'Miércoles',
   4 => 'Jueves',
   5 => 'Viernes',
-  6 => 'SÃ¡bado',
+  6 => 'Sábado',
   7 => 'Domingo',
 ];
 
@@ -165,7 +167,7 @@ $document_status_code = isset($_GET['doc_status']) ? (string) $_GET['doc_status'
 if ($document_status_code === 'calendar_generated') {
   $calendar_status = 'Calendario generado correctamente.';
 } elseif ($document_status_code === 'plan_generated') {
-  $plan_status = 'Plan de formaciÃ³n generado correctamente.';
+  $plan_status = 'Plan de formación generado correctamente.';
 }
 
 $document_error_message = isset($_GET['doc_error']) ? trim((string) $_GET['doc_error']) : '';
@@ -178,7 +180,7 @@ if ($document_error_message !== '') {
 }
 
 if ($id_practica === false || $id_practica === null) {
-  $load_error = 'No se ha indicado un identificador de prÃ¡ctica vÃ¡lido.';
+  $load_error = 'No se ha indicado un identificador de práctica válido.';
 } else {
   try {
     $pdo = db();
@@ -407,7 +409,7 @@ if ($id_practica === false || $id_practica === null) {
           exit;
         }
 
-        $calendar_error = 'El calendario no existe o no estÃ¡ disponible para descarga.';
+        $calendar_error = 'El calendario no existe o no está disponible para descarga.';
       }
 
       if ($action === 'generar_calendario') {
@@ -433,18 +435,18 @@ if ($id_practica === false || $id_practica === null) {
           exit;
         }
 
-        $plan_error = 'El plan de formaciÃ³n no existe o no estÃ¡ disponible para descarga.';
+        $plan_error = 'El plan de formación no existe o no está disponible para descarga.';
       }
 
     }
   } catch (Throwable $error) {
-    $load_error = 'No se ha podido cargar el detalle de la prÃ¡ctica en este momento.';
+    $load_error = 'No se ha podido cargar el detalle de la práctica en este momento.';
   }
 }
 
 $practice_found = is_array($practice);
-$student_name = $practice_found ? full_name($practice, 'alumno') : 'PrÃ¡ctica no encontrada';
-$company_name = $practice_found ? format_value($practice['empresa_nombre'] ?? null) : 'PrÃ¡ctica no encontrada';
+$student_name = $practice_found ? full_name($practice, 'alumno') : 'Práctica no encontrada';
+$company_name = $practice_found ? format_value($practice['empresa_nombre'] ?? null) : 'Práctica no encontrada';
 $company_commercial_name = $practice_found ? trim((string) ($practice['empresa_nombre_comercial'] ?? '')) : '';
 $company_contact_name = $practice_found ? trim((string) ($practice['empresa_nombre'] ?? '')) : '';
 $company_contact_lastname = $practice_found ? trim((string) ($practice['empresa_apellido1'] ?? '')) : '';
@@ -453,8 +455,8 @@ if ($company_contact_name !== '' && $company_contact_lastname !== '') {
   $company_summary_name .= ' (' . $company_contact_name . ' ' . $company_contact_lastname . ')';
 }
 $page_title = $practice_found
-  ? 'Detalle de prÃ¡ctica #' . (int) $practice['id_practica'] . ' | Gestor de Alumnos'
-  : 'PrÃ¡ctica no encontrada | Gestor de Alumnos';
+  ? 'Detalle de práctica #' . (int) $practice['id_practica'] . ' | Gestor de Alumnos'
+  : 'Práctica no encontrada | Gestor de Alumnos';
 $active_page = 'practicas';
 $calendar_exists = $practice_found && $calendar_file_path !== null && is_file($calendar_file_path);
 $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($calendar_file_path)) : null;
@@ -463,10 +465,10 @@ $plan_generated_at = $plan_exists ? date('d/m/Y H:i', (int) filemtime($plan_file
 $practice_status = $practice_found ? calculate_practice_status($practice) : 'No disponible';
 $practice_header_title = $practice_found
   ? $student_name . ' - (' . format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']) . ') - ' . $practice_status
-  : 'PrÃ¡ctica no encontrada';
+  : 'Práctica no encontrada';
 $student_age = $practice_found ? calculate_age($practice['alumno_fecha_nacimiento'] ?? null) : null;
 $student_birth_date = $practice_found
-  ? format_date($practice['alumno_fecha_nacimiento'] ?? null) . ($student_age !== null ? ' (' . $student_age . ' aÃ±os)' : '')
+  ? format_date($practice['alumno_fecha_nacimiento'] ?? null) . ($student_age !== null ? ' (' . $student_age . ' años)' : '')
   : 'No disponible';
 $seguimiento_rows = [];
 $seguimiento_horas_hoy = '0,00';
@@ -586,15 +588,15 @@ if ($practice_found) {
       <?php if ($load_error !== null): ?>
         <section class="panel">
           <div class="panel-header">
-            <h3>Error al cargar la prÃ¡ctica</h3>
+            <h3>Error al cargar la práctica</h3>
             <p><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
         </section>
       <?php elseif (!$practice_found): ?>
         <section class="panel">
           <div class="panel-header">
-            <h3>PrÃ¡ctica no encontrada</h3>
-            <p>No existe ninguna prÃ¡ctica con el identificador indicado.</p>
+            <h3>Práctica no encontrada</h3>
+            <p>No existe ninguna práctica con el identificador indicado.</p>
           </div>
         </section>
       <?php else: ?>
@@ -618,7 +620,7 @@ if ($practice_found) {
                 <p>Calendario generado el <?php echo htmlspecialchars($calendar_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
               <?php endif; ?>
               <?php if ($plan_generated_at !== null): ?>
-                <p>Plan de formaciÃ³n generado el <?php echo htmlspecialchars($plan_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
+                <p>Plan de formación generado el <?php echo htmlspecialchars($plan_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
               <?php endif; ?>
             </div>
           </section>
@@ -634,7 +636,7 @@ if ($practice_found) {
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">DNI</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_dni']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email personal</span><span class="practica-detalle-campo-valor"><?php $alumno_email_personal = trim((string) ($practice['alumno_email_personal'] ?? '')); ?><?php if ($alumno_email_personal !== ''): ?><span data-copy="<?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email EducaMadrid</span><span class="practica-detalle-campo-valor"><?php $alumno_email_educamadrid = trim((string) ($practice['alumno_email_educamadrid'] ?? '')); ?><?php if ($alumno_email_educamadrid !== ''): ?><span data-copy="<?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">TelÃ©fono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de nacimiento</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($student_birth_date, ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
@@ -671,18 +673,18 @@ if ($practice_found) {
         <div class="practica-detalle-grid practica-detalle-grid--fila-2">
           <section class="panel practica-detalle-bloque practica-detalle-bloque--practica">
             <div class="panel-header">
-              <h3>Resumen de la prÃ¡ctica</h3>
+              <h3>Resumen de la práctica</h3>
             </div>
             <div class="practica-detalle-campos">
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">NÂº Anexo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['anexo']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de inicio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_inicio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin calculada</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">DÃ­as extra</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) ((int) ($practice['dias_extra'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin_extra'] ?? null, 'â€”'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Días extra</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) ((int) ($practice['dias_extra'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin_extra'] ?? null, '—'), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Horas totales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['horas']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">KilÃ³metros al CT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_km_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Kilómetros al CT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_km_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Abono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_abono_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Circunstancias excepcionales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(((isset($practice['circ_excep']) ? (int) $practice['circ_excep'] : 0) === 1 ? 'Requiere solicitud de autorizaciÃ³n para la realizaciÃ³n de la FFE bajo circunstancias de carÃ¡cter excepcional.' : 'No'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Circunstancias excepcionales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(((isset($practice['circ_excep']) ? (int) $practice['circ_excep'] : 0) === 1 ? 'Requiere solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional.' : 'No'), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
 
@@ -694,8 +696,8 @@ if ($practice_found) {
               <table class="practica-horario-detalle-table">
                 <thead>
                   <tr>
-                    <th>DÃ­a</th>
-                    <th>MaÃ±ana</th>
+                    <th>Día</th>
+                    <th>Mañana</th>
                     <th>Tarde</th>
                     <th>Total</th>
                   </tr>
@@ -716,7 +718,7 @@ if ($practice_found) {
                       }
                       $hours = intdiv($total_seconds, 3600);
                       $minutes = intdiv($total_seconds % 3600, 60);
-                      $total_label = $total_seconds > 0 ? sprintf('%02d:%02d', $hours, $minutes) : 'â€”';
+                      $total_label = $total_seconds > 0 ? sprintf('%02d:%02d', $hours, $minutes) : '—';
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -765,7 +767,7 @@ if ($practice_found) {
                 <thead>
                   <tr>
                     <th>Mes</th>
-                    <th>DÃ­as de prácticas</th>
+                    <th>Días de prácticas</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -783,14 +785,14 @@ if ($practice_found) {
                   <?php endif; ?>
                 </tbody>
               </table>
-              <p><strong>Horas realizadas a dÃ­a de hoy:</strong> <?php echo htmlspecialchars($seguimiento_horas_hoy, ENT_QUOTES, 'UTF-8'); ?> (faltan <?php echo htmlspecialchars($seguimiento_horas_pendientes, ENT_QUOTES, 'UTF-8'); ?>)</p>
+              <p><strong>Horas realizadas a día de hoy:</strong> <?php echo htmlspecialchars($seguimiento_horas_hoy, ENT_QUOTES, 'UTF-8'); ?> (faltan <?php echo htmlspecialchars($seguimiento_horas_pendientes, ENT_QUOTES, 'UTF-8'); ?>)</p>
             </div>
           </section>
 
           <section class="panel practica-detalle-bloque practica-detalle-bloque--documentacion">
             <div class="panel-header">
-              <h3>DocumentaciÃ³n</h3>
-              <p>GeneraciÃ³n y descarga de calendario y plan de formaciÃ³n.</p>
+              <h3>Documentación</h3>
+              <p>Generación y descarga de calendario y plan de formación.</p>
             </div>
             <div class="panel-grid">
               <p><strong>Calendario</strong></p>
@@ -801,11 +803,11 @@ if ($practice_found) {
                 <?php endif; ?>
               </div>
 
-              <p><strong>Plan de formaciÃ³n</strong></p>
+              <p><strong>Plan de formación</strong></p>
               <div class="header-actions">
-                <a class="primary-button" href="generar_plan_formacion.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Plan FormaciÃ³n</a>
+                <a class="primary-button" href="generar_plan_formacion.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Plan Formación</a>
                 <?php if ($plan_exists && $plan_file_name !== null): ?>
-                  <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan FormaciÃ³n</a>
+                  <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
                 <?php endif; ?>
               </div>
             </div>
