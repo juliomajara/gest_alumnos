@@ -572,11 +572,14 @@ if ($practice_found) {
     <main class="content">
       <header class="header">
         <div>
+          <p class="eyebrow">Detalle de práctica</p>
+          <h1><?php echo htmlspecialchars($practice_header_title, ENT_QUOTES, 'UTF-8'); ?></h1>
+        </div>
         <div class="header-actions">
           <?php if ($practice_found): ?>
             <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) $id_practica; ?>">Editar práctica</a>
           <?php endif; ?>
-          <a class="ghost-button" href="practicas.php">Volver a prÃ¡cticas</a>
+          <a class="ghost-button" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
 
@@ -762,7 +765,7 @@ if ($practice_found) {
                 <thead>
                   <tr>
                     <th>Mes</th>
-                    <th>DÃ­as de prÃ¡cticas</th>
+                    <th>DÃ­as de prácticas</th>
                   </tr>
                 </thead>
                 <tbody>
