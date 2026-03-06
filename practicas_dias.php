@@ -3,32 +3,78 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
-function full_name_name_first(array $row, string $prefix): string
+function format_student_name(array $row, string $prefix): string
 {
-  $parts = array_filter([
-    trim((string) ($row[$prefix . '_nombre'] ?? '')),
-    trim((string) ($row[$prefix . '_apellido1'] ?? '')),
-    trim((string) ($row[$prefix . '_apellido2'] ?? '')),
-  ], static fn (string $value): bool => $value !== '');
+  $apellido1 = trim((string) ($row[$prefix . '_apellido1'] ?? ''));
+  $apellido2 = trim((string) ($row[$prefix . '_apellido2'] ?? ''));
+  $nombre = trim((string) ($row[$prefix . '_nombre'] ?? ''));
 
-  return $parts !== [] ? implode(' ', $parts) : 'No disponible';
+  $apellidos = trim(implode(' ', array_filter([
+    $apellido1,
+    $apellido2,
+  ], static fn (string $value): bool => $value !== '')));
+
+  if ($apellidos === '' && $nombre === '') {
+    return 'No disponible';
+  }
+
+  if ($apellidos === '') {
+    return $nombre;
+  }
+
+  if ($nombre === '') {
+    return $apellidos;
+  }
+
+  return $apellidos . ', ' . $nombre;
+}
+
+function calculate_practice_status(array $practice): string
+{
+  if ((int) ($practice['cancelada'] ?? 0) === 1) {
+    return 'Cancelada';
+  }
+
+  $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
+  $fecha_fin_real = (string) ($practice['fecha_fin_real'] ?? '');
+
+  if ($fecha_inicio === '' || $fecha_fin_real === '') {
+    return 'No disponible';
+  }
+
+  $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+  if ($today < $fecha_inicio) {
+    return 'En espera';
+  }
+
+  if ($today <= $fecha_fin_real) {
+    return 'En curso';
+  }
+
+  return 'Finalizada';
 }
 
 $page_title = 'Días de prácticas | Gestor de Alumnos';
 $active_page = 'utilidades';
 
 $months = [
-  9 => 'Septiembre',
-  10 => 'Octubre',
-  11 => 'Noviembre',
-  12 => 'Diciembre',
-  1 => 'Enero',
-  2 => 'Febrero',
-  3 => 'Marzo',
-  4 => 'Abril',
-  5 => 'Mayo',
-  6 => 'Junio',
+  9 => 'SEP',
+  10 => 'OCT',
+  11 => 'NOV',
+  12 => 'DIC',
+  1 => 'ENE',
+  2 => 'FEB',
+  3 => 'MAR',
+  4 => 'ABR',
+  5 => 'MAY',
+  6 => 'JUN',
 ];
+
+$allowed_orders = ['default', 'alumno'];
+$order_param = (string) ($_GET['orden'] ?? 'default');
+$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'default';
+$solo_activos = (string) ($_GET['solo_activos'] ?? '') === '1';
 
 $student_rows = [];
 $load_error = null;
@@ -44,6 +90,7 @@ try {
         p.id_alumno,
         p.fecha_inicio,
         p.fecha_fin_real,
+        p.cancelada,
         a.nombre AS alumno_nombre,
         a.apellido1 AS alumno_apellido1,
         a.apellido2 AS alumno_apellido2
@@ -85,14 +132,21 @@ try {
       }
 
       $hoy = new DateTimeImmutable('today');
+      $current_month = (int) $hoy->format('n');
+      $current_year = (int) $hoy->format('Y');
+      $course_start_year = $current_month >= 9 ? $current_year : $current_year - 1;
 
       foreach ($practices as $practice) {
         $student_id = (int) $practice['id_alumno'];
         if (!isset($student_rows[$student_id])) {
           $student_rows[$student_id] = [
-            'name' => full_name_name_first($practice, 'alumno'),
+            'id_practica' => (int) $practice['id_practica'],
+            'name' => format_student_name($practice, 'alumno'),
+            'apellido1' => mb_strtolower(trim((string) ($practice['alumno_apellido1'] ?? ''))),
             'months' => array_fill_keys(array_keys($months), 0),
             'seconds' => 0,
+            'current_month_seconds' => 0,
+            'status' => calculate_practice_status($practice),
           ];
         }
 
@@ -136,9 +190,36 @@ try {
 
           if ($cursor <= $fecha_hasta_hoy) {
             $student_rows[$student_id]['seconds'] += $segundos_por_dia_semana[$dia_semana];
+
+            if ((int) $cursor->format('n') === $current_month && (int) $cursor->format('Y') === $current_year) {
+              $student_rows[$student_id]['current_month_seconds'] += $segundos_por_dia_semana[$dia_semana];
+            }
           }
         }
       }
+
+      foreach (array_keys($months) as $month_number) {
+        $month_year = $month_number >= 9 ? $course_start_year : $course_start_year + 1;
+        $months[$month_number] = sprintf("%s '%s", $months[$month_number], substr((string) $month_year, -2));
+      }
+
+      if ($solo_activos) {
+        $student_rows = array_filter(
+          $student_rows,
+          static fn (array $student): bool => ($student['status'] ?? '') === 'En curso'
+        );
+      }
+
+      usort($student_rows, static function (array $left, array $right) use ($current_order): int {
+        if ($current_order === 'alumno') {
+          return [$left['apellido1'], $left['name']] <=> [$right['apellido1'], $right['name']];
+        }
+
+        $left_has_hours = (float) $left['current_month_seconds'] > 0 ? 0 : 1;
+        $right_has_hours = (float) $right['current_month_seconds'] > 0 ? 0 : 1;
+
+        return [$left_has_hours, $left['apellido1'], $left['name']] <=> [$right_has_hours, $right['apellido1'], $right['name']];
+      });
     }
   }
 } catch (Throwable $error) {
@@ -166,6 +247,18 @@ try {
           <h1>Días de prácticas por alumno</h1>
           <p class="subheading">Consulta los días de prácticas por mes y las horas realizadas a día de hoy.</p>
         </div>
+        <div class="header-actions">
+          <?php
+            $solo_activos_params = $_GET;
+            if ($solo_activos) {
+              unset($solo_activos_params['solo_activos']);
+            } else {
+              $solo_activos_params['solo_activos'] = '1';
+            }
+            $solo_activos_query = http_build_query($solo_activos_params);
+          ?>
+          <a class="edit-toggle<?php echo $solo_activos ? ' is-active' : ''; ?>" href="practicas_dias.php<?php echo $solo_activos_query !== '' ? '?' . htmlspecialchars($solo_activos_query, ENT_QUOTES, 'UTF-8') : ''; ?>">Solo activos</a>
+        </div>
       </header>
 
       <section class="panel">
@@ -178,30 +271,41 @@ try {
           <table>
             <thead>
               <tr>
-                <th>Alumno</th>
+                <?php
+                  $alumno_order_params = $_GET;
+                  $alumno_order_params['orden'] = 'alumno';
+                  $alumno_order_query = http_build_query($alumno_order_params);
+                ?>
+                <th><a class="practice-link" href="practicas_dias.php<?php echo $alumno_order_query !== '' ? '?' . htmlspecialchars($alumno_order_query, ENT_QUOTES, 'UTF-8') : ''; ?>">Alumno</a></th>
                 <?php foreach ($months as $month_name): ?>
                   <th><?php echo htmlspecialchars($month_name, ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
                 <th>Horas realizadas</th>
+                <th>Estado</th>
               </tr>
             </thead>
             <tbody>
               <?php if ($load_error !== null): ?>
                 <tr>
-                  <td colspan="12"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
+                  <td colspan="13"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
                 </tr>
               <?php elseif ($student_rows === []): ?>
                 <tr>
-                  <td colspan="12">No hay prácticas registradas para el curso actual.</td>
+                  <td colspan="13">No hay prácticas registradas para el curso actual.</td>
                 </tr>
               <?php else: ?>
                 <?php foreach ($student_rows as $student_row): ?>
                   <tr>
-                    <td><?php echo htmlspecialchars((string) $student_row['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td>
+                      <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) $student_row['id_practica']); ?>">
+                        <?php echo htmlspecialchars((string) $student_row['name'], ENT_QUOTES, 'UTF-8'); ?>
+                      </a>
+                    </td>
                     <?php foreach (array_keys($months) as $month_number): ?>
                       <td><?php echo htmlspecialchars((string) $student_row['months'][$month_number], ENT_QUOTES, 'UTF-8'); ?></td>
                     <?php endforeach; ?>
                     <td><?php echo htmlspecialchars(number_format(((float) $student_row['seconds']) / 3600, 2, ',', '.'), ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars((string) $student_row['status'], ENT_QUOTES, 'UTF-8'); ?></td>
                   </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
