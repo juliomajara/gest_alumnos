@@ -90,6 +90,16 @@ function full_name(array $row, string $prefix): string {
   return trim(implode(' ', $parts) . ', ' . $name, ' ,');
 }
 
+function full_name_name_first(array $row, string $prefix): string {
+  $parts = array_filter([
+    trim((string) ($row[$prefix . '_nombre'] ?? '')),
+    trim((string) ($row[$prefix . '_apellido1'] ?? '')),
+    trim((string) ($row[$prefix . '_apellido2'] ?? '')),
+  ], static fn (string $value): bool => $value !== '');
+
+  return $parts !== [] ? implode(' ', $parts) : 'No disponible';
+}
+
 function build_address(array $practice): string {
   $parts = array_filter([
     trim((string) ($practice['direccion_via_tipo'] ?? '')),
@@ -265,7 +275,7 @@ if ($id_practica === false || $id_practica === null) {
           LIMIT 1
         ) AS empresa_telefono,
         (
-          SELECT CONCAT_WS(\' \', ec.apellido1, ec.apellido2, ec.nombre)
+          SELECT CONCAT_WS(\' \', ec.nombre, ec.apellido1, ec.apellido2)
           FROM empresas_contactos ec
           WHERE ec.id_empresa = e.id_empresa
           ORDER BY ec.id_empresa_contacto ASC
@@ -445,6 +455,82 @@ $student_age = $practice_found ? calculate_age($practice['alumno_fecha_nacimient
 $student_birth_date = $practice_found
   ? format_date($practice['alumno_fecha_nacimiento'] ?? null) . ($student_age !== null ? ' (' . $student_age . ' años)' : '')
   : 'No disponible';
+$seguimiento_rows = [];
+$seguimiento_horas_hoy = '0,00';
+
+if ($practice_found) {
+  $fecha_inicio = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
+  $fecha_fin_real = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_real'] ?? ''));
+
+  if ($fecha_inicio !== false && $fecha_fin_real !== false && $fecha_inicio <= $fecha_fin_real) {
+    $segundos_por_dia_semana = [];
+    foreach ($schedule_by_day as $day_number => $segments) {
+      $total_segundos = 0;
+      foreach ($segments as $segment) {
+        $entrada = strtotime((string) $segment['hora_entrada']);
+        $salida = strtotime((string) $segment['hora_salida']);
+        if ($entrada !== false && $salida !== false && $salida > $entrada) {
+          $total_segundos += ($salida - $entrada);
+        }
+      }
+
+      if ($total_segundos > 0) {
+        $segundos_por_dia_semana[(int) $day_number] = $total_segundos;
+      }
+    }
+
+    $meses = [
+      1 => 'Enero',
+      2 => 'Febrero',
+      3 => 'Marzo',
+      4 => 'Abril',
+      5 => 'Mayo',
+      6 => 'Junio',
+      7 => 'Julio',
+      8 => 'Agosto',
+      9 => 'Septiembre',
+      10 => 'Octubre',
+      11 => 'Noviembre',
+      12 => 'Diciembre',
+    ];
+
+    $seguimiento_por_mes = [];
+    $hoy = new DateTimeImmutable('today');
+    $fecha_hasta_hoy = $hoy < $fecha_fin_real ? $hoy : $fecha_fin_real;
+    $segundos_realizados = 0;
+
+    for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_real; $cursor = $cursor->modify('+1 day')) {
+      $dia_semana = (int) $cursor->format('N');
+      if (!isset($segundos_por_dia_semana[$dia_semana])) {
+        continue;
+      }
+
+      $clave_mes = $cursor->format('Y-m');
+      if (!isset($seguimiento_por_mes[$clave_mes])) {
+        $mes_numero = (int) $cursor->format('n');
+        $seguimiento_por_mes[$clave_mes] = [
+          'mes' => ($meses[$mes_numero] ?? $cursor->format('F')) . ' ' . $cursor->format('Y'),
+          'dias' => [],
+        ];
+      }
+
+      $seguimiento_por_mes[$clave_mes]['dias'][] = (int) $cursor->format('j');
+
+      if ($cursor <= $fecha_hasta_hoy) {
+        $segundos_realizados += $segundos_por_dia_semana[$dia_semana];
+      }
+    }
+
+    foreach ($seguimiento_por_mes as $row) {
+      $seguimiento_rows[] = [
+        'mes' => $row['mes'],
+        'dias' => implode(', ', $row['dias']),
+      ];
+    }
+
+    $seguimiento_horas_hoy = number_format($segundos_realizados / 3600, 2, ',', '.');
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -539,7 +625,7 @@ $student_birth_date = $practice_found
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Persona de contacto</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email PC</span><span class="practica-detalle-campo-valor"><?php $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? '')); ?><?php if ($empresa_contacto_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono PC</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Tutor Centro de Trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(full_name($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Tutor Centro de Trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(full_name_name_first($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email TCT</span><span class="practica-detalle-campo-valor"><?php $tutor_empresa_email = trim((string) ($practice['tutor_empresa_email'] ?? '')); ?><?php if ($tutor_empresa_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono TCT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
@@ -567,42 +653,75 @@ $student_birth_date = $practice_found
             <div class="panel-header">
               <h3>Horario</h3>
             </div>
-            <table class="practica-horario-detalle-table">
-              <thead>
-                <tr>
-                  <th>Día</th>
-                  <th>Mañana</th>
-                  <th>Tarde</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($dias_semana as $day_number => $day_name): ?>
-                  <?php
-                    $segments = $schedule_by_day[$day_number] ?? [];
-                    $morning = $segments[0] ?? null;
-                    $afternoon = $segments[1] ?? null;
-                    $total_seconds = 0;
-                    foreach ($segments as $segment) {
-                      $entrada = strtotime((string) $segment['hora_entrada']);
-                      $salida = strtotime((string) $segment['hora_salida']);
-                      if ($entrada !== false && $salida !== false && $salida > $entrada) {
-                        $total_seconds += ($salida - $entrada);
-                      }
-                    }
-                    $hours = intdiv($total_seconds, 3600);
-                    $minutes = intdiv($total_seconds % 3600, 60);
-                    $total_label = $total_seconds > 0 ? sprintf('%02d:%02d', $hours, $minutes) : '—';
-                  ?>
+            <div class="panel-grid">
+              <table class="practica-horario-detalle-table">
+                <thead>
                   <tr>
-                    <td><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars(format_time($morning['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($morning['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars(format_time($afternoon['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($afternoon['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($total_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <th>Día</th>
+                    <th>Mañana</th>
+                    <th>Tarde</th>
+                    <th>Total</th>
                   </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <?php foreach ($dias_semana as $day_number => $day_name): ?>
+                    <?php
+                      $segments = $schedule_by_day[$day_number] ?? [];
+                      $morning = $segments[0] ?? null;
+                      $afternoon = $segments[1] ?? null;
+                      $total_seconds = 0;
+                      foreach ($segments as $segment) {
+                        $entrada = strtotime((string) $segment['hora_entrada']);
+                        $salida = strtotime((string) $segment['hora_salida']);
+                        if ($entrada !== false && $salida !== false && $salida > $entrada) {
+                          $total_seconds += ($salida - $entrada);
+                        }
+                      }
+                      $hours = intdiv($total_seconds, 3600);
+                      $minutes = intdiv($total_seconds % 3600, 60);
+                      $total_label = $total_seconds > 0 ? sprintf('%02d:%02d', $hours, $minutes) : '—';
+                    ?>
+                    <tr>
+                      <td><?php echo htmlspecialchars($day_name, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(format_time($morning['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($morning['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(format_time($afternoon['hora_entrada'] ?? null), ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars(format_time($afternoon['hora_salida'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($total_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel practica-detalle-bloque practica-detalle-bloque--seguimiento">
+            <div class="panel-header">
+              <h3>Seguimiento</h3>
+            </div>
+            <div class="panel-grid">
+              <table class="practica-horario-detalle-table">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Días con prácticas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php if ($seguimiento_rows !== []): ?>
+                    <?php foreach ($seguimiento_rows as $seguimiento_row): ?>
+                      <tr>
+                        <td><?php echo htmlspecialchars((string) $seguimiento_row['mes'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars((string) $seguimiento_row['dias'], ENT_QUOTES, 'UTF-8'); ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="2">No hay datos de seguimiento disponibles.</td>
+                    </tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+              <p><strong>Horas realizadas a día de hoy:</strong> <?php echo htmlspecialchars($seguimiento_horas_hoy, ENT_QUOTES, 'UTF-8'); ?> h</p>
+            </div>
           </section>
         </div>
 

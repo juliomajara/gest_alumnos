@@ -1724,15 +1724,15 @@ a.edit-toggle:active {
 
 .practica-detalle-campos {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .practica-detalle-campo {
   display: grid;
   grid-template-columns: minmax(170px, 0.9fr) minmax(0, 1.6fr);
-  gap: 12px;
+  gap: 10px;
   align-items: baseline;
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
 
