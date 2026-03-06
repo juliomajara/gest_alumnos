@@ -1,0 +1,296 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/practicas_pdfs.php';
+
+function format_student_name(array $row): string
+{
+  $apellido1 = trim((string) ($row['alumno_apellido1'] ?? ''));
+  $apellido2 = trim((string) ($row['alumno_apellido2'] ?? ''));
+  $nombre = trim((string) ($row['alumno_nombre'] ?? ''));
+
+  $apellidos = trim(implode(' ', array_filter([
+    $apellido1,
+    $apellido2,
+  ], static fn (string $value): bool => $value !== '')));
+
+  if ($apellidos === '' && $nombre === '') {
+    return 'No disponible';
+  }
+
+  if ($apellidos === '') {
+    return $nombre;
+  }
+
+  if ($nombre === '') {
+    return $apellidos;
+  }
+
+  return $apellidos . ', ' . $nombre;
+}
+
+function format_date_es(?string $value): string
+{
+  $value = trim((string) $value);
+  if ($value === '') {
+    return 'No disponible';
+  }
+
+  $date = DateTimeImmutable::createFromFormat('Y-m-d', $value);
+  return $date ? $date->format('d/m/Y') : $value;
+}
+
+function run_generator_script(string $scriptName, int $practiceId): bool
+{
+  $scriptPath = __DIR__ . '/' . $scriptName;
+  if (!is_file($scriptPath)) {
+    return false;
+  }
+
+  $bootstrapCode = sprintf(
+    '$_GET["id_practica"]=%d;$_SERVER["HTTP_HOST"]="localhost";$_SERVER["HTTP_REFERER"]="practicas_documentacion.php";require %s;',
+    $practiceId,
+    var_export($scriptPath, true)
+  );
+
+  $command = escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($bootstrapCode);
+  $output = [];
+  $exitCode = 1;
+  @exec($command . ' 2>&1', $output, $exitCode);
+
+  return $exitCode === 0;
+}
+
+$page_title = 'Documentación de prácticas | Gestor de Alumnos';
+$active_page = 'utilidades';
+
+$load_error = null;
+$active_course_id = null;
+$practices = [];
+$generated_documents = [];
+$generation_errors = [];
+$generation_summary = null;
+
+try {
+  $pdo = db();
+  $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
+
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && $active_course_id !== false && $active_course_id !== null) {
+    $selected_programa = $_POST['generar_programa'] ?? [];
+    $selected_calendario = $_POST['generar_calendario'] ?? [];
+
+    if (!is_array($selected_programa)) {
+      $selected_programa = [];
+    }
+    if (!is_array($selected_calendario)) {
+      $selected_calendario = [];
+    }
+
+    $selected_ids = array_unique(array_map(
+      static fn (string $id): int => (int) $id,
+      array_merge(array_keys($selected_programa), array_keys($selected_calendario))
+    ));
+    $selected_ids = array_values(array_filter($selected_ids, static fn (int $id): bool => $id > 0));
+
+    if ($selected_ids !== []) {
+      $placeholders = implode(', ', array_fill(0, count($selected_ids), '?'));
+      $selected_stmt = $pdo->prepare(
+        'SELECT DISTINCT
+          p.id_practica,
+          p.anexo,
+          a.nombre AS alumno_nombre,
+          a.apellido1 AS alumno_apellido1,
+          a.apellido2 AS alumno_apellido2,
+          e.convenio AS empresa_convenio,
+          e.nombre AS empresa_nombre,
+          e.nombre_comercial AS empresa_nombre_comercial
+        FROM practicas p
+        INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
+        INNER JOIN empresas e ON e.id_empresa = p.id_empresa
+        INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
+        WHERE ac.id_curso_escolar = ?
+          AND p.id_practica IN (' . $placeholders . ')'
+      );
+
+      $selected_stmt->execute(array_merge([(int) $active_course_id], $selected_ids));
+      $selected_practices = $selected_stmt->fetchAll();
+
+      foreach ($selected_practices as $practice) {
+        $id_practica = (int) $practice['id_practica'];
+        $paths = practicas_get_document_paths($practice);
+
+        if (isset($selected_programa[(string) $id_practica])) {
+          $before_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
+          $executed = run_generator_script('generar_plan_formacion.php', $id_practica);
+          clearstatcache(true, $paths['plan_file_path']);
+          $after_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
+
+          if ($executed && is_file($paths['plan_file_path']) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
+            $generated_documents[] = 'Programa Formativo - ' . $paths['plan_file_name'];
+          } else {
+            $generation_errors[] = 'No se pudo generar el Programa Formativo para la práctica #' . $id_practica . '.';
+          }
+        }
+
+        if (isset($selected_calendario[(string) $id_practica])) {
+          $before_mtime = is_file($paths['calendar_file_path']) ? (int) filemtime($paths['calendar_file_path']) : 0;
+          $executed = run_generator_script('generar_calendario.php', $id_practica);
+          clearstatcache(true, $paths['calendar_file_path']);
+          $after_mtime = is_file($paths['calendar_file_path']) ? (int) filemtime($paths['calendar_file_path']) : 0;
+
+          if ($executed && is_file($paths['calendar_file_path']) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
+            $generated_documents[] = 'Calendario - ' . $paths['calendar_file_name'];
+          } else {
+            $generation_errors[] = 'No se pudo generar el Calendario para la práctica #' . $id_practica . '.';
+          }
+        }
+      }
+
+      if ($generated_documents !== []) {
+        $generation_summary = 'La documentación se ha generado correctamente.';
+      } elseif ($generation_errors === []) {
+        $generation_errors[] = 'No se ha generado ningún documento.';
+      }
+    } else {
+      $generation_errors[] = 'Selecciona al menos una opción de documentación antes de generar.';
+    }
+  }
+
+  if ($active_course_id !== false && $active_course_id !== null) {
+    $practices_stmt = $pdo->prepare(
+      'SELECT DISTINCT
+        p.id_practica,
+        p.anexo,
+        p.fecha_inicio,
+        p.fecha_fin,
+        a.nombre AS alumno_nombre,
+        a.apellido1 AS alumno_apellido1,
+        a.apellido2 AS alumno_apellido2,
+        e.nombre AS empresa_nombre
+      FROM practicas p
+      INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
+      INNER JOIN empresas e ON e.id_empresa = p.id_empresa
+      INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
+      WHERE ac.id_curso_escolar = :active_course_id
+      ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica ASC'
+    );
+
+    $practices_stmt->execute(['active_course_id' => $active_course_id]);
+    $practices = $practices_stmt->fetchAll();
+  }
+} catch (Throwable $error) {
+  $load_error = 'No se ha podido cargar la documentación de prácticas en este momento.';
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?php echo htmlspecialchars($page_title, ENT_QUOTES, 'UTF-8'); ?></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="page">
+    <?php require __DIR__ . '/includes/sidebar.php'; ?>
+
+    <main class="content">
+      <header class="header">
+        <div>
+          <h1>Documentación de prácticas</h1>
+          <p class="subheading">Genera el Programa Formativo y/o el Calendario para las prácticas del curso actual.</p>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>Listado del curso actual</h3>
+          <p>Selecciona los documentos que quieras generar para cada práctica.</p>
+        </div>
+
+        <div class="panel-grid">
+          <?php if ($generation_summary !== null): ?>
+            <p><?php echo htmlspecialchars($generation_summary, ENT_QUOTES, 'UTF-8'); ?></p>
+          <?php endif; ?>
+
+          <?php if ($generated_documents !== []): ?>
+            <ul>
+              <?php foreach ($generated_documents as $generated_document): ?>
+                <li><?php echo htmlspecialchars($generated_document, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <?php if ($generation_errors !== []): ?>
+            <ul>
+              <?php foreach ($generation_errors as $generation_error): ?>
+                <li><?php echo htmlspecialchars($generation_error, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <form method="post" action="practicas_documentacion.php">
+            <table>
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Empresa</th>
+                  <th>Anexo</th>
+                  <th>Fecha inicio</th>
+                  <th>Fecha fin</th>
+                  <th>Programa Formativo</th>
+                  <th>Calendario</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if ($load_error !== null): ?>
+                  <tr>
+                    <td colspan="7"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                <?php elseif ($active_course_id === false || $active_course_id === null): ?>
+                  <tr>
+                    <td colspan="7">No hay un curso activo configurado.</td>
+                  </tr>
+                <?php elseif ($practices === []): ?>
+                  <tr>
+                    <td colspan="7">No hay prácticas registradas para el curso actual.</td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($practices as $practice): ?>
+                    <?php $practice_id = (int) $practice['id_practica']; ?>
+                    <tr>
+                      <td>
+                        <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) $practice_id); ?>">
+                          <?php echo htmlspecialchars(format_student_name($practice), ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                      </td>
+                      <td><?php echo htmlspecialchars((string) ($practice['empresa_nombre'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars((string) ($practice['anexo'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(format_date_es($practice['fecha_inicio'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(format_date_es($practice['fecha_fin'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td>
+                        <input type="checkbox" name="generar_programa[<?php echo $practice_id; ?>]" value="1">
+                      </td>
+                      <td>
+                        <input type="checkbox" name="generar_calendario[<?php echo $practice_id; ?>]" value="1">
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+
+            <div class="form-actions">
+              <button type="submit" class="primary-button">Generar Documentación</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

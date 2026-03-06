@@ -40,6 +40,10 @@ $active_page = 'configuracion';
               <span>Días de prácticas por alumno</span>
               <small>Consulta el resumen mensual y las horas realizadas.</small>
             </a>
+            <a class="panel-link" href="practicas_documentacion.php">
+              <span>Documentación de prácticas</span>
+              <small>Genera programas formativos y calendarios del curso actual.</small>
+            </a>
             <a class="panel-link" href="#" aria-disabled="true">
               <span>Acceso a FFE</span>
               <small>Próximamente (enlace en preparación).</small>
