@@ -577,6 +577,9 @@ if ($practice_found) {
           <p class="subheading">Consulta la información completa de la práctica y su horario asociado.</p>
         </div>
         <div class="header-actions">
+          <?php if ($practice_found): ?>
+            <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) $id_practica; ?>">Editar práctica</a>
+          <?php endif; ?>
           <a class="ghost-button" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
