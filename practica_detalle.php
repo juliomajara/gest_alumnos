@@ -446,24 +446,11 @@ $practice_found = is_array($practice);
 $student_name = $practice_found ? full_name($practice, 'alumno') : 'Práctica no encontrada';
 $company_name = $practice_found ? format_value($practice['empresa_nombre'] ?? null) : 'Práctica no encontrada';
 $company_commercial_name = $practice_found ? trim((string) ($practice['empresa_nombre_comercial'] ?? '')) : '';
-$raw_company_name = $practice_found ? trim((string) ($practice['empresa_nombre'] ?? '')) : '';
 $company_contact_name = $practice_found ? trim((string) ($practice['empresa_nombre'] ?? '')) : '';
 $company_contact_lastname = $practice_found ? trim((string) ($practice['empresa_apellido1'] ?? '')) : '';
-$company_contact_summary = trim($company_contact_name . ' ' . $company_contact_lastname);
-$company_summary_name = $company_name;
-if ($company_commercial_name !== '') {
-  $company_summary_name = $company_commercial_name;
-  if ($raw_company_name !== '' && $company_commercial_name !== $raw_company_name) {
-    $company_summary_name .= ' (' . $company_name;
-    if ($company_contact_summary !== '') {
-      $company_summary_name .= ' - ' . $company_contact_summary;
-    }
-    $company_summary_name .= ')';
-  } elseif ($company_contact_summary !== '') {
-    $company_summary_name .= ' (' . $company_contact_summary . ')';
-  }
-} elseif ($raw_company_name !== '' && $company_contact_summary !== '') {
-  $company_summary_name = $company_name . ' (' . $company_contact_summary . ')';
+$company_summary_name = $company_commercial_name !== '' ? $company_commercial_name : $company_name;
+if ($company_contact_name !== '' && $company_contact_lastname !== '') {
+  $company_summary_name .= ' (' . $company_contact_name . ' ' . $company_contact_lastname . ')';
 }
 $page_title = $practice_found
   ? 'Detalle de práctica #' . (int) $practice['id_practica'] . ' | Gestor de Alumnos'
