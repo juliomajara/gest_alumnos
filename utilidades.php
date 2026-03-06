@@ -54,6 +54,15 @@ $active_page = 'configuracion';
                 <small>Genera programas formativos y calendarios del curso actual.</small>
               </span>
             </a>
+            <a class="panel-link panel-link-with-icon" href="enviar_correos.php">
+              <span class="nav-icon" aria-hidden="true">
+                <img class="nav-icon-image" src="assets/icons/enviar_correos.svg" alt="">
+              </span>
+              <span class="panel-link-text">
+                <span>Envío de correos</span>
+                <small>Envía comunicaciones masivas desde la plataforma.</small>
+              </span>
+            </a>
             <a class="panel-link panel-link-with-icon" href="#" aria-disabled="true">
               <span class="nav-icon" aria-hidden="true">
                 <img class="nav-icon-image" src="assets/icons/acceso_ffe.svg" alt="">
