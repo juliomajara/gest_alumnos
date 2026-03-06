@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 06-03-2026 a las 19:04:04
+-- Tiempo de generación: 06-03-2026 a las 20:01:23
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -392,8 +392,11 @@ CREATE TABLE `practicas` (
   `anexo` smallint(5) UNSIGNED DEFAULT NULL,
   `fecha_inicio` date DEFAULT NULL,
   `fecha_fin` date DEFAULT NULL,
-  `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
   `fecha_fin_real` date DEFAULT NULL,
+  `motivo_exclusion` varchar(60) DEFAULT NULL,
+  `id_practica_anterior` int(10) UNSIGNED DEFAULT NULL,
+  `dias_extra` tinyint(2) UNSIGNED NOT NULL DEFAULT 0,
+  `fecha_fin_extra` date DEFAULT NULL,
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `cancelada` tinyint(1) NOT NULL DEFAULT 0,
