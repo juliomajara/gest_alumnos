@@ -447,7 +447,13 @@ $minor_age_warning_message = null;
 $minor_age_warning_details = [];
 $pending_minor_age_confirmation = false;
 $save_error_detail = null;
+$open_cancel_modal = false;
 $form_values = $_POST;
+$cancel_reasons = [
+  'Cambio de empresa',
+  'Renuncia del alumno',
+  'Renuncia de la empresa',
+];
 $non_teaching_data = load_non_teaching_days($pdo);
 $non_teaching_lookup = $non_teaching_data['dates'];
 $non_teaching_configured = $non_teaching_data['configured'];
@@ -525,6 +531,75 @@ if ($id_practica === false || $id_practica === null) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $is_cancel_submission = (string) ($_POST['form_action'] ?? '') === 'cancelar_practica';
+
+  if ($is_cancel_submission) {
+    $cancel_fecha_fin_real = normalize_text($_POST['fecha_fin_real'] ?? null);
+    $cancel_motivo_exclusion = normalize_text($_POST['motivo_exclusion'] ?? null);
+    $form_values['cancel_fecha_fin_real'] = $cancel_fecha_fin_real ?? '';
+    $form_values['cancel_motivo_exclusion'] = $cancel_motivo_exclusion ?? '';
+
+    if ($id_practica === false || $id_practica === null) {
+      $errors[] = 'No se ha indicado un identificador de práctica válido.';
+    }
+    if ($cancel_fecha_fin_real === null || !valid_date($cancel_fecha_fin_real)) {
+      $errors[] = 'El último día de prácticas es obligatorio y debe ser válido.';
+    }
+    if ($cancel_motivo_exclusion === null || !in_array($cancel_motivo_exclusion, $cancel_reasons, true)) {
+      $errors[] = 'El motivo de cancelación seleccionado no es válido.';
+    }
+
+    if ($errors) {
+      $save_error_detail = implode(' ', $errors);
+      $open_cancel_modal = true;
+    } else {
+      try {
+        $cancel_stmt = $pdo->prepare(
+          'UPDATE practicas
+           SET fecha_fin_real = :fecha_fin_real,
+               motivo_exclusion = :motivo_exclusion,
+               cancelada = 1
+           WHERE id_practica = :id_practica'
+        );
+
+        $cancel_saved = $cancel_stmt->execute([
+          'fecha_fin_real' => $cancel_fecha_fin_real,
+          'motivo_exclusion' => $cancel_motivo_exclusion,
+          'id_practica' => $id_practica,
+        ]);
+
+        if ($cancel_saved === false) {
+          $error_info = $cancel_stmt->errorInfo();
+          throw new RuntimeException(
+            sprintf(
+              'Error PDO en cancelación de práctica. SQLSTATE: %s; Código: %s; Mensaje: %s.',
+              (string) ($error_info[0] ?? 'N/A'),
+              (string) ($error_info[1] ?? 'N/A'),
+              (string) ($error_info[2] ?? 'N/A')
+            )
+          );
+        }
+
+        header('Location: practica_detalle.php?id_practica=' . (int) $id_practica);
+        exit;
+      } catch (Throwable $error) {
+        $errors[] = 'No se pudo cancelar la práctica.';
+        $open_cancel_modal = true;
+
+        if ($error instanceof PDOException) {
+          $error_info = $error->errorInfo;
+          $save_error_detail = sprintf(
+            'SQLSTATE: %s; Código PDO: %s; Mensaje: %s.',
+            (string) ($error_info[0] ?? 'N/A'),
+            (string) $error->getCode(),
+            $error->getMessage()
+          );
+        } else {
+          $save_error_detail = $error->getMessage();
+        }
+      }
+    }
+  } else {
   $curso_escolar_id = isset($_POST['id_curso_escolar']) ? (int) $_POST['id_curso_escolar'] : 0;
   $grupo_id = isset($_POST['id_grupo']) ? (int) $_POST['id_grupo'] : 0;
   $alumno_id = isset($_POST['id_alumno']) ? (int) $_POST['id_alumno'] : 0;
@@ -825,6 +900,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
   }
+  }
 }
 
 $groups = [];
@@ -980,6 +1056,9 @@ $dias_semana = [
           <p class="subheading">Modifica una práctica y actualiza el horario semanal del alumno.</p>
         </div>
         <div class="header-actions">
+          <?php if ($load_error === null): ?>
+            <button type="button" class="edit-toggle edit-toggle-danger" id="openCancelPracticeModal">Cancelar práctica</button>
+          <?php endif; ?>
           <a class="edit-toggle" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
@@ -1251,6 +1330,39 @@ $dias_semana = [
     </main>
   </div>
 
+  <?php if ($load_error === null): ?>
+    <div class="practicas-ras-modal" id="cancel-practice-modal" hidden>
+      <button type="button" class="practicas-ras-modal__backdrop" data-cancel-modal-close tabindex="-1" aria-hidden="true"></button>
+      <div class="practicas-ras-modal__content" role="dialog" aria-modal="true" aria-labelledby="cancel-practice-title">
+        <button type="button" class="practicas-ras-modal__close" data-cancel-modal-close aria-label="Cerrar modal de cancelación">×</button>
+        <h3 class="practicas-ras-modal__title" id="cancel-practice-title">Cancelar práctica</h3>
+        <form method="post" class="entity-form">
+          <input type="hidden" name="id_practica" value="<?php echo (int) $id_practica; ?>">
+          <input type="hidden" name="form_action" value="cancelar_practica">
+          <label>
+            Último día de prácticas
+            <input type="date" name="fecha_fin_real" value="<?php echo htmlspecialchars((string) ($form_values['cancel_fecha_fin_real'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+          </label>
+          <label>
+            Motivo de cancelación
+            <select name="motivo_exclusion" required>
+              <option value="">Selecciona un motivo</option>
+              <?php foreach ($cancel_reasons as $cancel_reason): ?>
+                <option value="<?php echo htmlspecialchars($cancel_reason, ENT_QUOTES, 'UTF-8'); ?>" <?php echo ($form_values['cancel_motivo_exclusion'] ?? '') === $cancel_reason ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($cancel_reason, ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="edit-toggle edit-toggle-danger">Confirmar cancelación</button>
+            <button type="button" class="ghost-button" data-cancel-modal-close>Cerrar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  <?php endif; ?>
+
   <script>
     const groupSelect = document.getElementById('id_grupo');
     const studentSelect = document.getElementById('id_alumno');
@@ -1269,6 +1381,39 @@ $dias_semana = [
     const scheduleContainer = document.querySelector('[data-schedule-container]');
     const nonTeachingDays = new Set(<?php echo json_encode(array_values($no_lectivos), JSON_UNESCAPED_UNICODE); ?>);
     const nonTeachingConfigured = <?php echo $non_teaching_configured ? 'true' : 'false'; ?>;
+    const openCancelPracticeModalButton = document.getElementById('openCancelPracticeModal');
+    const cancelPracticeModal = document.getElementById('cancel-practice-modal');
+    const openCancelPracticeModalOnLoad = <?php echo $open_cancel_modal ? 'true' : 'false'; ?>;
+
+    const showCancelPracticeModal = () => {
+      if (!cancelPracticeModal) {
+        return;
+      }
+      cancelPracticeModal.hidden = false;
+      document.body.style.overflow = 'hidden';
+    };
+
+    const hideCancelPracticeModal = () => {
+      if (!cancelPracticeModal) {
+        return;
+      }
+      cancelPracticeModal.hidden = true;
+      document.body.style.overflow = '';
+    };
+
+    if (openCancelPracticeModalButton && cancelPracticeModal) {
+      openCancelPracticeModalButton.addEventListener('click', showCancelPracticeModal);
+
+      cancelPracticeModal.querySelectorAll('[data-cancel-modal-close]').forEach((element) => {
+        element.addEventListener('click', hideCancelPracticeModal);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !cancelPracticeModal.hidden) {
+          hideCancelPracticeModal();
+        }
+      });
+    }
 
 
     const copyMondayFieldToWeekdays = (sourceInput) => {
@@ -1640,6 +1785,9 @@ $dias_semana = [
     updateDayTotals();
     calculatePlanning();
     updateRealEndDate();
+    if (openCancelPracticeModalOnLoad) {
+      showCancelPracticeModal();
+    }
   </script>
 </body>
 </html>
