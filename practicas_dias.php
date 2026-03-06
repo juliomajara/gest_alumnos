@@ -144,6 +144,7 @@ try {
             'name' => format_student_name($practice, 'alumno'),
             'apellido1' => mb_strtolower(trim((string) ($practice['alumno_apellido1'] ?? ''))),
             'months' => array_fill_keys(array_keys($months), 0),
+            'month_practice_ids' => array_fill_keys(array_keys($months), []),
             'seconds' => 0,
             'current_month_seconds' => 0,
             'had_current_month_in_course' => false,
@@ -187,6 +188,7 @@ try {
           $mes_numero = (int) $cursor->format('n');
           if (isset($student_rows[$student_id]['months'][$mes_numero])) {
             $student_rows[$student_id]['months'][$mes_numero]++;
+            $student_rows[$student_id]['month_practice_ids'][$mes_numero][(int) $practice['id_practica']] = true;
           }
 
           if ((int) $cursor->format('n') === $current_month && (int) $cursor->format('Y') === $current_year) {
@@ -308,10 +310,11 @@ try {
                     </td>
                     <?php foreach (array_keys($months) as $month_number): ?>
                       <td>
+                        <?php $month_value = (string) $student_row['months'][$month_number] . (count($student_row['month_practice_ids'][$month_number] ?? []) > 1 ? '*' : ''); ?>
                         <?php if ($month_number === $current_month): ?>
-                          <strong><?php echo htmlspecialchars((string) $student_row['months'][$month_number], ENT_QUOTES, 'UTF-8'); ?></strong>
+                          <strong><?php echo htmlspecialchars($month_value, ENT_QUOTES, 'UTF-8'); ?></strong>
                         <?php else: ?>
-                          <?php echo htmlspecialchars((string) $student_row['months'][$month_number], ENT_QUOTES, 'UTF-8'); ?>
+                          <?php echo htmlspecialchars($month_value, ENT_QUOTES, 'UTF-8'); ?>
                         <?php endif; ?>
                       </td>
                     <?php endforeach; ?>
