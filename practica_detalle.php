@@ -444,7 +444,7 @@ if ($id_practica === false || $id_practica === null) {
 
 $practice_found = is_array($practice);
 $student_name = $practice_found ? full_name($practice, 'alumno') : 'Práctica no encontrada';
-$company_name = $practice_found ? full_name($practice, 'empresa') : 'Práctica no encontrada';
+$company_name = $practice_found ? format_value($practice['empresa_nombre'] ?? null) : 'Práctica no encontrada';
 $company_commercial_name = $practice_found ? trim((string) ($practice['empresa_nombre_comercial'] ?? '')) : '';
 $company_summary_name = $company_commercial_name !== ''
   ? $company_commercial_name . ' (' . $company_name . ')'
@@ -458,6 +458,9 @@ $calendar_generated_at = $calendar_exists ? date('d/m/Y H:i', (int) filemtime($c
 $plan_exists = $practice_found && $plan_file_path !== null && is_file($plan_file_path);
 $plan_generated_at = $plan_exists ? date('d/m/Y H:i', (int) filemtime($plan_file_path)) : null;
 $practice_status = $practice_found ? calculate_practice_status($practice) : 'No disponible';
+$practice_header_title = $practice_found
+  ? $student_name . ' (' . format_value($practice['empresa_convenio']) . ' / ' . format_value($practice['anexo']) . ') - ' . $practice_status
+  : 'Práctica no encontrada';
 $student_age = $practice_found ? calculate_age($practice['alumno_fecha_nacimiento'] ?? null) : null;
 $student_birth_date = $practice_found
   ? format_date($practice['alumno_fecha_nacimiento'] ?? null) . ($student_age !== null ? ' (' . $student_age . ' años)' : '')
@@ -567,7 +570,7 @@ if ($practice_found) {
       <header class="header">
         <div>
           <p class="eyebrow">Detalle de práctica</p>
-          <h1><?php echo htmlspecialchars($practice_found ? $student_name : 'Práctica no encontrada', ENT_QUOTES, 'UTF-8'); ?></h1>
+          <h1><?php echo htmlspecialchars($practice_header_title, ENT_QUOTES, 'UTF-8'); ?></h1>
           <p class="subheading">Consulta la información completa de la práctica y su horario asociado.</p>
         </div>
         <div class="header-actions">
@@ -638,7 +641,6 @@ if ($practice_found) {
             <div class="practica-detalle-campos">
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre de la empresa</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="empresa_detalle.php?id_empresa=<?php echo (int) $practice['id_empresa']; ?>"><?php echo htmlspecialchars($company_summary_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">CIF</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_cif']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nº Convenio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_convenio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Persona de contacto</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email PC</span><span class="practica-detalle-campo-valor"><?php $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? '')); ?><?php if ($empresa_contacto_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono PC</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
@@ -655,15 +657,14 @@ if ($practice_found) {
               <h3>Resumen de la práctica</h3>
             </div>
             <div class="practica-detalle-campos">
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Estado</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($practice_status, ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nº Anexo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['anexo']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de inicio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_inicio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin calculada</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Días extra</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) ((int) ($practice['dias_extra'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de fin</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_date($practice['fecha_fin_real'] ?? null, '—'), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Horas totales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['horas']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Kilómetros al centro de trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_km_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Tipo de abono desde Getafe</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_abono_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Kilómetros al CT</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_km_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Abono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['direccion_abono_desde_getafe']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Circunstancias excepcionales</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(((isset($practice['circ_excep']) ? (int) $practice['circ_excep'] : 0) === 1 ? 'Requiere solicitud de autorización para la realización de la FFE bajo circunstancias de carácter excepcional.' : 'No'), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
