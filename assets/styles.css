@@ -1714,3 +1714,68 @@ a.edit-toggle:active {
   font-size: 0.85rem;
   line-height: 1.5;
 }
+
+.practica-detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.practica-detalle-campos {
+  display: grid;
+  gap: 10px;
+}
+
+.practica-detalle-campo {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.9fr) minmax(0, 1.6fr);
+  gap: 12px;
+  align-items: baseline;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.practica-detalle-campo:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.practica-detalle-campo-etiqueta {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.practica-detalle-campo-valor {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.practica-detalle-horario-lista {
+  display: grid;
+  gap: 10px;
+}
+
+.practica-detalle-horario-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f8faff;
+}
+
+.practica-detalle-horario-dia {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.practica-detalle-horario-tramo,
+.practica-detalle-horario-total {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.practica-detalle-horario-total {
+  margin-top: 4px;
+  color: var(--muted);
+  font-weight: 600;
+}
