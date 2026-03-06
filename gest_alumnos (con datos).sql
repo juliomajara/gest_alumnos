@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 05-03-2026 a las 14:15:23
+-- Tiempo de generación: 05-03-2026 a las 23:31:43
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -15405,7 +15405,10 @@ INSERT INTO `codigos_postales` (`id`, `provincia`, `poblacion`, `cod_postal`) VA
 (14661, 'Melilla', 'Melilla', '52003'),
 (14662, 'Melilla', 'Melilla', '52004'),
 (14663, 'Melilla', 'Melilla', '52005'),
-(14664, 'Melilla', 'Melilla', '52006');
+(14664, 'Melilla', 'Melilla', '52006'),
+(16384, 'Madrid', 'Valdemoro', '28341'),
+(16385, 'Madrid', 'Valdemoro', '28342'),
+(16386, 'Madrid', 'Valdemoro', '28343');
 
 -- --------------------------------------------------------
 
@@ -16303,7 +16306,7 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (16, 12, 1, 28, 4, 10, 'Luna', '19', NULL, NULL, NULL, NULL, 'Local 2', 'Principal', '28004', 1),
 (17, 13, 1, 28, 4, 10, 'Amaltea', '1', NULL, 'F', '1', 'A', NULL, 'Principal', '28045', 1),
 (18, 14, 1, 28, 1, 10, 'Garcilaso', '14', NULL, NULL, '2', NULL, NULL, 'Principal', '28904', 1),
-(19, 15, 1, 28, NULL, 10, 'Capitan Angosto Gómez Castrillón', '18', NULL, NULL, 'Bajo', 'Derecha', NULL, 'Principal', '28300', 1),
+(19, 15, 1, 28, 13, 10, 'Capitan Angosto Gómez Castrillón', '18', NULL, NULL, 'Bajo', 'Derecha', NULL, 'Principal', '28300', 1),
 (20, 16, 1, 28, 4, 5, 'de los Rosales', '42', '3', NULL, NULL, NULL, 'Nave 210, 211, 212', 'Principal', '28021', 1),
 (21, 17, 1, 28, 11, 5, 'Atenas', 's/n', NULL, NULL, NULL, NULL, 'Campus URJC Alcorcón - Edificio Clínica Universitaria - 2ª planta', 'Principal', '28922', 1),
 (22, 18, 1, 28, 1, 10, 'Progreso', '2', NULL, NULL, NULL, NULL, 'Oficina 214', 'Principal', '28906', 1),
@@ -16311,7 +16314,7 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (27, 13, 1, 28, 4, 5, 'Marconi', '9', NULL, NULL, NULL, NULL, 'Edificio 7, Nave 3', 'Centro de Trabajo', '28021', 0),
 (28, 22, 1, 28, 4, 10, 'Pelícano', '10', NULL, NULL, NULL, NULL, NULL, 'Principal', '28025', 1),
 (29, 22, 1, 28, 5, 10, 'Valdeón', '12', NULL, NULL, NULL, NULL, 'Local 57', 'Centro de Trabajo', '28947', 0),
-(30, 23, 1, 28, NULL, 10, 'Río Manzanares', '4', NULL, NULL, '2', NULL, 'Centro de Asociaciones Pedro Zerolo', 'Principal', '28342', 1),
+(30, 23, 1, 28, 62, 10, 'Río Manzanares', '4', NULL, NULL, '2', NULL, 'Centro de Asociaciones Pedro Zerolo', 'Principal', '28342', 1),
 (31, 24, 1, 28, 1, 5, 'Leonardo Da Vinci', '8', NULL, NULL, NULL, NULL, 'Oficina 121', 'Principal', '28906', 1);
 
 -- --------------------------------------------------------
@@ -16589,7 +16592,8 @@ INSERT INTO `localidades` (`id_localidad`, `id_provincia`, `nombre`, `km_desde_g
 (64, 28, 'Villamanta', 86, 'C1'),
 (65, 28, 'Villanueva de la Cañada', 78, 'B3'),
 (66, 28, 'Villaviciosa de Odón', 41, 'B2'),
-(71, 28, 'Casa Del Reloj', NULL, NULL);
+(71, 28, 'Casa Del Reloj', NULL, NULL),
+(72, 45, 'Ocaña', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -18098,7 +18102,7 @@ ALTER TABLE `ciclos`
 -- AUTO_INCREMENT de la tabla `codigos_postales`
 --
 ALTER TABLE `codigos_postales`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16384;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16387;
 
 --
 -- AUTO_INCREMENT de la tabla `correos`
@@ -18164,7 +18168,7 @@ ALTER TABLE `grupos_tutores`
 -- AUTO_INCREMENT de la tabla `localidades`
 --
 ALTER TABLE `localidades`
-  MODIFY `id_localidad` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=72;
+  MODIFY `id_localidad` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT de la tabla `meses`
