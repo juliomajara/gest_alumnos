@@ -269,7 +269,7 @@ function get_student_practice_context(PDO $pdo, int $student_id): array {
   }
 
   $practices_stmt = $pdo->prepare(
-    'SELECT p.id_practica,
+    "SELECT p.id_practica,
             p.id_alumno,
             p.id_empresa,
             p.fecha_inicio,
@@ -284,7 +284,7 @@ function get_student_practice_context(PDO $pdo, int $student_id): array {
      INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
      LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
      WHERE p.id_alumno = :id_alumno
-     ORDER BY COALESCE(NULLIF(p.fecha_inicio, ''), '0000-00-00') DESC, p.id_practica DESC'
+     ORDER BY COALESCE(NULLIF(p.fecha_inicio, ''), '0000-00-00') DESC, p.id_practica DESC"
   );
   $practices_stmt->execute(['id_alumno' => $student_id]);
   $practices = $practices_stmt->fetchAll();
