@@ -36,6 +36,10 @@ $active_page = 'configuracion';
               <span>Importar empresas</span>
               <small>Actualiza los datos de empresas colaboradoras.</small>
             </a>
+            <a class="panel-link" href="practicas_dias.php">
+              <span>Días de prácticas por alumno</span>
+              <small>Consulta el resumen mensual y las horas realizadas.</small>
+            </a>
             <a class="panel-link" href="#" aria-disabled="true">
               <span>Acceso a FFE</span>
               <small>Próximamente (enlace en preparación).</small>
