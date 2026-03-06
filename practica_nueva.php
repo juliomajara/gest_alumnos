@@ -237,6 +237,160 @@ function compare_iso_dates(string $left, string $right): int {
   return strcmp($left, $right);
 }
 
+function resolve_practice_end_for_hours(array $practice): ?string {
+  $fecha_fin_real = normalize_text($practice['fecha_fin_real'] ?? null);
+  if ($fecha_fin_real !== null && valid_date($fecha_fin_real)) {
+    return $fecha_fin_real;
+  }
+
+  $fecha_fin_extra = normalize_text($practice['fecha_fin_extra'] ?? null);
+  if ($fecha_fin_extra !== null && valid_date($fecha_fin_extra)) {
+    return $fecha_fin_extra;
+  }
+
+  $fecha_fin = normalize_text($practice['fecha_fin'] ?? null);
+  if ($fecha_fin !== null && valid_date($fecha_fin)) {
+    return $fecha_fin;
+  }
+
+  return null;
+}
+
+/**
+ * @return array{active_practice: array<string, mixed>|null, last_practice_id: int|null, completed_hours: float}
+ */
+function get_student_practice_context(PDO $pdo, int $student_id): array {
+  if ($student_id <= 0) {
+    return [
+      'active_practice' => null,
+      'last_practice_id' => null,
+      'completed_hours' => 0.0,
+    ];
+  }
+
+  $practices_stmt = $pdo->prepare(
+    'SELECT p.id_practica,
+            p.id_alumno,
+            p.id_empresa,
+            p.fecha_inicio,
+            p.fecha_fin,
+            p.fecha_fin_extra,
+            p.fecha_fin_real,
+            COALESCE(p.cancelada, 0) AS cancelada,
+            a.nombre AS alumno_nombre,
+            a.apellido1 AS alumno_apellido1,
+            e.nombre AS empresa_nombre
+     FROM practicas p
+     INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
+     LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
+     WHERE p.id_alumno = :id_alumno
+     ORDER BY COALESCE(NULLIF(p.fecha_inicio, ''), '0000-00-00') DESC, p.id_practica DESC'
+  );
+  $practices_stmt->execute(['id_alumno' => $student_id]);
+  $practices = $practices_stmt->fetchAll();
+
+  if ($practices === []) {
+    return [
+      'active_practice' => null,
+      'last_practice_id' => null,
+      'completed_hours' => 0.0,
+    ];
+  }
+
+  $last_practice_id = (int) ($practices[0]['id_practica'] ?? 0);
+  $active_practice = null;
+  $cancelled_practice_ids = [];
+
+  foreach ($practices as $practice) {
+    if ((int) ($practice['cancelada'] ?? 0) === 0 && $active_practice === null) {
+      $active_practice = $practice;
+      continue;
+    }
+
+    if ((int) ($practice['cancelada'] ?? 0) === 1) {
+      $cancelled_practice_ids[] = (int) ($practice['id_practica'] ?? 0);
+    }
+  }
+
+  $schedule_by_practice = [];
+  if ($cancelled_practice_ids !== []) {
+    $placeholders = implode(', ', array_fill(0, count($cancelled_practice_ids), '?'));
+    $schedule_stmt = $pdo->prepare(
+      'SELECT id_practica, dia_semana, hora_entrada, hora_salida
+       FROM practicas_horario
+       WHERE id_practica IN (' . $placeholders . ')
+       ORDER BY id_practica, dia_semana, hora_entrada'
+    );
+    $schedule_stmt->execute($cancelled_practice_ids);
+    foreach ($schedule_stmt->fetchAll() as $schedule_row) {
+      $practice_id = (int) ($schedule_row['id_practica'] ?? 0);
+      $day = (int) ($schedule_row['dia_semana'] ?? 0);
+
+      $entrada = substr((string) ($schedule_row['hora_entrada'] ?? ''), 0, 5);
+      $salida = substr((string) ($schedule_row['hora_salida'] ?? ''), 0, 5);
+      if (!valid_time($entrada) || !valid_time($salida)) {
+        continue;
+      }
+
+      $seconds = (time_to_minutes($salida) - time_to_minutes($entrada)) * 60;
+      if ($seconds <= 0) {
+        continue;
+      }
+
+      if (!isset($schedule_by_practice[$practice_id])) {
+        $schedule_by_practice[$practice_id] = [];
+      }
+      if (!isset($schedule_by_practice[$practice_id][$day])) {
+        $schedule_by_practice[$practice_id][$day] = 0;
+      }
+
+      $schedule_by_practice[$practice_id][$day] += $seconds;
+    }
+  }
+
+  $completed_seconds = 0;
+  foreach ($practices as $practice) {
+    if ((int) ($practice['cancelada'] ?? 0) !== 1) {
+      continue;
+    }
+
+    $practice_id = (int) ($practice['id_practica'] ?? 0);
+    $start = normalize_text($practice['fecha_inicio'] ?? null);
+    $end = resolve_practice_end_for_hours($practice);
+    if ($practice_id <= 0 || $start === null || !valid_date($start) || $end === null || !valid_date($end)) {
+      continue;
+    }
+    if (compare_iso_dates($end, $start) < 0) {
+      continue;
+    }
+
+    $seconds_by_day = $schedule_by_practice[$practice_id] ?? [];
+    if ($seconds_by_day === []) {
+      continue;
+    }
+
+    $cursor = DateTimeImmutable::createFromFormat('!Y-m-d', $start, new DateTimeZone('UTC'));
+    $end_date = DateTimeImmutable::createFromFormat('!Y-m-d', $end, new DateTimeZone('UTC'));
+    if (!$cursor || !$end_date) {
+      continue;
+    }
+
+    while ($cursor <= $end_date) {
+      $day = (int) $cursor->format('N');
+      if (isset($seconds_by_day[$day])) {
+        $completed_seconds += (int) $seconds_by_day[$day];
+      }
+      $cursor = $cursor->modify('+1 day');
+    }
+  }
+
+  return [
+    'active_practice' => $active_practice,
+    'last_practice_id' => $last_practice_id > 0 ? $last_practice_id : null,
+    'completed_hours' => $completed_seconds / 3600,
+  ];
+}
+
 function inclusive_days_between(string $start, string $end): ?int {
   $start_date = DateTimeImmutable::createFromFormat('!Y-m-d', $start, new DateTimeZone('UTC'));
   $end_date = DateTimeImmutable::createFromFormat('!Y-m-d', $end, new DateTimeZone('UTC'));
