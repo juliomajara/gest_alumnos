@@ -1683,6 +1683,27 @@ a.edit-toggle:active {
   table-layout: fixed;
 }
 
+
+.practica-detalle-resumen-grid {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.practica-detalle-bloque {
+  gap: 12px;
+}
+
+.practica-detalle-eyebrow {
+  margin-bottom: 4px;
+}
+
+.practica-detalle-tabla .panel-table-aligned th {
+  width: 40%;
+}
+
+.practica-detalle-tabla .panel-table-aligned td {
+  font-weight: 500;
+}
+
 .practica-observaciones {
   color: var(--text);
   line-height: 1.5;
