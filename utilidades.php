@@ -36,26 +36,32 @@ $active_page = 'configuracion';
               <span>Importar empresas</span>
               <small>Actualiza los datos de empresas colaboradoras.</small>
             </a>
-            <a class="panel-link" href="practicas_dias.php">
+            <a class="panel-link panel-link-with-icon" href="practicas_dias.php">
               <span class="nav-icon" aria-hidden="true">
                 <img class="nav-icon-image" src="assets/icons/dias_practicas.svg" alt="">
               </span>
-              <span>Días de prácticas por alumno</span>
-              <small>Consulta el resumen mensual y las horas realizadas.</small>
+              <span class="panel-link-text">
+                <span>Días de prácticas por alumno</span>
+                <small>Consulta el resumen mensual y las horas realizadas.</small>
+              </span>
             </a>
-            <a class="panel-link" href="practicas_documentacion.php">
+            <a class="panel-link panel-link-with-icon" href="practicas_documentacion.php">
               <span class="nav-icon" aria-hidden="true">
                 <img class="nav-icon-image" src="assets/icons/documentacion.svg" alt="">
               </span>
-              <span>Documentación de prácticas</span>
-              <small>Genera programas formativos y calendarios del curso actual.</small>
+              <span class="panel-link-text">
+                <span>Documentación de prácticas</span>
+                <small>Genera programas formativos y calendarios del curso actual.</small>
+              </span>
             </a>
-            <a class="panel-link" href="#" aria-disabled="true">
+            <a class="panel-link panel-link-with-icon" href="#" aria-disabled="true">
               <span class="nav-icon" aria-hidden="true">
                 <img class="nav-icon-image" src="assets/icons/acceso_ffe.svg" alt="">
               </span>
-              <span>Acceso a FFE</span>
-              <small>Próximamente (enlace en preparación).</small>
+              <span class="panel-link-text">
+                <span>Acceso a FFE</span>
+                <small>Próximamente (enlace en preparación).</small>
+              </span>
             </a>
           </div>
         </article>

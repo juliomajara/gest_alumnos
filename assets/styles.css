@@ -806,6 +806,22 @@ a.edit-toggle:active {
   box-shadow: 0 10px 24px rgba(86, 111, 235, 0.12);
 }
 
+.panel-link-with-icon {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.panel-link-with-icon .nav-icon-image {
+  filter: saturate(1) brightness(0.85);
+}
+
+.panel-link-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .entity-form {
   gap: 18px;
 }
