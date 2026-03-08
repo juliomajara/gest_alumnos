@@ -153,6 +153,13 @@ try {
           ];
         }
 
+        if (
+          $student_rows[$student_id]['status'] === 'Cancelada'
+          && (int) ($practice['cancelada'] ?? 0) === 0
+        ) {
+          $student_rows[$student_id]['status'] = calculate_practice_status($practice);
+        }
+
         $fecha_inicio = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
         $fecha_fin_extra = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_extra'] ?? ''));
         $fecha_fin_real = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_real'] ?? ''));
