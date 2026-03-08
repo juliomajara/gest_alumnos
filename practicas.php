@@ -298,11 +298,16 @@ function render_practice_rows(array $practices): string
         $anexo_21 = $convenio . ' / ' . $anexo;
 
         $estado = calculate_practice_status($practice);
+        $alumno_html = htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8');
+
+        if ((int) ($practice['cancelada'] ?? 0) === 1) {
+          $alumno_html = '<s>' . $alumno_html . '</s>';
+        }
       ?>
       <tr>
         <td>
           <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) $practice['id_practica']); ?>">
-            <?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?>
+            <?php echo $alumno_html; ?>
           </a>
         </td>
         <td>
