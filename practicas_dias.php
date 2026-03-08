@@ -186,7 +186,7 @@ try {
 
         $fecha_hasta_hoy = $hoy < $fecha_fin_practica ? $hoy : $fecha_fin_practica;
 
-        for ($cursor = $fecha_inicio; $cursor <= $fecha_hasta_hoy; $cursor = $cursor->modify('+1 day')) {
+        for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_practica; $cursor = $cursor->modify('+1 day')) {
           $dia_semana = (int) $cursor->format('N');
           if (!isset($segundos_por_dia_semana[$dia_semana])) {
             continue;
@@ -202,10 +202,12 @@ try {
             $student_rows[$student_id]['had_current_month_in_course'] = true;
           }
 
-          $student_rows[$student_id]['seconds'] += $segundos_por_dia_semana[$dia_semana];
+          if ($cursor <= $fecha_hasta_hoy) {
+            $student_rows[$student_id]['seconds'] += $segundos_por_dia_semana[$dia_semana];
 
-          if ((int) $cursor->format('n') === $current_month && (int) $cursor->format('Y') === $current_year) {
-            $student_rows[$student_id]['current_month_seconds'] += $segundos_por_dia_semana[$dia_semana];
+            if ((int) $cursor->format('n') === $current_month && (int) $cursor->format('Y') === $current_year) {
+              $student_rows[$student_id]['current_month_seconds'] += $segundos_por_dia_semana[$dia_semana];
+            }
           }
         }
       }
