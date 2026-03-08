@@ -527,6 +527,16 @@ $non_teaching_data = load_non_teaching_days($pdo);
 $non_teaching_lookup = $non_teaching_data['dates'];
 $non_teaching_configured = $non_teaching_data['configured'];
 $non_teaching_warning = !$non_teaching_configured;
+$practice_cancelada = 0;
+
+if ($id_practica !== false && $id_practica !== null) {
+  $practice_cancelada_stmt = $pdo->prepare('SELECT cancelada FROM practicas WHERE id_practica = :id_practica LIMIT 1');
+  $practice_cancelada_stmt->execute(['id_practica' => $id_practica]);
+  $practice_cancelada_value = $practice_cancelada_stmt->fetchColumn();
+  if ($practice_cancelada_value !== false && $practice_cancelada_value !== null) {
+    $practice_cancelada = (int) $practice_cancelada_value;
+  }
+}
 
 if ($id_practica === false || $id_practica === null) {
   $load_error = 'No se ha indicado un identificador de práctica válido.';
@@ -1142,7 +1152,7 @@ $dias_semana = [
           <p class="subheading">Modifica una práctica y actualiza el horario semanal del alumno.</p>
         </div>
         <div class="header-actions">
-          <?php if ($load_error === null): ?>
+          <?php if ($load_error === null && $practice_cancelada !== 1): ?>
             <button type="button" class="edit-toggle edit-toggle-danger" id="openCancelPracticeModal">Cancelar práctica</button>
           <?php endif; ?>
           <a class="edit-toggle" href="practicas.php">Volver a prácticas</a>
