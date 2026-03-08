@@ -257,137 +257,62 @@ function resolve_practice_end_for_hours(array $practice): ?string {
 }
 
 /**
- * @return array{active_practice: array<string, mixed>|null, last_practice_id: int|null, completed_hours: float}
+ * @return array{active_practice: array<string, mixed>|null, approved_hours: float, cancelled_hours: float}
  */
-function get_student_practice_context(PDO $pdo, int $student_id): array {
-  if ($student_id <= 0) {
+function get_student_practice_context(PDO $pdo, int $student_id, int $course_id): array {
+  if ($student_id <= 0 || $course_id <= 0) {
     return [
       'active_practice' => null,
-      'last_practice_id' => null,
-      'completed_hours' => 0.0,
+      'approved_hours' => 0.0,
+      'cancelled_hours' => 0.0,
     ];
   }
+
+  $student_stmt = $pdo->prepare('SELECT nombre, apellido1, COALESCE(horas_ffe_aprobadas, 0) AS horas_ffe_aprobadas FROM alumnos WHERE id_alumno = :id_alumno LIMIT 1');
+  $student_stmt->execute(['id_alumno' => $student_id]);
+  $student = $student_stmt->fetch();
+
+  $approved_hours = (float) ($student['horas_ffe_aprobadas'] ?? 0);
+  $active_practice = null;
+  $cancelled_hours = 0.0;
 
   $practices_stmt = $pdo->prepare(
-    "SELECT p.id_practica,
-            p.id_alumno,
-            p.id_empresa,
-            p.fecha_inicio,
-            p.fecha_fin,
-            p.fecha_fin_extra,
-            p.fecha_fin_real,
+    "SELECT DISTINCT p.id_practica,
             COALESCE(p.cancelada, 0) AS cancelada,
+            COALESCE(p.horas_hechas, 0) AS horas_hechas,
             a.nombre AS alumno_nombre,
-            a.apellido1 AS alumno_apellido1,
-            e.nombre AS empresa_nombre
+            a.apellido1 AS alumno_apellido1
      FROM practicas p
      INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
-     LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
+     INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
      WHERE p.id_alumno = :id_alumno
-     ORDER BY COALESCE(NULLIF(p.fecha_inicio, ''), '0000-00-00') DESC, p.id_practica DESC"
+       AND ac.id_curso_escolar = :id_curso_escolar
+     ORDER BY p.id_practica DESC"
   );
-  $practices_stmt->execute(['id_alumno' => $student_id]);
-  $practices = $practices_stmt->fetchAll();
+  $practices_stmt->execute([
+    'id_alumno' => $student_id,
+    'id_curso_escolar' => $course_id,
+  ]);
 
-  if ($practices === []) {
-    return [
-      'active_practice' => null,
-      'last_practice_id' => null,
-      'completed_hours' => 0.0,
-    ];
-  }
-
-  $last_practice_id = (int) ($practices[0]['id_practica'] ?? 0);
-  $active_practice = null;
-  $cancelled_practice_ids = [];
-
-  foreach ($practices as $practice) {
+  foreach ($practices_stmt->fetchAll() as $practice) {
     if ((int) ($practice['cancelada'] ?? 0) === 0 && $active_practice === null) {
       $active_practice = $practice;
       continue;
     }
 
     if ((int) ($practice['cancelada'] ?? 0) === 1) {
-      $cancelled_practice_ids[] = (int) ($practice['id_practica'] ?? 0);
+      $cancelled_hours += (float) ($practice['horas_hechas'] ?? 0);
     }
   }
 
-  $schedule_by_practice = [];
-  if ($cancelled_practice_ids !== []) {
-    $placeholders = implode(', ', array_fill(0, count($cancelled_practice_ids), '?'));
-    $schedule_stmt = $pdo->prepare(
-      'SELECT id_practica, dia_semana, hora_entrada, hora_salida
-       FROM practicas_horario
-       WHERE id_practica IN (' . $placeholders . ')
-       ORDER BY id_practica, dia_semana, hora_entrada'
-    );
-    $schedule_stmt->execute($cancelled_practice_ids);
-    foreach ($schedule_stmt->fetchAll() as $schedule_row) {
-      $practice_id = (int) ($schedule_row['id_practica'] ?? 0);
-      $day = (int) ($schedule_row['dia_semana'] ?? 0);
-
-      $entrada = substr((string) ($schedule_row['hora_entrada'] ?? ''), 0, 5);
-      $salida = substr((string) ($schedule_row['hora_salida'] ?? ''), 0, 5);
-      if (!valid_time($entrada) || !valid_time($salida)) {
-        continue;
-      }
-
-      $seconds = (time_to_minutes($salida) - time_to_minutes($entrada)) * 60;
-      if ($seconds <= 0) {
-        continue;
-      }
-
-      if (!isset($schedule_by_practice[$practice_id])) {
-        $schedule_by_practice[$practice_id] = [];
-      }
-      if (!isset($schedule_by_practice[$practice_id][$day])) {
-        $schedule_by_practice[$practice_id][$day] = 0;
-      }
-
-      $schedule_by_practice[$practice_id][$day] += $seconds;
-    }
-  }
-
-  $completed_seconds = 0;
-  foreach ($practices as $practice) {
-    if ((int) ($practice['cancelada'] ?? 0) !== 1) {
-      continue;
-    }
-
-    $practice_id = (int) ($practice['id_practica'] ?? 0);
-    $start = normalize_text($practice['fecha_inicio'] ?? null);
-    $end = resolve_practice_end_for_hours($practice);
-    if ($practice_id <= 0 || $start === null || !valid_date($start) || $end === null || !valid_date($end)) {
-      continue;
-    }
-    if (compare_iso_dates($end, $start) < 0) {
-      continue;
-    }
-
-    $seconds_by_day = $schedule_by_practice[$practice_id] ?? [];
-    if ($seconds_by_day === []) {
-      continue;
-    }
-
-    $cursor = DateTimeImmutable::createFromFormat('!Y-m-d', $start, new DateTimeZone('UTC'));
-    $end_date = DateTimeImmutable::createFromFormat('!Y-m-d', $end, new DateTimeZone('UTC'));
-    if (!$cursor || !$end_date) {
-      continue;
-    }
-
-    while ($cursor <= $end_date) {
-      $day = (int) $cursor->format('N');
-      if (isset($seconds_by_day[$day])) {
-        $completed_seconds += (int) $seconds_by_day[$day];
-      }
-      $cursor = $cursor->modify('+1 day');
-    }
+  if ($active_practice === null && $student !== false) {
+    $active_practice = null;
   }
 
   return [
     'active_practice' => $active_practice,
-    'last_practice_id' => $last_practice_id > 0 ? $last_practice_id : null,
-    'completed_hours' => $completed_seconds / 3600,
+    'approved_hours' => $approved_hours,
+    'cancelled_hours' => $cancelled_hours,
   ];
 }
 
@@ -514,15 +439,22 @@ if (($_GET['action'] ?? '') !== '') {
     $student_id = isset($_GET['id_alumno']) ? (int) $_GET['id_alumno'] : 0;
 
     if ($student_id <= 0) {
-      echo json_encode(['ok' => true, 'horas_ffe_aprobadas' => null]);
+      echo json_encode(['ok' => true, 'horas_calculadas' => 500, 'active_practice' => null]);
       exit;
     }
 
-    $hours_stmt = $pdo->prepare('SELECT horas_ffe_aprobadas FROM alumnos WHERE id_alumno = :id_alumno');
-    $hours_stmt->execute(['id_alumno' => $student_id]);
-    $hours = $hours_stmt->fetchColumn();
+    $practice_context = get_student_practice_context($pdo, $student_id, $active_course_id);
+    $hours = max(0, 500 - $practice_context['approved_hours'] - $practice_context['cancelled_hours']);
 
-    echo json_encode(['ok' => true, 'horas_ffe_aprobadas' => $hours !== false ? (int) $hours : null]);
+    echo json_encode([
+      'ok' => true,
+      'horas_calculadas' => $hours,
+      'active_practice' => $practice_context['active_practice'] !== null ? [
+        'id_practica' => (int) ($practice_context['active_practice']['id_practica'] ?? 0),
+        'alumno_nombre' => (string) ($practice_context['active_practice']['alumno_nombre'] ?? ''),
+        'alumno_apellido1' => (string) ($practice_context['active_practice']['alumno_apellido1'] ?? ''),
+      ] : null,
+    ]);
     exit;
   }
 
@@ -641,6 +573,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   if ($alumno_id <= 0) {
     $errors[] = 'El alumno es obligatorio.';
+  } elseif ($curso_escolar_id > 0) {
+    $practice_context = get_student_practice_context($pdo, $alumno_id, $curso_escolar_id);
+    if ($practice_context['active_practice'] !== null) {
+      $active_practice_id = (int) ($practice_context['active_practice']['id_practica'] ?? 0);
+      $student_name = trim((string) ($practice_context['active_practice']['alumno_nombre'] ?? ''));
+      $student_last_name = trim((string) ($practice_context['active_practice']['alumno_apellido1'] ?? ''));
+      $errors[] = 'El alumno ' . trim($student_name . ' ' . $student_last_name) . ' tiene actualmente una práctica activa en el curso actual. Hay que cancelarla antes de meter una práctica nueva. (practica_detalle.php?id_practica=' . $active_practice_id . ')';
+    }
   }
   if ($empresa_id <= 0) {
     $errors[] = 'La empresa es obligatoria.';
@@ -1154,6 +1094,7 @@ $dias_semana = [
               <input type="number" name="horas" id="horas" min="0" step="1" value="<?php echo htmlspecialchars((string) ($form_values['horas'] ?? '500'), ENT_QUOTES, 'UTF-8'); ?>" required>
             </label>
           </div>
+          <ul class="form-errors" id="active-practice-warning" hidden></ul>
           <div class="entity-grid entity-grid--3">
             <label>
               Empresa
@@ -1318,6 +1259,8 @@ $dias_semana = [
     const kmDesdeGetafeInput = document.getElementById('km_desde_getafe');
     const abonoDesdeGetafeInput = document.getElementById('abono_desde_getafe');
     const scheduleContainer = document.querySelector('[data-schedule-container]');
+    const activePracticeWarning = document.getElementById('active-practice-warning');
+    const submitButtons = document.querySelectorAll('button[type="submit"]');
     const nonTeachingDays = new Set(<?php echo json_encode(array_values($no_lectivos), JSON_UNESCAPED_UNICODE); ?>);
     const nonTeachingConfigured = <?php echo $non_teaching_configured ? 'true' : 'false'; ?>;
 
@@ -1545,6 +1488,13 @@ $dias_semana = [
       const studentId = Number(studentSelect.value || 0);
       if (studentId <= 0) {
         hoursInput.value = '500';
+        if (activePracticeWarning) {
+          activePracticeWarning.hidden = true;
+          activePracticeWarning.innerHTML = '';
+        }
+        submitButtons.forEach((button) => {
+          button.disabled = false;
+        });
         calculatePlanning();
         return;
       }
@@ -1552,11 +1502,46 @@ $dias_semana = [
       try {
         const response = await fetch(`practica_nueva.php?action=student_hours&id_alumno=${studentId}`);
         const data = await response.json();
-        const approved = data?.horas_ffe_aprobadas;
-        const result = approved === null || approved === undefined ? 500 : Math.max(0, 500 - Number(approved));
+        const result = Math.max(0, Number(data?.horas_calculadas ?? 500));
         hoursInput.value = String(Number.isFinite(result) ? result : 500);
+
+        if (data?.active_practice && activePracticeWarning) {
+          const practiceId = Number(data.active_practice.id_practica || 0);
+          const studentName = `${data.active_practice.alumno_nombre || ''} ${data.active_practice.alumno_apellido1 || ''}`.trim();
+
+          activePracticeWarning.innerHTML = '';
+          const item = document.createElement('li');
+          item.append('El alumno ');
+
+          const link = document.createElement('a');
+          link.href = `practica_detalle.php?id_practica=${practiceId}`;
+          link.textContent = studentName || 'seleccionado';
+          item.appendChild(link);
+
+          item.append(' tiene actualmente una práctica activa en el curso actual. Hay que cancelarla antes de meter una práctica nueva.');
+          activePracticeWarning.appendChild(item);
+          activePracticeWarning.hidden = false;
+          submitButtons.forEach((button) => {
+            button.disabled = true;
+          });
+        } else {
+          if (activePracticeWarning) {
+            activePracticeWarning.hidden = true;
+            activePracticeWarning.innerHTML = '';
+          }
+          submitButtons.forEach((button) => {
+            button.disabled = false;
+          });
+        }
       } catch (error) {
         hoursInput.value = '500';
+        if (activePracticeWarning) {
+          activePracticeWarning.hidden = true;
+          activePracticeWarning.innerHTML = '';
+        }
+        submitButtons.forEach((button) => {
+          button.disabled = false;
+        });
       }
 
       calculatePlanning();
@@ -1691,6 +1676,7 @@ $dias_semana = [
     updateDayTotals();
     calculatePlanning();
     updateRealEndDate();
+    updateHoursByStudent();
   </script>
 </body>
 </html>
