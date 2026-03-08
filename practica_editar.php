@@ -165,6 +165,75 @@ function load_non_teaching_days(PDO $pdo): array {
   ];
 }
 
+/**
+ * @return array<string, bool>
+ */
+function load_tutoring_days(PDO $pdo): array {
+  try {
+    $rows = $pdo->query('SELECT fecha FROM tutorias')->fetchAll(PDO::FETCH_COLUMN);
+  } catch (Throwable $error) {
+    return [];
+  }
+
+  $dates = [];
+  foreach ($rows as $date) {
+    $date_value = is_string($date) ? trim($date) : '';
+    if (valid_date($date_value)) {
+      $dates[$date_value] = true;
+    }
+  }
+
+  return $dates;
+}
+
+function calculate_performed_hours(string $fecha_inicio, string $fecha_fin_real, array $schedule_rows, array $non_teaching_lookup, array $tutoring_lookup): float {
+  $start_date = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_inicio, new DateTimeZone('UTC'));
+  $end_date = DateTimeImmutable::createFromFormat('!Y-m-d', $fecha_fin_real, new DateTimeZone('UTC'));
+  if (!$start_date || !$end_date || $end_date < $start_date) {
+    return 0.0;
+  }
+
+  $seconds_by_day = [];
+  foreach ($schedule_rows as $schedule_row) {
+    $day = (int) ($schedule_row['dia_semana'] ?? 0);
+    if ($day < 1 || $day > 7) {
+      continue;
+    }
+
+    $entrada = strtotime((string) ($schedule_row['hora_entrada'] ?? ''));
+    $salida = strtotime((string) ($schedule_row['hora_salida'] ?? ''));
+    if ($entrada === false || $salida === false || $salida <= $entrada) {
+      continue;
+    }
+
+    if (!isset($seconds_by_day[$day])) {
+      $seconds_by_day[$day] = 0;
+    }
+    $seconds_by_day[$day] += ($salida - $entrada);
+  }
+
+  if ($seconds_by_day === []) {
+    return 0.0;
+  }
+
+  $total_seconds = 0;
+  for ($cursor = $start_date; $cursor <= $end_date; $cursor = $cursor->modify('+1 day')) {
+    $date_key = $cursor->format('Y-m-d');
+    if (isset($non_teaching_lookup[$date_key]) && !isset($tutoring_lookup[$date_key])) {
+      continue;
+    }
+
+    $day = (int) $cursor->format('N');
+    if (!isset($seconds_by_day[$day])) {
+      continue;
+    }
+
+    $total_seconds += $seconds_by_day[$day];
+  }
+
+  return $total_seconds / 3600;
+}
+
 function has_schedule_for_day(array $horario, int $day): bool {
   $day_data = is_array($horario[$day] ?? null) ? $horario[$day] : [];
   $segments = [
@@ -554,17 +623,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $open_cancel_modal = true;
     } else {
       try {
+        $practice_cancel_data_stmt = $pdo->prepare('SELECT fecha_inicio FROM practicas WHERE id_practica = :id_practica LIMIT 1');
+        $practice_cancel_data_stmt->execute(['id_practica' => $id_practica]);
+        $practice_cancel_data = $practice_cancel_data_stmt->fetch();
+        $fecha_inicio_practica = normalize_text($practice_cancel_data['fecha_inicio'] ?? null);
+
+        $cancel_schedule_stmt = $pdo->prepare('SELECT dia_semana, hora_entrada, hora_salida FROM practicas_horario WHERE id_practica = :id_practica ORDER BY dia_semana, hora_entrada');
+        $cancel_schedule_stmt->execute(['id_practica' => $id_practica]);
+        $cancel_schedule_rows = $cancel_schedule_stmt->fetchAll();
+
+        $horas_hechas = 0.0;
+        if ($fecha_inicio_practica !== null && valid_date($fecha_inicio_practica)) {
+          $tutoring_lookup = load_tutoring_days($pdo);
+          $horas_hechas = calculate_performed_hours($fecha_inicio_practica, $cancel_fecha_fin_real, $cancel_schedule_rows, $non_teaching_lookup, $tutoring_lookup);
+        }
+
         $cancel_stmt = $pdo->prepare(
           'UPDATE practicas
            SET fecha_fin_real = :fecha_fin_real,
                motivo_exclusion = :motivo_exclusion,
-               cancelada = 1
+               cancelada = 1,
+               horas_hechas = :horas_hechas
            WHERE id_practica = :id_practica'
         );
 
         $cancel_saved = $cancel_stmt->execute([
           'fecha_fin_real' => $cancel_fecha_fin_real,
           'motivo_exclusion' => $cancel_motivo_exclusion,
+          'horas_hechas' => $horas_hechas,
           'id_practica' => $id_practica,
         ]);
 
