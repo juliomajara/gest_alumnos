@@ -426,6 +426,10 @@ body {
   gap: 12px;
 }
 
+.header-actions form {
+  margin: 0;
+}
+
 .calendar-select-form {
   margin-top: 12px;
   max-width: 260px;
@@ -463,6 +467,15 @@ a.ghost-button:active {
 .primary-button:hover {
   background: var(--primary-dark);
   transform: translateY(-1px);
+}
+
+.primary-button.reactivate-button {
+  background: #1f9d55;
+  box-shadow: 0 10px 20px rgba(31, 157, 85, 0.2);
+}
+
+.primary-button.reactivate-button:hover {
+  background: #188246;
 }
 
 .ghost-button {

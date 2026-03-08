@@ -162,6 +162,8 @@ $plan_status = null;
 $plan_error = null;
 $plan_file_path = null;
 $plan_file_name = null;
+$reactivate_status = null;
+$reactivate_error = null;
 
 $document_status_code = isset($_GET['doc_status']) ? (string) $_GET['doc_status'] : '';
 if ($document_status_code === 'calendar_generated') {
@@ -372,6 +374,90 @@ if ($id_practica === false || $id_practica === null) {
     $practice = $practice_stmt->fetch();
 
     if ($practice) {
+      if ($post_action === 'reactivar_practica') {
+        $id_alumno_practica = (int) ($practice['id_alumno'] ?? 0);
+
+        if ($id_alumno_practica <= 0) {
+          $reactivate_error = 'No se puede reactivar la práctica en este momento.';
+        } elseif ((int) ($practice['cancelada'] ?? 0) === 0) {
+          $reactivate_error = 'La práctica indicada ya está activa.';
+        } else {
+          $curso_actual_stmt = $pdo->prepare(
+            'SELECT MAX(ac.id_curso_escolar)
+             FROM alumno_curso ac
+             WHERE ac.id_alumno = :id_alumno'
+          );
+          $curso_actual_stmt->execute(['id_alumno' => $id_alumno_practica]);
+          $id_curso_actual = (int) ($curso_actual_stmt->fetchColumn() ?: 0);
+
+          if ($id_curso_actual <= 0) {
+            $reactivate_error = 'No se puede determinar el curso actual del alumno para reactivar la práctica.';
+          } else {
+            $active_practice_stmt = $pdo->prepare(
+              'SELECT p.id_practica
+               FROM practicas p
+               INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
+               WHERE p.id_alumno = :id_alumno
+                 AND ac.id_curso_escolar = :id_curso_escolar
+                 AND COALESCE(p.cancelada, 0) = 0
+                 AND p.id_practica <> :id_practica
+               ORDER BY p.id_practica DESC
+               LIMIT 1'
+            );
+            $active_practice_stmt->execute([
+              'id_alumno' => $id_alumno_practica,
+              'id_curso_escolar' => $id_curso_actual,
+              'id_practica' => $id_practica,
+            ]);
+            $other_active_practice_id = (int) ($active_practice_stmt->fetchColumn() ?: 0);
+
+            if ($other_active_practice_id > 0) {
+              $reactivate_error = 'No se puede reactivar esta práctica porque el alumno ya tiene otra práctica activa en el curso actual.';
+            } else {
+              $latest_practice_stmt = $pdo->prepare(
+                'SELECT p.id_practica
+                 FROM practicas p
+                 INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
+                 WHERE p.id_alumno = :id_alumno
+                   AND ac.id_curso_escolar = :id_curso_escolar
+                 ORDER BY
+                   COALESCE(
+                     NULLIF(p.fecha_fin_real, \'\'),
+                     NULLIF(p.fecha_fin_extra, \'\'),
+                     NULLIF(p.fecha_fin, \'\'),
+                     NULLIF(p.fecha_inicio, \'\')
+                   ) DESC,
+                   NULLIF(p.fecha_inicio, \'\') DESC,
+                   p.id_practica DESC
+                 LIMIT 1'
+              );
+              $latest_practice_stmt->execute([
+                'id_alumno' => $id_alumno_practica,
+                'id_curso_escolar' => $id_curso_actual,
+              ]);
+              $latest_practice_id = (int) ($latest_practice_stmt->fetchColumn() ?: 0);
+
+              if ($latest_practice_id !== (int) $id_practica) {
+                $reactivate_error = 'No se puede activar esta práctica porque el alumno ha tenido una práctica posterior en el curso actual.';
+              } else {
+                $reactivate_stmt = $pdo->prepare(
+                  'UPDATE practicas
+                   SET cancelada = 0,
+                       horas_hechas = NULL,
+                       fecha_fin_real = NULL
+                   WHERE id_practica = :id_practica'
+                );
+                $reactivate_stmt->execute(['id_practica' => $id_practica]);
+                $reactivate_status = 'Práctica reactivada correctamente.';
+
+                $practice_stmt->execute(['id_practica' => $id_practica]);
+                $practice = $practice_stmt->fetch();
+              }
+            }
+          }
+        }
+      }
+
       $schedule_stmt = $pdo->prepare(
         'SELECT id_practicas_horario, dia_semana, hora_entrada, hora_salida
          FROM practicas_horario
@@ -579,7 +665,10 @@ if ($practice_found) {
         </div>
         <div class="header-actions">
           <?php if ($practice_found): ?>
-            <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) $id_practica; ?>">Editar práctica</a>
+            <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+              <input type="hidden" name="action" value="reactivar_practica">
+              <button type="submit" class="primary-button reactivate-button">Reactivar práctica</button>
+            </form>
           <?php endif; ?>
           <a class="ghost-button" href="practicas.php">Volver a prácticas</a>
         </div>
@@ -600,10 +689,16 @@ if ($practice_found) {
           </div>
         </section>
       <?php else: ?>
-        <?php if ($calendar_status !== null || $calendar_error !== null || $plan_status !== null || $plan_error !== null || $calendar_generated_at !== null || $plan_generated_at !== null): ?>
+        <?php if ($reactivate_status !== null || $reactivate_error !== null || $calendar_status !== null || $calendar_error !== null || $plan_status !== null || $plan_error !== null || $calendar_generated_at !== null || $plan_generated_at !== null): ?>
         <section class="panel">
           <div class="panel-header">
             <h3>Estado de documentos</h3>
+              <?php if ($reactivate_status !== null): ?>
+                <p><?php echo htmlspecialchars($reactivate_status, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($reactivate_error !== null): ?>
+                <p><?php echo htmlspecialchars($reactivate_error, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
               <?php if ($calendar_status !== null): ?>
                 <p><?php echo htmlspecialchars($calendar_status, ENT_QUOTES, 'UTF-8'); ?></p>
               <?php endif; ?>
