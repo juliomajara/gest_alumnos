@@ -6,6 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
+$sort = (string) ($_GET['sort'] ?? '');
 
 $filters = [];
 $params = [];
@@ -24,11 +25,24 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
+$order_by_clause = 'e.nombre, e.apellido1, e.apellido2';
+if ($sort === 'convenio') {
+  $order_by_clause = 'e.convenio + 0 ASC';
+} elseif ($sort === 'nombre') {
+  $order_by_clause = 'CASE
+    WHEN TRIM(COALESCE(e.nombre_comercial, \'\')) <> \'\'
+      AND TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2)) <> TRIM(COALESCE(e.nombre_comercial, \'\'))
+      THEN TRIM(COALESCE(e.nombre_comercial, \'\'))
+    ELSE TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2))
+  END ASC';
+}
+
 $companies_stmt = $pdo->prepare(
   'SELECT
     e.id_empresa,
     e.cif,
     e.nombre,
+    e.nombre_comercial,
     e.apellido1,
     e.apellido2,
     e.convenio,
@@ -94,7 +108,7 @@ $companies_stmt = $pdo->prepare(
     WHERE c1.entidad_tipo = \'empresa_contacto\'
   ) c ON c.id_entidad = fc.id_empresa_contacto
   ' . $where_clause . '
-  ORDER BY e.nombre, e.apellido1, e.apellido2'
+  ORDER BY ' . $order_by_clause
 );
 
 $companies_stmt->execute($params);
@@ -116,7 +130,18 @@ function render_company_rows(array $companies): string
           $company['apellido1'] ?? '',
           $company['apellido2'] ?? ''
         ], static fn ($value) => trim((string) $value) !== '')));
+        $nombreComercial = trim((string) ($company['nombre_comercial'] ?? ''));
+        $nombreApellido1 = trim(implode(' ', array_filter([
+          $company['nombre'] ?? '',
+          $company['apellido1'] ?? ''
+        ], static fn ($value) => trim((string) $value) !== '')));
         $nombre = $nombreCompleto !== '' ? $nombreCompleto : 'No disponible';
+        if ($nombreComercial !== '' && $nombreComercial !== $nombreCompleto) {
+          $nombre = $nombreComercial;
+          if ($nombreApellido1 !== '') {
+            $nombre .= ' (' . $nombreApellido1 . ')';
+          }
+        }
         $contacto = (string) ($company['contacto'] ?? '');
         $idEmpresa = (int) ($company['id_empresa'] ?? 0);
         $detalleUrl = 'empresa_detalle.php?id_empresa=' . $idEmpresa;
@@ -205,6 +230,7 @@ $active_page = 'empresas';
           >
         </div>
         <div class="topbar-actions"></div>
+        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort, ENT_QUOTES, 'UTF-8'); ?>">
       </form>
 
       <section class="panel">
@@ -217,8 +243,8 @@ $active_page = 'empresas';
           <table>
             <thead>
               <tr>
-                <th>Convenio</th>
-                <th>Nombre</th>
+                <th><a href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'convenio']), ENT_QUOTES, 'UTF-8'); ?>">Convenio</a></th>
+                <th><a href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'nombre']), ENT_QUOTES, 'UTF-8'); ?>">Nombre</a></th>
                 <th>CIF</th>
                 <th>Contacto</th>
                 <th>Teléfono</th>
