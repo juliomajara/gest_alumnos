@@ -146,7 +146,21 @@ SQL;
   }
 
   $paths = practicas_get_document_paths($practice);
-  $planFileName = practicas_build_plan_pdf_filename($practice);
+  $alumnoNombreArchivoRaw = trim(implode(' ', array_filter([
+    (string) ($practice['alumno_nombre'] ?? ''),
+    (string) ($practice['alumno_apellido1'] ?? ''),
+    (string) ($practice['alumno_apellido2'] ?? ''),
+  ])));
+  $empresaNombreComercialRaw = (string) ($practice['empresa_nombre'] ?? '');
+  $alumnoNombreArchivo = practicas_sanitize_filename_component((string) preg_replace('/\s+/u', '', $alumnoNombreArchivoRaw), 40);
+  $empresaNombreComercialArchivo = practicas_sanitize_filename_component((string) preg_replace('/\s+/u', '', $empresaNombreComercialRaw), 40);
+  $planFileName = implode('_', [
+    'PF',
+    practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+    practicas_sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
+    $alumnoNombreArchivo,
+    $empresaNombreComercialArchivo,
+  ]) . '.pdf';
   $paths['plan_file_name'] = $planFileName;
   $paths['plan_file_path'] = $paths['plan_directory'] . '/' . $planFileName;
 
