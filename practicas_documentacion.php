@@ -77,7 +77,7 @@ function build_order_url(string $order): string
   return 'practicas_documentacion.php' . ($query !== '' ? '?' . $query : '');
 }
 
-function run_generator_script(string $scriptName, int $practiceId): bool
+function run_generator_script(string $scriptName, int $practiceId, ?string &$commandOutput = null): bool
 {
   $scriptPath = __DIR__ . '/' . $scriptName;
   if (!is_file($scriptPath)) {
@@ -93,7 +93,8 @@ function run_generator_script(string $scriptName, int $practiceId): bool
   $command = escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($bootstrapCode);
   $output = [];
   $exitCode = 1;
-  @exec($command . ' 2>&1', $output, $exitCode);
+  exec($command . ' 2>&1', $output, $exitCode);
+  $commandOutput = trim(implode("\n", $output));
 
   return $exitCode === 0;
 }
@@ -138,6 +139,9 @@ try {
         'SELECT DISTINCT
           p.id_practica,
           p.anexo,
+          p.fecha_inicio,
+          p.fecha_fin,
+          p.fecha_fin_extra,
           a.nombre AS alumno_nombre,
           a.apellido1 AS alumno_apellido1,
           a.apellido2 AS alumno_apellido2,
@@ -154,17 +158,54 @@ try {
 
       $selected_stmt->execute(array_merge([(int) $active_course_id], $selected_ids));
       $selected_practices = $selected_stmt->fetchAll();
-
+      $selected_practices_by_id = [];
       foreach ($selected_practices as $practice) {
-        $id_practica = (int) $practice['id_practica'];
+        $selected_practices_by_id[(int) ($practice['id_practica'] ?? 0)] = $practice;
+      }
+
+      foreach ($selected_ids as $id_practica) {
+        if (!isset($selected_practices_by_id[$id_practica])) {
+          $generation_errors[] = 'No se pudo recuperar la información necesaria para la práctica #' . $id_practica . '.';
+          continue;
+        }
+
+        $practice = $selected_practices_by_id[$id_practica];
         $paths = practicas_get_document_paths($practice);
         $practice_for_calendar_paths = $practice;
         unset($practice_for_calendar_paths['empresa_nombre_comercial']);
         $calendar_paths = practicas_get_document_paths($practice_for_calendar_paths);
 
         if (isset($selected_programa[(string) $id_practica])) {
+          $missing_plan_fields = [];
+          $required_plan_fields = [
+            'alumno_nombre' => 'nombre del alumno',
+            'alumno_apellido1' => 'primer apellido del alumno',
+            'empresa_nombre' => 'nombre de la empresa',
+            'empresa_convenio' => 'número de convenio',
+            'anexo' => 'número de anexo',
+            'fecha_inicio' => 'fecha de inicio',
+          ];
+          foreach ($required_plan_fields as $field => $label) {
+            if (trim((string) ($practice[$field] ?? '')) === '') {
+              $missing_plan_fields[] = $label;
+            }
+          }
+          $end_date = trim((string) ($practice['fecha_fin_extra'] ?? ''));
+          if ($end_date === '') {
+            $end_date = trim((string) ($practice['fecha_fin'] ?? ''));
+          }
+          if ($end_date === '') {
+            $missing_plan_fields[] = 'fecha de fin';
+          }
+
+          if ($missing_plan_fields !== []) {
+            $generation_errors[] = 'No se pudo generar el Plan Formación para la práctica #' . $id_practica . '.';
+            continue;
+          }
+
           $before_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
-          $executed = run_generator_script('generar_plan_formacion.php', $id_practica);
+          $script_output = null;
+          $executed = run_generator_script('generar_plan_formacion.php', $id_practica, $script_output);
           clearstatcache(true, $paths['plan_file_path']);
           $after_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
 
@@ -176,8 +217,20 @@ try {
         }
 
         if (isset($selected_calendario[(string) $id_practica])) {
+          $start_date = trim((string) ($practice['fecha_inicio'] ?? ''));
+          $end_date = trim((string) ($practice['fecha_fin_extra'] ?? ''));
+          if ($end_date === '') {
+            $end_date = trim((string) ($practice['fecha_fin'] ?? ''));
+          }
+
+          if ($start_date === '' || $end_date === '') {
+            $generation_errors[] = 'No se pudo generar el Calendario para la práctica #' . $id_practica . '.';
+            continue;
+          }
+
           $before_mtime = is_file($calendar_paths['calendar_file_path']) ? (int) filemtime($calendar_paths['calendar_file_path']) : 0;
-          $executed = run_generator_script('generar_calendario.php', $id_practica);
+          $script_output = null;
+          $executed = run_generator_script('generar_calendario.php', $id_practica, $script_output);
           clearstatcache(true, $calendar_paths['calendar_file_path']);
           $after_mtime = is_file($calendar_paths['calendar_file_path']) ? (int) filemtime($calendar_paths['calendar_file_path']) : 0;
 
