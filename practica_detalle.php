@@ -482,6 +482,30 @@ if ($id_practica === false || $id_practica === null) {
       $plan_file_name = $document_paths['plan_file_name'];
       $plan_file_path = $document_paths['plan_file_path'];
 
+      if ($plan_file_path !== null && !is_file($plan_file_path)) {
+        $alumnoNombreArchivoRaw = trim(implode(' ', array_filter([
+          (string) ($practice['alumno_nombre'] ?? ''),
+          (string) ($practice['alumno_apellido1'] ?? ''),
+          (string) ($practice['alumno_apellido2'] ?? ''),
+        ])));
+        $empresaNombreComercialRaw = (string) ($practice['empresa_nombre_comercial'] ?? '');
+        $alumnoNombreArchivo = practicas_sanitize_filename_component((string) preg_replace('/\s+/u', '', $alumnoNombreArchivoRaw), 40);
+        $empresaNombreComercialArchivo = practicas_sanitize_filename_component((string) preg_replace('/\s+/u', '', $empresaNombreComercialRaw), 40);
+        $planFileNameAlternativo = implode('_', [
+          'PF',
+          practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+          practicas_sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
+          $alumnoNombreArchivo,
+          $empresaNombreComercialArchivo,
+        ]) . '.pdf';
+        $planFilePathAlternativo = $planDirectory . '/' . $planFileNameAlternativo;
+
+        if (is_file($planFilePathAlternativo)) {
+          $plan_file_name = $planFileNameAlternativo;
+          $plan_file_path = $planFilePathAlternativo;
+        }
+      }
+
       if ($action === 'descargar_calendario') {
         $realBase = realpath($calendarDirectory);
         $realFile = $calendar_file_path !== null && file_exists($calendar_file_path) ? realpath($calendar_file_path) : false;
