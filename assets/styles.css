@@ -799,6 +799,36 @@ a.edit-toggle:active {
   gap: 10px;
 }
 
+.generation-feedback {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.generation-feedback p {
+  margin: 0;
+}
+
+.generation-feedback ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.generation-feedback-success {
+  background: #e4f7ec;
+  border-color: #c7ecd7;
+  color: #2d8a57;
+}
+
+.generation-feedback-error {
+  background: #fee4e2;
+  border-color: #fecdca;
+}
+
+.generation-feedback-error .form-errors {
+  margin: 0;
+}
+
 @media (min-width: 981px) {
   .panel-grid table {
     border-collapse: separate;
@@ -1888,7 +1918,6 @@ a.edit-toggle:active {
   color: var(--muted);
   font-weight: 600;
 }
-
 
 
 

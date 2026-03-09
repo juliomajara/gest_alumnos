@@ -408,24 +408,30 @@ try {
         </div>
 
         <div class="panel-grid">
-          <?php if ($generation_summary !== null): ?>
-            <p><?php echo htmlspecialchars($generation_summary, ENT_QUOTES, 'UTF-8'); ?></p>
-          <?php endif; ?>
+          <?php if ($generation_summary !== null || $generated_documents !== []): ?>
+            <div class="generation-feedback generation-feedback-success">
+              <?php if ($generation_summary !== null): ?>
+                <p><?php echo htmlspecialchars($generation_summary, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
 
-          <?php if ($generated_documents !== []): ?>
-            <ul>
-              <?php foreach ($generated_documents as $generated_document): ?>
-                <li><?php echo htmlspecialchars($generated_document, ENT_QUOTES, 'UTF-8'); ?></li>
-              <?php endforeach; ?>
-            </ul>
+              <?php if ($generated_documents !== []): ?>
+                <ul>
+                  <?php foreach ($generated_documents as $generated_document): ?>
+                    <li><?php echo htmlspecialchars($generated_document, ENT_QUOTES, 'UTF-8'); ?></li>
+                  <?php endforeach; ?>
+                </ul>
+              <?php endif; ?>
+            </div>
           <?php endif; ?>
 
           <?php if ($generation_errors !== []): ?>
-            <ul>
-              <?php foreach ($generation_errors as $generation_error): ?>
-                <li><?php echo htmlspecialchars($generation_error, ENT_QUOTES, 'UTF-8'); ?></li>
-              <?php endforeach; ?>
-            </ul>
+            <div class="generation-feedback generation-feedback-error">
+              <ul class="form-errors">
+                <?php foreach ($generation_errors as $generation_error): ?>
+                  <li><?php echo htmlspecialchars($generation_error, ENT_QUOTES, 'UTF-8'); ?></li>
+                <?php endforeach; ?>
+              </ul>
+            </div>
           <?php endif; ?>
 
           <form method="post" action="practicas_documentacion.php">
