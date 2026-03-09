@@ -664,7 +664,7 @@ if ($practice_found) {
           <h1><?php echo htmlspecialchars($practice_header_title, ENT_QUOTES, 'UTF-8'); ?></h1>
         </div>
         <div class="header-actions">
-          <?php if ($practice_found && $practice_status !== 'Finalizada'): ?>
+          <?php if ($practice_found && $practice_status === 'Cancelada'): ?>
             <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
               <input type="hidden" name="action" value="reactivar_practica">
               <button type="submit" class="primary-button reactivate-button">Reactivar práctica</button>
