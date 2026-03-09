@@ -243,8 +243,8 @@ $active_page = 'empresas';
           <table>
             <thead>
               <tr>
-                <th><a href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'convenio']), ENT_QUOTES, 'UTF-8'); ?>">Convenio</a></th>
-                <th><a href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'nombre']), ENT_QUOTES, 'UTF-8'); ?>">Nombre</a></th>
+                <th><a class="practice-link" href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'convenio']), ENT_QUOTES, 'UTF-8'); ?>">Convenio</a></th>
+                <th><a class="practice-link" href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'nombre']), ENT_QUOTES, 'UTF-8'); ?>">Nombre</a></th>
                 <th>CIF</th>
                 <th>Contacto</th>
                 <th>Teléfono</th>
