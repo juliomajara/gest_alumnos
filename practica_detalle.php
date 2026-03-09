@@ -670,6 +670,9 @@ if ($practice_found) {
               <button type="submit" class="primary-button reactivate-button">Reactivar práctica</button>
             </form>
           <?php endif; ?>
+          <?php if ($practice_found): ?>
+            <a class="primary-button" href="practica_editar.php?id_practica=<?php echo (int) $id_practica; ?>">Editar práctica</a>
+          <?php endif; ?>
           <a class="ghost-button" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
