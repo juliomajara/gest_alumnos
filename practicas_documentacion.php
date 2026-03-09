@@ -266,14 +266,31 @@ try {
             continue;
           }
 
-          $before_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
+          $alumnoNombreArchivoRaw = trim(implode(' ', array_filter([
+            (string) ($practice['alumno_nombre'] ?? ''),
+            (string) ($practice['alumno_apellido1'] ?? ''),
+            (string) ($practice['alumno_apellido2'] ?? ''),
+          ])));
+          $empresaNombreComercialRaw = (string) ($practice['empresa_nombre_comercial'] ?? '');
+          $alumnoNombreArchivo = practicas_sanitize_filename_component((string) preg_replace('/\s+/u', '', $alumnoNombreArchivoRaw), 40);
+          $empresaNombreComercialArchivo = practicas_sanitize_filename_component((string) preg_replace('/\s+/u', '', $empresaNombreComercialRaw), 40);
+          $planFileName = implode('_', [
+            'PF',
+            practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+            practicas_sanitize_filename_component((string) ($practice['empresa_convenio'] ?? ''), 20),
+            $alumnoNombreArchivo,
+            $empresaNombreComercialArchivo,
+          ]) . '.pdf';
+          $planFilePath = $paths['plan_directory'] . '/' . $planFileName;
+
+          $before_mtime = is_file($planFilePath) ? (int) filemtime($planFilePath) : 0;
           $script_output = null;
           $executed = run_generator_script('generar_plan_formacion.php', $id_practica, $script_output);
-          clearstatcache(true, $paths['plan_file_path']);
-          $after_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
+          clearstatcache(true, $planFilePath);
+          $after_mtime = is_file($planFilePath) ? (int) filemtime($planFilePath) : 0;
 
-          if ($executed && is_file($paths['plan_file_path']) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
-            $generated_documents[] = 'Plan Formación - ' . $paths['plan_file_name'];
+          if ($executed && is_file($planFilePath) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
+            $generated_documents[] = 'Plan Formación - ' . $planFileName;
           } else {
             $generation_errors[] = 'No se pudo generar el Plan Formación para la práctica #' . $id_practica . '.';
           }
