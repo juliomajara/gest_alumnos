@@ -84,6 +84,65 @@ function run_generator_script(string $scriptName, int $practiceId, ?string &$com
     return false;
   }
 
+  $scheme = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
+  $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+  $basePath = trim((string) dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+
+  if ($host !== '') {
+    $url = $scheme . '://' . $host . '/'
+      . ($basePath !== '' ? $basePath . '/' : '')
+      . rawurlencode($scriptName)
+      . '?id_practica=' . $practiceId;
+
+    $headers = [];
+    if (!empty($_COOKIE)) {
+      $cookiePairs = [];
+      foreach ($_COOKIE as $cookieName => $cookieValue) {
+        $cookiePairs[] = rawurlencode((string) $cookieName) . '=' . rawurlencode((string) $cookieValue);
+      }
+      if ($cookiePairs !== []) {
+        $headers[] = 'Cookie: ' . implode('; ', $cookiePairs);
+      }
+    }
+
+    $context = stream_context_create([
+      'http' => [
+        'method' => 'GET',
+        'header' => $headers,
+        'ignore_errors' => true,
+        'timeout' => 30,
+      ],
+    ]);
+
+    $responseBody = @file_get_contents($url, false, $context);
+    $responseHeaders = $http_response_header ?? [];
+    $locationHeader = '';
+    foreach ($responseHeaders as $headerLine) {
+      if (stripos($headerLine, 'Location:') === 0) {
+        $locationHeader = trim((string) substr($headerLine, 9));
+      }
+    }
+
+    if ($locationHeader !== '') {
+      $locationParts = parse_url($locationHeader);
+      if ($locationParts !== false && isset($locationParts['query'])) {
+        $locationQuery = [];
+        parse_str($locationParts['query'], $locationQuery);
+        if (isset($locationQuery['doc_error'])) {
+          $commandOutput = (string) $locationQuery['doc_error'];
+          return false;
+        }
+      }
+
+      $commandOutput = $locationHeader;
+      return true;
+    }
+
+    if ($responseBody !== false) {
+      $commandOutput = trim((string) $responseBody);
+    }
+  }
+
   $bootstrapCode = sprintf(
     '$_GET["id_practica"]=%d;$_REQUEST["id_practica"]=%d;$_SERVER["REQUEST_METHOD"]="GET";$_SERVER["HTTP_HOST"]="localhost";$_SERVER["HTTP_REFERER"]="http://localhost/practicas_documentacion.php";require %s;',
     $practiceId,
@@ -95,7 +154,9 @@ function run_generator_script(string $scriptName, int $practiceId, ?string &$com
   $output = [];
   $exitCode = 1;
   exec($command . ' 2>&1', $output, $exitCode);
-  $commandOutput = trim(implode("\n", $output));
+  if ($commandOutput === null || $commandOutput === '') {
+    $commandOutput = trim(implode("\n", $output));
+  }
 
   return $exitCode === 0;
 }
