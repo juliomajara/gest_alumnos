@@ -445,9 +445,7 @@ try {
   preg_match_all('/\{\{[A-Z0-9_]+\}\}/', $template, $matches);
   $templateMarkers = array_unique($matches[0] ?? []);
 
-  $practiceForPaths = $practice;
-  unset($practiceForPaths['empresa_nombre_comercial']);
-  $paths = practicas_get_document_paths($practiceForPaths);
+  $paths = practicas_get_document_paths($practice);
 
   $contactoNombre = fallback_text(trim((string) ($practice['tutor_empresa_nombre'] ?? '') . ' ' . (string) ($practice['tutor_empresa_apellido1'] ?? '')));
 
