@@ -223,7 +223,10 @@ try {
         a.nombre AS alumno_nombre,
         a.apellido1 AS alumno_apellido1,
         a.apellido2 AS alumno_apellido2,
-        e.nombre AS empresa_nombre
+        e.nombre AS empresa_nombre,
+        e.apellido1 AS empresa_apellido1,
+        e.apellido2 AS empresa_apellido2,
+        e.nombre_comercial AS empresa_nombre_comercial
       FROM practicas p
       INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
@@ -324,14 +327,33 @@ try {
                   </tr>
                 <?php else: ?>
                   <?php foreach ($practices as $practice): ?>
-                    <?php $practice_id = (int) $practice['id_practica']; ?>
+                    <?php
+                      $practice_id = (int) $practice['id_practica'];
+                      $nombreCompleto = trim(implode(' ', array_filter([
+                        $practice['empresa_nombre'] ?? '',
+                        $practice['empresa_apellido1'] ?? '',
+                        $practice['empresa_apellido2'] ?? ''
+                      ], static fn ($value) => trim((string) $value) !== '')));
+                      $nombreComercial = trim((string) ($practice['empresa_nombre_comercial'] ?? ''));
+                      $nombreApellido1 = trim(implode(' ', array_filter([
+                        $practice['empresa_nombre'] ?? '',
+                        $practice['empresa_apellido1'] ?? ''
+                      ], static fn ($value) => trim((string) $value) !== '')));
+                      $empresaNombreMostrado = $nombreCompleto !== '' ? $nombreCompleto : 'No disponible';
+                      if ($nombreComercial !== '' && $nombreComercial !== $nombreCompleto) {
+                        $empresaNombreMostrado = $nombreComercial;
+                        if ($nombreApellido1 !== '') {
+                          $empresaNombreMostrado .= ' (' . $nombreApellido1 . ')';
+                        }
+                      }
+                    ?>
                     <tr>
                       <td>
                         <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) $practice_id); ?>">
                           <?php echo htmlspecialchars(format_student_name($practice), ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                       </td>
-                      <td><?php echo htmlspecialchars((string) ($practice['empresa_nombre'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($empresaNombreMostrado, ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) ($practice['anexo'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_date_es($practice['fecha_inicio'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_date_es($practice['fecha_fin'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
