@@ -142,11 +142,15 @@ try {
           p.fecha_inicio,
           p.fecha_fin,
           p.fecha_fin_extra,
+          p.cancelada,
           a.nombre AS alumno_nombre,
           a.apellido1 AS alumno_apellido1,
           a.apellido2 AS alumno_apellido2,
           e.convenio AS empresa_convenio,
           e.nombre AS empresa_nombre,
+          e.apellido1 AS empresa_apellido1,
+          e.apellido2 AS empresa_apellido2,
+          e.nombre_comercial AS nombre_comercial,
           e.nombre_comercial AS empresa_nombre_comercial
         FROM practicas p
         INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
