@@ -146,6 +146,7 @@ $practices_stmt = $pdo->prepare(
     a.apellido2 AS alumno_apellido2,
     e.id_empresa,
     e.nombre AS empresa_nombre,
+    e.nombre_comercial AS empresa_nombre_comercial,
     e.apellido1 AS empresa_apellido1,
     e.apellido2 AS empresa_apellido2,
     e.convenio,
@@ -267,12 +268,23 @@ function render_practice_rows(array $practices): string
           ? trim($alumno_apellidos . ', ' . $alumno_nombre, ' ,')
           : 'No disponible';
 
-        $empresa = trim(implode(' ', array_filter([
+        $empresa_nombre_completo = trim(implode(' ', array_filter([
           $practice['empresa_nombre'] ?? '',
           $practice['empresa_apellido1'] ?? '',
           $practice['empresa_apellido2'] ?? '',
         ], static fn ($value) => trim((string) $value) !== '')));
-        $empresa = $empresa !== '' ? $empresa : 'No disponible';
+        $empresa_nombre_comercial = trim((string) ($practice['empresa_nombre_comercial'] ?? ''));
+        $empresa_nombre_apellido1 = trim(implode(' ', array_filter([
+          $practice['empresa_nombre'] ?? '',
+          $practice['empresa_apellido1'] ?? '',
+        ], static fn ($value) => trim((string) $value) !== '')));
+        $empresa = $empresa_nombre_completo !== '' ? $empresa_nombre_completo : 'No disponible';
+        if ($empresa_nombre_comercial !== '' && $empresa_nombre_comercial !== $empresa_nombre_completo) {
+          $empresa = $empresa_nombre_comercial;
+          if ($empresa_nombre_apellido1 !== '') {
+            $empresa .= ' (' . $empresa_nombre_apellido1 . ')';
+          }
+        }
         $empresa_cif = trim((string) ($practice['empresa_cif'] ?? ''));
         $empresa_cif = $empresa_cif !== '' ? $empresa_cif : 'No disponible';
         $empresa_contacto_nombre = $format_person_display_name($practice['empresa_contacto_nombre'] ?? null);
