@@ -158,6 +158,9 @@ try {
       foreach ($selected_practices as $practice) {
         $id_practica = (int) $practice['id_practica'];
         $paths = practicas_get_document_paths($practice);
+        $practice_for_calendar_paths = $practice;
+        unset($practice_for_calendar_paths['empresa_nombre_comercial']);
+        $calendar_paths = practicas_get_document_paths($practice_for_calendar_paths);
 
         if (isset($selected_programa[(string) $id_practica])) {
           $before_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
@@ -173,13 +176,13 @@ try {
         }
 
         if (isset($selected_calendario[(string) $id_practica])) {
-          $before_mtime = is_file($paths['calendar_file_path']) ? (int) filemtime($paths['calendar_file_path']) : 0;
+          $before_mtime = is_file($calendar_paths['calendar_file_path']) ? (int) filemtime($calendar_paths['calendar_file_path']) : 0;
           $executed = run_generator_script('generar_calendario.php', $id_practica);
-          clearstatcache(true, $paths['calendar_file_path']);
-          $after_mtime = is_file($paths['calendar_file_path']) ? (int) filemtime($paths['calendar_file_path']) : 0;
+          clearstatcache(true, $calendar_paths['calendar_file_path']);
+          $after_mtime = is_file($calendar_paths['calendar_file_path']) ? (int) filemtime($calendar_paths['calendar_file_path']) : 0;
 
-          if ($executed && is_file($paths['calendar_file_path']) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
-            $generated_documents[] = 'Calendario - ' . $paths['calendar_file_name'];
+          if ($executed && is_file($calendar_paths['calendar_file_path']) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
+            $generated_documents[] = 'Calendario - ' . $calendar_paths['calendar_file_name'];
           } else {
             $generation_errors[] = 'No se pudo generar el Calendario para la práctica #' . $id_practica . '.';
           }
