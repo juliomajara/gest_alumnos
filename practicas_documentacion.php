@@ -41,6 +41,42 @@ function format_date_es(?string $value): string
   return $date ? $date->format('d/m/Y') : $value;
 }
 
+function calculate_practice_status(array $practice): string
+{
+  if ((int) ($practice['cancelada'] ?? 0) === 1) {
+    return 'Cancelada';
+  }
+
+  $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
+  $fecha_fin_extra = (string) ($practice['fecha_fin_extra'] ?? '');
+
+  if ($fecha_inicio === '' || $fecha_fin_extra === '') {
+    return 'No disponible';
+  }
+
+  $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+  if ($today < $fecha_inicio) {
+    return 'En espera';
+  }
+
+  if ($today <= $fecha_fin_extra) {
+    return 'En curso';
+  }
+
+  return 'Finalizada';
+}
+
+function build_order_url(string $order): string
+{
+  $params = $_GET;
+  $params['orden'] = $order;
+
+  $query = http_build_query($params);
+
+  return 'practicas_documentacion.php' . ($query !== '' ? '?' . $query : '');
+}
+
 function run_generator_script(string $scriptName, int $practiceId): bool
 {
   $scriptPath = __DIR__ . '/' . $scriptName;
@@ -71,6 +107,9 @@ $practices = [];
 $generated_documents = [];
 $generation_errors = [];
 $generation_summary = null;
+$allowed_orders = ['alumno', 'empresa', 'anexo', 'fecha_inicio', 'fecha_fin', 'estado'];
+$order_param = (string) ($_GET['orden'] ?? 'alumno');
+$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno';
 
 try {
   $pdo = db();
@@ -127,9 +166,9 @@ try {
           $after_mtime = is_file($paths['plan_file_path']) ? (int) filemtime($paths['plan_file_path']) : 0;
 
           if ($executed && is_file($paths['plan_file_path']) && ($before_mtime === 0 || $after_mtime >= $before_mtime)) {
-            $generated_documents[] = 'Programa Formativo - ' . $paths['plan_file_name'];
+            $generated_documents[] = 'Plan Formación - ' . $paths['plan_file_name'];
           } else {
-            $generation_errors[] = 'No se pudo generar el Programa Formativo para la práctica #' . $id_practica . '.';
+            $generation_errors[] = 'No se pudo generar el Plan Formación para la práctica #' . $id_practica . '.';
           }
         }
 
@@ -158,12 +197,29 @@ try {
   }
 
   if ($active_course_id !== false && $active_course_id !== null) {
+    $order_clause = match ($current_order) {
+      'empresa' => 'ORDER BY e.nombre ASC, p.id_practica ASC',
+      'anexo' => 'ORDER BY CAST(p.anexo AS UNSIGNED) ASC, p.id_practica ASC',
+      'fecha_inicio' => 'ORDER BY p.fecha_inicio ASC, p.id_practica ASC',
+      'fecha_fin' => 'ORDER BY p.fecha_fin ASC, p.id_practica ASC',
+      'estado' => "ORDER BY CASE
+        WHEN p.cancelada = 1 THEN 1
+        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = '' OR p.fecha_fin_extra IS NULL OR p.fecha_fin_extra = '' THEN 2
+        WHEN CURDATE() < p.fecha_inicio THEN 3
+        WHEN CURDATE() <= p.fecha_fin_extra THEN 4
+        ELSE 5
+      END ASC, p.id_practica ASC",
+      default => 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica ASC',
+    };
+
     $practices_stmt = $pdo->prepare(
       'SELECT DISTINCT
         p.id_practica,
         p.anexo,
         p.fecha_inicio,
         p.fecha_fin,
+        p.fecha_fin_extra,
+        p.cancelada,
         a.nombre AS alumno_nombre,
         a.apellido1 AS alumno_apellido1,
         a.apellido2 AS alumno_apellido2,
@@ -173,7 +229,7 @@ try {
       INNER JOIN empresas e ON e.id_empresa = p.id_empresa
       INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
       WHERE ac.id_curso_escolar = :active_course_id
-      ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica ASC'
+      ' . $order_clause
     );
 
     $practices_stmt->execute(['active_course_id' => $active_course_id]);
@@ -202,7 +258,7 @@ try {
       <header class="header">
         <div>
           <h1>Documentación de prácticas</h1>
-          <p class="subheading">Genera el Programa Formativo y/o el Calendario para las prácticas del curso actual.</p>
+          <p class="subheading">Genera el Plan Formación y/o el Calendario para las prácticas del curso actual.</p>
         </div>
       </header>
 
@@ -237,27 +293,34 @@ try {
             <table>
               <thead>
                 <tr>
-                  <th>Alumno</th>
-                  <th>Empresa</th>
-                  <th>Anexo</th>
-                  <th>Fecha inicio</th>
-                  <th>Fecha fin</th>
-                  <th>Programa Formativo</th>
-                  <th>Calendario</th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('alumno'), ENT_QUOTES, 'UTF-8'); ?>">Alumno</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa'), ENT_QUOTES, 'UTF-8'); ?>">Empresa</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo'), ENT_QUOTES, 'UTF-8'); ?>">Anexo</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_inicio'), ENT_QUOTES, 'UTF-8'); ?>">Fecha inicio</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin'), ENT_QUOTES, 'UTF-8'); ?>">Fecha fin</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado'), ENT_QUOTES, 'UTF-8'); ?>">Estado</a></th>
+                  <th>
+                    Plan Formación
+                    <input type="checkbox" id="select-all-programa" aria-label="Seleccionar o deseleccionar todos los Plan Formación">
+                  </th>
+                  <th>
+                    Calendario
+                    <input type="checkbox" id="select-all-calendario" aria-label="Seleccionar o deseleccionar todos los Calendarios">
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <?php if ($load_error !== null): ?>
                   <tr>
-                    <td colspan="7"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td colspan="8"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
                   </tr>
                 <?php elseif ($active_course_id === false || $active_course_id === null): ?>
                   <tr>
-                    <td colspan="7">No hay un curso activo configurado.</td>
+                    <td colspan="8">No hay un curso activo configurado.</td>
                   </tr>
                 <?php elseif ($practices === []): ?>
                   <tr>
-                    <td colspan="7">No hay prácticas registradas para el curso actual.</td>
+                    <td colspan="8">No hay prácticas registradas para el curso actual.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($practices as $practice): ?>
@@ -272,6 +335,7 @@ try {
                       <td><?php echo htmlspecialchars((string) ($practice['anexo'] ?? 'No disponible'), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_date_es($practice['fecha_inicio'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_date_es($practice['fecha_fin'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(calculate_practice_status($practice), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td>
                         <input type="checkbox" name="generar_programa[<?php echo $practice_id; ?>]" value="1">
                       </td>
@@ -292,5 +356,26 @@ try {
       </section>
     </main>
   </div>
+
+  <script>
+    const selectAllPrograma = document.getElementById('select-all-programa');
+    const selectAllCalendario = document.getElementById('select-all-calendario');
+
+    if (selectAllPrograma) {
+      selectAllPrograma.addEventListener('change', () => {
+        document.querySelectorAll('input[name^="generar_programa["]').forEach((checkbox) => {
+          checkbox.checked = selectAllPrograma.checked;
+        });
+      });
+    }
+
+    if (selectAllCalendario) {
+      selectAllCalendario.addEventListener('change', () => {
+        document.querySelectorAll('input[name^="generar_calendario["]').forEach((checkbox) => {
+          checkbox.checked = selectAllCalendario.checked;
+        });
+      });
+    }
+  </script>
 </body>
 </html>
