@@ -63,20 +63,18 @@ function get_groups(PDO $pdo, int $activeCourseId): array
   return $stmt->fetchAll();
 }
 
-function fetch_students(PDO $pdo, int $activeCourseId, string $nameFilter, string $surnameFilter, string $groupFilter): array
+function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, string $groupFilter): array
 {
   $filters = [];
   $params = ['active_course_id' => $activeCourseId];
 
-  if ($nameFilter !== '') {
-    $filters[] = 'a.nombre LIKE :name_filter';
-    $params['name_filter'] = '%' . $nameFilter . '%';
-  }
-
-  if ($surnameFilter !== '') {
-    $filters[] = '(a.apellido1 LIKE :surname_filter OR a.apellido2 LIKE :surname_filter2)';
-    $params['surname_filter'] = '%' . $surnameFilter . '%';
-    $params['surname_filter2'] = '%' . $surnameFilter . '%';
+  if ($searchTerm !== '') {
+    $filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term1 OR a.apellido2 LIKE :search_term2 OR a.dni LIKE :search_term3 OR a.nia LIKE :search_term4)';
+    $params['search_term'] = '%' . $searchTerm . '%';
+    $params['search_term1'] = '%' . $searchTerm . '%';
+    $params['search_term2'] = '%' . $searchTerm . '%';
+    $params['search_term3'] = '%' . $searchTerm . '%';
+    $params['search_term4'] = '%' . $searchTerm . '%';
   }
 
   if ($groupFilter !== '') {
@@ -365,6 +363,8 @@ function fetch_students_for_send(PDO $pdo, array $studentIds): array
     $result[$studentId] = [
       'id' => $studentId,
       'first_name' => trim((string) ($row['nombre'] ?? '')),
+      'surname1' => trim((string) ($row['apellido1'] ?? '')),
+      'surname2' => $surname2,
       'name' => trim(sprintf('%s %s, %s', (string) $row['apellido1'], $surname2, (string) $row['nombre'])),
     ];
   }
@@ -830,12 +830,11 @@ function render_student_rows(array $students, array $docsByStudent): string
 $activeCourseId = get_active_course_id($pdo);
 $groups = get_groups($pdo, $activeCourseId);
 
-$nameFilter = trim((string) ($_GET['nombre'] ?? ''));
-$surnameFilter = trim((string) ($_GET['apellidos'] ?? ''));
+$searchTerm = trim((string) ($_GET['q'] ?? ''));
 $groupFilter = (string) ($_GET['grupo_id'] ?? '');
 $groupFilter = $groupFilter === '' ? '' : $groupFilter;
 
-$students = fetch_students($pdo, $activeCourseId, $nameFilter, $surnameFilter, $groupFilter);
+$students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter);
 $studentIds = array_values(array_map(static fn (array $student): int => (int) $student['id_alumno'], $students));
 $practices = fetch_practices_for_students($pdo, $studentIds);
 $docsByStudent = build_documents_by_student($practices);
@@ -1015,6 +1014,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         if ($studentFirstName === '') {
           $studentFirstName = trim((string) ($studentData['first_name'] ?? ''));
         }
+        $studentSurname1 = trim((string) ($practiceData['alumno_apellido1'] ?? ''));
+        if ($studentSurname1 === '') {
+          $studentSurname1 = trim((string) ($studentData['surname1'] ?? ''));
+        }
+        $studentSurname2 = trim((string) ($studentData['surname2'] ?? ''));
+        $studentFullName = trim($studentSurname1 . ' ' . $studentSurname2 . ', ' . $studentFirstName);
         $companyName = trim((string) ($practiceData['empresa_nombre'] ?? ''));
         $startDate = trim((string) ($practiceData['fecha_inicio'] ?? ''));
         if ($startDate !== '') {
@@ -1026,6 +1031,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
 
         $bodyReplacements = [
           '[[nombre del alumno]]' => $studentFirstName,
+          '[[apellido1 del alumno]]' => $studentSurname1,
+          '[[apellido2 del alumno]]' => $studentSurname2,
+          '[[nombre completo del alumno]]' => $studentFullName,
           '[[fecha de inicio]]' => $startDate,
           '[[nombre de la empresa]]' => $companyName,
         ];
@@ -1074,6 +1082,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
     }
   }
 }
+
+$previewStudent = $students[0] ?? [];
+$previewStudentId = (int) ($previewStudent['id_alumno'] ?? 0);
+$previewPractice = null;
+foreach ($practices as $practice) {
+  if ((int) ($practice['id_alumno'] ?? 0) === $previewStudentId) {
+    $previewPractice = $practice;
+    break;
+  }
+}
+
+$previewFirstName = trim((string) ($previewStudent['nombre'] ?? ''));
+$previewLastName1 = trim((string) ($previewStudent['apellido1'] ?? ''));
+$previewLastName2 = trim((string) ($previewStudent['apellido2'] ?? ''));
+$previewFullName = trim($previewLastName1 . ' ' . $previewLastName2 . ', ' . $previewFirstName);
+$previewStartDate = trim((string) ($previewPractice['fecha_inicio'] ?? ''));
+if ($previewStartDate !== '') {
+  $date = DateTime::createFromFormat('Y-m-d', $previewStartDate);
+  if ($date instanceof DateTime) {
+    $previewStartDate = $date->format('d/m/Y');
+  }
+}
+$previewReplacements = [
+  '[[nombre del alumno]]' => $previewFirstName,
+  '[[apellido1 del alumno]]' => $previewLastName1,
+  '[[apellido2 del alumno]]' => $previewLastName2,
+  '[[nombre completo del alumno]]' => $previewFullName,
+  '[[fecha de inicio]]' => $previewStartDate,
+  '[[nombre de la empresa]]' => trim((string) ($previewPractice['empresa_nombre'] ?? '')),
+];
+$previewSubject = str_replace(array_keys($previewReplacements), array_values($previewReplacements), $mailSubjectInput);
+$previewBody = str_replace(array_keys($previewReplacements), array_values($previewReplacements), $mailBodyInput);
 
 $page_title = 'Enviar correos | Gestor de Alumnos';
 $active_page = '';
@@ -1145,10 +1185,19 @@ $active_page = '';
 
       <form class="topbar" id="filtersForm" method="get">
         <div class="topbar-search">
-          <input type="search" name="nombre" placeholder="Filtrar por nombre" value="<?php echo h($nameFilter); ?>">
-        </div>
-        <div class="topbar-search">
-          <input type="search" name="apellidos" placeholder="Filtrar por apellidos" value="<?php echo h($surnameFilter); ?>">
+          <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+            </svg>
+          </span>
+          <input
+            type="search"
+            name="q"
+            placeholder="Buscar por nombre, apellidos, DNI o NIA"
+            aria-label="Buscar por nombre, apellidos, DNI o NIA"
+            value="<?php echo h($searchTerm); ?>"
+          >
         </div>
         <div class="topbar-actions">
           <label class="calendar-select">
@@ -1165,26 +1214,15 @@ $active_page = '';
         </div>
       </form>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h3>Listado de alumnos y documentos</h3>
-          <p>Marca alumnos y documentos disponibles para enviar.</p>
-        </div>
+      <form method="post" id="sendForm">
+        <input type="hidden" name="action" value="send_documents">
+        <input type="hidden" name="selected_students" id="selectedStudentsInput" value="">
+        <input type="hidden" name="selected_documents" id="selectedDocumentsInput" value="">
 
-        <form method="post" id="sendForm">
-          <input type="hidden" name="action" value="send_documents">
-          <input type="hidden" name="selected_students" id="selectedStudentsInput" value="">
-          <input type="hidden" name="selected_documents" id="selectedDocumentsInput" value="">
-
-          <div class="panel-grid entity-form">
-            <label>
-              Asunto
-              <input type="text" name="mail_subject" id="mailSubjectInput" value="<?php echo h($mailSubjectInput); ?>">
-            </label>
-            <label>
-              Cuerpo del mensaje
-              <textarea name="mail_body" id="mailBodyInput" rows="10"><?php echo h($mailBodyInput); ?></textarea>
-            </label>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Listado de alumnos y documentos</h3>
+            <p>Marca alumnos y documentos disponibles para enviar.</p>
           </div>
 
           <div class="panel-grid">
@@ -1206,20 +1244,64 @@ $active_page = '';
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Plantilla del mensaje</h3>
+            <p>Edita asunto y cuerpo. Puedes usar campos para personalizar automáticamente cada correo.</p>
+          </div>
+
+          <div class="panel-grid entity-form empresa-form-grid">
+            <div class="entity-stack">
+              <label>
+                Asunto
+                <input type="text" name="mail_subject" id="mailSubjectInput" value="<?php echo h($mailSubjectInput); ?>">
+              </label>
+              <label>
+                Cuerpo del mensaje
+                <textarea name="mail_body" id="mailBodyInput" rows="10"><?php echo h($mailBodyInput); ?></textarea>
+              </label>
+            </div>
+
+            <div class="entity-stack">
+              <label>
+                Asunto (resultado)
+                <input type="text" id="mailSubjectPreview" value="<?php echo h($previewSubject); ?>" readonly>
+              </label>
+              <label>
+                Cuerpo (resultado)
+                <textarea id="mailBodyPreview" rows="10" readonly><?php echo h($previewBody); ?></textarea>
+              </label>
+            </div>
+          </div>
+
+          <div class="panel-grid entity-form">
+            <div class="entity-repeatable-item entity-card">
+              <strong>Campos disponibles</strong>
+              <ul>
+                <li><code>[[nombre del alumno]]</code></li>
+                <li><code>[[apellido1 del alumno]]</code></li>
+                <li><code>[[apellido2 del alumno]]</code></li>
+                <li><code>[[nombre completo del alumno]]</code></li>
+                <li><code>[[fecha de inicio]]</code></li>
+                <li><code>[[nombre de la empresa]]</code></li>
+              </ul>
+            </div>
+          </div>
 
           <div class="topbar-actions">
             <button type="submit">Enviar documentos</button>
           </div>
-        </form>
-      </section>
+        </section>
+      </form>
     </main>
   </div>
 
   <script>
     (function () {
       const filtersForm = document.getElementById('filtersForm');
-      const nameInput = filtersForm.querySelector('input[name="nombre"]');
-      const surnameInput = filtersForm.querySelector('input[name="apellidos"]');
+      const searchInput = filtersForm.querySelector('input[name="q"]');
       const groupSelect = filtersForm.querySelector('select[name="grupo_id"]');
       const tableBody = document.getElementById('studentsTableBody');
       const selectAllVisible = document.getElementById('selectAllVisible');
@@ -1228,6 +1310,9 @@ $active_page = '';
       const selectedDocumentsInput = document.getElementById('selectedDocumentsInput');
       const mailSubjectInput = document.getElementById('mailSubjectInput');
       const mailBodyInput = document.getElementById('mailBodyInput');
+      const mailSubjectPreview = document.getElementById('mailSubjectPreview');
+      const mailBodyPreview = document.getElementById('mailBodyPreview');
+      const previewReplacements = <?php echo json_encode($previewReplacements, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
       const selectedStudents = new Set();
       const selectedDocuments = new Set();
@@ -1332,6 +1417,24 @@ $active_page = '';
         run();
       };
 
+      const updateMessagePreview = () => {
+        const applyReplacements = (value) => {
+          let result = String(value || '');
+          Object.keys(previewReplacements).forEach((token) => {
+            result = result.split(token).join(previewReplacements[token] || '');
+          });
+          return result;
+        };
+
+        if (mailSubjectPreview && mailSubjectInput) {
+          mailSubjectPreview.value = applyReplacements(mailSubjectInput.value);
+        }
+
+        if (mailBodyPreview && mailBodyInput) {
+          mailBodyPreview.value = applyReplacements(mailBodyInput.value);
+        }
+      };
+
       selectAllVisible.addEventListener('change', () => {
         const checked = selectAllVisible.checked;
         tableBody.querySelectorAll('.student-checkbox').forEach((checkbox) => {
@@ -1354,9 +1457,14 @@ $active_page = '';
         fetchFilteredRows();
       });
 
-      nameInput.addEventListener('input', () => fetchFilteredRows(true));
-      surnameInput.addEventListener('input', () => fetchFilteredRows(true));
+      searchInput.addEventListener('input', () => fetchFilteredRows(true));
       groupSelect.addEventListener('change', () => fetchFilteredRows());
+      if (mailSubjectInput) {
+        mailSubjectInput.addEventListener('input', updateMessagePreview);
+      }
+      if (mailBodyInput) {
+        mailBodyInput.addEventListener('input', updateMessagePreview);
+      }
 
       sendForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -1402,6 +1510,7 @@ $active_page = '';
       visibleStudentIds = Array.from(tableBody.querySelectorAll('.student-checkbox')).map((checkbox) => parseInt(checkbox.value, 10)).filter((id) => !Number.isNaN(id));
       bindTableEvents();
       updateSelectAllState();
+      updateMessagePreview();
     })();
   </script>
 </body>
