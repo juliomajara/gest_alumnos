@@ -63,7 +63,7 @@ function get_groups(PDO $pdo, int $activeCourseId): array
   return $stmt->fetchAll();
 }
 
-function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, string $groupFilter): array
+function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, string $groupFilter, bool $onlyWithPractices): array
 {
   $filters = [];
   $params = ['active_course_id' => $activeCourseId];
@@ -84,6 +84,16 @@ function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, strin
       $filters[] = 'g.id_grupo = :group_id';
       $params['group_id'] = (int) $groupFilter;
     }
+  }
+
+  if ($onlyWithPractices) {
+    $filters[] = 'EXISTS (
+      SELECT 1
+      FROM practicas p
+      WHERE p.id_alumno = a.id_alumno
+        AND p.id_curso_escolar = :practice_course_id
+    )';
+    $params['practice_course_id'] = $activeCourseId;
   }
 
   $whereClause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
@@ -845,8 +855,9 @@ $groups = get_groups($pdo, $activeCourseId);
 $searchTerm = trim((string) ($_GET['q'] ?? ''));
 $groupFilter = (string) ($_GET['grupo_id'] ?? '');
 $groupFilter = $groupFilter === '' ? '' : $groupFilter;
+$onlyWithPractices = (string) ($_GET['con_practicas'] ?? '') === '1';
 
-$students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter);
+$students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter, $onlyWithPractices);
 $studentIds = array_values(array_map(static fn (array $student): int => (int) $student['id_alumno'], $students));
 $practices = fetch_practices_for_students($pdo, $studentIds);
 $docsByStudent = build_documents_by_student($practices);
@@ -1261,6 +1272,10 @@ $active_page = '';
           >
         </div>
         <div class="topbar-actions">
+          <label>
+            <input type="checkbox" name="con_practicas" value="1" <?php echo $onlyWithPractices ? 'checked' : ''; ?>>
+            Alumnos con prácticas
+          </label>
           <label class="calendar-select">
             <select name="grupo_id">
               <option value="" <?php echo $groupFilter === '' ? 'selected' : ''; ?>>Todos los grupos</option>
@@ -1327,6 +1342,20 @@ $active_page = '';
                 Cuerpo del mensaje
                 <textarea name="mail_body" id="mailBodyInput" rows="10"><?php echo h($mailBodyInput); ?></textarea>
               </label>
+
+              <div class="entity-repeatable-item entity-card">
+                <strong>Campos disponibles</strong>
+                <ul>
+                  <li><code>[[nombre_alumno]]</code></li>
+                  <li><code>[[apellido1_alumno]]</code></li>
+                  <li><code>[[apellido2_alumno]]</code></li>
+                  <li><code>[[fecha_inicio]]</code></li>
+                  <li><code>[[nombre_empresa]]</code></li>
+                  <li><code>[[fecha_fin]]</code></li>
+                  <li><code>[[tutor_empresa]]</code></li>
+                  <li><code>[[correo_tutor]]</code></li>
+                </ul>
+              </div>
             </div>
 
             <div class="entity-stack">
@@ -1342,37 +1371,22 @@ $active_page = '';
                 Cuerpo (resultado)
                 <textarea id="mailBodyPreview" rows="10" readonly><?php echo h($previewBody); ?></textarea>
               </label>
-            </div>
-          </div>
 
-          <div class="panel-grid entity-form empresa-form-grid">
-            <div class="entity-repeatable-item entity-card">
-              <strong>Campos disponibles</strong>
-              <ul>
-                <li><code>[[nombre_alumno]]</code></li>
-                <li><code>[[apellido1_alumno]]</code></li>
-                <li><code>[[apellido2_alumno]]</code></li>
-                <li><code>[[fecha_inicio]]</code></li>
-                <li><code>[[nombre_empresa]]</code></li>
-                <li><code>[[fecha_fin]]</code></li>
-                <li><code>[[tutor_empresa]]</code></li>
-                <li><code>[[correo_tutor]]</code></li>
-              </ul>
-            </div>
-            <div class="entity-repeatable-item entity-card">
-              <strong>Navegación y adjuntos del alumno en vista previa</strong>
-              <div class="topbar-actions preview-navigation-actions">
-                <button type="button" class="ghost-button preview-navigation-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
-                <button type="button" class="ghost-button preview-navigation-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
+              <div class="entity-repeatable-item entity-card">
+                <strong>Navegación y adjuntos del alumno en vista previa</strong>
+                <div class="topbar-actions preview-navigation-actions">
+                  <button type="button" class="ghost-button preview-navigation-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
+                  <button type="button" class="ghost-button preview-navigation-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
+                </div>
+                <ul id="previewAttachmentsList">
+                  <li>No hay adjuntos seleccionados para este alumno.</li>
+                </ul>
               </div>
-              <ul id="previewAttachmentsList">
-                <li>No hay adjuntos seleccionados para este alumno.</li>
-              </ul>
             </div>
           </div>
 
           <div class="topbar-actions">
-            <button type="submit" class="primary-button">Enviar documentos</button>
+            <button type="submit" class="primary-button">Enviar correos</button>
           </div>
         </section>
       </form>
@@ -1384,6 +1398,7 @@ $active_page = '';
       const filtersForm = document.getElementById('filtersForm');
       const searchInput = filtersForm.querySelector('input[name="q"]');
       const groupSelect = filtersForm.querySelector('select[name="grupo_id"]');
+      const practicesCheckbox = filtersForm.querySelector('input[name="con_practicas"]');
       const tableBody = document.getElementById('studentsTableBody');
       const selectAllVisible = document.getElementById('selectAllVisible');
       const sendForm = document.getElementById('sendForm');
@@ -1614,6 +1629,9 @@ $active_page = '';
 
       searchInput.addEventListener('input', () => fetchFilteredRows(true));
       groupSelect.addEventListener('change', () => fetchFilteredRows());
+      if (practicesCheckbox) {
+        practicesCheckbox.addEventListener('change', () => fetchFilteredRows());
+      }
       if (mailSubjectInput) {
         mailSubjectInput.addEventListener('input', updateMessagePreview);
       }
