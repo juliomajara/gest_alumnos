@@ -1123,11 +1123,19 @@ foreach ($practices as $practice) {
 }
 
 $previewStudents = [];
+$previewDocumentsByStudent = [];
 foreach ($students as $student) {
   $studentId = (int) ($student['id_alumno'] ?? 0);
   if ($studentId <= 0) {
     continue;
   }
+
+  $previewDocumentsByStudent[$studentId] = array_values(array_map(static function (array $doc): array {
+    return [
+      'key' => (string) ($doc['key'] ?? ''),
+      'label' => (string) ($doc['label'] ?? ''),
+    ];
+  }, array_values($docsByStudent[$studentId] ?? [])));
 
   $previewPractice = $previewPracticeByStudent[$studentId] ?? [];
   $previewStartDate = trim((string) ($previewPractice['fecha_inicio'] ?? ''));
@@ -1333,10 +1341,7 @@ $active_page = '';
             <div class="entity-stack">
               <div class="header">
                 <strong id="previewStudentLabel">Vista previa del correo</strong>
-                <div class="topbar-actions preview-navigation-actions">
-                  <button type="button" class="ghost-button preview-navigation-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
-                  <button type="button" class="ghost-button preview-navigation-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
-                </div>
+                <div class="topbar-actions"></div>
               </div>
               <label>
                 Asunto (resultado)
@@ -1349,7 +1354,7 @@ $active_page = '';
             </div>
           </div>
 
-          <div class="panel-grid entity-form">
+          <div class="panel-grid entity-form empresa-form-grid">
             <div class="entity-repeatable-item entity-card">
               <strong>Campos disponibles</strong>
               <ul>
@@ -1361,6 +1366,16 @@ $active_page = '';
                 <li><code>[[fecha_fin]]</code></li>
                 <li><code>[[tutor_empresa]]</code></li>
                 <li><code>[[correo_tutor]]</code></li>
+              </ul>
+            </div>
+            <div class="entity-repeatable-item entity-card">
+              <strong>Navegación y adjuntos del alumno en vista previa</strong>
+              <div class="topbar-actions preview-navigation-actions">
+                <button type="button" class="ghost-button preview-navigation-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
+                <button type="button" class="ghost-button preview-navigation-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
+              </div>
+              <ul id="previewAttachmentsList">
+                <li>No hay adjuntos seleccionados para este alumno.</li>
               </ul>
             </div>
           </div>
@@ -1390,13 +1405,16 @@ $active_page = '';
       const previewStudentLabel = document.getElementById('previewStudentLabel');
       const previewPrev = document.getElementById('previewPrev');
       const previewNext = document.getElementById('previewNext');
+      const previewAttachmentsList = document.getElementById('previewAttachmentsList');
       const previewStudents = <?php echo json_encode($previewStudents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+      const previewDocumentsByStudent = <?php echo json_encode($previewDocumentsByStudent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
       const selectedStudents = new Set();
       const selectedDocuments = new Set();
       let visibleStudentIds = [];
       let previewIndex = 0;
       let debounceTimer = null;
+      let syncingBodyScroll = false;
 
       const getSelectedPreviewIds = () => Array.from(selectedStudents).filter((id) => Object.prototype.hasOwnProperty.call(previewStudents, id));
 
@@ -1540,6 +1558,44 @@ $active_page = '';
         if (mailBodyPreview && mailBodyInput) {
           mailBodyPreview.value = applyReplacements(mailBodyInput.value);
         }
+
+        if (previewAttachmentsList) {
+          previewAttachmentsList.innerHTML = '';
+          const allDocs = selectedPreviewId ? (previewDocumentsByStudent[selectedPreviewId] || []) : [];
+          const selectedDocLabels = allDocs
+            .filter((doc) => selectedDocuments.has(doc.key))
+            .map((doc) => doc.label)
+            .filter((label) => label !== '');
+
+          if (!selectedDocLabels.length) {
+            const item = document.createElement('li');
+            item.textContent = 'No hay adjuntos seleccionados para este alumno.';
+            previewAttachmentsList.appendChild(item);
+          } else {
+            selectedDocLabels.forEach((label) => {
+              const item = document.createElement('li');
+              item.textContent = label;
+              previewAttachmentsList.appendChild(item);
+            });
+          }
+        }
+      };
+
+      const syncBodyScroll = (source, target) => {
+        if (!source || !target) {
+          return;
+        }
+        source.addEventListener('scroll', () => {
+          if (syncingBodyScroll) {
+            return;
+          }
+          syncingBodyScroll = true;
+          const maxSource = source.scrollHeight - source.clientHeight;
+          const maxTarget = target.scrollHeight - target.clientHeight;
+          const ratio = maxSource > 0 ? source.scrollTop / maxSource : 0;
+          target.scrollTop = maxTarget > 0 ? ratio * maxTarget : 0;
+          syncingBodyScroll = false;
+        });
       };
 
       selectAllVisible.addEventListener('change', () => {
@@ -1573,6 +1629,8 @@ $active_page = '';
       if (mailBodyInput) {
         mailBodyInput.addEventListener('input', updateMessagePreview);
       }
+      syncBodyScroll(mailBodyInput, mailBodyPreview);
+      syncBodyScroll(mailBodyPreview, mailBodyInput);
       if (previewPrev) {
         previewPrev.addEventListener('click', () => {
           const selectedPreviewIds = getSelectedPreviewIds();
