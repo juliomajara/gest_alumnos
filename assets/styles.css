@@ -504,6 +504,17 @@ a.edit-toggle:active {
   text-decoration: none;
 }
 
+.edit-toggle.edit-toggle-warning {
+  background: #fff4d6;
+  border-color: #ffd89a;
+  color: #b54708;
+}
+
+.edit-toggle.edit-toggle-warning:hover,
+.edit-toggle.edit-toggle-warning:focus {
+  box-shadow: 0 10px 20px rgba(181, 71, 8, 0.18);
+}
+
 .edit-toggle.edit-toggle-danger {
   background: #fee4e2;
   border-color: #fecdca;
