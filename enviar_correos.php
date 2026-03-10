@@ -1316,6 +1316,10 @@ $active_page = '';
 
           <div class="panel-grid entity-form empresa-form-grid">
             <div class="entity-stack">
+              <div class="header">
+                <strong>Edición del correo</strong>
+                <div class="topbar-actions"></div>
+              </div>
               <label>
                 Asunto
                 <input type="text" name="mail_subject" id="mailSubjectInput" value="<?php echo h($mailSubjectInput); ?>">
@@ -1328,8 +1332,9 @@ $active_page = '';
 
             <div class="entity-stack">
               <div class="header">
-                <strong id="previewStudentLabel">Vista previa de alumno seleccionado</strong>
+                <strong>Vista previa del correo</strong>
                 <div class="topbar-actions">
+                  <span id="previewStudentLabel">Vista previa de alumno seleccionado</span>
                   <button type="button" class="ghost-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
                   <button type="button" class="ghost-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
                 </div>
@@ -1349,11 +1354,11 @@ $active_page = '';
             <div class="entity-repeatable-item entity-card">
               <strong>Campos disponibles</strong>
               <ul>
-                <li><code>[[nombre del alumno]] - [[nombre_alumno]]</code></li>
-                <li><code>[[apellido1 del alumno]] - [[apellido1_alumno]]</code></li>
-                <li><code>[[apellido2 del alumno]] - [[apellido2_alumno]]</code></li>
-                <li><code>[[fecha de inicio]] - [[fecha_inicio]]</code></li>
-                <li><code>[[nombre de la empresa]] - [[nombre_empresa]]</code></li>
+                <li><code>[[nombre_alumno]]</code></li>
+                <li><code>[[apellido1_alumno]]</code></li>
+                <li><code>[[apellido2_alumno]]</code></li>
+                <li><code>[[fecha_inicio]]</code></li>
+                <li><code>[[nombre_empresa]]</code></li>
                 <li><code>[[fecha_fin]]</code></li>
                 <li><code>[[tutor_empresa]]</code></li>
                 <li><code>[[correo_tutor]]</code></li>
