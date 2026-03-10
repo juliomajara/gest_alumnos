@@ -515,6 +515,23 @@ a.edit-toggle:active {
   box-shadow: 0 10px 20px rgba(180, 35, 24, 0.15);
 }
 
+
+.edit-toggle.edit-toggle-danger-dark {
+  background: #d92d20;
+  border-color: #b42318;
+  color: #fff;
+}
+
+.edit-toggle.edit-toggle-danger-dark:hover,
+.edit-toggle.edit-toggle-danger-dark:focus {
+  box-shadow: 0 10px 20px rgba(180, 35, 24, 0.2);
+}
+
+.edit-toggle[aria-disabled="true"] {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .edit-toggle.is-active {
   background: var(--primary);
   color: #fff;
