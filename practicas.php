@@ -253,7 +253,7 @@ function render_practice_rows(array $practices): string
   ob_start();
   if (!$practices): ?>
     <tr>
-      <td colspan="7">No hay prácticas para los filtros seleccionados.</td>
+      <td colspan="6">No hay prácticas para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($practices as $practice): ?>
@@ -343,11 +343,6 @@ function render_practice_rows(array $practices): string
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td>
-          <a class="practice-link" href="practica_eliminar.php?id_practica=<?php echo urlencode((string) $practice['id_practica']); ?>">
-            Eliminar
-          </a>
-        </td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -432,7 +427,6 @@ $active_page = 'practicas';
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin'), ENT_QUOTES, 'UTF-8'); ?>">Fecha de fin</a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo'), ENT_QUOTES, 'UTF-8'); ?>">Anexo 2.1</a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado'), ENT_QUOTES, 'UTF-8'); ?>">Estado</a></th>
-                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
