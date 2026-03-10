@@ -435,14 +435,15 @@ body {
   max-width: 260px;
 }
 .primary-button,
-.ghost-button {
-  border: none;
+.ghost-button,
+.edit-toggle {
   border-radius: 10px;
   padding: 8px 12px;
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  box-shadow: none;
 }
 
 a.primary-button,
@@ -459,19 +460,18 @@ a.ghost-button:active {
 }
 
 .primary-button {
+  border: none;
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 10px 20px rgba(76, 106, 243, 0.2);
 }
 
-.primary-button:hover {
+.primary-button:hover,
+.primary-button:focus {
   background: var(--primary-dark);
-  transform: translateY(-1px);
 }
 
 .primary-button.reactivate-button {
   background: #1f9d55;
-  box-shadow: 0 10px 20px rgba(31, 157, 85, 0.2);
 }
 
 .primary-button.reactivate-button:hover {
@@ -485,15 +485,9 @@ a.ghost-button:active {
 }
 
 .edit-toggle {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 12px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
+  border: 1px solid #c6d0eb;
   background: #e5e9f5;
   color: #5f6f99;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 a.edit-toggle,
@@ -504,38 +498,50 @@ a.edit-toggle:active {
   text-decoration: none;
 }
 
-.edit-toggle.edit-toggle-warning {
-  background: #fff4d6;
-  border-color: #ffd89a;
-  color: #b54708;
+button:hover,
+button:focus,
+.primary-button:hover,
+.primary-button:focus,
+.ghost-button:hover,
+.ghost-button:focus,
+.edit-toggle:hover,
+.edit-toggle:focus,
+a.primary-button:hover,
+a.primary-button:focus,
+a.ghost-button:hover,
+a.ghost-button:focus,
+a.edit-toggle:hover,
+a.edit-toggle:focus {
+  filter: brightness(0.95);
+  box-shadow: none;
+  transform: none;
 }
 
-.edit-toggle.edit-toggle-warning:hover,
-.edit-toggle.edit-toggle-warning:focus {
-  box-shadow: 0 10px 20px rgba(181, 71, 8, 0.18);
+.edit-toggle.edit-toggle-warning {
+  background: #fef0c7;
+  border-color: #d97706;
+  color: #b45309;
 }
+
 
 .edit-toggle.edit-toggle-danger {
-  background: #fee4e2;
-  border-color: #fecdca;
-  color: #b42318;
+  background: #fee2e2;
+  border-color: #b91c1c;
+  color: #b91c1c;
 }
 
-.edit-toggle.edit-toggle-danger:hover,
-.edit-toggle.edit-toggle-danger:focus {
-  box-shadow: 0 10px 20px rgba(180, 35, 24, 0.15);
-}
 
+
+.edit-toggle.edit-toggle-neutral {
+  background: #e5e9f5;
+  border-color: #c6d0eb;
+  color: #5f6f99;
+}
 
 .edit-toggle.edit-toggle-danger-dark {
   background: #d92d20;
   border-color: #b42318;
   color: #fff;
-}
-
-.edit-toggle.edit-toggle-danger-dark:hover,
-.edit-toggle.edit-toggle-danger-dark:focus {
-  box-shadow: 0 10px 20px rgba(180, 35, 24, 0.2);
 }
 
 .edit-toggle[aria-disabled="true"] {
@@ -546,7 +552,6 @@ a.edit-toggle:active {
 .edit-toggle.is-active {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 10px 20px rgba(76, 106, 243, 0.2);
 }
 
 .cards {

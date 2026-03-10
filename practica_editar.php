@@ -1154,9 +1154,9 @@ $dias_semana = [
         <div class="header-actions">
           <?php if ($load_error === null && $practice_cancelada !== 1): ?>
             <button type="button" class="edit-toggle edit-toggle-warning" id="openCancelPracticeModal">Cancelar práctica</button>
-            <a class="edit-toggle edit-toggle-danger-dark" href="practica_eliminar.php?id_practica=<?php echo urlencode((string) $id_practica); ?>">Eliminar práctica</a>
+            <a class="edit-toggle edit-toggle-danger" href="practica_eliminar.php?id_practica=<?php echo urlencode((string) $id_practica); ?>">Eliminar práctica</a>
           <?php endif; ?>
-          <a class="edit-toggle" href="practicas.php">Volver a prácticas</a>
+          <a class="edit-toggle edit-toggle-neutral" href="practicas.php">Volver a prácticas</a>
         </div>
       </header>
 
