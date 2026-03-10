@@ -918,10 +918,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
     $errors[] = 'Selecciona al menos un alumno.';
   }
 
-  if (!$selectedDocumentKeys) {
-    $errors[] = 'Selecciona al menos un documento.';
-  }
-
   if (!$errors) {
     $studentsData = fetch_students_for_send($pdo, $selectedStudentIds);
     $emailsByStudent = fetch_emails_by_student($pdo, $selectedStudentIds);
@@ -999,11 +995,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         }
 
         $attachments = array_values($attachmentsByStudent[$studentId] ?? []);
-        if (!$attachments) {
-          $summary['students_without_docs'][] = $studentName;
-          continue;
-        }
-
         $totalSize = 0;
         foreach ($attachments as $attachment) {
           $size = filesize($attachment['path']);
@@ -1206,7 +1197,7 @@ $active_page = '';
     <main class="content">
       <header class="header">
         <div>
-          <h1>Enviar documentos por correo</h1>
+          <h1>Envío masivo de correos</h1>
           <p class="subheading">Selecciona alumnos y documentos de prácticas para enviarlos por email.</p>
         </div>
       </header>
@@ -1661,10 +1652,9 @@ $active_page = '';
         const documents = JSON.parse(selectedDocumentsInput.value || '[]');
 
         const hasStudents = Array.isArray(students) && students.length > 0;
-        const hasDocuments = Array.isArray(documents) && documents.length > 0;
 
-        if (!hasStudents || !hasDocuments) {
-          window.alert('Selecciona al menos un alumno y un documento antes de enviar.');
+        if (!hasStudents) {
+          window.alert('Selecciona al menos un alumno antes de enviar.');
           return;
         }
 
