@@ -1067,13 +1067,6 @@ if ($selected_group > 0 && $active_course_id > 0) {
   $students = $students_stmt->fetchAll();
 }
 
-$selected_student_apellido1 = '';
-if ($selected_student > 0) {
-  $selected_student_apellido1_stmt = $pdo->prepare('SELECT apellido1 FROM alumnos WHERE id_alumno = :id_alumno LIMIT 1');
-  $selected_student_apellido1_stmt->execute(['id_alumno' => $selected_student]);
-  $selected_student_apellido1 = trim((string) ($selected_student_apellido1_stmt->fetchColumn() ?: ''));
-}
-
 $company_addresses = [];
 $company_tutors = [];
 if ($selected_company > 0) {
@@ -1160,8 +1153,8 @@ $dias_semana = [
         </div>
         <div class="header-actions">
           <?php if ($load_error === null && $practice_cancelada !== 1): ?>
-            <button type="button" class="edit-toggle edit-toggle-danger" id="openCancelPracticeModal">Cancelar práctica</button>
-            <button type="button" class="edit-toggle edit-toggle-danger-dark" id="openDeletePracticeModal">Eliminar práctica</button>
+            <button type="button" class="edit-toggle edit-toggle-warning" id="openCancelPracticeModal">Cancelar práctica</button>
+            <a class="edit-toggle edit-toggle-danger-dark" href="practica_eliminar.php?id_practica=<?php echo urlencode((string) $id_practica); ?>">Eliminar práctica</a>
           <?php endif; ?>
           <a class="edit-toggle" href="practicas.php">Volver a prácticas</a>
         </div>
@@ -1466,29 +1459,6 @@ $dias_semana = [
       </div>
     </div>
 
-    <div class="practicas-ras-modal" id="delete-practice-modal" hidden>
-      <button type="button" class="practicas-ras-modal__backdrop" data-delete-modal-close tabindex="-1" aria-hidden="true"></button>
-      <div class="practicas-ras-modal__content" role="dialog" aria-modal="true" aria-labelledby="delete-practice-title">
-        <button type="button" class="practicas-ras-modal__close" data-delete-modal-close aria-label="Cerrar modal de eliminación">×</button>
-        <h3 class="practicas-ras-modal__title" id="delete-practice-title">Eliminar práctica</h3>
-        <form class="entity-form" onsubmit="return false;">
-          <p>Vas a eliminar esta práctica de la base de datos y no se podrá recuperar.</p>
-          <label>
-            Escribe el primer apellido del alumno para confirmar
-            <input type="text" id="delete_practice_apellido_confirmacion" autocomplete="off" required>
-          </label>
-          <div class="form-actions">
-            <a
-              href="practica_eliminar.php?id_practica=<?php echo (int) $id_practica; ?>"
-              class="edit-toggle edit-toggle-danger-dark"
-              id="confirmDeletePracticeLink"
-              aria-disabled="true"
-            >Eliminar práctica</a>
-            <button type="button" class="ghost-button" data-delete-modal-close>Cerrar</button>
-          </div>
-        </form>
-      </div>
-    </div>
   <?php endif; ?>
 
   <script>
@@ -1511,11 +1481,6 @@ $dias_semana = [
     const nonTeachingConfigured = <?php echo $non_teaching_configured ? 'true' : 'false'; ?>;
     const openCancelPracticeModalButton = document.getElementById('openCancelPracticeModal');
     const cancelPracticeModal = document.getElementById('cancel-practice-modal');
-    const openDeletePracticeModalButton = document.getElementById('openDeletePracticeModal');
-    const deletePracticeModal = document.getElementById('delete-practice-modal');
-    const deletePracticeConfirmInput = document.getElementById('delete_practice_apellido_confirmacion');
-    const confirmDeletePracticeLink = document.getElementById('confirmDeletePracticeLink');
-    const expectedDeleteLastName = <?php echo json_encode(mb_strtolower($selected_student_apellido1, 'UTF-8'), JSON_UNESCAPED_UNICODE); ?>;
     const openCancelPracticeModalOnLoad = <?php echo $open_cancel_modal ? 'true' : 'false'; ?>;
 
     const showCancelPracticeModal = () => {
@@ -1534,37 +1499,6 @@ $dias_semana = [
       document.body.style.overflow = '';
     };
 
-    const showDeletePracticeModal = () => {
-      if (!deletePracticeModal) {
-        return;
-      }
-      if (deletePracticeConfirmInput) {
-        deletePracticeConfirmInput.value = '';
-      }
-      if (confirmDeletePracticeLink) {
-        confirmDeletePracticeLink.setAttribute('aria-disabled', 'true');
-      }
-      deletePracticeModal.hidden = false;
-      document.body.style.overflow = 'hidden';
-    };
-
-    const hideDeletePracticeModal = () => {
-      if (!deletePracticeModal) {
-        return;
-      }
-      deletePracticeModal.hidden = true;
-      document.body.style.overflow = '';
-    };
-
-    const syncDeletePracticeConfirmation = () => {
-      if (!deletePracticeConfirmInput || !confirmDeletePracticeLink) {
-        return;
-      }
-
-      const typedValue = deletePracticeConfirmInput.value.trim().toLowerCase();
-      const matches = typedValue !== '' && typedValue === expectedDeleteLastName;
-      confirmDeletePracticeLink.setAttribute('aria-disabled', matches ? 'false' : 'true');
-    };
 
     if (openCancelPracticeModalButton && cancelPracticeModal) {
       openCancelPracticeModalButton.addEventListener('click', showCancelPracticeModal);
@@ -1576,32 +1510,6 @@ $dias_semana = [
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape' && !cancelPracticeModal.hidden) {
           hideCancelPracticeModal();
-        }
-      });
-    }
-
-    if (openDeletePracticeModalButton && deletePracticeModal) {
-      openDeletePracticeModalButton.addEventListener('click', showDeletePracticeModal);
-
-      deletePracticeModal.querySelectorAll('[data-delete-modal-close]').forEach((element) => {
-        element.addEventListener('click', hideDeletePracticeModal);
-      });
-
-      if (deletePracticeConfirmInput) {
-        deletePracticeConfirmInput.addEventListener('input', syncDeletePracticeConfirmation);
-      }
-
-      if (confirmDeletePracticeLink) {
-        confirmDeletePracticeLink.addEventListener('click', (event) => {
-          if (confirmDeletePracticeLink.getAttribute('aria-disabled') === 'true') {
-            event.preventDefault();
-          }
-        });
-      }
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !deletePracticeModal.hidden) {
-          hideDeletePracticeModal();
         }
       });
     }
