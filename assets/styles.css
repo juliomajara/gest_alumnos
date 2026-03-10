@@ -1243,6 +1243,10 @@ a.edit-toggle:focus {
   gap: 10px;
 }
 
+.entity-repeatable-item ul {
+  padding-left: 18px;
+}
+
 .entity-card {
   background: #f5f7ff;
 }
@@ -1995,6 +1999,5 @@ a.edit-toggle:focus {
   color: var(--muted);
   font-weight: 600;
 }
-
 
 

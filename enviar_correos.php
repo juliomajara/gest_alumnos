@@ -138,13 +138,25 @@ function fetch_practices_for_students(PDO $pdo, array $studentIds): array
       p.id_alumno,
       p.anexo,
       p.fecha_inicio,
+      p.fecha_fin_extra,
       e.convenio AS empresa_convenio,
       a.nombre AS alumno_nombre,
       a.apellido1 AS alumno_apellido1,
-      e.nombre_comercial AS empresa_nombre
+      e.nombre_comercial AS empresa_nombre,
+      et.nombre AS tutor_empresa_nombre,
+      et.apellido1 AS tutor_empresa_apellido1,
+      (
+        SELECT c.direccion_correo
+        FROM correos c
+        WHERE c.entidad_tipo = "empresa_tutor"
+          AND c.id_entidad = et.id_empresas_tutor
+        ORDER BY c.id_correo ASC
+        LIMIT 1
+      ) AS tutor_empresa_correo
     FROM practicas p
     INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
     INNER JOIN empresas e ON e.id_empresa = p.id_empresa
+    LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
     WHERE p.id_alumno IN (' . $placeholders . ')';
 
   $stmt = $pdo->prepare($sql);
@@ -1028,14 +1040,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
             $startDate = $date->format('d/m/Y');
           }
         }
+        $endDate = trim((string) ($practiceData['fecha_fin_extra'] ?? ''));
+        if ($endDate !== '') {
+          $date = DateTime::createFromFormat('Y-m-d', $endDate);
+          if ($date instanceof DateTime) {
+            $endDate = $date->format('d/m/Y');
+          }
+        }
+        $tutorCompanyName = trim((string) ($practiceData['tutor_empresa_nombre'] ?? ''));
+        $tutorCompanySurname1 = trim((string) ($practiceData['tutor_empresa_apellido1'] ?? ''));
+        $tutorCompany = trim($tutorCompanyName . ' ' . $tutorCompanySurname1);
+        $tutorCompanyEmail = trim((string) ($practiceData['tutor_empresa_correo'] ?? ''));
 
         $bodyReplacements = [
           '[[nombre del alumno]]' => $studentFirstName,
+          '[[nombre_alumno]]' => $studentFirstName,
           '[[apellido1 del alumno]]' => $studentSurname1,
+          '[[apellido1_alumno]]' => $studentSurname1,
           '[[apellido2 del alumno]]' => $studentSurname2,
+          '[[apellido2_alumno]]' => $studentSurname2,
           '[[nombre completo del alumno]]' => $studentFullName,
           '[[fecha de inicio]]' => $startDate,
+          '[[fecha_inicio]]' => $startDate,
+          '[[fecha_fin]]' => $endDate,
           '[[nombre de la empresa]]' => $companyName,
+          '[[nombre_empresa]]' => $companyName,
+          '[[tutor_empresa]]' => $tutorCompany,
+          '[[correo_tutor]]' => $tutorCompanyEmail,
         ];
         $hasCalendar = isset($documentTypesByStudent[$studentId]['calendar']);
         $hasPlan = isset($documentTypesByStudent[$studentId]['plan']);
@@ -1083,37 +1114,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
   }
 }
 
-$previewStudent = $students[0] ?? [];
-$previewStudentId = (int) ($previewStudent['id_alumno'] ?? 0);
-$previewPractice = null;
+$previewPracticeByStudent = [];
 foreach ($practices as $practice) {
-  if ((int) ($practice['id_alumno'] ?? 0) === $previewStudentId) {
-    $previewPractice = $practice;
-    break;
+  $studentId = (int) ($practice['id_alumno'] ?? 0);
+  if ($studentId > 0 && !isset($previewPracticeByStudent[$studentId])) {
+    $previewPracticeByStudent[$studentId] = $practice;
   }
 }
 
-$previewFirstName = trim((string) ($previewStudent['nombre'] ?? ''));
-$previewLastName1 = trim((string) ($previewStudent['apellido1'] ?? ''));
-$previewLastName2 = trim((string) ($previewStudent['apellido2'] ?? ''));
-$previewFullName = trim($previewLastName1 . ' ' . $previewLastName2 . ', ' . $previewFirstName);
-$previewStartDate = trim((string) ($previewPractice['fecha_inicio'] ?? ''));
-if ($previewStartDate !== '') {
-  $date = DateTime::createFromFormat('Y-m-d', $previewStartDate);
-  if ($date instanceof DateTime) {
-    $previewStartDate = $date->format('d/m/Y');
+$previewStudents = [];
+foreach ($students as $student) {
+  $studentId = (int) ($student['id_alumno'] ?? 0);
+  if ($studentId <= 0) {
+    continue;
   }
+
+  $previewPractice = $previewPracticeByStudent[$studentId] ?? [];
+  $previewStartDate = trim((string) ($previewPractice['fecha_inicio'] ?? ''));
+  if ($previewStartDate !== '') {
+    $date = DateTime::createFromFormat('Y-m-d', $previewStartDate);
+    if ($date instanceof DateTime) {
+      $previewStartDate = $date->format('d/m/Y');
+    }
+  }
+
+  $previewEndDate = trim((string) ($previewPractice['fecha_fin_extra'] ?? ''));
+  if ($previewEndDate !== '') {
+    $date = DateTime::createFromFormat('Y-m-d', $previewEndDate);
+    if ($date instanceof DateTime) {
+      $previewEndDate = $date->format('d/m/Y');
+    }
+  }
+
+  $previewFirstName = trim((string) ($student['nombre'] ?? ''));
+  $previewLastName1 = trim((string) ($student['apellido1'] ?? ''));
+  $previewLastName2 = trim((string) ($student['apellido2'] ?? ''));
+  $previewFullName = trim($previewLastName1 . ' ' . $previewLastName2 . ', ' . $previewFirstName);
+  $previewTutorName = trim((string) ($previewPractice['tutor_empresa_nombre'] ?? ''));
+  $previewTutorSurname1 = trim((string) ($previewPractice['tutor_empresa_apellido1'] ?? ''));
+
+  $previewStudents[$studentId] = [
+    'name' => trim($previewLastName1 . ' ' . $previewLastName2 . ', ' . $previewFirstName),
+    'replacements' => [
+      '[[nombre del alumno]]' => $previewFirstName,
+      '[[nombre_alumno]]' => $previewFirstName,
+      '[[apellido1 del alumno]]' => $previewLastName1,
+      '[[apellido1_alumno]]' => $previewLastName1,
+      '[[apellido2 del alumno]]' => $previewLastName2,
+      '[[apellido2_alumno]]' => $previewLastName2,
+      '[[nombre completo del alumno]]' => $previewFullName,
+      '[[fecha de inicio]]' => $previewStartDate,
+      '[[fecha_inicio]]' => $previewStartDate,
+      '[[fecha_fin]]' => $previewEndDate,
+      '[[nombre de la empresa]]' => trim((string) ($previewPractice['empresa_nombre'] ?? '')),
+      '[[nombre_empresa]]' => trim((string) ($previewPractice['empresa_nombre'] ?? '')),
+      '[[tutor_empresa]]' => trim($previewTutorName . ' ' . $previewTutorSurname1),
+      '[[correo_tutor]]' => trim((string) ($previewPractice['tutor_empresa_correo'] ?? '')),
+    ],
+  ];
 }
-$previewReplacements = [
-  '[[nombre del alumno]]' => $previewFirstName,
-  '[[apellido1 del alumno]]' => $previewLastName1,
-  '[[apellido2 del alumno]]' => $previewLastName2,
-  '[[nombre completo del alumno]]' => $previewFullName,
-  '[[fecha de inicio]]' => $previewStartDate,
-  '[[nombre de la empresa]]' => trim((string) ($previewPractice['empresa_nombre'] ?? '')),
-];
-$previewSubject = str_replace(array_keys($previewReplacements), array_values($previewReplacements), $mailSubjectInput);
-$previewBody = str_replace(array_keys($previewReplacements), array_values($previewReplacements), $mailBodyInput);
+
+$previewSubject = '';
+$previewBody = '';
 
 $page_title = 'Enviar correos | Gestor de Alumnos';
 $active_page = '';
@@ -1214,7 +1276,7 @@ $active_page = '';
         </div>
       </form>
 
-      <form method="post" id="sendForm">
+      <form method="post" id="sendForm" class="entity-stack entity-form">
         <input type="hidden" name="action" value="send_documents">
         <input type="hidden" name="selected_students" id="selectedStudentsInput" value="">
         <input type="hidden" name="selected_documents" id="selectedDocumentsInput" value="">
@@ -1265,6 +1327,13 @@ $active_page = '';
             </div>
 
             <div class="entity-stack">
+              <div class="header">
+                <strong id="previewStudentLabel">Vista previa de alumno seleccionado</strong>
+                <div class="topbar-actions">
+                  <button type="button" class="ghost-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
+                  <button type="button" class="ghost-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
+                </div>
+              </div>
               <label>
                 Asunto (resultado)
                 <input type="text" id="mailSubjectPreview" value="<?php echo h($previewSubject); ?>" readonly>
@@ -1280,18 +1349,20 @@ $active_page = '';
             <div class="entity-repeatable-item entity-card">
               <strong>Campos disponibles</strong>
               <ul>
-                <li><code>[[nombre del alumno]]</code></li>
-                <li><code>[[apellido1 del alumno]]</code></li>
-                <li><code>[[apellido2 del alumno]]</code></li>
-                <li><code>[[nombre completo del alumno]]</code></li>
-                <li><code>[[fecha de inicio]]</code></li>
-                <li><code>[[nombre de la empresa]]</code></li>
+                <li><code>[[nombre del alumno]] - [[nombre_alumno]]</code></li>
+                <li><code>[[apellido1 del alumno]] - [[apellido1_alumno]]</code></li>
+                <li><code>[[apellido2 del alumno]] - [[apellido2_alumno]]</code></li>
+                <li><code>[[fecha de inicio]] - [[fecha_inicio]]</code></li>
+                <li><code>[[nombre de la empresa]] - [[nombre_empresa]]</code></li>
+                <li><code>[[fecha_fin]]</code></li>
+                <li><code>[[tutor_empresa]]</code></li>
+                <li><code>[[correo_tutor]]</code></li>
               </ul>
             </div>
           </div>
 
           <div class="topbar-actions">
-            <button type="submit">Enviar documentos</button>
+            <button type="submit" class="primary-button">Enviar documentos</button>
           </div>
         </section>
       </form>
@@ -1312,12 +1383,18 @@ $active_page = '';
       const mailBodyInput = document.getElementById('mailBodyInput');
       const mailSubjectPreview = document.getElementById('mailSubjectPreview');
       const mailBodyPreview = document.getElementById('mailBodyPreview');
-      const previewReplacements = <?php echo json_encode($previewReplacements, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+      const previewStudentLabel = document.getElementById('previewStudentLabel');
+      const previewPrev = document.getElementById('previewPrev');
+      const previewNext = document.getElementById('previewNext');
+      const previewStudents = <?php echo json_encode($previewStudents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
       const selectedStudents = new Set();
       const selectedDocuments = new Set();
       let visibleStudentIds = [];
+      let previewIndex = 0;
       let debounceTimer = null;
+
+      const getSelectedPreviewIds = () => Array.from(selectedStudents).filter((id) => Object.prototype.hasOwnProperty.call(previewStudents, id));
 
       const syncHiddenInputs = () => {
         selectedStudentsInput.value = JSON.stringify(Array.from(selectedStudents));
@@ -1362,6 +1439,7 @@ $active_page = '';
               });
             }
             updateSelectAllState();
+            updateMessagePreview();
           });
         });
 
@@ -1379,6 +1457,7 @@ $active_page = '';
               selectedDocuments.delete(checkbox.value);
             }
             updateSelectAllState();
+            updateMessagePreview();
           });
         });
       };
@@ -1404,6 +1483,7 @@ $active_page = '';
               visibleStudentIds = Array.isArray(payload.visible_student_ids) ? payload.visible_student_ids : [];
               bindTableEvents();
               applySelectionStateToDOM();
+              updateMessagePreview();
               history.replaceState(null, '', '?' + cleanParams.toString());
             })
             .catch(() => {});
@@ -1418,13 +1498,36 @@ $active_page = '';
       };
 
       const updateMessagePreview = () => {
+        const selectedPreviewIds = getSelectedPreviewIds();
+        if (previewIndex >= selectedPreviewIds.length) {
+          previewIndex = 0;
+        }
+
+        const selectedPreviewId = selectedPreviewIds[previewIndex] || null;
+        const selectedPreviewStudent = selectedPreviewId ? previewStudents[selectedPreviewId] : null;
+        const replacements = selectedPreviewStudent ? (selectedPreviewStudent.replacements || {}) : {};
+
         const applyReplacements = (value) => {
           let result = String(value || '');
-          Object.keys(previewReplacements).forEach((token) => {
-            result = result.split(token).join(previewReplacements[token] || '');
+          Object.keys(replacements).forEach((token) => {
+            result = result.split(token).join(replacements[token] || '');
           });
           return result;
         };
+
+        if (previewStudentLabel) {
+          previewStudentLabel.textContent = selectedPreviewStudent
+            ? ('Vista previa: ' + (selectedPreviewStudent.name || 'Alumno'))
+            : 'Vista previa de alumno seleccionado';
+        }
+
+        if (previewPrev) {
+          previewPrev.disabled = selectedPreviewIds.length <= 1;
+        }
+
+        if (previewNext) {
+          previewNext.disabled = selectedPreviewIds.length <= 1;
+        }
 
         if (mailSubjectPreview && mailSubjectInput) {
           mailSubjectPreview.value = applyReplacements(mailSubjectInput.value);
@@ -1450,6 +1553,7 @@ $active_page = '';
           }
         });
         updateSelectAllState();
+        updateMessagePreview();
       });
 
       filtersForm.addEventListener('submit', (event) => {
@@ -1464,6 +1568,26 @@ $active_page = '';
       }
       if (mailBodyInput) {
         mailBodyInput.addEventListener('input', updateMessagePreview);
+      }
+      if (previewPrev) {
+        previewPrev.addEventListener('click', () => {
+          const selectedPreviewIds = getSelectedPreviewIds();
+          if (selectedPreviewIds.length <= 1) {
+            return;
+          }
+          previewIndex = (previewIndex - 1 + selectedPreviewIds.length) % selectedPreviewIds.length;
+          updateMessagePreview();
+        });
+      }
+      if (previewNext) {
+        previewNext.addEventListener('click', () => {
+          const selectedPreviewIds = getSelectedPreviewIds();
+          if (selectedPreviewIds.length <= 1) {
+            return;
+          }
+          previewIndex = (previewIndex + 1) % selectedPreviewIds.length;
+          updateMessagePreview();
+        });
       }
 
       sendForm.addEventListener('submit', (event) => {
