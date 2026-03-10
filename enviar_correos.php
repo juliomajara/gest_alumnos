@@ -759,6 +759,16 @@ function send_mail_with_attachments(array $toEmails, string $subject, string $bo
   return ['ok' => true, 'error' => null, 'raw_message' => $rawMessage];
 }
 
+function get_default_mail_subject(): string
+{
+  return 'Documentación de prácticas';
+}
+
+function get_default_mail_body(): string
+{
+  return "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente los documentos.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+}
+
 function render_student_rows(array $students, array $docsByStudent): string
 {
   ob_start();
@@ -842,8 +852,22 @@ if (($_GET['ajax'] ?? '') === '1') {
 
 $errors = [];
 $summary = null;
+$mailSubjectInput = get_default_mail_subject();
+$mailBodyInput = get_default_mail_body();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') === 'send_documents') {
+  $mailSubjectInput = trim((string) ($_POST['mail_subject'] ?? get_default_mail_subject()));
+  if ($mailSubjectInput === '') {
+    $mailSubjectInput = get_default_mail_subject();
+  }
+
+  $mailBodyInput = (string) ($_POST['mail_body'] ?? get_default_mail_body());
+  if (trim($mailBodyInput) === '') {
+    $mailBodyInput = get_default_mail_body();
+  }
+
+  $isDefaultMailContent = $mailSubjectInput === get_default_mail_subject() && $mailBodyInput === get_default_mail_body();
+
   $selectedStudentIds = [];
   foreach ((array) ($_POST['selected_students'] ?? []) as $rawStudentId) {
     $studentId = filter_var($rawStudentId, FILTER_VALIDATE_INT);
@@ -985,7 +1009,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
           continue;
         }
 
-        $subject = 'Documentación de prácticas';
+        $subject = get_default_mail_subject();
         $practiceData = $practiceDataByStudent[$studentId] ?? [];
         $studentFirstName = trim((string) ($practiceData['alumno_nombre'] ?? ''));
         if ($studentFirstName === '') {
@@ -1017,6 +1041,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         } else {
           $bodyTemplate = "Hola [[nombre del alumno]],\n\nEn el archivo adjunto tienes tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente el documento.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
           $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $bodyTemplate);
+        }
+
+        if (!$isDefaultMailContent) {
+          $subject = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $mailSubjectInput);
+          $body = str_replace(array_keys($bodyReplacements), array_values($bodyReplacements), $mailBodyInput);
         }
 
         $result = send_mail_with_attachments($emails, $subject, $body, $attachments, $mailConfig);
@@ -1147,6 +1176,17 @@ $active_page = '';
           <input type="hidden" name="selected_students" id="selectedStudentsInput" value="">
           <input type="hidden" name="selected_documents" id="selectedDocumentsInput" value="">
 
+          <div class="panel-grid entity-form">
+            <label>
+              Asunto
+              <input type="text" name="mail_subject" id="mailSubjectInput" value="<?php echo h($mailSubjectInput); ?>">
+            </label>
+            <label>
+              Cuerpo del mensaje
+              <textarea name="mail_body" id="mailBodyInput" rows="10"><?php echo h($mailBodyInput); ?></textarea>
+            </label>
+          </div>
+
           <div class="panel-grid">
             <table>
               <thead>
@@ -1186,6 +1226,8 @@ $active_page = '';
       const sendForm = document.getElementById('sendForm');
       const selectedStudentsInput = document.getElementById('selectedStudentsInput');
       const selectedDocumentsInput = document.getElementById('selectedDocumentsInput');
+      const mailSubjectInput = document.getElementById('mailSubjectInput');
+      const mailBodyInput = document.getElementById('mailBodyInput');
 
       const selectedStudents = new Set();
       const selectedDocuments = new Set();
@@ -1334,6 +1376,8 @@ $active_page = '';
 
         const formData = new FormData();
         formData.append('action', 'send_documents');
+        formData.append('mail_subject', mailSubjectInput ? mailSubjectInput.value : '');
+        formData.append('mail_body', mailBodyInput ? mailBodyInput.value : '');
         students.forEach((id) => formData.append('selected_students[]', id));
         documents.forEach((key) => formData.append('selected_documents[]', key));
 
