@@ -460,15 +460,15 @@ a.ghost-button:active {
 }
 
 .primary-button {
-  border: 1px solid #3d8bfd;
-  background: #9ec5fe;
+  border: 1px solid #6ea8fe;
+  background: #cfe2ff;
   color: var(--text);
 }
 
 .primary-button:hover,
 .primary-button:focus {
-  background: #6ea8fe;
-  border-color: #3d8bfd;
+  background: #9ec5fe;
+  border-color: #6ea8fe;
 }
 
 .primary-button.reactivate-button {
@@ -480,14 +480,14 @@ a.ghost-button:active {
 }
 
 .ghost-button {
-  background: #e9ecef;
-  border: 1px solid #ced4da;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
   color: var(--text);
 }
 
 .edit-toggle {
-  border: 1px solid #ced4da;
-  background: #e9ecef;
+  border: 1px solid #dee2e6;
+  background: #f8f9fa;
   color: #5f6f99;
 }
 
@@ -526,59 +526,59 @@ a.ghost-button:focus,
 .edit-toggle:focus,
 a.edit-toggle:hover,
 a.edit-toggle:focus {
-  background: #dee2e6;
-  border-color: #ced4da;
+  background: #e9ecef;
+  border-color: #dee2e6;
 }
 
 .edit-toggle.edit-toggle-warning {
-  background: #ffe69c;
-  border-color: #ffcd39;
+  background: #fff3cd;
+  border-color: #ffda6a;
   color: #b45309;
 }
 
 .edit-toggle.edit-toggle-warning:hover,
 .edit-toggle.edit-toggle-warning:focus {
-  background: #ffda6a;
-  border-color: #ffcd39;
+  background: #ffe69c;
+  border-color: #ffda6a;
 }
 
 
 .edit-toggle.edit-toggle-danger {
-  background: #f1aeb5;
-  border-color: #e35d6a;
+  background: #f8d7da;
+  border-color: #ea868f;
   color: #b91c1c;
 }
 
 .edit-toggle.edit-toggle-danger:hover,
 .edit-toggle.edit-toggle-danger:focus {
-  background: #ea868f;
-  border-color: #e35d6a;
+  background: #f1aeb5;
+  border-color: #ea868f;
 }
 
 
 
 .edit-toggle.edit-toggle-neutral {
-  background: #e9ecef;
-  border-color: #ced4da;
+  background: #f8f9fa;
+  border-color: #dee2e6;
   color: #5f6f99;
 }
 
 .edit-toggle.edit-toggle-neutral:hover,
 .edit-toggle.edit-toggle-neutral:focus {
-  background: #dee2e6;
-  border-color: #ced4da;
+  background: #e9ecef;
+  border-color: #dee2e6;
 }
 
 .edit-toggle.edit-toggle-danger-dark {
-  background: #f1aeb5;
-  border-color: #e35d6a;
+  background: #f8d7da;
+  border-color: #ea868f;
   color: #b91c1c;
 }
 
 .edit-toggle.edit-toggle-danger-dark:hover,
 .edit-toggle.edit-toggle-danger-dark:focus {
-  background: #ea868f;
-  border-color: #e35d6a;
+  background: #f1aeb5;
+  border-color: #ea868f;
 }
 
 .edit-toggle[aria-disabled="true"] {
@@ -587,15 +587,15 @@ a.edit-toggle:focus {
 }
 
 .edit-toggle.is-active {
-  background: #9ec5fe;
-  border-color: #3d8bfd;
+  background: #cfe2ff;
+  border-color: #6ea8fe;
   color: var(--text);
 }
 
 .edit-toggle.is-active:hover,
 .edit-toggle.is-active:focus {
-  background: #6ea8fe;
-  border-color: #3d8bfd;
+  background: #9ec5fe;
+  border-color: #6ea8fe;
 }
 
 .cards {
