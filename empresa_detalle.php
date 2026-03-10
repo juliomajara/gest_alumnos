@@ -327,190 +327,120 @@ $dias_semana = [
           </div>
         </section>
       <?php else: ?>
-        <div class="grid">
-          <section class="panel">
+        <div class="practica-detalle-grid practica-detalle-grid--fila-1">
+          <section class="panel practica-detalle-bloque">
             <div class="panel-header">
               <h3>Datos de empresa y contacto</h3>
               <p>Información básica de identificación y contacto corporativo.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>CIF</th>
-                    <td><?php echo htmlspecialchars(format_value($company['cif']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Empresa</th>
-                    <td><?php echo htmlspecialchars(format_value($company['nombre']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Apellido 1</th>
-                    <td><?php echo htmlspecialchars(format_value($company['apellido1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Apellido 2</th>
-                    <td><?php echo htmlspecialchars(format_value($company['apellido2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Teléfono principal</th>
-                    <td><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Correo principal</th>
-                    <td><?php echo htmlspecialchars(format_value($correo_principal), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Teléfonos registrados</th>
-                    <td>
-                      <?php
-                        $telefono_items = [];
-                        foreach ($phones as $phone) {
-                          $etiqueta = format_value($phone['etiqueta'], '');
-                          $telefono_label = $etiqueta ? $etiqueta . ': ' : '';
-                          $telefono_items[] = $telefono_label . $phone['telefono'];
-                        }
-                      ?>
-                      <?php echo htmlspecialchars($telefono_items ? implode(' · ', $telefono_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Correos registrados</th>
-                    <td>
-                      <?php
-                        $correo_items = [];
-                        foreach ($emails as $email) {
-                          $etiqueta = format_value($email['etiqueta'], '');
-                          $correo_label = $etiqueta ? $etiqueta . ': ' : '';
-                          $correo_items[] = $correo_label . $email['direccion_correo'];
-                        }
-                      ?>
-                      <?php echo htmlspecialchars($correo_items ? implode(' · ', $correo_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Convenio</th>
-                    <td><?php echo htmlspecialchars(format_value($company['convenio']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">CIF</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['cif']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Empresa</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['nombre']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Apellido 1</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['apellido1']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Apellido 2</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['apellido2']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono principal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Correo principal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($correo_principal), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Teléfonos registrados</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $telefono_items = [];
+                    foreach ($phones as $phone) {
+                      $etiqueta = format_value($phone['etiqueta'], '');
+                      $telefono_label = $etiqueta ? $etiqueta . ': ' : '';
+                      $telefono_items[] = $telefono_label . $phone['telefono'];
+                    }
+                  ?>
+                  <?php echo htmlspecialchars($telefono_items ? implode(' · ', $telefono_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Correos registrados</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $correo_items = [];
+                    foreach ($emails as $email) {
+                      $etiqueta = format_value($email['etiqueta'], '');
+                      $correo_label = $etiqueta ? $etiqueta . ': ' : '';
+                      $correo_items[] = $correo_label . $email['direccion_correo'];
+                    }
+                  ?>
+                  <?php echo htmlspecialchars($correo_items ? implode(' · ', $correo_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+              </div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Convenio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['convenio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
 
-          <section class="panel">
+          <section class="panel practica-detalle-bloque">
             <div class="panel-header">
               <h3>Contactos principales</h3>
               <p>Personas de referencia registradas en la empresa.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>Contacto 1</th>
-                    <td>
-                      <?php
-                        $contacto_nombre = $contacto_principal
-                          ? trim(sprintf(
-                            '%s %s %s',
-                            $contacto_principal['nombre'] ?? '',
-                            $contacto_principal['apellido1'] ?? '',
-                            $contacto_principal['apellido2'] ?? ''
-                          ))
-                          : null;
-                      ?>
-                      <?php echo htmlspecialchars(format_value($contacto_nombre), ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Cargo contacto 1</th>
-                    <td><?php echo htmlspecialchars(format_value($contacto_principal['cargo'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Comentarios contacto 1</th>
-                    <td><?php echo htmlspecialchars(format_value($contacto_principal['comentarios'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Contacto 2</th>
-                    <td>
-                      <?php
-                        $contacto_nombre_sec = $contacto_secundario
-                          ? trim(sprintf(
-                            '%s %s %s',
-                            $contacto_secundario['nombre'] ?? '',
-                            $contacto_secundario['apellido1'] ?? '',
-                            $contacto_secundario['apellido2'] ?? ''
-                          ))
-                          : null;
-                      ?>
-                      <?php echo htmlspecialchars(format_value($contacto_nombre_sec), ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Cargo contacto 2</th>
-                    <td><?php echo htmlspecialchars(format_value($contacto_secundario['cargo'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Comentarios contacto 2</th>
-                    <td><?php echo htmlspecialchars(format_value($contacto_secundario['comentarios'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Contacto 1</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $contacto_nombre = $contacto_principal
+                      ? trim(sprintf(
+                        '%s %s %s',
+                        $contacto_principal['nombre'] ?? '',
+                        $contacto_principal['apellido1'] ?? '',
+                        $contacto_principal['apellido2'] ?? ''
+                      ))
+                      : null;
+                  ?>
+                  <?php echo htmlspecialchars(format_value($contacto_nombre), ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+              </div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Cargo contacto 1</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($contacto_principal['cargo'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Comentarios contacto 1</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($contacto_principal['comentarios'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Contacto 2</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $contacto_nombre_sec = $contacto_secundario
+                      ? trim(sprintf(
+                        '%s %s %s',
+                        $contacto_secundario['nombre'] ?? '',
+                        $contacto_secundario['apellido1'] ?? '',
+                        $contacto_secundario['apellido2'] ?? ''
+                      ))
+                      : null;
+                  ?>
+                  <?php echo htmlspecialchars(format_value($contacto_nombre_sec), ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+              </div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Cargo contacto 2</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($contacto_secundario['cargo'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Comentarios contacto 2</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($contacto_secundario['comentarios'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
         </div>
 
-        <div class="grid">
-          <section class="panel">
+        <div class="practica-detalle-grid practica-detalle-grid--fila-2">
+          <section class="panel practica-detalle-bloque">
             <div class="panel-header">
               <h3>Dirección y localización</h3>
               <p>Dirección principal registrada para la empresa.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>Dirección principal</th>
-                    <td><?php echo htmlspecialchars($direccion_partes ? implode(' · ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Localidad</th>
-                    <td><?php echo htmlspecialchars(format_value($direccion_principal['localidad'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Provincia</th>
-                    <td><?php echo htmlspecialchars(format_value($direccion_principal['provincia'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>País</th>
-                    <td><?php echo htmlspecialchars(format_value($direccion_principal['pais'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Código postal</th>
-                    <td><?php echo htmlspecialchars(format_value($direccion_principal['cp'] ?? null), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Dirección principal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($direccion_partes ? implode(' · ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Localidad</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($direccion_principal['localidad'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Provincia</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($direccion_principal['provincia'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">País</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($direccion_principal['pais'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Código postal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($direccion_principal['cp'] ?? null), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
 
-          <section class="panel">
+          <section class="panel practica-detalle-bloque">
             <div class="panel-header">
               <h3>Convenio y notas</h3>
               <p>Información administrativa y comentarios internos.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>Convenio</th>
-                    <td><?php echo htmlspecialchars(format_value($company['convenio']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Notas</th>
-                    <td><?php echo htmlspecialchars(format_value($company['notas']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Convenio</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['convenio']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Notas</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['notas']), ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
         </div>
