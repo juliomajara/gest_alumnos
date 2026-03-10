@@ -401,6 +401,16 @@ body {
   flex-wrap: wrap;
 }
 
+.preview-navigation-actions {
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.preview-navigation-button {
+  padding: 4px 10px;
+  line-height: 1;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -1999,5 +2009,4 @@ a.edit-toggle:focus {
   color: var(--muted);
   font-weight: 600;
 }
-
 

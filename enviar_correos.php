@@ -1332,11 +1332,10 @@ $active_page = '';
 
             <div class="entity-stack">
               <div class="header">
-                <strong>Vista previa del correo</strong>
-                <div class="topbar-actions">
-                  <span id="previewStudentLabel">Vista previa de alumno seleccionado</span>
-                  <button type="button" class="ghost-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
-                  <button type="button" class="ghost-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
+                <strong id="previewStudentLabel">Vista previa del correo</strong>
+                <div class="topbar-actions preview-navigation-actions">
+                  <button type="button" class="ghost-button preview-navigation-button" id="previewPrev" aria-label="Alumno anterior">◀</button>
+                  <button type="button" class="ghost-button preview-navigation-button" id="previewNext" aria-label="Alumno siguiente">▶</button>
                 </div>
               </div>
               <label>
@@ -1522,8 +1521,8 @@ $active_page = '';
 
         if (previewStudentLabel) {
           previewStudentLabel.textContent = selectedPreviewStudent
-            ? ('Vista previa: ' + (selectedPreviewStudent.name || 'Alumno'))
-            : 'Vista previa de alumno seleccionado';
+            ? ('Vista previa del correo (' + (selectedPreviewStudent.name || 'Alumno') + ')')
+            : 'Vista previa del correo';
         }
 
         if (previewPrev) {
