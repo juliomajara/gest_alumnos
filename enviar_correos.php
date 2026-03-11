@@ -18,6 +18,55 @@ function normalize_email_address(string $email): string
   return function_exists('mb_strtolower') ? mb_strtolower(trim($email)) : strtolower(trim($email));
 }
 
+function pick_contact_value(array $items, string $valueKey, array $preferredLabels): ?string
+{
+  foreach ($preferredLabels as $label) {
+    foreach ($items as $item) {
+      if (!isset($item['etiqueta'])) {
+        continue;
+      }
+      if (strtolower((string) $item['etiqueta']) === strtolower($label)) {
+        return $item[$valueKey] ?? null;
+      }
+    }
+  }
+
+  if (!$items) {
+    return null;
+  }
+
+  $first = $items[0];
+  return $first[$valueKey] ?? null;
+}
+
+function fetch_emails_with_labels_by_student(PDO $pdo, array $studentIds): array
+{
+  if (!$studentIds) {
+    return [];
+  }
+
+  $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
+  $stmt = $pdo->prepare(
+    'SELECT id_entidad AS id_alumno, direccion_correo, etiqueta
+     FROM correos
+     WHERE entidad_tipo = "alumno"
+       AND id_entidad IN (' . $placeholders . ')
+     ORDER BY etiqueta, direccion_correo'
+  );
+
+  foreach ($studentIds as $index => $studentId) {
+    $stmt->bindValue($index + 1, $studentId, PDO::PARAM_INT);
+  }
+  $stmt->execute();
+
+  $emailsByStudent = [];
+  foreach ($stmt->fetchAll() as $email) {
+    $emailsByStudent[(int) $email['id_alumno']][] = $email;
+  }
+
+  return $emailsByStudent;
+}
+
 function get_mail_config(): array
 {
   $cfg = require __DIR__ . '/config.php';
@@ -93,24 +142,8 @@ function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, strin
       a.apellido2,
       a.nombre,
       t.telefono,
-      (
-        SELECT c1.direccion_correo
-        FROM correos c1
-        WHERE c1.entidad_tipo = \'alumno\'
-          AND c1.id_entidad = a.id_alumno
-          AND TRIM(COALESCE(c1.etiqueta, \'\')) = \'EducaMadrid\'
-        ORDER BY c1.id_correo ASC
-        LIMIT 1
-      ) AS correo_educamadrid,
-      (
-        SELECT c2.direccion_correo
-        FROM correos c2
-        WHERE c2.entidad_tipo = \'alumno\'
-          AND c2.id_entidad = a.id_alumno
-          AND TRIM(COALESCE(c2.etiqueta, \'\')) = \'Personal\'
-        ORDER BY c2.id_correo ASC
-        LIMIT 1
-      ) AS correo_personal,
+      NULL AS correo_educamadrid,
+      NULL AS correo_personal,
       g.grupo
     FROM alumnos a
     LEFT JOIN alumno_curso ac
@@ -130,7 +163,33 @@ function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, strin
 
   $stmt->execute($params);
 
-  return $stmt->fetchAll();
+  $students = $stmt->fetchAll();
+  if (!$students) {
+    return [];
+  }
+
+  $studentIds = array_map(static fn (array $student): int => (int) $student['id_alumno'], $students);
+  $emailsByStudent = fetch_emails_with_labels_by_student($pdo, $studentIds);
+
+  foreach ($students as &$student) {
+    $emails = $emailsByStudent[(int) $student['id_alumno']] ?? [];
+
+    $student['correo_educamadrid'] = null;
+    foreach ($emails as $email) {
+      if (!isset($email['etiqueta'])) {
+        continue;
+      }
+      if (strtolower((string) $email['etiqueta']) === 'educamadrid') {
+        $student['correo_educamadrid'] = $email['direccion_correo'] ?? null;
+        break;
+      }
+    }
+
+    $student['correo_personal'] = pick_contact_value($emails, 'direccion_correo', ['personal']);
+  }
+  unset($student);
+
+  return $students;
 }
 
 function fetch_practices_for_students(PDO $pdo, array $studentIds): array
