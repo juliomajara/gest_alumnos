@@ -788,8 +788,26 @@ function get_default_mail_body(): string
   return "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente los documentos.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
 }
 
-function render_student_rows(array $students, array $docsByStudent): string
+function render_student_rows(array $students, array $docsByStudent, array $practices): string
 {
+  $practiceDetailsByStudent = [];
+  foreach ($practices as $practice) {
+    $studentId = (int) ($practice['id_alumno'] ?? 0);
+    if ($studentId <= 0 || isset($practiceDetailsByStudent[$studentId])) {
+      continue;
+    }
+
+    $empresaConvenio = trim((string) ($practice['empresa_convenio'] ?? ''));
+    $anexo = trim((string) ($practice['anexo'] ?? ''));
+    $practiceDetailsByStudent[$studentId] = [
+      'empresa' => trim((string) ($practice['empresa_nombre'] ?? '')),
+      'anexo' => $anexo,
+      'convenio' => $empresaConvenio,
+      'inicio' => trim((string) ($practice['fecha_inicio'] ?? '')),
+      'fin' => trim((string) ($practice['fecha_fin_extra'] ?? '')),
+    ];
+  }
+
   ob_start();
 
   if (!$students): ?>
@@ -807,7 +825,13 @@ function render_student_rows(array $students, array $docsByStudent): string
         $emailEducamadrid = $student['correo_educamadrid'] ?: 'No disponible';
         $emailPersonal = $student['correo_personal'] ?: 'No disponible';
         $detalleUrl = sprintf('alumno_detalle.php?id_alumno=%d', $studentId);
-        $docs = array_values($docsByStudent[$studentId] ?? []);
+        $docsRaw = array_values($docsByStudent[$studentId] ?? []);
+        usort($docsRaw, static function (array $first, array $second): int {
+          $order = ['calendar' => 1, 'plan' => 2];
+          return ($order[(string) ($first['type'] ?? '')] ?? 99) <=> ($order[(string) ($second['type'] ?? '')] ?? 99);
+        });
+        $docs = $docsRaw;
+        $practiceData = $practiceDetailsByStudent[$studentId] ?? null;
       ?>
       <tr data-student-id="<?php echo $studentId; ?>">
         <td>
@@ -815,10 +839,39 @@ function render_student_rows(array $students, array $docsByStudent): string
         </td>
         <td><?php echo h($grupo); ?></td>
         <td>
-          <a class="practice-link" href="<?php echo h($detalleUrl); ?>"><?php echo h($nombreCompleto); ?></a>
+          <span
+            class="student-name-trigger practice-link"
+            role="button"
+            tabindex="0"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            data-student-name="<?php echo h($nombreCompleto); ?>"
+            data-student-group="<?php echo h($grupo); ?>"
+            data-student-phone="<?php echo h($telefono); ?>"
+            data-student-email-educamadrid="<?php echo h($emailEducamadrid); ?>"
+            data-student-email-personal="<?php echo h($emailPersonal); ?>"
+            data-student-detail-url="<?php echo h($detalleUrl); ?>"
+            data-practice-company="<?php echo h((string) ($practiceData['empresa'] ?? '')); ?>"
+            data-practice-anexo="<?php echo h((string) ($practiceData['anexo'] ?? '')); ?>"
+            data-practice-convenio="<?php echo h((string) ($practiceData['convenio'] ?? '')); ?>"
+            data-practice-start="<?php echo h((string) ($practiceData['inicio'] ?? '')); ?>"
+            data-practice-end="<?php echo h((string) ($practiceData['fin'] ?? '')); ?>"
+          ><?php echo h($nombreCompleto); ?></span>
         </td>
         <td><?php echo h($telefono); ?></td>
-        <td><?php echo h($emailEducamadrid); ?><br><?php echo h($emailPersonal); ?></td>
+        <td>
+          <?php if ($emailEducamadrid !== 'No disponible'): ?>
+            <span data-copy="<?php echo h($emailEducamadrid); ?>"><?php echo h($emailEducamadrid); ?></span>
+          <?php else: ?>
+            <?php echo h($emailEducamadrid); ?>
+          <?php endif; ?>
+          <br>
+          <?php if ($emailPersonal !== 'No disponible'): ?>
+            <span data-copy="<?php echo h($emailPersonal); ?>"><?php echo h($emailPersonal); ?></span>
+          <?php else: ?>
+            <?php echo h($emailPersonal); ?>
+          <?php endif; ?>
+        </td>
         <td>
           <?php if (!$docs): ?>
             <span>No hay documentos</span>
@@ -831,8 +884,15 @@ function render_student_rows(array $students, array $docsByStudent): string
                   value="<?php echo h((string) $doc['key']); ?>"
                   data-student-id="<?php echo $studentId; ?>"
                 >
-                <?php echo h((string) $doc['label']); ?>
+                <?php if ((string) ($doc['type'] ?? '') === 'calendar'): ?>
+                  Calendario
+                <?php elseif ((string) ($doc['type'] ?? '') === 'plan'): ?>
+                  Plan Formación
+                <?php else: ?>
+                  <?php echo h((string) ($doc['label'] ?? 'Documento')); ?>
+                <?php endif; ?>
               </label>
+              <br>
             <?php endforeach; ?>
           <?php endif; ?>
         </td>
@@ -854,7 +914,7 @@ $students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter);
 $studentIds = array_values(array_map(static fn (array $student): int => (int) $student['id_alumno'], $students));
 $practices = fetch_practices_for_students($pdo, $studentIds);
 $docsByStudent = build_documents_by_student($practices);
-$rowsHtml = render_student_rows($students, $docsByStudent);
+$rowsHtml = render_student_rows($students, $docsByStudent, $practices);
 
 if (($_GET['ajax'] ?? '') === '1') {
   header('Content-Type: application/json; charset=UTF-8');
@@ -1379,6 +1439,15 @@ $active_page = '';
     </main>
   </div>
 
+  <div class="practicas-ras-popover-layer" id="student-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover" id="student-detail-popover" role="dialog" aria-modal="false" aria-labelledby="student-detail-title" hidden>
+      <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del alumno">×</button>
+      <a id="student-detail-title" class="practicas-ras-popover__title" href="#"></a>
+      <ul class="practicas-ras-popover__criteria" id="student-detail-data"></ul>
+    </div>
+  </div>
+
   <script>
     (function () {
       const filtersForm = document.getElementById('filtersForm');
@@ -1397,6 +1466,10 @@ $active_page = '';
       const previewPrev = document.getElementById('previewPrev');
       const previewNext = document.getElementById('previewNext');
       const previewAttachmentsList = document.getElementById('previewAttachmentsList');
+      const layer = document.getElementById('student-detail-layer');
+      const popover = document.getElementById('student-detail-popover');
+      const title = document.getElementById('student-detail-title');
+      const detailList = document.getElementById('student-detail-data');
       const previewStudents = <?php echo json_encode($previewStudents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
       const previewDocumentsByStudent = <?php echo json_encode($previewDocumentsByStudent, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
 
@@ -1407,6 +1480,132 @@ $active_page = '';
       let debounceTimer = null;
       let syncingBodyScroll = false;
       let activeFilterRequest = null;
+      let activeTrigger = null;
+
+      const copyUsingFallback = (text) => {
+        const helper = document.createElement('textarea');
+        helper.value = text;
+        helper.setAttribute('readonly', 'readonly');
+        helper.style.position = 'fixed';
+        helper.style.opacity = '0';
+        helper.style.pointerEvents = 'none';
+        document.body.appendChild(helper);
+        helper.select();
+        helper.setSelectionRange(0, helper.value.length);
+        document.execCommand('copy');
+        helper.remove();
+      };
+
+      const copyText = (text) => {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          return navigator.clipboard.writeText(text).catch(() => {
+            copyUsingFallback(text);
+          });
+        }
+
+        copyUsingFallback(text);
+        return Promise.resolve();
+      };
+
+      const showCopied = (element) => {
+        const originalText = element.dataset.originalText ?? element.textContent;
+        const textToCopy = element.dataset.copy ?? '';
+        if (textToCopy === '') {
+          return;
+        }
+
+        element.dataset.originalText = originalText;
+
+        if (element.dataset.copyTimerId) {
+          window.clearTimeout(Number(element.dataset.copyTimerId));
+        }
+
+        element.textContent = 'Copiado!';
+        copyText(textToCopy);
+
+        const timerId = window.setTimeout(() => {
+          element.textContent = element.dataset.originalText ?? originalText;
+          delete element.dataset.copyTimerId;
+        }, 1000);
+
+        element.dataset.copyTimerId = String(timerId);
+      };
+
+      const getValueOrFallback = (value) => {
+        const normalized = (value || '').trim();
+        return normalized !== '' ? normalized : 'No disponible';
+      };
+
+      const setPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        popover.style.top = `${Math.max(gutter, top)}px`;
+        popover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closePopover = () => {
+        popover.hidden = true;
+        layer.hidden = true;
+        if (activeTrigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeTrigger = null;
+      };
+
+      const addInfoItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = `${label}: `;
+        item.appendChild(strong);
+        item.appendChild(document.createTextNode(value));
+        detailList.appendChild(item);
+      };
+
+      const openPopover = (trigger) => {
+        if (activeTrigger && activeTrigger !== trigger) {
+          activeTrigger.setAttribute('aria-expanded', 'false');
+        }
+
+        title.textContent = trigger.dataset.studentName || 'Alumno';
+        title.href = trigger.dataset.studentDetailUrl || '#';
+        detailList.innerHTML = '';
+
+        addInfoItem('Grupo', getValueOrFallback(trigger.dataset.studentGroup));
+        addInfoItem('Teléfono', getValueOrFallback(trigger.dataset.studentPhone));
+        addInfoItem('Correo EducaMadrid', getValueOrFallback(trigger.dataset.studentEmailEducamadrid));
+        addInfoItem('Correo personal', getValueOrFallback(trigger.dataset.studentEmailPersonal));
+        addInfoItem('Empresa', getValueOrFallback(trigger.dataset.practiceCompany));
+        addInfoItem('Convenio', getValueOrFallback(trigger.dataset.practiceConvenio));
+        addInfoItem('Anexo', getValueOrFallback(trigger.dataset.practiceAnexo));
+        addInfoItem('Inicio', getValueOrFallback(trigger.dataset.practiceStart));
+        addInfoItem('Fin', getValueOrFallback(trigger.dataset.practiceEnd));
+
+        activeTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        layer.hidden = false;
+        popover.hidden = false;
+        setPopoverPosition(trigger);
+      };
 
       const getSelectedPreviewIds = () => Array.from(selectedStudents).filter((id) => Object.prototype.hasOwnProperty.call(previewStudents, id));
 
@@ -1654,6 +1853,58 @@ $active_page = '';
           }
           previewIndex = (previewIndex + 1) % selectedPreviewIds.length;
           updateMessagePreview();
+        });
+      }
+
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.student-name-trigger');
+        if (trigger && tableBody.contains(trigger)) {
+          if (activeTrigger === trigger && !popover.hidden) {
+            closePopover();
+            return;
+          }
+
+          openPopover(trigger);
+          return;
+        }
+
+        const copyTarget = event.target.closest('[data-copy]');
+        if (!copyTarget) {
+          return;
+        }
+
+        showCopied(copyTarget);
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.student-name-trigger');
+        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
+
+      if (layer && popover && title && detailList) {
+        layer.querySelectorAll('[data-popover-close]').forEach((element) => {
+          element.addEventListener('click', closePopover);
+        });
+
+        window.addEventListener('resize', () => {
+          if (activeTrigger && !popover.hidden) {
+            setPopoverPosition(activeTrigger);
+          }
+        });
+
+        window.addEventListener('scroll', () => {
+          if (activeTrigger && !popover.hidden) {
+            setPopoverPosition(activeTrigger);
+          }
+        }, true);
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && !popover.hidden) {
+            closePopover();
+          }
         });
       }
 
