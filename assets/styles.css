@@ -984,41 +984,50 @@ a.edit-toggle:focus {
   }
 }
 
+.documents-column {
+  width: 220px;
+  min-width: 220px;
+}
+
 .documents-cell {
   text-align: left !important;
+  vertical-align: middle;
+  white-space: normal;
 }
 
-.documents-column {
-  width: 260px;
-  min-width: 260px;
-}
-
-.documents-list {
+.documents-cell .documents-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 6px;
 }
 
 .documents-cell .documents-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.documents-option .document-checkbox {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px;
   margin: 0;
   padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+  width: auto;
+  white-space: nowrap;
+  text-align: left;
+  line-height: 1.2;
+  cursor: pointer;
 }
 
-.documents-option-text {
-  display: inline;
+.documents-cell .documents-option input[type="checkbox"] {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.documents-cell .documents-option .documents-option-text {
+  display: inline !important;
+  margin: 0;
+  padding: 0;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .panel-table-aligned th {
