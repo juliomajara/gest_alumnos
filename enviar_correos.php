@@ -844,7 +844,7 @@ function get_default_mail_subject(): string
 
 function get_default_mail_body(): string
 {
-  return "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmado que has recibido correctamente los documentos.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
+  return "Hola [[nombre del alumno]],\n\nempiezas tus prácticas de FFE el próximo [[fecha de inicio]] en la empresa [[nombre de la empresa]] en el horario adjunto.\n\nEn los archivos adjuntos tienes tu calendario de prácticas y tu Plan de Formación. Este Plan de Formación deberás entregárselo a tu tutor de prácticas para que te lo firme. Después deberás firmarlo tú y traerlo de vuelta al instituto cuanto antes.\n\nIMPORTANTE: contesta a ese correo confirmando que has recibido correctamente los documentos.\n\nUn saludo,\n\nJulio Sánchez\nIES Laguna de Joatzel - Getafe";
 }
 
 function render_student_rows(array $students, array $docsByStudent, array $practices): string
