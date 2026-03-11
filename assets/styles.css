@@ -984,6 +984,26 @@ a.edit-toggle:focus {
   }
 }
 
+.documents-cell {
+  text-align: left !important;
+}
+
+.documents-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.documents-option + .documents-option {
+  margin-top: 2px;
+}
+
+.documents-option .document-checkbox {
+  margin: 0;
+}
+
 .panel-table-aligned th {
   text-align: right;
 }
