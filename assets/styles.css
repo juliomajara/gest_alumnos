@@ -989,13 +989,18 @@ a.edit-toggle:focus {
 }
 
 .documents-column {
-  width: 200px;
-  min-width: 200px;
+  width: 240px;
+  min-width: 240px;
+}
+
+.documents-list {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .documents-cell .documents-option {
-  display: flex;
-  width: fit-content;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   margin: 0;
@@ -1003,12 +1008,13 @@ a.edit-toggle:focus {
   white-space: nowrap;
 }
 
-.documents-option + .documents-option {
-  margin-top: 2px;
-}
-
 .documents-option .document-checkbox {
   margin: 0;
+}
+
+.documents-option-text {
+  display: inline;
+  white-space: nowrap;
 }
 
 .panel-table-aligned th {
