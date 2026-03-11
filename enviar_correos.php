@@ -1340,12 +1340,12 @@ $active_page = '';
               </label>
               <label>
                 Cuerpo del mensaje
-                <textarea name="mail_body" id="mailBodyInput" rows="10"><?php echo h($mailBodyInput); ?></textarea>
+                <textarea name="mail_body" id="mailBodyInput" class="mail-body-textarea" rows="10"><?php echo h($mailBodyInput); ?></textarea>
               </label>
 
               <div class="entity-repeatable-item entity-card">
                 <strong>Campos disponibles</strong>
-                <ul>
+                <ul class="available-fields-list">
                   <li><code>[[nombre_alumno]]</code></li>
                   <li><code>[[apellido1_alumno]]</code></li>
                   <li><code>[[apellido2_alumno]]</code></li>
@@ -1369,7 +1369,7 @@ $active_page = '';
               </label>
               <label>
                 Cuerpo (resultado)
-                <textarea id="mailBodyPreview" rows="10" readonly><?php echo h($previewBody); ?></textarea>
+                <textarea id="mailBodyPreview" class="mail-body-textarea" rows="10" readonly><?php echo h($previewBody); ?></textarea>
               </label>
 
               <div class="entity-repeatable-item entity-card">
@@ -1421,6 +1421,7 @@ $active_page = '';
       let previewIndex = 0;
       let debounceTimer = null;
       let syncingBodyScroll = false;
+      let activeFilterRequest = null;
 
       const getSelectedPreviewIds = () => Array.from(selectedStudents).filter((id) => Object.prototype.hasOwnProperty.call(previewStudents, id));
 
@@ -1500,7 +1501,14 @@ $active_page = '';
           const cleanParams = new URLSearchParams(params);
           params.set('ajax', '1');
 
+          if (activeFilterRequest) {
+            activeFilterRequest.abort();
+          }
+
+          activeFilterRequest = new AbortController();
+
           fetch('enviar_correos.php?' + params.toString(), {
+            signal: activeFilterRequest.signal,
             headers: {
               'X-Requested-With': 'fetch'
             }
@@ -1513,8 +1521,14 @@ $active_page = '';
               applySelectionStateToDOM();
               updateMessagePreview();
               history.replaceState(null, '', '?' + cleanParams.toString());
+              activeFilterRequest = null;
             })
-            .catch(() => {});
+            .catch((error) => {
+              if (error && error.name === 'AbortError') {
+                return;
+              }
+              activeFilterRequest = null;
+            });
         };
 
         if (withDebounce) {
