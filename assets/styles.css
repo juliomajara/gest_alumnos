@@ -989,12 +989,12 @@ a.edit-toggle:focus {
 }
 
 .documents-column {
-  width: 240px;
-  min-width: 240px;
+  width: 260px;
+  min-width: 260px;
 }
 
 .documents-list {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   gap: 2px;
 }
@@ -1010,6 +1010,10 @@ a.edit-toggle:focus {
 
 .documents-option .document-checkbox {
   margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .documents-option-text {
