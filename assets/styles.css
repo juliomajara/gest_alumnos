@@ -988,12 +988,19 @@ a.edit-toggle:focus {
   text-align: left !important;
 }
 
-.documents-option {
-  display: inline-flex;
+.documents-column {
+  width: 200px;
+  min-width: 200px;
+}
+
+.documents-cell .documents-option {
+  display: flex;
+  width: fit-content;
   align-items: center;
   gap: 6px;
   margin: 0;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .documents-option + .documents-option {

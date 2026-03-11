@@ -1357,7 +1357,7 @@ $active_page = '';
                   <th>Apellidos y nombre</th>
                   <th>Teléfono</th>
                   <th>Correos</th>
-                  <th>Documentos disponibles</th>
+                  <th class="documents-column">Documentos disponibles</th>
                 </tr>
               </thead>
               <tbody id="studentsTableBody">
