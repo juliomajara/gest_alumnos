@@ -876,6 +876,7 @@ function render_student_rows(array $students, array $docsByStudent, array $pract
           <?php if (!$docs): ?>
             <span>No hay documentos</span>
           <?php else: ?>
+            <div class="documents-list">
             <?php foreach ($docs as $doc): ?>
               <label class="documents-option">
                 <input
@@ -884,6 +885,7 @@ function render_student_rows(array $students, array $docsByStudent, array $pract
                   value="<?php echo h((string) $doc['key']); ?>"
                   data-student-id="<?php echo $studentId; ?>"
                 >
+                <span class="documents-option-text">
                 <?php if ((string) ($doc['type'] ?? '') === 'calendar'): ?>
                   Calendario
                 <?php elseif ((string) ($doc['type'] ?? '') === 'plan'): ?>
@@ -891,8 +893,10 @@ function render_student_rows(array $students, array $docsByStudent, array $pract
                 <?php else: ?>
                   <?php echo h((string) ($doc['label'] ?? 'Documento')); ?>
                 <?php endif; ?>
+                </span>
               </label>
             <?php endforeach; ?>
+            </div>
           <?php endif; ?>
         </td>
       </tr>
