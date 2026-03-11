@@ -63,7 +63,7 @@ function get_groups(PDO $pdo, int $activeCourseId): array
   return $stmt->fetchAll();
 }
 
-function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, string $groupFilter, bool $onlyWithPractices): array
+function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, string $groupFilter): array
 {
   $filters = [];
   $params = ['active_course_id' => $activeCourseId];
@@ -78,22 +78,10 @@ function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, strin
   }
 
   if ($groupFilter !== '') {
-    if ($groupFilter === 'sin') {
-      $filters[] = 'g.id_grupo IS NULL';
-    } elseif (ctype_digit($groupFilter)) {
+    if (ctype_digit($groupFilter)) {
       $filters[] = 'g.id_grupo = :group_id';
       $params['group_id'] = (int) $groupFilter;
     }
-  }
-
-  if ($onlyWithPractices) {
-    $filters[] = 'EXISTS (
-      SELECT 1
-      FROM practicas p
-      WHERE p.id_alumno = a.id_alumno
-        AND p.id_curso_escolar = :practice_course_id
-    )';
-    $params['practice_course_id'] = $activeCourseId;
   }
 
   $whereClause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
@@ -105,9 +93,24 @@ function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, strin
       a.apellido2,
       a.nombre,
       t.telefono,
-      c.direccion_correo AS correo_personal,
-      a.nia,
-      a.dni,
+      (
+        SELECT c1.direccion_correo
+        FROM correos c1
+        WHERE c1.entidad_tipo = \'alumno\'
+          AND c1.id_entidad = a.id_alumno
+          AND TRIM(COALESCE(c1.etiqueta, \'\')) = \'EducaMadrid\'
+        ORDER BY c1.id_correo ASC
+        LIMIT 1
+      ) AS correo_educamadrid,
+      (
+        SELECT c2.direccion_correo
+        FROM correos c2
+        WHERE c2.entidad_tipo = \'alumno\'
+          AND c2.id_entidad = a.id_alumno
+          AND TRIM(COALESCE(c2.etiqueta, \'\')) = \'Personal\'
+        ORDER BY c2.id_correo ASC
+        LIMIT 1
+      ) AS correo_personal,
       g.grupo
     FROM alumnos a
     LEFT JOIN alumno_curso ac
@@ -121,12 +124,6 @@ function fetch_students(PDO $pdo, int $activeCourseId, string $searchTerm, strin
       WHERE entidad_tipo = \'alumno\'
       GROUP BY id_entidad
     ) t ON t.id_entidad = a.id_alumno
-    LEFT JOIN (
-      SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
-      FROM correos
-      WHERE entidad_tipo = \'alumno\'
-      GROUP BY id_entidad
-    ) c ON c.id_entidad = a.id_alumno
     ' . $whereClause . '
     ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre'
   );
@@ -797,7 +794,7 @@ function render_student_rows(array $students, array $docsByStudent): string
 
   if (!$students): ?>
     <tr>
-      <td colspan="8">No hay alumnos para los filtros seleccionados.</td>
+      <td colspan="6">No hay alumnos para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($students as $student): ?>
@@ -807,9 +804,8 @@ function render_student_rows(array $students, array $docsByStudent): string
         $nombreCompleto = sprintf('%s%s, %s', $student['apellido1'], $apellido2, $student['nombre']);
         $grupo = $student['grupo'] ?: 'Sin grupo';
         $telefono = $student['telefono'] ?: 'No disponible';
+        $emailEducamadrid = $student['correo_educamadrid'] ?: 'No disponible';
         $emailPersonal = $student['correo_personal'] ?: 'No disponible';
-        $nia = $student['nia'] ?: 'No disponible';
-        $dni = $student['dni'] ?: 'No disponible';
         $detalleUrl = sprintf('alumno_detalle.php?id_alumno=%d', $studentId);
         $docs = array_values($docsByStudent[$studentId] ?? []);
       ?>
@@ -822,9 +818,7 @@ function render_student_rows(array $students, array $docsByStudent): string
           <a class="practice-link" href="<?php echo h($detalleUrl); ?>"><?php echo h($nombreCompleto); ?></a>
         </td>
         <td><?php echo h($telefono); ?></td>
-        <td><?php echo h($emailPersonal); ?></td>
-        <td><?php echo h($nia); ?></td>
-        <td><?php echo h($dni); ?></td>
+        <td><?php echo h($emailEducamadrid); ?><br><?php echo h($emailPersonal); ?></td>
         <td>
           <?php if (!$docs): ?>
             <span>No hay documentos</span>
@@ -855,9 +849,8 @@ $groups = get_groups($pdo, $activeCourseId);
 $searchTerm = trim((string) ($_GET['q'] ?? ''));
 $groupFilter = (string) ($_GET['grupo_id'] ?? '');
 $groupFilter = $groupFilter === '' ? '' : $groupFilter;
-$onlyWithPractices = (string) ($_GET['con_practicas'] ?? '') === '1';
 
-$students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter, $onlyWithPractices);
+$students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter);
 $studentIds = array_values(array_map(static fn (array $student): int => (int) $student['id_alumno'], $students));
 $practices = fetch_practices_for_students($pdo, $studentIds);
 $docsByStudent = build_documents_by_student($practices);
@@ -1272,10 +1265,6 @@ $active_page = '';
           >
         </div>
         <div class="topbar-actions">
-          <label>
-            <input type="checkbox" name="con_practicas" value="1" <?php echo $onlyWithPractices ? 'checked' : ''; ?>>
-            Alumnos con prácticas
-          </label>
           <label class="calendar-select">
             <select name="grupo_id">
               <option value="" <?php echo $groupFilter === '' ? 'selected' : ''; ?>>Todos los grupos</option>
@@ -1284,7 +1273,6 @@ $active_page = '';
                   <?php echo h((string) $group['grupo']); ?>
                 </option>
               <?php endforeach; ?>
-              <option value="sin" <?php echo $groupFilter === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
             </select>
           </label>
         </div>
@@ -1309,9 +1297,7 @@ $active_page = '';
                   <th>Grupo</th>
                   <th>Apellidos y nombre</th>
                   <th>Teléfono</th>
-                  <th>Correo personal</th>
-                  <th>NIA</th>
-                  <th>DNI</th>
+                  <th>Correos</th>
                   <th>Documentos disponibles</th>
                 </tr>
               </thead>
@@ -1398,7 +1384,6 @@ $active_page = '';
       const filtersForm = document.getElementById('filtersForm');
       const searchInput = filtersForm.querySelector('input[name="q"]');
       const groupSelect = filtersForm.querySelector('select[name="grupo_id"]');
-      const practicesCheckbox = filtersForm.querySelector('input[name="con_practicas"]');
       const tableBody = document.getElementById('studentsTableBody');
       const selectAllVisible = document.getElementById('selectAllVisible');
       const sendForm = document.getElementById('sendForm');
@@ -1643,9 +1628,6 @@ $active_page = '';
 
       searchInput.addEventListener('input', () => fetchFilteredRows(true));
       groupSelect.addEventListener('change', () => fetchFilteredRows());
-      if (practicesCheckbox) {
-        practicesCheckbox.addEventListener('change', () => fetchFilteredRows());
-      }
       if (mailSubjectInput) {
         mailSubjectInput.addEventListener('input', updateMessagePreview);
       }
