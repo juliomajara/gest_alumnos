@@ -872,12 +872,12 @@ function render_student_rows(array $students, array $docsByStudent, array $pract
             <?php echo h($emailPersonal); ?>
           <?php endif; ?>
         </td>
-        <td>
+        <td class="documents-cell">
           <?php if (!$docs): ?>
             <span>No hay documentos</span>
           <?php else: ?>
             <?php foreach ($docs as $doc): ?>
-              <label>
+              <label class="documents-option">
                 <input
                   type="checkbox"
                   class="document-checkbox"
@@ -892,7 +892,6 @@ function render_student_rows(array $students, array $docsByStudent, array $pract
                   <?php echo h((string) ($doc['label'] ?? 'Documento')); ?>
                 <?php endif; ?>
               </label>
-              <br>
             <?php endforeach; ?>
           <?php endif; ?>
         </td>
