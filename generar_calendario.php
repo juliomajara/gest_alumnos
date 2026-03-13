@@ -98,14 +98,16 @@ function build_observaciones(?string $complementoDireccion, ?string $observacion
 }
 
 function ensure_mpdf_temp_dir(): string {
-  $tempDir = __DIR__ . '/docs/.mpdf_tmp';
-  if (!is_dir($tempDir) && !mkdir($tempDir, 0755, true) && !is_dir($tempDir)) {
+  $tmpDir = sys_get_temp_dir() . '/mpdf_tmp';
+  if (!is_dir($tmpDir) && !mkdir($tmpDir, 0755, true) && !is_dir($tmpDir)) {
     throw new RuntimeException('No se pudo crear el directorio temporal de mPDF.');
   }
-  if (!is_writable($tempDir)) {
-    throw new RuntimeException('El directorio temporal de mPDF no tiene permisos de escritura.');
+  $testFile = $tmpDir . '/_write_test.tmp';
+  if (@file_put_contents($testFile, '1') === false) {
+    throw new RuntimeException('El directorio temporal para PDFs no tiene permisos de escritura: ' . $tmpDir);
   }
-  return $tempDir;
+  @unlink($testFile);
+  return $tmpDir;
 }
 
 function month_name_es(int $month): string {
@@ -498,9 +500,11 @@ try {
   if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
     throw new RuntimeException('No se pudo crear el directorio de destino del calendario: ' . $targetDir);
   }
-  if (!is_writable($targetDir)) {
-    throw new RuntimeException('El directorio de destino del calendario no tiene permisos de escritura: ' . $targetDir);
+  $testFile = $targetDir . '/_write_test.tmp';
+  if (@file_put_contents($testFile, '1') === false) {
+      throw new RuntimeException('El directorio de destino del calendario no tiene permisos de escritura: ' . $targetDir);
   }
+  @unlink($testFile);
 
   if (file_exists($tempFilePath)) {
     @unlink($tempFilePath);

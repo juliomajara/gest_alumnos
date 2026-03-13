@@ -737,15 +737,15 @@ function fetch_plan_formacion_rows(PDO $pdo, array $practice): array {
 }
 
 function ensure_mpdf_temp_dir(): string {
-  $tmpDir = __DIR__ . '/docs/.mpdf_tmp';
+  $tmpDir = sys_get_temp_dir() . '/mpdf_tmp';
   if (!is_dir($tmpDir) && !mkdir($tmpDir, 0755, true) && !is_dir($tmpDir)) {
-    throw new RuntimeException('No se pudo crear el directorio temporal para PDFs.');
+    throw new RuntimeException('No se pudo crear el directorio temporal de mPDF.');
   }
-
-  if (!is_writable($tmpDir)) {
-    throw new RuntimeException('El directorio temporal para PDFs no tiene permisos de escritura.');
+  $testFile = $tmpDir . '/_write_test.tmp';
+  if (@file_put_contents($testFile, '1') === false) {
+    throw new RuntimeException('El directorio temporal para PDFs no tiene permisos de escritura: ' . $tmpDir);
   }
-
+  @unlink($testFile);
   return $tmpDir;
 }
 

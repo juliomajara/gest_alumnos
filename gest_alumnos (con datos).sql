@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 06-03-2026 a las 22:37:17
+-- Tiempo de generación: 13-03-2026 a las 08:48:23
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -15640,7 +15640,7 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (197, 'empresa_contacto', 24, 'juliangrande@infoneri.com', 'Trabajo'),
 (198, 'empresa_tutor', 20, 'juliangrande@infoneri.com', 'Trabajo'),
 (199, 'alumno', 27, 'sebastian.moncada1@educa.madrid.org', 'EducaMadrid'),
-(200, 'alumno', 33, 'julio.sanchezfernandez@educa.madrid.org', NULL),
+(200, 'alumno', 33, 'julio.sanchezfernandez@educa.madrid.org', 'EducaMadrid'),
 (201, 'empresa', 1, 'info@gtpsistemas.com', 'Trabajo'),
 (202, 'empresa_contacto', 25, 'administracion@gtpsistemas.es', 'Trabajo'),
 (203, 'empresa_tutor', 1, 'epulido@gtpsistemas.es', 'Trabajo'),
@@ -15666,7 +15666,10 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (223, 'empresa', 23, 'valdetea2020@gmail.com', 'Trabajo'),
 (224, 'empresa', 24, 'comercial@gestionlan.com', 'Trabajo'),
 (225, 'empresa_contacto', 32, 'cmartin@gestionlan.com', 'Trabajo'),
-(226, 'empresa_tutor', 23, 'cmartin@gestionlan.com', 'Trabajo');
+(226, 'empresa_tutor', 23, 'cmartin@gestionlan.com', 'Trabajo'),
+(227, 'empresa_contacto', 31, 'valdetea2020@gmail.com', 'Trabajo'),
+(228, 'empresa_tutor', 22, 'valdetea2020@gmail.com', 'Trabajo'),
+(229, 'empresa', 25, 'web@caycon.es', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -16218,7 +16221,37 @@ INSERT INTO `criterios_evaluacion` (`id_ce`, `id_ra`, `codigo`, `descripcion`) V
 (529, 159, 'f', 'Se ha accedido a impresoras desde equipos con diferentes sistemas operativos.'),
 (530, 159, 'g', 'Se ha trabajado en grupo.'),
 (531, 159, 'h', 'Se han establecido niveles de seguridad para controlar el acceso del usuario a los recursos compartidos en red.'),
-(532, 159, 'i', 'Se ha comprobado el funcionamiento de los servicios instalados.');
+(532, 159, 'i', 'Se ha comprobado el funcionamiento de los servicios instalados.'),
+(533, 160, 'a', 'Se ha descrito el significado de corriente, tensión, resistencia, potencia y energía.'),
+(534, 160, 'b', 'Se han identificado señales continuas y alternas.'),
+(535, 160, 'c', 'Se han identificado señales periódicas y aleatorias.'),
+(536, 160, 'd', 'Se han descrito la amplitud, frecuencia y el periodo de una señal periódica.'),
+(537, 160, 'e', 'Se han identificado señales en tiempo continuo y discreto.'),
+(538, 160, 'f', 'Se ha descrito la conversión analógico-digital (muestreo, cuantificación y codificación) examinando los conceptos básicos (frecuencia de muestreo y resolución).'),
+(539, 161, 'a', 'Se han identificado los distintos componentes discretos que forman parte de un circuito electrónico.'),
+(540, 161, 'b', 'Se han descrito las características básicas y principios de los distintos componentes discretos.'),
+(541, 161, 'c', 'Se han analizado y explicado circuitos electrónicos con componentes discretos.'),
+(542, 161, 'd', 'Se han diseñado circuitos electrónicos con componentes discretos.'),
+(543, 161, 'e', 'Se han empleado programas de simulación para comprobar cálculos y verificar el diseño de los circuitos electrónicos.'),
+(544, 161, 'f', 'Se han realizado montajes y pruebas de funcionamiento de circuitos con componentes discretos con las herramientas e instrumentación adecuada.'),
+(545, 161, 'g', 'Se han identificado circuitos abiertos y cortocircuitos.'),
+(546, 162, 'a', 'Se ha utilizado con precisión el entorno de programación de un sistema electrónico.'),
+(547, 162, 'b', 'Se han desarrollado programas para controlar el funcionamiento de un sistema electrónico.'),
+(548, 162, 'c', 'Se han usado de manera adecuada comandos de control de ejecución (condicionales y bucles).'),
+(549, 162, 'd', 'Se han usado de manera adecuada constantes, variables y listas.'),
+(550, 162, 'e', 'Se ha analizado el funcionamiento de un programa de un sistema electrónico.'),
+(551, 163, 'a', 'Se ha descrito el funcionamiento de un sistema de impresión 3D.'),
+(552, 163, 'b', 'Se han enumerado los distintos tipos de materiales usados en impresión 3D, así como las características de cada uno de ellos.'),
+(553, 163, 'c', 'Se ha seleccionado el material adecuado de impresión 3D.'),
+(554, 163, 'd', 'Se ha usado software de diseño adecuado para la creación de objetos y prototipos 3D.'),
+(555, 163, 'e', 'Se ha usado software de impresión 3D y se han configurado sus parámetros para la impresión adecuada de objetos y prototipos 3D.'),
+(556, 164, 'a', 'Se han descrito las fases del proceso de un proyecto tecnológico.'),
+(557, 164, 'b', 'Se han usado herramientas de gestión de proyectos.'),
+(558, 164, 'c', 'Se ha empleado el software adecuado para la generación de la documentación asociada al proceso tecnológico (elaboración de exposiciones, presupuestos...).'),
+(559, 164, 'd', 'Se ha elaborado documentación técnica asociada a un proyecto tecnológico.'),
+(560, 164, 'e', 'Se ha desarrollado y seguido una planificación del proyecto.'),
+(561, 164, 'f', 'Se ha diseñado y creado un sistema robótico.'),
+(562, 164, 'g', 'Se ha presentado adecuadamente el proyecto de un sistema robótico.');
 
 -- --------------------------------------------------------
 
@@ -16315,7 +16348,8 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (28, 22, 1, 28, 4, 10, 'Pelícano', '10', NULL, NULL, NULL, NULL, NULL, 'Principal', '28025', 1),
 (29, 22, 1, 28, 5, 10, 'Valdeón', '12', NULL, NULL, NULL, NULL, 'Local 57', 'Centro de Trabajo', '28947', 0),
 (30, 23, 1, 28, 62, 10, 'Río Manzanares', '4', NULL, NULL, '2', NULL, 'Centro de Asociaciones Pedro Zerolo', 'Principal', '28342', 1),
-(31, 24, 1, 28, 1, 5, 'Leonardo Da Vinci', '8', NULL, NULL, NULL, NULL, 'Oficina 121', 'Principal', '28906', 1);
+(31, 24, 1, 28, 1, 5, 'Leonardo Da Vinci', '8', NULL, NULL, NULL, NULL, 'Oficina 121', 'Principal', '28906', 1),
+(32, 25, 1, 28, 4, 10, 'Ciudad de Frías', '25', NULL, NULL, NULL, NULL, 'Nave 8', 'Principal', '28021', 1);
 
 -- --------------------------------------------------------
 
@@ -16360,7 +16394,8 @@ INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`,
 (19, '52100377H', 'Julián', 'Grande', 'Santamaría', 'Infoneri', 1320, NULL),
 (22, '03188516A', 'Beder David', 'García', 'Cardoza', 'Astrid Technology', 1573, NULL),
 (23, 'G02929891', 'Asociación Valdetea', NULL, NULL, 'Asociación Valdetea', 1331, NULL),
-(24, 'B86967502', 'Gestionlan Informática, S.L.', NULL, NULL, 'Gestionlan Informática, S.L.', 15666, NULL);
+(24, 'B86967502', 'Gestionlan Informática, S.L.', NULL, NULL, 'Gestionlan Informática, S.L.', 15666, NULL),
+(25, 'B82522418', 'Cableados y Conexiones, S.L.', NULL, NULL, 'Cableados y Conexiones, S.L.', 1308, NULL);
 
 -- --------------------------------------------------------
 
@@ -16940,6 +16975,7 @@ CREATE TABLE `practicas` (
   `horas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `circ_excep` tinyint(1) NOT NULL DEFAULT 0,
   `cancelada` tinyint(1) NOT NULL DEFAULT 0,
+  `horas_hechas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `mayor_edad` tinyint(1) NOT NULL DEFAULT 0,
   `instrucciones` text DEFAULT NULL,
   `observaciones` text DEFAULT NULL
@@ -16949,33 +16985,35 @@ CREATE TABLE `practicas` (
 -- Volcado de datos para la tabla `practicas`
 --
 
-INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `fecha_inicio`, `fecha_fin`, `fecha_fin_real`, `motivo_exclusion`, `id_practica_anterior`, `dias_extra`, `fecha_fin_extra`, `horas`, `circ_excep`, `cancelada`, `mayor_edad`, `instrucciones`, `observaciones`) VALUES
-(1, 23, 1, 1, 1, 59, '2026-02-23', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
-(2, 25, 2, 2, 2, 95, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
-(3, 28, 3, 5, 4, 64, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 0, '2026-06-03', 500, 0, 0, 0, NULL, NULL),
-(4, 30, 4, 7, 5, 60, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
-(5, 31, 5, 8, 6, 154, '2026-02-23', '2026-05-08', NULL, NULL, NULL, 0, '2026-05-08', 370, 0, 0, 0, NULL, NULL),
-(6, 39, 6, 9, 7, 61, '2026-02-23', '2026-05-08', NULL, NULL, NULL, 0, '2026-05-08', 370, 0, 0, 0, NULL, NULL),
-(7, 44, 7, 11, 8, 143, '2026-02-23', '2026-06-03', '2026-02-27', 'Cambio de empresa', NULL, 1, '2026-06-04', 500, 0, 1, 0, NULL, NULL),
-(10, 48, 8, 12, 9, 63, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 1, 0, 0, NULL, NULL),
-(11, 2, 10, 14, 11, 93, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
-(12, 11, 11, 15, 12, 94, '2026-02-23', '2026-05-28', NULL, NULL, NULL, 1, '2026-05-29', 440, 0, 0, 0, NULL, NULL),
-(13, 42, 17, 21, 18, 21, '2025-10-01', '2025-12-17', NULL, NULL, NULL, 0, '2025-12-17', 370, 0, 0, 0, NULL, NULL),
-(14, 16, 8, 12, 9, 18, '2025-10-14', '2025-12-19', NULL, NULL, NULL, 0, '2025-12-19', 370, 1, 0, 0, NULL, NULL),
-(15, 17, 9, 13, 10, 26, '2025-10-22', '2026-01-15', NULL, NULL, NULL, 0, '2026-01-15', 370, 0, 0, 0, NULL, NULL),
-(16, 40, 16, 20, 17, 27, '2025-10-22', '2026-01-15', NULL, NULL, NULL, 0, '2026-01-15', 370, 0, 0, 0, NULL, NULL),
-(17, 43, 18, 22, 19, 17, '2025-10-14', '2025-12-19', NULL, NULL, NULL, 0, '2025-12-19', 370, 0, 0, 0, NULL, NULL),
-(18, 1, 19, 23, 20, 16, '2025-10-01', '2025-12-17', NULL, NULL, NULL, 0, '2025-12-17', 370, 0, 0, 0, NULL, NULL),
-(19, 26, 13, 17, 14, 166, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
-(20, 27, 13, 17, 14, 166, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
-(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
-(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, NULL, NULL),
-(23, 35, 15, 19, 16, 167, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
-(24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, NULL, NULL),
-(25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 0, '2026-06-03', 500, 0, 0, 0, NULL, NULL),
-(26, 47, 9, 13, 10, 175, '2026-02-26', '2026-05-13', NULL, NULL, NULL, 0, '2026-05-13', 370, 0, 0, 0, NULL, NULL),
-(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', NULL, NULL, NULL, 0, '2026-06-08', 500, 0, 0, 0, NULL, NULL),
-(30, 46, 8, 12, 9, 193, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 1, 0, 1, NULL, NULL);
+INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion`, `id_empresa_tutor`, `anexo`, `fecha_inicio`, `fecha_fin`, `fecha_fin_real`, `motivo_exclusion`, `id_practica_anterior`, `dias_extra`, `fecha_fin_extra`, `horas`, `circ_excep`, `cancelada`, `horas_hechas`, `mayor_edad`, `instrucciones`, `observaciones`) VALUES
+(1, 23, 1, 1, 1, 59, '2026-02-23', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, 0, NULL, NULL),
+(2, 25, 2, 2, 2, 95, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, 0, NULL, NULL),
+(3, 28, 3, 5, 4, 64, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 0, '2026-06-03', 500, 0, 0, 0, 0, NULL, NULL),
+(4, 30, 4, 7, 5, 60, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(5, 31, 5, 8, 6, 154, '2026-02-23', '2026-05-08', NULL, NULL, NULL, 0, '2026-05-08', 370, 0, 0, 0, 0, NULL, NULL),
+(6, 39, 6, 9, 7, 61, '2026-02-23', '2026-05-08', NULL, NULL, NULL, 0, '2026-05-08', 370, 0, 0, 0, 0, NULL, NULL),
+(7, 44, 7, 11, 8, 143, '2026-02-23', '2026-06-03', '2026-02-27', 'Cambio de empresa', NULL, 1, '2026-06-04', 500, 0, 1, 40, 0, NULL, NULL),
+(10, 48, 8, 12, 9, 63, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 1, 0, 0, 0, NULL, NULL),
+(11, 2, 10, 14, 11, 93, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(12, 11, 11, 15, 12, 94, '2026-02-23', '2026-05-28', NULL, NULL, NULL, 1, '2026-05-29', 440, 0, 0, 0, 0, NULL, NULL),
+(13, 42, 17, 21, 18, 21, '2025-10-01', '2025-12-17', NULL, NULL, NULL, 0, '2025-12-17', 370, 0, 0, 0, 0, NULL, NULL),
+(14, 16, 8, 12, 9, 18, '2025-10-14', '2025-12-19', NULL, NULL, NULL, 0, '2025-12-19', 370, 1, 0, 0, 0, NULL, NULL),
+(15, 17, 9, 13, 10, 26, '2025-10-22', '2026-01-15', NULL, NULL, NULL, 0, '2026-01-15', 370, 0, 0, 0, 0, NULL, NULL),
+(16, 40, 16, 20, 17, 27, '2025-10-22', '2026-01-15', NULL, NULL, NULL, 0, '2026-01-15', 370, 0, 0, 0, 0, NULL, NULL),
+(17, 43, 18, 22, 19, 17, '2025-10-14', '2025-12-19', NULL, NULL, NULL, 0, '2025-12-19', 370, 0, 0, 0, 0, NULL, NULL),
+(18, 1, 19, 23, 20, 16, '2025-10-01', '2025-12-17', NULL, NULL, NULL, 0, '2025-12-17', 370, 0, 0, 0, 0, NULL, NULL),
+(19, 26, 13, 17, 14, 166, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(20, 27, 13, 17, 14, 166, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(23, 35, 15, 19, 16, 167, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, 0, NULL, NULL),
+(24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, 0, NULL, NULL),
+(25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 0, '2026-06-03', 500, 0, 0, 0, 0, NULL, NULL),
+(26, 47, 9, 13, 10, 175, '2026-02-26', '2026-05-13', NULL, NULL, NULL, 0, '2026-05-13', 370, 0, 0, 0, 0, NULL, NULL),
+(27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', NULL, NULL, NULL, 0, '2026-06-08', 500, 0, 0, 0, 0, NULL, NULL),
+(30, 46, 8, 12, 9, 193, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 1, 0, 0, 1, NULL, NULL),
+(33, 44, 23, 30, 22, 201, '2026-03-02', '2026-06-03', '2026-03-06', 'Cambio de empresa', NULL, 0, '2026-06-03', 460, 0, 1, 40, 0, NULL, NULL),
+(34, 44, 24, 31, 23, 202, '2026-03-09', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 420, 0, 0, 0, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -17213,7 +17251,22 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (194, 30, 4, '09:30:00', '14:30:00'),
 (195, 30, 4, '16:30:00', '19:30:00'),
 (196, 30, 5, '09:30:00', '14:30:00'),
-(197, 30, 5, '16:30:00', '19:30:00');
+(197, 30, 5, '16:30:00', '19:30:00'),
+(213, 33, 1, '08:00:00', '16:00:00'),
+(214, 33, 2, '08:00:00', '16:00:00'),
+(215, 33, 3, '08:00:00', '16:00:00'),
+(216, 33, 4, '08:00:00', '16:00:00'),
+(217, 33, 5, '08:00:00', '16:00:00'),
+(218, 34, 1, '09:00:00', '14:00:00'),
+(219, 34, 1, '15:00:00', '18:00:00'),
+(220, 34, 2, '09:00:00', '14:00:00'),
+(221, 34, 2, '15:00:00', '18:00:00'),
+(222, 34, 3, '09:00:00', '14:00:00'),
+(223, 34, 3, '15:00:00', '18:00:00'),
+(224, 34, 4, '09:00:00', '14:00:00'),
+(225, 34, 4, '15:00:00', '18:00:00'),
+(226, 34, 5, '09:00:00', '14:00:00'),
+(227, 34, 5, '15:00:00', '18:00:00');
 
 -- --------------------------------------------------------
 
@@ -17451,7 +17504,12 @@ INSERT INTO `resultados_aprendizaje` (`id_ra`, `id_modulo`, `numero`, `descripci
 (156, 11, 3, 'Realiza tareas de gestión sobre dominios identificando necesidades y aplicando herramientas de administración de dominios.'),
 (157, 11, 4, 'Gestiona los recursos compartidos del sistema, interpretando especificaciones y determinando niveles de seguridad.'),
 (158, 11, 5, 'Realiza tareas de monitorización y uso del sistema operativo en red, describiendo las herramientas utilizadas e identificando las principales incidencias.'),
-(159, 11, 6, 'Realiza tareas de integración de sistemas operativos libres y propietarios, describiendo las ventajas de compartir recursos e instalando software específico.');
+(159, 11, 6, 'Realiza tareas de integración de sistemas operativos libres y propietarios, describiendo las ventajas de compartir recursos e instalando software específico.'),
+(160, 64, 1, 'Describe los fundamentos básicos de las señales eléctricas.'),
+(161, 64, 2, 'Analiza, diseña, simula y mide circuitos electrónicos en continua.'),
+(162, 64, 3, 'Utiliza con destreza un entorno de programación de sistemas electrónicos digitales.'),
+(163, 64, 4, 'Utiliza software de diseño 3D e impresión 3D para la creación de objetos y prototipos.'),
+(164, 64, 5, 'Desarrolla un proyecto para la creación de un prototipo de un sistema robótico funcional, respetando las fases de diseño, elaborando documentación técnica y presentando dicho proyecto.');
 
 -- --------------------------------------------------------
 
@@ -17677,7 +17735,8 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (215, 'empresa', 23, '644242583', 'Trabajo'),
 (216, 'empresa', 24, '917375777', 'Trabajo'),
 (217, 'empresa_contacto', 32, '634284642', 'Trabajo'),
-(218, 'empresa_tutor', 23, '634284642', 'Trabajo');
+(218, 'empresa_tutor', 23, '634284642', 'Trabajo'),
+(219, 'empresa', 25, '914280036', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -18094,13 +18153,13 @@ ALTER TABLE `codigos_postales`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=227;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
 --
 ALTER TABLE `criterios_evaluacion`
-  MODIFY `id_ce` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=533;
+  MODIFY `id_ce` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=563;
 
 --
 -- AUTO_INCREMENT de la tabla `cursos`
@@ -18118,13 +18177,13 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
 --
 ALTER TABLE `empresas`
-  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
@@ -18196,7 +18255,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -18214,7 +18273,7 @@ ALTER TABLE `practicas_anexos_estados`
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=213;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
@@ -18244,13 +18303,13 @@ ALTER TABLE `provincias`
 -- AUTO_INCREMENT de la tabla `resultados_aprendizaje`
 --
 ALTER TABLE `resultados_aprendizaje`
-  MODIFY `id_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=160;
+  MODIFY `id_ra` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
 
 --
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=219;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
 
 --
 -- AUTO_INCREMENT de la tabla `tutorias`
