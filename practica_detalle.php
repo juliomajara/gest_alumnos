@@ -586,76 +586,59 @@ $seguimiento_horas_hoy_valor = 0.0;
 $seguimiento_horas_pendientes = '0,00';
 
 if ($practice_found) {
-  $fecha_inicio = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_inicio'] ?? ''));
-  $fecha_fin_extra = DateTimeImmutable::createFromFormat('Y-m-d', (string) ($practice['fecha_fin_extra'] ?? ''));
+  $months = [
+    1 => 'Enero',
+    2 => 'Febrero',
+    3 => 'Marzo',
+    4 => 'Abril',
+    5 => 'Mayo',
+    6 => 'Junio',
+    7 => 'Julio',
+    8 => 'Agosto',
+    9 => 'Septiembre',
+    10 => 'Octubre',
+    11 => 'Noviembre',
+    12 => 'Diciembre',
+  ];
+  $practices = [$practice];
+  $student_rows = [
+    (int) $practice['id_alumno'] => [
+      'id_practica' => (int) $practice['id_practica'],
+      'name' => $student_name,
+      'apellido1' => mb_strtolower(trim((string) ($practice['alumno_apellido1'] ?? ''))),
+      'months' => array_fill_keys(array_keys($months), 0),
+      'month_practice_ids' => array_fill_keys(array_keys($months), []),
+      'seconds' => 0,
+      'current_month_seconds' => 0,
+      'had_current_month_in_course' => false,
+      'status' => calculate_practice_status($practice),
+    ],
+  ];
+  $hoy = new DateTimeImmutable('today');
+  $current_month = (int) $hoy->format('n');
+  $current_year = (int) $hoy->format('Y');
+  $schedule_by_practice = [
+    (int) $practice['id_practica'] => $schedule_by_day,
+  ];
+  $non_teaching_days = $pdo->query('SELECT fecha FROM no_lectivos')->fetchAll(PDO::FETCH_COLUMN);
+  $non_teaching_days_lookup = array_fill_keys($non_teaching_days, true);
 
-  if ($fecha_inicio !== false && $fecha_fin_extra !== false && $fecha_inicio <= $fecha_fin_extra) {
-    $segundos_por_dia_semana = [];
-    foreach ($schedule_by_day as $day_number => $segments) {
-      $total_segundos = 0;
-      foreach ($segments as $segment) {
-        $entrada = strtotime((string) $segment['hora_entrada']);
-        $salida = strtotime((string) $segment['hora_salida']);
-        if ($entrada !== false && $salida !== false && $salida > $entrada) {
-          $total_segundos += ($salida - $entrada);
-        }
-      }
+  require __DIR__ . '/includes/practicas_dias_calculo.php';
 
-      if ($total_segundos > 0) {
-        $segundos_por_dia_semana[(int) $day_number] = $total_segundos;
-      }
-    }
-
-    $meses = [
-      1 => 'Enero',
-      2 => 'Febrero',
-      3 => 'Marzo',
-      4 => 'Abril',
-      5 => 'Mayo',
-      6 => 'Junio',
-      7 => 'Julio',
-      8 => 'Agosto',
-      9 => 'Septiembre',
-      10 => 'Octubre',
-      11 => 'Noviembre',
-      12 => 'Diciembre',
-    ];
-
-    $seguimiento_por_mes = [];
-    $hoy = new DateTimeImmutable('today');
-    $fecha_hasta_hoy = $hoy < $fecha_fin_extra ? $hoy : $fecha_fin_extra;
-    $segundos_realizados = 0;
-
-    for ($cursor = $fecha_inicio; $cursor <= $fecha_fin_extra; $cursor = $cursor->modify('+1 day')) {
-      $dia_semana = (int) $cursor->format('N');
-      if (!isset($segundos_por_dia_semana[$dia_semana])) {
+  $student_row = $student_rows[(int) $practice['id_alumno']] ?? null;
+  if (is_array($student_row)) {
+    foreach ($student_row['months'] as $month_number => $days_count) {
+      if ((int) $days_count <= 0) {
         continue;
       }
 
-      $clave_mes = $cursor->format('Y-m');
-      if (!isset($seguimiento_por_mes[$clave_mes])) {
-        $mes_numero = (int) $cursor->format('n');
-        $seguimiento_por_mes[$clave_mes] = [
-          'mes' => ($meses[$mes_numero] ?? $cursor->format('F')) . ' ' . $cursor->format('Y'),
-          'dias' => 0,
-        ];
-      }
-
-      $seguimiento_por_mes[$clave_mes]['dias']++;
-
-      if ($cursor <= $fecha_hasta_hoy) {
-        $segundos_realizados += $segundos_por_dia_semana[$dia_semana];
-      }
-    }
-
-    foreach ($seguimiento_por_mes as $row) {
       $seguimiento_rows[] = [
-        'mes' => $row['mes'],
-        'dias' => (string) $row['dias'],
+        'mes' => ($months[(int) $month_number] ?? ''),
+        'dias' => (string) $days_count,
       ];
     }
 
-    $seguimiento_horas_hoy_valor = $segundos_realizados / 3600;
+    $seguimiento_horas_hoy_valor = ((float) ($student_row['seconds'] ?? 0)) / 3600;
     $seguimiento_horas_hoy = number_format($seguimiento_horas_hoy_valor, 2, ',', '.');
   }
 
