@@ -522,6 +522,7 @@ function build_multipart_mail_payload(array $toEmails, string $subject, string $
   }
 
   $headers[] = 'To: ' . implode(', ', $toEmails);
+  $headers[] = 'Bcc: ' . $fromEmail;
   $headers[] = 'Subject: ' . encode_mime_header_value($subject);
   $headers[] = 'Date: ' . date('r');
   $headers[] = 'MIME-Version: 1.0';
