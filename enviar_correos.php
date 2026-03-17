@@ -1015,6 +1015,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
       'students_without_email' => [],
       'students_without_docs' => [],
       'errors' => [],
+      'success' => [],
       'documents' => [],
     ];
 
@@ -1125,6 +1126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         $summary['students_sent']++;
         $summary['addresses_sent'] += count($emails);
         $summary['documents'][$studentName] = array_keys($documentLabels[$studentId] ?? []);
+        $summary['success'][] = $studentName . ': enviado correctamente.';
       }
     }
   }
@@ -1247,9 +1249,16 @@ $active_page = '';
             <p>Alumnos seleccionados: <?php echo (int) $summary['students_selected']; ?> · Alumnos enviados: <?php echo (int) $summary['students_sent']; ?> · Direcciones destino: <?php echo (int) $summary['addresses_sent']; ?></p>
           </div>
           <?php if ($summary['documents']): ?>
-            <ul class="form-errors">
+            <ul>
               <?php foreach ($summary['documents'] as $studentName => $labels): ?>
-                <li><strong><?php echo h($studentName); ?>:</strong> <?php echo h(implode(', ', $labels)); ?></li>
+                <li><strong><?php echo h($studentName); ?>:</strong> OK · <?php echo h(implode(', ', $labels)); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+          <?php if ($summary['success']): ?>
+            <ul>
+              <?php foreach ($summary['success'] as $success): ?>
+                <li><?php echo h($success); ?></li>
               <?php endforeach; ?>
             </ul>
           <?php endif; ?>
