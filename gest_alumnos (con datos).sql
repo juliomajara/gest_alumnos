@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 16-03-2026 a las 10:24:54
+-- Tiempo de generación: 17-03-2026 a las 23:17:08
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -687,6 +687,26 @@ CREATE TABLE `asistencia_mensual` (
   `faltas_justificadas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `faltas_injustificadas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `retrasos` smallint(5) UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `calificaciones`
+--
+
+CREATE TABLE `calificaciones` (
+  `id_calificacion` int(10) UNSIGNED NOT NULL,
+  `id_alumno` int(10) UNSIGNED NOT NULL,
+  `id_curso_escolar` int(10) UNSIGNED NOT NULL,
+  `id_ciclo` int(10) UNSIGNED NOT NULL,
+  `id_curso` int(10) UNSIGNED NOT NULL,
+  `id_grupo` int(10) UNSIGNED NOT NULL,
+  `id_modulo` int(10) UNSIGNED NOT NULL,
+  `calificacion_original` varchar(20) DEFAULT NULL,
+  `prefijo` varchar(10) DEFAULT NULL,
+  `nota` decimal(4,2) DEFAULT NULL,
+  `fecha_importacion` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -16483,7 +16503,7 @@ INSERT INTO `empresas_tutores` (`id_empresas_tutor`, `id_empresa`, `apellido1`, 
 (15, 14, 'Alfageme', 'Langdon', 'Ana', '51069694B', NULL),
 (16, 15, 'Hernando', 'Herrero', 'Teresa', '50474566P', NULL),
 (17, 16, 'Ramiro', NULL, 'Ana', '06255766L', NULL),
-(18, 17, 'Aguilar-Tablada', 'Masso', 'María Victoria', '43624572N', NULL),
+(18, 17, 'Aguilar', 'Tablada-Massó', 'María Victoria', '43624572N', NULL),
 (19, 18, 'Ruiz', 'Mora', 'Daniel', '49007655Z', NULL),
 (20, 19, 'Grande', 'Santamaría', 'Julián', '52100377H', NULL),
 (21, 22, 'García', 'Cardoza', 'Beder David', '03188516A', NULL),
@@ -17889,6 +17909,19 @@ ALTER TABLE `asistencia_mensual`
   ADD KEY `fk_as_mes` (`id_mes`);
 
 --
+-- Indices de la tabla `calificaciones`
+--
+ALTER TABLE `calificaciones`
+  ADD PRIMARY KEY (`id_calificacion`),
+  ADD UNIQUE KEY `uq_calificacion_contexto` (`id_alumno`,`id_curso_escolar`,`id_ciclo`,`id_curso`,`id_grupo`,`id_modulo`),
+  ADD KEY `idx_cal_alumno` (`id_alumno`),
+  ADD KEY `idx_cal_curso_escolar` (`id_curso_escolar`),
+  ADD KEY `idx_cal_ciclo` (`id_ciclo`),
+  ADD KEY `idx_cal_curso` (`id_curso`),
+  ADD KEY `idx_cal_grupo` (`id_grupo`),
+  ADD KEY `idx_cal_modulo` (`id_modulo`);
+
+--
 -- Indices de la tabla `ciclos`
 --
 ALTER TABLE `ciclos`
@@ -18138,6 +18171,12 @@ ALTER TABLE `asistencia_mensual`
   MODIFY `id_asistencia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `calificaciones`
+--
+ALTER TABLE `calificaciones`
+  MODIFY `id_calificacion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `ciclos`
 --
 ALTER TABLE `ciclos`
@@ -18359,6 +18398,17 @@ ALTER TABLE `asistencia_mensual`
   ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_as_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_as_mes` FOREIGN KEY (`id_mes`) REFERENCES `meses` (`id_mes`);
+
+--
+-- Filtros para la tabla `calificaciones`
+--
+ALTER TABLE `calificaciones`
+  ADD CONSTRAINT `fk_cal_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cal_ciclo` FOREIGN KEY (`id_ciclo`) REFERENCES `ciclos` (`id_ciclo`),
+  ADD CONSTRAINT `fk_cal_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`),
+  ADD CONSTRAINT `fk_cal_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
+  ADD CONSTRAINT `fk_cal_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`),
+  ADD CONSTRAINT `fk_cal_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`);
 
 --
 -- Filtros para la tabla `criterios_evaluacion`
