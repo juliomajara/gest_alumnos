@@ -63,9 +63,6 @@ $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $
 $selected_group = (string) ($_GET['id_grupo'] ?? '');
 $selected_group = ctype_digit($selected_group) ? $selected_group : '';
 
-$selected_student = (string) ($_GET['id_alumno'] ?? '');
-$selected_student = ctype_digit($selected_student) ? $selected_student : '';
-
 $selected_evaluation = isset($_GET['id_evaluacion']) && ctype_digit((string) $_GET['id_evaluacion'])
   ? (int) $_GET['id_evaluacion']
   : $latest_normal_evaluation_id;
@@ -82,111 +79,68 @@ $groups_stmt->execute([
 ]);
 $groups = $groups_stmt->fetchAll();
 
-$students_filter_sql =
-  'SELECT a.id_alumno, a.apellido1, a.apellido2, a.nombre
-   FROM alumno_curso ac
-   INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
-   WHERE ac.id_curso_escolar = :id_curso_escolar';
-$students_filter_params = [
-  'id_curso_escolar' => $selected_course_id,
-];
-
-if ($selected_group !== '') {
-  $students_filter_sql .= ' AND ac.id_grupo = :id_grupo';
-  $students_filter_params['id_grupo'] = (int) $selected_group;
-}
-
-$students_filter_sql .= ' ORDER BY a.apellido1, a.apellido2, a.nombre';
-
-$students_filter_stmt = $pdo->prepare($students_filter_sql);
-$students_filter_stmt->execute($students_filter_params);
-$student_options = $students_filter_stmt->fetchAll();
-
 $evaluation_ids = array_map(static fn (array $evaluation): int => (int) $evaluation['id_evaluacion'], $evaluations);
 if (!in_array($selected_evaluation, $evaluation_ids, true)) {
   $selected_evaluation = $latest_normal_evaluation_id;
 }
 
-$students_sql =
-  'SELECT
-     a.id_alumno,
-     a.apellido1,
-     a.apellido2,
-     a.nombre,
-     g.grupo
-   FROM alumno_curso ac
-   INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
-   LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
-   WHERE ac.id_curso_escolar = :id_curso_escolar';
-$students_params = [
-  'id_curso_escolar' => $selected_course_id,
-];
-
-if ($selected_group !== '') {
-  $students_sql .= ' AND ac.id_grupo = :id_grupo';
-  $students_params['id_grupo'] = (int) $selected_group;
-}
-
-if ($selected_student !== '') {
-  $students_sql .= ' AND ac.id_alumno = :id_alumno';
-  $students_params['id_alumno'] = (int) $selected_student;
-}
-
-$students_sql .= ' ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre';
-
-$students_stmt = $pdo->prepare($students_sql);
-$students_stmt->execute($students_params);
-$students = $students_stmt->fetchAll();
-
-$modules_sql =
-  'SELECT DISTINCT
-     m.id_modulo,
-     m.codigo,
-     m.abreviatura,
-     m.materia_general,
-     m.materia_propia
-   FROM modulos m
-   INNER JOIN alumno_curso ac
-     ON ac.id_ciclo = m.id_ciclo
-    AND ac.id_curso = m.id_curso
-   WHERE ac.id_curso_escolar = :id_curso_escolar';
-$modules_params = [
-  'id_curso_escolar' => $selected_course_id,
-];
-
-if ($selected_group !== '') {
-  $modules_sql .= ' AND ac.id_grupo = :id_grupo';
-  $modules_params['id_grupo'] = (int) $selected_group;
-}
-
-if ($selected_student !== '') {
-  $modules_sql .= ' AND ac.id_alumno = :id_alumno';
-  $modules_params['id_alumno'] = (int) $selected_student;
-}
-
-$modules_sql .= ' ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo';
-
-$modules_stmt = $pdo->prepare($modules_sql);
-$modules_stmt->execute($modules_params);
-$modules = $modules_stmt->fetchAll();
-
+$show_results = $selected_group !== '';
+$students = [];
+$modules = [];
 $grades_by_student = [];
-if ($students !== [] && $modules !== [] && $selected_evaluation > 0) {
+$grades_history_by_student = [];
+if ($show_results) {
+  $students_sql =
+    'SELECT
+       a.id_alumno,
+       a.apellido1,
+       a.apellido2,
+       a.nombre,
+       g.grupo
+     FROM alumno_curso ac
+     INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
+     LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
+     WHERE ac.id_curso_escolar = :id_curso_escolar
+       AND ac.id_grupo = :id_grupo
+     ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre';
+  $students_stmt = $pdo->prepare($students_sql);
+  $students_stmt->execute([
+    'id_curso_escolar' => $selected_course_id,
+    'id_grupo' => (int) $selected_group,
+  ]);
+  $students = $students_stmt->fetchAll();
+
+  $modules_sql =
+    'SELECT DISTINCT
+       m.id_modulo,
+       m.codigo,
+       m.abreviatura,
+       m.materia_general,
+       m.materia_propia
+     FROM modulos m
+     INNER JOIN alumno_curso ac
+       ON ac.id_ciclo = m.id_ciclo
+      AND ac.id_curso = m.id_curso
+     WHERE ac.id_curso_escolar = :id_curso_escolar
+       AND ac.id_grupo = :id_grupo
+     ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo';
+  $modules_stmt = $pdo->prepare($modules_sql);
+  $modules_stmt->execute([
+    'id_curso_escolar' => $selected_course_id,
+    'id_grupo' => (int) $selected_group,
+  ]);
+  $modules = $modules_stmt->fetchAll();
+}
+
+if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation > 0) {
   $grade_filters = ['c.id_curso_escolar = :id_curso_escolar', 'c.id_evaluacion = :id_evaluacion'];
   $grade_params = [
     'id_curso_escolar' => $selected_course_id,
     'id_evaluacion' => $selected_evaluation,
   ];
 
-  if ($selected_group !== '') {
-    $grade_filters[] = 'c.id_grupo = :id_grupo';
-    $grade_params['id_grupo'] = (int) $selected_group;
-  }
-
-  if ($selected_student !== '') {
-    $grade_filters[] = 'c.id_alumno = :id_alumno';
-    $grade_params['id_alumno'] = (int) $selected_student;
-  }
+  $grade_filters[] = 'c.id_grupo = :id_grupo';
+  $grade_params['id_grupo'] = (int) $selected_group;
 
   $grades_stmt = $pdo->prepare(
     'SELECT
@@ -215,6 +169,44 @@ if ($students !== [] && $modules !== [] && $selected_evaluation > 0) {
 
     $grades_by_student[$id_alumno][$id_modulo] = $display_grade;
   }
+
+  $grades_history_stmt = $pdo->prepare(
+    'SELECT
+       c.id_alumno,
+       c.id_modulo,
+       e.nombre AS evaluacion_nombre,
+       c.calificacion_original,
+       c.nota
+     FROM calificaciones c
+     INNER JOIN evaluaciones e ON e.id_evaluacion = c.id_evaluacion
+     WHERE c.id_curso_escolar = :id_curso_escolar
+       AND c.id_grupo = :id_grupo
+     ORDER BY e.id_evaluacion, c.id_calificacion'
+  );
+  $grades_history_stmt->execute([
+    'id_curso_escolar' => $selected_course_id,
+    'id_grupo' => (int) $selected_group,
+  ]);
+  $grades_history = $grades_history_stmt->fetchAll();
+
+  foreach ($grades_history as $history_row) {
+    $id_alumno = (int) $history_row['id_alumno'];
+    $id_modulo = (int) $history_row['id_modulo'];
+    $calificacion_original = trim((string) ($history_row['calificacion_original'] ?? ''));
+
+    if ($calificacion_original !== '') {
+      $display_grade = $calificacion_original;
+    } elseif ($history_row['nota'] !== null && $history_row['nota'] !== '') {
+      $display_grade = rtrim(rtrim(number_format((float) $history_row['nota'], 2, '.', ''), '0'), '.');
+    } else {
+      $display_grade = '—';
+    }
+
+    $grades_history_by_student[$id_alumno][$id_modulo][] = [
+      'evaluacion' => (string) $history_row['evaluacion_nombre'],
+      'nota' => $display_grade,
+    ];
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -236,7 +228,7 @@ if ($students !== [] && $modules !== [] && $selected_evaluation > 0) {
       <header class="header">
         <div>
           <h1>Calificaciones</h1>
-          <p class="subheading">Consulta las notas por curso escolar, grupo, alumno y evaluación.</p>
+          <p class="subheading">Consulta las notas por curso escolar, grupo y evaluación.</p>
         </div>
       </header>
 
@@ -254,28 +246,10 @@ if ($students !== [] && $modules !== [] && $selected_evaluation > 0) {
 
           <label class="calendar-select">
             <select name="id_grupo" onchange="this.form.submit()">
-              <option value="">Todos los grupos</option>
+              <option value="">Selecciona grupo</option>
               <?php foreach ($groups as $group): ?>
                 <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
                   <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-
-          <label class="calendar-select">
-            <select name="id_alumno" onchange="this.form.submit()">
-              <option value="">Todos los alumnos</option>
-              <?php foreach ($student_options as $student): ?>
-                <?php
-                  $apellido2 = trim((string) ($student['apellido2'] ?? ''));
-                  $nombre_completo = trim((string) $student['apellido1'])
-                    . ($apellido2 !== '' ? ' ' . $apellido2 : '')
-                    . ', '
-                    . trim((string) $student['nombre']);
-                ?>
-                <option value="<?php echo (int) $student['id_alumno']; ?>" <?php echo (string) $student['id_alumno'] === $selected_student ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -293,77 +267,118 @@ if ($students !== [] && $modules !== [] && $selected_evaluation > 0) {
         </div>
       </form>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h3>Tabla de calificaciones</h3>
-          <p>Alumnado del contexto seleccionado y sus notas por módulo para la evaluación elegida.</p>
-        </div>
+      <?php if ($show_results): ?>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Tabla de calificaciones</h3>
+            <p>Alumnado del contexto seleccionado y sus notas por módulo para la evaluación elegida.</p>
+          </div>
 
-        <div class="panel-grid">
-          <table>
-            <thead>
-              <tr>
-                <th>Grupo</th>
-                <th>Apellidos y nombre</th>
-                <?php foreach ($modules as $module): ?>
-                  <?php
-                    $module_label = trim((string) $module['codigo']);
-                    $module_name = trim((string) ($module['materia_general'] ?? ''));
-                    if ($module_name === '') {
-                      $module_name = trim((string) ($module['materia_propia'] ?? ''));
-                    }
-                    if ($module_label !== '' && $module_name !== '') {
-                      $module_label .= ' · ' . $module_name;
-                    } elseif ($module_name !== '') {
-                      $module_label = $module_name;
-                    } elseif ($module_label === '') {
-                      $module_label = trim((string) ($module['abreviatura'] ?? 'Módulo'));
-                    }
-                  ?>
-                  <th><?php echo htmlspecialchars($module_label, ENT_QUOTES, 'UTF-8'); ?></th>
-                <?php endforeach; ?>
-              </tr>
-            </thead>
-            <tbody>
-              <?php if ($students === []): ?>
+          <div class="panel-grid">
+            <table>
+              <thead>
                 <tr>
-                  <td colspan="<?php echo 2 + count($modules); ?>">No hay alumnos para los filtros seleccionados.</td>
+                  <th>Grupo</th>
+                  <th>Apellidos y nombre</th>
+                  <?php foreach ($modules as $module): ?>
+                    <?php
+                      $module_code = trim((string) $module['codigo']);
+                      if ($module_code === '') {
+                        $module_code = trim((string) ($module['abreviatura'] ?? 'Módulo'));
+                      }
+                      $module_name = trim((string) ($module['materia_general'] ?? ''));
+                      if ($module_name === '') {
+                        $module_name = trim((string) ($module['materia_propia'] ?? ''));
+                      }
+                    ?>
+                    <th>
+                      <span class="help-tooltip">
+                        <span tabindex="0"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="help-tooltip-content" role="tooltip">
+                          <span class="help-tooltip-title"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
+                          <div>
+                            <?php if ($module_name !== ''): ?>
+                              <div><strong>Módulo:</strong> <?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
+                            <?php endif; ?>
+                            <?php if (trim((string) ($module['abreviatura'] ?? '')) !== ''): ?>
+                              <div><strong>Abreviatura:</strong> <?php echo htmlspecialchars((string) $module['abreviatura'], ENT_QUOTES, 'UTF-8'); ?></div>
+                            <?php endif; ?>
+                          </div>
+                        </span>
+                      </span>
+                    </th>
+                  <?php endforeach; ?>
                 </tr>
-              <?php elseif ($modules === []): ?>
-                <tr>
-                  <td colspan="2">No hay módulos disponibles para el contexto seleccionado.</td>
-                </tr>
-              <?php else: ?>
-                <?php foreach ($students as $student): ?>
-                  <?php
-                    $id_alumno = (int) $student['id_alumno'];
-                    $apellido2 = trim((string) ($student['apellido2'] ?? ''));
-                    $nombre_completo = trim((string) $student['apellido1'])
-                      . ($apellido2 !== '' ? ' ' . $apellido2 : '')
-                      . ', '
-                      . trim((string) $student['nombre']);
-                    $grupo = trim((string) ($student['grupo'] ?? ''));
-                    if ($grupo === '') {
-                      $grupo = 'Sin grupo';
-                    }
-                  ?>
+              </thead>
+              <tbody>
+                <?php if ($students === []): ?>
                   <tr>
-                    <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <?php foreach ($modules as $module): ?>
-                      <?php
-                        $id_modulo = (int) $module['id_modulo'];
-                        $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
-                      ?>
-                      <td><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></td>
-                    <?php endforeach; ?>
+                    <td colspan="<?php echo 2 + count($modules); ?>">No hay alumnos para los filtros seleccionados.</td>
                   </tr>
-                <?php endforeach; ?>
-              <?php endif; ?>
-            </tbody>
-          </table>
-        </div>
-      </section>
+                <?php elseif ($modules === []): ?>
+                  <tr>
+                    <td colspan="2">No hay módulos disponibles para el contexto seleccionado.</td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($students as $student): ?>
+                    <?php
+                      $id_alumno = (int) $student['id_alumno'];
+                      $apellido2 = trim((string) ($student['apellido2'] ?? ''));
+                      $nombre_completo = trim((string) $student['apellido1'])
+                        . ($apellido2 !== '' ? ' ' . $apellido2 : '')
+                        . ', '
+                        . trim((string) $student['nombre']);
+                      $grupo = trim((string) ($student['grupo'] ?? ''));
+                      if ($grupo === '') {
+                        $grupo = 'Sin grupo';
+                      }
+                    ?>
+                    <tr>
+                      <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <?php foreach ($modules as $module): ?>
+                        <?php
+                          $id_modulo = (int) $module['id_modulo'];
+                          $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
+                          $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
+                        ?>
+                        <td>
+                          <span class="help-tooltip">
+                            <span tabindex="0"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="help-tooltip-content" role="tooltip">
+                              <span class="help-tooltip-title">Detalle por evaluación</span>
+                              <?php if ($history_rows === []): ?>
+                                <div>Sin calificaciones registradas.</div>
+                              <?php else: ?>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Evaluación</th>
+                                      <th>Nota</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <?php foreach ($history_rows as $history_row): ?>
+                                      <tr>
+                                        <td><?php echo htmlspecialchars($history_row['evaluacion'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?php echo htmlspecialchars($history_row['nota'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                      </tr>
+                                    <?php endforeach; ?>
+                                  </tbody>
+                                </table>
+                              <?php endif; ?>
+                            </span>
+                          </span>
+                        </td>
+                      <?php endforeach; ?>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      <?php endif; ?>
     </main>
   </div>
 </body>
