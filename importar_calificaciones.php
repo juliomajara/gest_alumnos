@@ -19,15 +19,15 @@ $result = [
 
 $selected = [
   'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? 0),
-  'id_ciclo' => (int) ($_POST['id_ciclo'] ?? 0),
-  'id_curso' => (int) ($_POST['id_curso'] ?? 0),
+  'id_ciclo' => 0,
+  'id_curso' => 0,
   'id_grupo' => (int) ($_POST['id_grupo'] ?? 0),
+  'id_evaluacion' => (int) ($_POST['id_evaluacion'] ?? 0),
 ];
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
-$ciclos = $pdo->query('SELECT id_ciclo, abreviatura, ciclo FROM ciclos ORDER BY abreviatura, ciclo')->fetchAll(PDO::FETCH_ASSOC);
-$cursos = $pdo->query('SELECT id_curso, curso FROM cursos ORDER BY id_curso')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
+$evaluaciones = $pdo->query('SELECT id_evaluacion, evaluacion FROM evaluaciones ORDER BY id_evaluacion')->fetchAll(PDO::FETCH_ASSOC);
 
 function normalize_name(string $value): string {
   $value = str_replace("\xc2\xa0", ' ', $value);
@@ -69,8 +69,8 @@ function parse_calificacion(string $raw): ?array {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  if ($selected['id_curso_escolar'] <= 0 || $selected['id_ciclo'] <= 0 || $selected['id_curso'] <= 0 || $selected['id_grupo'] <= 0) {
-    $errors[] = 'Debes seleccionar curso escolar, ciclo, curso y grupo.';
+  if ($selected['id_curso_escolar'] <= 0 || $selected['id_grupo'] <= 0 || $selected['id_evaluacion'] <= 0) {
+    $errors[] = 'Debes seleccionar curso escolar, grupo y evaluación.';
   }
 
   if (!isset($_FILES['csv_calificaciones']) || !is_uploaded_file($_FILES['csv_calificaciones']['tmp_name'])) {
@@ -78,15 +78,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   if ($errors === []) {
-    $grupo_valido_stmt = $pdo->prepare('SELECT 1 FROM grupos WHERE id_grupo = :id_grupo AND id_ciclo = :id_ciclo AND id_curso = :id_curso LIMIT 1');
+    $grupo_valido_stmt = $pdo->prepare('SELECT id_ciclo, id_curso FROM grupos WHERE id_grupo = :id_grupo LIMIT 1');
     $grupo_valido_stmt->execute([
       'id_grupo' => $selected['id_grupo'],
-      'id_ciclo' => $selected['id_ciclo'],
-      'id_curso' => $selected['id_curso'],
+    ]);
+    $grupo_contexto = $grupo_valido_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$grupo_contexto) {
+      $errors[] = 'El grupo seleccionado no es válido.';
+    } else {
+      $selected['id_ciclo'] = (int) $grupo_contexto['id_ciclo'];
+      $selected['id_curso'] = (int) $grupo_contexto['id_curso'];
+    }
+
+    $evaluacion_valida_stmt = $pdo->prepare('SELECT 1 FROM evaluaciones WHERE id_evaluacion = :id_evaluacion LIMIT 1');
+    $evaluacion_valida_stmt->execute([
+      'id_evaluacion' => $selected['id_evaluacion'],
     ]);
 
-    if (!$grupo_valido_stmt->fetchColumn()) {
-      $errors[] = 'El grupo seleccionado no pertenece al ciclo y curso indicados.';
+    if (!$evaluacion_valida_stmt->fetchColumn()) {
+      $errors[] = 'La evaluación seleccionada no es válida.';
     }
   }
 
@@ -178,9 +189,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           $upsert_stmt = $pdo->prepare(
             'INSERT INTO calificaciones
-              (id_alumno, id_curso_escolar, id_ciclo, id_curso, id_grupo, id_modulo, calificacion_original, prefijo, nota)
+              (id_alumno, id_curso_escolar, id_ciclo, id_curso, id_grupo, id_modulo, id_evaluacion, calificacion_original, prefijo, nota)
              VALUES
-              (:id_alumno, :id_curso_escolar, :id_ciclo, :id_curso, :id_grupo, :id_modulo, :calificacion_original, :prefijo, :nota)
+              (:id_alumno, :id_curso_escolar, :id_ciclo, :id_curso, :id_grupo, :id_modulo, :id_evaluacion, :calificacion_original, :prefijo, :nota)
              ON DUPLICATE KEY UPDATE
               calificacion_original = VALUES(calificacion_original),
               prefijo = VALUES(prefijo),
@@ -233,6 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   'id_curso' => $selected['id_curso'],
                   'id_grupo' => $selected['id_grupo'],
                   'id_modulo' => (int) $modules_by_code[$module_code],
+                  'id_evaluacion' => $selected['id_evaluacion'],
                   'calificacion_original' => $parsed['calificacion_original'],
                   'prefijo' => $parsed['prefijo'],
                   'nota' => $parsed['nota'],
@@ -351,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="entity-section">
           <div class="panel-header">
             <h3>Contexto académico</h3>
-            <p>Selecciona curso escolar, ciclo, curso y grupo para esta importación.</p>
+            <p>Selecciona curso escolar, grupo y evaluación para esta importación.</p>
           </div>
 
           <div class="entity-grid entity-grid--4">
@@ -368,37 +380,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </label>
 
             <label>
-              Ciclo
-              <select name="id_ciclo" required>
-                <option value="">Selecciona ciclo</option>
-                <?php foreach ($ciclos as $item): ?>
-                  <?php $label = trim((string) $item['abreviatura']) !== '' ? ((string) $item['abreviatura'] . ' - ' . (string) $item['ciclo']) : (string) $item['ciclo']; ?>
-                  <option value="<?php echo (int) $item['id_ciclo']; ?>" <?php echo (int) $item['id_ciclo'] === $selected['id_ciclo'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-
-            <label>
-              Curso
-              <select name="id_curso" required>
-                <option value="">Selecciona curso</option>
-                <?php foreach ($cursos as $item): ?>
-                  <option value="<?php echo (int) $item['id_curso']; ?>" <?php echo (int) $item['id_curso'] === $selected['id_curso'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars((string) $item['curso'], ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-
-            <label>
               Grupo
               <select name="id_grupo" required>
                 <option value="">Selecciona grupo</option>
                 <?php foreach ($grupos as $item): ?>
                   <option value="<?php echo (int) $item['id_grupo']; ?>" <?php echo (int) $item['id_grupo'] === $selected['id_grupo'] ? 'selected' : ''; ?>>
                     <?php echo htmlspecialchars((string) $item['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+
+            <label>
+              Evaluación
+              <select name="id_evaluacion" required>
+                <option value="">Selecciona evaluación</option>
+                <?php foreach ($evaluaciones as $item): ?>
+                  <option value="<?php echo (int) $item['id_evaluacion']; ?>" <?php echo (int) $item['id_evaluacion'] === $selected['id_evaluacion'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars((string) $item['evaluacion'], ENT_QUOTES, 'UTF-8'); ?>
                   </option>
                 <?php endforeach; ?>
               </select>
