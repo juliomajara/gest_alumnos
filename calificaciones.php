@@ -113,6 +113,8 @@ if ($show_results) {
   $modules_sql =
     'SELECT DISTINCT
        m.id_modulo,
+       m.id_ciclo,
+       m.id_curso,
        m.codigo,
        m.abreviatura,
        m.materia_general,
@@ -130,6 +132,56 @@ if ($show_results) {
     'id_grupo' => (int) $selected_group,
   ]);
   $modules = $modules_stmt->fetchAll();
+
+  if ($selected_evaluation > 0) {
+    $additional_modules_stmt = $pdo->prepare(
+      'SELECT DISTINCT
+         m.id_modulo,
+         m.id_ciclo,
+         m.id_curso,
+         m.codigo,
+         m.abreviatura,
+         m.materia_general,
+         m.materia_propia
+       FROM calificaciones c
+       INNER JOIN modulos m ON m.id_modulo = c.id_modulo
+       INNER JOIN alumno_curso ac
+         ON ac.id_alumno = c.id_alumno
+        AND ac.id_curso_escolar = c.id_curso_escolar
+        AND ac.id_grupo = c.id_grupo
+       WHERE c.id_curso_escolar = :id_curso_escolar
+         AND c.id_grupo = :id_grupo
+         AND c.id_evaluacion = :id_evaluacion
+         AND (c.nota IS NOT NULL OR TRIM(COALESCE(c.calificacion_original, \'\')) <> \'\')
+         AND m.id_ciclo = ac.id_ciclo
+         AND m.id_curso <> ac.id_curso
+       ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo'
+    );
+    $additional_modules_stmt->execute([
+      'id_curso_escolar' => $selected_course_id,
+      'id_grupo' => (int) $selected_group,
+      'id_evaluacion' => $selected_evaluation,
+    ]);
+    $additional_modules = $additional_modules_stmt->fetchAll();
+
+    if ($additional_modules !== []) {
+      $modules_by_id = [];
+      foreach ($modules as $module) {
+        $modules_by_id[(int) $module['id_modulo']] = $module;
+      }
+      foreach ($additional_modules as $module) {
+        $modules_by_id[(int) $module['id_modulo']] = $module;
+      }
+      $modules = array_values($modules_by_id);
+      usort(
+        $modules,
+        static fn (array $module_a, array $module_b): int =>
+          [(int) $module_a['id_ciclo'], (int) $module_a['id_curso'], (string) $module_a['codigo'], (int) $module_a['id_modulo']]
+          <=>
+          [(int) $module_b['id_ciclo'], (int) $module_b['id_curso'], (string) $module_b['codigo'], (int) $module_b['id_modulo']]
+      );
+    }
+  }
 }
 
 if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation > 0) {
