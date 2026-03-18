@@ -349,8 +349,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       <form class="topbar" method="get">
         <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
-            <span class="calendar-select-label">Curso escolar</span>
-            <select name="id_curso_escolar" onchange="this.form.submit()">
+            <select name="id_curso_escolar" onchange="this.form.submit()" aria-label="Curso escolar">
               <?php foreach ($courses as $course): ?>
                 <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
                   <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
@@ -360,8 +359,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
           </label>
 
           <label class="calendar-select">
-            <span class="calendar-select-label">Grupo</span>
-            <select name="id_grupo" onchange="this.form.submit()">
+            <select name="id_grupo" onchange="this.form.submit()" aria-label="Grupo">
               <option value="">Selecciona grupo</option>
               <?php foreach ($groups as $group): ?>
                 <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
@@ -372,8 +370,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
           </label>
 
           <label class="calendar-select">
-            <span class="calendar-select-label">Evaluación</span>
-            <select name="id_evaluacion" onchange="this.form.submit()">
+            <select name="id_evaluacion" onchange="this.form.submit()" aria-label="Evaluación">
               <?php foreach ($evaluations as $evaluation): ?>
                 <option value="<?php echo (int) $evaluation['id_evaluacion']; ?>" <?php echo (int) $evaluation['id_evaluacion'] === $selected_evaluation ? 'selected' : ''; ?>>
                   <?php echo htmlspecialchars($evaluation['nombre'], ENT_QUOTES, 'UTF-8'); ?>
@@ -577,16 +574,26 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       let activeTooltip = null;
       let activeContainer = null;
 
+      tooltipContainers.forEach((container) => {
+        const tooltip = container.querySelector('.help-tooltip-content');
+        if (!tooltip) {
+          return;
+        }
+
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = '0px';
+        tooltip.style.top = '0px';
+        tooltip.style.right = 'auto';
+        tooltip.style.bottom = 'auto';
+      });
+
       const hideTooltip = (tooltip) => {
         if (!tooltip) {
           return;
         }
 
-        tooltip.style.position = '';
-        tooltip.style.left = '';
-        tooltip.style.top = '';
-        tooltip.style.right = '';
-        tooltip.style.bottom = '';
+        tooltip.style.right = 'auto';
+        tooltip.style.bottom = 'auto';
       };
 
       const positionTooltip = (container) => {

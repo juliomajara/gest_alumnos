@@ -96,7 +96,7 @@ $nav_items = [
   </div>
   <nav class="nav">
     <?php foreach ($nav_items as $item): ?>
-      <?php $icon_key = pathinfo((string) $item['icon'], PATHINFO_FILENAME); ?>
+      <?php $icon_key = (string) $item['key']; ?>
       <a
         class="nav-link<?php echo $item['key'] === $active_page ? ' active' : ''; ?>"
         href="<?php echo htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
