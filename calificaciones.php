@@ -153,17 +153,20 @@ if ($show_results) {
        AND ac.id_grupo = :id_grupo
        AND (
          :search_term = \'\'
-         OR a.nombre LIKE :search_term_like
-         OR a.apellido1 LIKE :search_term_like
-         OR a.apellido2 LIKE :search_term_like
+         OR a.nombre LIKE :search_term_like_nombre
+         OR a.apellido1 LIKE :search_term_like_apellido1
+         OR a.apellido2 LIKE :search_term_like_apellido2
        )
      ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre';
   $students_stmt = $pdo->prepare($students_sql);
+  $search_term_like = '%' . $search_term . '%';
   $students_stmt->execute([
     'id_curso_escolar' => $selected_course_id,
     'id_grupo' => (int) $selected_group,
     'search_term' => $search_term,
-    'search_term_like' => '%' . $search_term . '%',
+    'search_term_like_nombre' => $search_term_like,
+    'search_term_like_apellido1' => $search_term_like,
+    'search_term_like_apellido2' => $search_term_like,
   ]);
   $students = $students_stmt->fetchAll();
 
