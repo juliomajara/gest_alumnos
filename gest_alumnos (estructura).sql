@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 17-03-2026 a las 23:17:20
+-- Tiempo de generación: 18-03-2026 a las 09:29:49
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -110,6 +110,7 @@ CREATE TABLE `calificaciones` (
   `id_curso` int(10) UNSIGNED NOT NULL,
   `id_grupo` int(10) UNSIGNED NOT NULL,
   `id_modulo` int(10) UNSIGNED NOT NULL,
+  `evaluacion` varchar(20) NOT NULL,
   `calificacion_original` varchar(20) DEFAULT NULL,
   `prefijo` varchar(10) DEFAULT NULL,
   `nota` decimal(4,2) DEFAULT NULL,
@@ -275,6 +276,18 @@ CREATE TABLE `empresas_tutores` (
   `nombre` varchar(60) NOT NULL,
   `dni` varchar(20) DEFAULT NULL,
   `comentarios` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `evaluaciones`
+--
+
+CREATE TABLE `evaluaciones` (
+  `id_evaluacion` int(10) UNSIGNED NOT NULL,
+  `codigo` varchar(20) NOT NULL,
+  `nombre` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -702,6 +715,13 @@ ALTER TABLE `empresas_tutores`
   ADD KEY `fk_tut_empresa` (`id_empresa`);
 
 --
+-- Indices de la tabla `evaluaciones`
+--
+ALTER TABLE `evaluaciones`
+  ADD PRIMARY KEY (`id_evaluacion`),
+  ADD UNIQUE KEY `uq_evaluacion_codigo` (`codigo`);
+
+--
 -- Indices de la tabla `grupos`
 --
 ALTER TABLE `grupos`
@@ -937,6 +957,12 @@ ALTER TABLE `empresas_contactos`
 --
 ALTER TABLE `empresas_tutores`
   MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `evaluaciones`
+--
+ALTER TABLE `evaluaciones`
+  MODIFY `id_evaluacion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `grupos`
