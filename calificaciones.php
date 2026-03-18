@@ -20,48 +20,80 @@ if (!$active_course_id && $courses !== []) {
 }
 $active_course_id = (int) $active_course_id;
 
-$normal_evaluation_names = [
-  '1ª evaluación',
-  '2ª evaluación',
-  'Evaluación ordinaria',
-  'Evaluación extraordinaria',
-];
-$normal_placeholders = implode(',', array_fill(0, count($normal_evaluation_names), '?'));
-
-$latest_normal_evaluation_stmt = $pdo->prepare(
-  'SELECT c.id_evaluacion
-   FROM calificaciones c
-   INNER JOIN evaluaciones e ON e.id_evaluacion = c.id_evaluacion
-   WHERE e.nombre IN (' . $normal_placeholders . ')
-   ORDER BY c.fecha_importacion DESC, c.id_calificacion DESC
-   LIMIT 1'
-);
-$latest_normal_evaluation_stmt->execute($normal_evaluation_names);
-$latest_normal_evaluation_id = (int) ($latest_normal_evaluation_stmt->fetchColumn() ?: 0);
-
-if ($latest_normal_evaluation_id <= 0) {
-  $fallback_normal_evaluation_stmt = $pdo->prepare(
-    'SELECT id_evaluacion
-     FROM evaluaciones
-     WHERE nombre IN (' . $normal_placeholders . ')
-     ORDER BY id_evaluacion DESC
-     LIMIT 1'
-  );
-  $fallback_normal_evaluation_stmt->execute($normal_evaluation_names);
-  $latest_normal_evaluation_id = (int) ($fallback_normal_evaluation_stmt->fetchColumn() ?: 0);
-}
-
-$evaluations = $pdo->query('SELECT id_evaluacion, nombre FROM evaluaciones ORDER BY id_evaluacion')->fetchAll();
-if ($latest_normal_evaluation_id <= 0 && $evaluations !== []) {
-  $latest_normal_evaluation_id = (int) $evaluations[0]['id_evaluacion'];
-}
-
 $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $_GET['id_curso_escolar'])
   ? (int) $_GET['id_curso_escolar']
   : $active_course_id;
 
 $selected_group = (string) ($_GET['id_grupo'] ?? '');
 $selected_group = ctype_digit($selected_group) ? $selected_group : '';
+
+$normal_evaluation_names = [
+  '1ª evaluación',
+  '2ª evaluación',
+  'Evaluación ordinaria',
+  'Evaluación extraordinaria',
+];
+$normal_evaluation_order = array_flip($normal_evaluation_names);
+$normal_placeholders = implode(',', array_fill(0, count($normal_evaluation_names), '?'));
+
+$latest_normal_evaluation_sql =
+  'SELECT DISTINCT e.id_evaluacion, e.nombre
+   FROM calificaciones c
+   INNER JOIN evaluaciones e ON e.id_evaluacion = c.id_evaluacion
+   WHERE c.id_curso_escolar = :id_curso_escolar
+     AND e.nombre IN (' . $normal_placeholders . ')';
+$latest_normal_evaluation_params = array_merge(
+  ['id_curso_escolar' => $selected_course_id],
+  $normal_evaluation_names
+);
+if ($selected_group !== '') {
+  $latest_normal_evaluation_sql .= ' AND c.id_grupo = :id_grupo';
+  $latest_normal_evaluation_params['id_grupo'] = (int) $selected_group;
+}
+$latest_normal_evaluation_stmt = $pdo->prepare($latest_normal_evaluation_sql);
+$latest_normal_evaluation_stmt->execute($latest_normal_evaluation_params);
+$available_normal_evaluations = $latest_normal_evaluation_stmt->fetchAll();
+
+$latest_normal_evaluation_id = 0;
+$latest_normal_evaluation_index = -1;
+foreach ($available_normal_evaluations as $evaluation_row) {
+  $evaluation_name = (string) ($evaluation_row['nombre'] ?? '');
+  if (!array_key_exists($evaluation_name, $normal_evaluation_order)) {
+    continue;
+  }
+  $evaluation_index = $normal_evaluation_order[$evaluation_name];
+  if ($evaluation_index >= $latest_normal_evaluation_index) {
+    $latest_normal_evaluation_index = $evaluation_index;
+    $latest_normal_evaluation_id = (int) $evaluation_row['id_evaluacion'];
+  }
+}
+
+if ($latest_normal_evaluation_id <= 0) {
+  $fallback_normal_evaluation_stmt = $pdo->prepare(
+    'SELECT id_evaluacion, nombre
+     FROM evaluaciones
+     WHERE nombre IN (' . $normal_placeholders . ')'
+  );
+  $fallback_normal_evaluation_stmt->execute($normal_evaluation_names);
+  $fallback_normal_evaluations = $fallback_normal_evaluation_stmt->fetchAll();
+
+  foreach ($fallback_normal_evaluations as $evaluation_row) {
+    $evaluation_name = (string) ($evaluation_row['nombre'] ?? '');
+    if (!array_key_exists($evaluation_name, $normal_evaluation_order)) {
+      continue;
+    }
+    $evaluation_index = $normal_evaluation_order[$evaluation_name];
+    if ($evaluation_index >= $latest_normal_evaluation_index) {
+      $latest_normal_evaluation_index = $evaluation_index;
+      $latest_normal_evaluation_id = (int) $evaluation_row['id_evaluacion'];
+    }
+  }
+}
+
+$evaluations = $pdo->query('SELECT id_evaluacion, nombre FROM evaluaciones ORDER BY id_evaluacion')->fetchAll();
+if ($latest_normal_evaluation_id <= 0 && $evaluations !== []) {
+  $latest_normal_evaluation_id = (int) $evaluations[0]['id_evaluacion'];
+}
 
 $selected_evaluation = isset($_GET['id_evaluacion']) && ctype_digit((string) $_GET['id_evaluacion'])
   ? (int) $_GET['id_evaluacion']
@@ -78,10 +110,18 @@ $groups_stmt->execute([
   'id_curso_escolar' => $selected_course_id,
 ]);
 $groups = $groups_stmt->fetchAll();
+$groups_by_id = [];
+foreach ($groups as $group) {
+  $groups_by_id[(int) $group['id_grupo']] = (string) $group['grupo'];
+}
 
 $evaluation_ids = array_map(static fn (array $evaluation): int => (int) $evaluation['id_evaluacion'], $evaluations);
 if (!in_array($selected_evaluation, $evaluation_ids, true)) {
   $selected_evaluation = $latest_normal_evaluation_id;
+}
+$evaluation_name_by_id = [];
+foreach ($evaluations as $evaluation) {
+  $evaluation_name_by_id[(int) $evaluation['id_evaluacion']] = (string) $evaluation['nombre'];
 }
 
 $show_results = $selected_group !== '';
@@ -285,8 +325,9 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       </header>
 
       <form class="topbar" method="get">
-        <div class="topbar-actions">
+        <div class="topbar-actions entity-grid entity-grid--3">
           <label class="calendar-select">
+            <span class="calendar-select-label">Curso escolar</span>
             <select name="id_curso_escolar" onchange="this.form.submit()">
               <?php foreach ($courses as $course): ?>
                 <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
@@ -297,6 +338,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
           </label>
 
           <label class="calendar-select">
+            <span class="calendar-select-label">Grupo</span>
             <select name="id_grupo" onchange="this.form.submit()">
               <option value="">Selecciona grupo</option>
               <?php foreach ($groups as $group): ?>
@@ -308,6 +350,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
           </label>
 
           <label class="calendar-select">
+            <span class="calendar-select-label">Evaluación</span>
             <select name="id_evaluacion" onchange="this.form.submit()">
               <?php foreach ($evaluations as $evaluation): ?>
                 <option value="<?php echo (int) $evaluation['id_evaluacion']; ?>" <?php echo (int) $evaluation['id_evaluacion'] === $selected_evaluation ? 'selected' : ''; ?>>
@@ -322,7 +365,14 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       <?php if ($show_results): ?>
         <section class="panel">
           <div class="panel-header">
-            <h3>Tabla de calificaciones</h3>
+            <?php
+              $selected_group_name = $selected_group !== '' ? trim((string) ($groups_by_id[(int) $selected_group] ?? '')) : '';
+              if ($selected_group_name === '') {
+                $selected_group_name = 'Sin grupo';
+              }
+              $selected_evaluation_name = trim((string) ($evaluation_name_by_id[$selected_evaluation] ?? ''));
+            ?>
+            <h3>Tabla de calificaciones de <?php echo htmlspecialchars($selected_group_name, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($selected_evaluation_name, ENT_QUOTES, 'UTF-8'); ?></h3>
             <p>Alumnado del contexto seleccionado y sus notas por módulo para la evaluación elegida.</p>
           </div>
 
@@ -330,7 +380,6 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
             <table>
               <thead>
                 <tr>
-                  <th>Grupo</th>
                   <th>Apellidos y nombre</th>
                   <?php foreach ($modules as $module): ?>
                     <?php
@@ -342,18 +391,26 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                       if ($module_name === '') {
                         $module_name = trim((string) ($module['materia_propia'] ?? ''));
                       }
+                      $module_abbreviation = trim((string) ($module['abreviatura'] ?? ''));
+                      $module_course = (int) ($module['id_curso'] ?? 0);
+                      $module_course_label = $module_course > 0 ? $module_course . 'º' : '';
                     ?>
                     <th>
                       <span class="help-tooltip">
                         <span tabindex="0"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
                         <span class="help-tooltip-content" role="tooltip">
-                          <span class="help-tooltip-title"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
+                          <span class="help-tooltip-title">
+                            <?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>
+                            <?php if ($module_abbreviation !== ''): ?>
+                              <?php echo ' ' . htmlspecialchars($module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>
+                            <?php endif; ?>
+                            <?php if ($module_course_label !== ''): ?>
+                              <?php echo ' (' . htmlspecialchars($module_course_label, ENT_QUOTES, 'UTF-8') . ')'; ?>
+                            <?php endif; ?>
+                          </span>
                           <div>
                             <?php if ($module_name !== ''): ?>
-                              <div><strong>Módulo:</strong> <?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
-                            <?php endif; ?>
-                            <?php if (trim((string) ($module['abreviatura'] ?? '')) !== ''): ?>
-                              <div><strong>Abreviatura:</strong> <?php echo htmlspecialchars((string) $module['abreviatura'], ENT_QUOTES, 'UTF-8'); ?></div>
+                              <div><?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
                             <?php endif; ?>
                           </div>
                         </span>
@@ -365,11 +422,11 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
               <tbody>
                 <?php if ($students === []): ?>
                   <tr>
-                    <td colspan="<?php echo 2 + count($modules); ?>">No hay alumnos para los filtros seleccionados.</td>
+                    <td colspan="<?php echo 1 + count($modules); ?>">No hay alumnos para los filtros seleccionados.</td>
                   </tr>
                 <?php elseif ($modules === []): ?>
                   <tr>
-                    <td colspan="2">No hay módulos disponibles para el contexto seleccionado.</td>
+                    <td>No hay módulos disponibles para el contexto seleccionado.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($students as $student): ?>
@@ -380,14 +437,9 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                         . ($apellido2 !== '' ? ' ' . $apellido2 : '')
                         . ', '
                         . trim((string) $student['nombre']);
-                      $grupo = trim((string) ($student['grupo'] ?? ''));
-                      if ($grupo === '') {
-                        $grupo = 'Sin grupo';
-                      }
                     ?>
                     <tr>
-                      <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><a class="practice-link" href="alumno_detalle.php?id_alumno=<?php echo (int) $id_alumno; ?>"><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></a></td>
                       <?php foreach ($modules as $module): ?>
                         <?php
                           $id_modulo = (int) $module['id_modulo'];
