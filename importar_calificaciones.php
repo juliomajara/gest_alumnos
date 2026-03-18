@@ -27,7 +27,7 @@ $selected = [
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
-$evaluaciones = $pdo->query('SELECT id_evaluacion, evaluacion FROM evaluaciones ORDER BY id_evaluacion')->fetchAll(PDO::FETCH_ASSOC);
+$evaluaciones = $pdo->query('SELECT id_evaluacion, nombre AS evaluacion FROM evaluaciones ORDER BY id_evaluacion')->fetchAll(PDO::FETCH_ASSOC);
 
 function normalize_name(string $value): string {
   $value = str_replace("\xc2\xa0", ' ', $value);
