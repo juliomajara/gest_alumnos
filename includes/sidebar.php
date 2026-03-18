@@ -47,7 +47,7 @@ $nav_items = [
     'key' => 'calificaciones',
     'label' => 'Calificaciones',
     'href' => 'calificaciones.php',
-    'icon' => 'assets/icons/evaluacion.svg',
+    'icon' => 'assets/icons/calificaciones.svg',
   ],
   [
     'key' => 'modulos',
