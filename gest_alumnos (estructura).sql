@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-03-2026 a las 09:29:49
+-- Tiempo de generación: 18-03-2026 a las 10:59:23
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -110,7 +110,7 @@ CREATE TABLE `calificaciones` (
   `id_curso` int(10) UNSIGNED NOT NULL,
   `id_grupo` int(10) UNSIGNED NOT NULL,
   `id_modulo` int(10) UNSIGNED NOT NULL,
-  `evaluacion` varchar(20) NOT NULL,
+  `id_evaluacion` int(10) UNSIGNED NOT NULL,
   `calificacion_original` varchar(20) DEFAULT NULL,
   `prefijo` varchar(10) DEFAULT NULL,
   `nota` decimal(4,2) DEFAULT NULL,
@@ -628,13 +628,14 @@ ALTER TABLE `asistencia_mensual`
 --
 ALTER TABLE `calificaciones`
   ADD PRIMARY KEY (`id_calificacion`),
-  ADD UNIQUE KEY `uq_calificacion_contexto` (`id_alumno`,`id_curso_escolar`,`id_ciclo`,`id_curso`,`id_grupo`,`id_modulo`),
+  ADD UNIQUE KEY `uq_calificacion_contexto` (`id_alumno`,`id_curso_escolar`,`id_ciclo`,`id_curso`,`id_grupo`,`id_modulo`,`id_evaluacion`),
   ADD KEY `idx_cal_alumno` (`id_alumno`),
   ADD KEY `idx_cal_curso_escolar` (`id_curso_escolar`),
   ADD KEY `idx_cal_ciclo` (`id_ciclo`),
   ADD KEY `idx_cal_curso` (`id_curso`),
   ADD KEY `idx_cal_grupo` (`id_grupo`),
-  ADD KEY `idx_cal_modulo` (`id_modulo`);
+  ADD KEY `idx_cal_modulo` (`id_modulo`),
+  ADD KEY `idx_cal_evaluacion` (`id_evaluacion`);
 
 --
 -- Indices de la tabla `ciclos`
@@ -1135,6 +1136,7 @@ ALTER TABLE `calificaciones`
   ADD CONSTRAINT `fk_cal_ciclo` FOREIGN KEY (`id_ciclo`) REFERENCES `ciclos` (`id_ciclo`),
   ADD CONSTRAINT `fk_cal_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`),
   ADD CONSTRAINT `fk_cal_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
+  ADD CONSTRAINT `fk_cal_evaluacion` FOREIGN KEY (`id_evaluacion`) REFERENCES `evaluaciones` (`id_evaluacion`),
   ADD CONSTRAINT `fk_cal_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`),
   ADD CONSTRAINT `fk_cal_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`);
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-03-2026 a las 09:19:44
+-- Tiempo de generación: 18-03-2026 a las 10:59:10
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -703,12 +703,54 @@ CREATE TABLE `calificaciones` (
   `id_curso` int(10) UNSIGNED NOT NULL,
   `id_grupo` int(10) UNSIGNED NOT NULL,
   `id_modulo` int(10) UNSIGNED NOT NULL,
-  `evaluacion` varchar(20) NOT NULL,
+  `id_evaluacion` int(10) UNSIGNED NOT NULL,
   `calificacion_original` varchar(20) DEFAULT NULL,
   `prefijo` varchar(10) DEFAULT NULL,
   `nota` decimal(4,2) DEFAULT NULL,
   `fecha_importacion` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `calificaciones`
+--
+
+INSERT INTO `calificaciones` (`id_calificacion`, `id_alumno`, `id_curso_escolar`, `id_ciclo`, `id_curso`, `id_grupo`, `id_modulo`, `id_evaluacion`, `calificacion_original`, `prefijo`, `nota`, `fecha_importacion`) VALUES
+(1, 26, 1, 1, 2, 4, 8, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(2, 26, 1, 1, 2, 4, 9, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(3, 26, 1, 1, 2, 4, 10, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(4, 26, 1, 1, 2, 4, 11, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(5, 26, 1, 1, 2, 4, 12, 2, '9', NULL, 9.00, '2026-03-18 10:32:26'),
+(6, 26, 1, 1, 2, 4, 13, 2, '3', NULL, 3.00, '2026-03-18 10:32:26'),
+(7, 26, 1, 1, 2, 4, 14, 2, '7', NULL, 7.00, '2026-03-18 10:32:26'),
+(8, 26, 1, 1, 2, 4, 15, 2, '7', NULL, 7.00, '2026-03-18 10:32:26'),
+(9, 26, 1, 1, 2, 4, 16, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(10, 37, 1, 1, 2, 4, 8, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(11, 37, 1, 1, 2, 4, 9, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(12, 37, 1, 1, 2, 4, 10, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(13, 37, 1, 1, 2, 4, 11, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(14, 37, 1, 1, 2, 4, 12, 2, '8', NULL, 8.00, '2026-03-18 10:32:26'),
+(15, 37, 1, 1, 2, 4, 13, 2, '3', NULL, 3.00, '2026-03-18 10:32:26'),
+(16, 37, 1, 1, 2, 4, 14, 2, '7', NULL, 7.00, '2026-03-18 10:32:26'),
+(17, 37, 1, 1, 2, 4, 15, 2, '8', NULL, 8.00, '2026-03-18 10:32:26'),
+(18, 37, 1, 1, 2, 4, 16, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(19, 45, 1, 1, 2, 4, 8, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(20, 45, 1, 1, 2, 4, 9, 2, 'TC-7', 'TC', 7.00, '2026-03-18 10:32:26'),
+(21, 45, 1, 1, 2, 4, 10, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(22, 45, 1, 1, 2, 4, 11, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(23, 45, 1, 1, 2, 4, 12, 2, 'CV-7', 'CV', 7.00, '2026-03-18 10:32:26'),
+(24, 45, 1, 1, 2, 4, 13, 2, 'CV-5', 'CV', 5.00, '2026-03-18 10:32:26'),
+(25, 45, 1, 1, 2, 4, 14, 2, '5', NULL, 5.00, '2026-03-18 10:32:26'),
+(26, 45, 1, 1, 2, 4, 15, 2, '5', NULL, 5.00, '2026-03-18 10:32:26'),
+(27, 45, 1, 1, 2, 4, 16, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(28, 48, 1, 1, 2, 4, 8, 2, '6', NULL, 6.00, '2026-03-18 10:32:26'),
+(29, 48, 1, 1, 2, 4, 9, 2, '3', NULL, 3.00, '2026-03-18 10:32:26'),
+(30, 48, 1, 1, 2, 4, 10, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(31, 48, 1, 1, 2, 4, 11, 2, '1', NULL, 1.00, '2026-03-18 10:32:26'),
+(32, 48, 1, 1, 2, 4, 12, 2, '8', NULL, 8.00, '2026-03-18 10:32:26'),
+(33, 48, 1, 1, 2, 4, 13, 2, '4', NULL, 4.00, '2026-03-18 10:32:26'),
+(34, 48, 1, 1, 2, 4, 14, 2, '8', NULL, 8.00, '2026-03-18 10:32:26'),
+(35, 48, 1, 1, 2, 4, 15, 2, '7', NULL, 7.00, '2026-03-18 10:32:26'),
+(36, 48, 1, 1, 2, 4, 16, 2, '2', NULL, 2.00, '2026-03-18 10:32:26');
 
 -- --------------------------------------------------------
 
@@ -17938,13 +17980,14 @@ ALTER TABLE `asistencia_mensual`
 --
 ALTER TABLE `calificaciones`
   ADD PRIMARY KEY (`id_calificacion`),
-  ADD UNIQUE KEY `uq_calificacion_contexto` (`id_alumno`,`id_curso_escolar`,`id_ciclo`,`id_curso`,`id_grupo`,`id_modulo`),
+  ADD UNIQUE KEY `uq_calificacion_contexto` (`id_alumno`,`id_curso_escolar`,`id_ciclo`,`id_curso`,`id_grupo`,`id_modulo`,`id_evaluacion`),
   ADD KEY `idx_cal_alumno` (`id_alumno`),
   ADD KEY `idx_cal_curso_escolar` (`id_curso_escolar`),
   ADD KEY `idx_cal_ciclo` (`id_ciclo`),
   ADD KEY `idx_cal_curso` (`id_curso`),
   ADD KEY `idx_cal_grupo` (`id_grupo`),
-  ADD KEY `idx_cal_modulo` (`id_modulo`);
+  ADD KEY `idx_cal_modulo` (`id_modulo`),
+  ADD KEY `idx_cal_evaluacion` (`id_evaluacion`);
 
 --
 -- Indices de la tabla `ciclos`
@@ -18206,7 +18249,7 @@ ALTER TABLE `asistencia_mensual`
 -- AUTO_INCREMENT de la tabla `calificaciones`
 --
 ALTER TABLE `calificaciones`
-  MODIFY `id_calificacion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_calificacion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de la tabla `ciclos`
@@ -18445,6 +18488,7 @@ ALTER TABLE `calificaciones`
   ADD CONSTRAINT `fk_cal_ciclo` FOREIGN KEY (`id_ciclo`) REFERENCES `ciclos` (`id_ciclo`),
   ADD CONSTRAINT `fk_cal_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`),
   ADD CONSTRAINT `fk_cal_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
+  ADD CONSTRAINT `fk_cal_evaluacion` FOREIGN KEY (`id_evaluacion`) REFERENCES `evaluaciones` (`id_evaluacion`),
   ADD CONSTRAINT `fk_cal_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`),
   ADD CONSTRAINT `fk_cal_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`);
 
