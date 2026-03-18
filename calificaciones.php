@@ -458,6 +458,9 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                           if ($module_name === '') {
                             $module_name = trim((string) ($module['materia_propia'] ?? ''));
                           }
+                          $module_abbreviation = trim((string) ($module['abreviatura'] ?? ''));
+                          $module_course = (int) ($module['id_curso'] ?? 0);
+                          $module_course_label = $module_course > 0 ? $module_course . 'º' : '';
                           $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
                           $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
                         ?>
@@ -465,10 +468,17 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                           <span class="help-tooltip">
                             <span tabindex="0"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></span>
                             <span class="help-tooltip-content" role="tooltip">
-                              <span class="help-tooltip-title">Detalle por evaluación</span>
-                              <div><strong>Código:</strong> <?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></div>
+                              <span class="help-tooltip-title">
+                                <?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>
+                                <?php if ($module_abbreviation !== ''): ?>
+                                  <?php echo ' ' . htmlspecialchars($module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>
+                                <?php endif; ?>
+                                <?php if ($module_course_label !== ''): ?>
+                                  <?php echo ' (' . htmlspecialchars($module_course_label, ENT_QUOTES, 'UTF-8') . ')'; ?>
+                                <?php endif; ?>
+                              </span>
                               <?php if ($module_name !== ''): ?>
-                                <div><strong>Módulo:</strong> <?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
+                                <div><?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
                               <?php endif; ?>
                               <?php if ($history_rows === []): ?>
                                 <div>Sin calificaciones registradas.</div>
