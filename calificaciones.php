@@ -391,6 +391,14 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                       <?php foreach ($modules as $module): ?>
                         <?php
                           $id_modulo = (int) $module['id_modulo'];
+                          $module_code = trim((string) $module['codigo']);
+                          if ($module_code === '') {
+                            $module_code = trim((string) ($module['abreviatura'] ?? 'Módulo'));
+                          }
+                          $module_name = trim((string) ($module['materia_general'] ?? ''));
+                          if ($module_name === '') {
+                            $module_name = trim((string) ($module['materia_propia'] ?? ''));
+                          }
                           $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
                           $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
                         ?>
@@ -399,6 +407,10 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                             <span tabindex="0"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></span>
                             <span class="help-tooltip-content" role="tooltip">
                               <span class="help-tooltip-title">Detalle por evaluación</span>
+                              <div><strong>Código:</strong> <?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></div>
+                              <?php if ($module_name !== ''): ?>
+                                <div><strong>Módulo:</strong> <?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
+                              <?php endif; ?>
                               <?php if ($history_rows === []): ?>
                                 <div>Sin calificaciones registradas.</div>
                               <?php else: ?>
