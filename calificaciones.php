@@ -172,6 +172,7 @@ if ($show_results) {
       AND ac.id_curso = m.id_curso
      WHERE ac.id_curso_escolar = :id_curso_escolar
        AND ac.id_grupo = :id_grupo
+       AND COALESCE(m.tipo, \'\') <> \'FFE\'
      ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo';
   $modules_stmt = $pdo->prepare($modules_sql);
   $modules_stmt->execute([
@@ -202,6 +203,7 @@ if ($show_results) {
          AND (c.nota IS NOT NULL OR TRIM(COALESCE(c.calificacion_original, \'\')) <> \'\')
          AND m.id_ciclo = ac.id_ciclo
          AND m.id_curso <> ac.id_curso
+         AND COALESCE(m.tipo, \'\') <> \'FFE\'
        ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo'
     );
     $additional_modules_stmt->execute([
@@ -401,19 +403,21 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                       $module_abbreviation = trim((string) ($module['abreviatura'] ?? ''));
                       $module_course = (int) ($module['id_curso'] ?? 0);
                       $module_course_label = $module_course > 0 ? $module_course . 'º' : '';
+                      $module_title_parts = [$module_code];
+                      if ($module_abbreviation !== '') {
+                        $module_title_parts[] = $module_abbreviation;
+                      }
+                      if ($module_course_label !== '') {
+                        $module_title_parts[] = $module_course_label;
+                      }
+                      $module_tooltip_title = implode(' - ', $module_title_parts);
                     ?>
                     <th>
                       <span class="help-tooltip">
                         <span tabindex="0"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
                         <span class="help-tooltip-content" role="tooltip">
                           <span class="help-tooltip-title">
-                            <?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>
-                            <?php if ($module_abbreviation !== ''): ?>
-                              <?php echo ' ' . htmlspecialchars($module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>
-                            <?php endif; ?>
-                            <?php if ($module_course_label !== ''): ?>
-                              <?php echo ' (' . htmlspecialchars($module_course_label, ENT_QUOTES, 'UTF-8') . ')'; ?>
-                            <?php endif; ?>
+                            <?php echo htmlspecialchars($module_tooltip_title, ENT_QUOTES, 'UTF-8'); ?>
                           </span>
                           <div>
                             <?php if ($module_name !== ''): ?>
@@ -461,6 +465,14 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                           $module_abbreviation = trim((string) ($module['abreviatura'] ?? ''));
                           $module_course = (int) ($module['id_curso'] ?? 0);
                           $module_course_label = $module_course > 0 ? $module_course . 'º' : '';
+                          $module_title_parts = [$module_code];
+                          if ($module_abbreviation !== '') {
+                            $module_title_parts[] = $module_abbreviation;
+                          }
+                          if ($module_course_label !== '') {
+                            $module_title_parts[] = $module_course_label;
+                          }
+                          $module_tooltip_title = implode(' - ', $module_title_parts);
                           $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
                           $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
                         ?>
@@ -469,13 +481,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                             <span tabindex="0"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></span>
                             <span class="help-tooltip-content" role="tooltip">
                               <span class="help-tooltip-title">
-                                <?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>
-                                <?php if ($module_abbreviation !== ''): ?>
-                                  <?php echo ' ' . htmlspecialchars($module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>
-                                <?php endif; ?>
-                                <?php if ($module_course_label !== ''): ?>
-                                  <?php echo ' (' . htmlspecialchars($module_course_label, ENT_QUOTES, 'UTF-8') . ')'; ?>
-                                <?php endif; ?>
+                                <?php echo htmlspecialchars($module_tooltip_title, ENT_QUOTES, 'UTF-8'); ?>
                               </span>
                               <?php if ($module_name !== ''): ?>
                                 <div><?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
@@ -514,5 +520,47 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       <?php endif; ?>
     </main>
   </div>
+  <script>
+    (function () {
+      const tooltipContainers = document.querySelectorAll('.help-tooltip');
+      if (!tooltipContainers.length) {
+        return;
+      }
+
+      const gap = 10;
+
+      const positionTooltip = (container) => {
+        const tooltip = container.querySelector('.help-tooltip-content');
+        if (!tooltip) {
+          return;
+        }
+
+        tooltip.style.left = '0';
+        tooltip.style.right = 'auto';
+        tooltip.style.top = 'calc(100% + 10px)';
+        tooltip.style.bottom = 'auto';
+
+        let rect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+        if (rect.right > viewportWidth - gap) {
+          tooltip.style.left = 'auto';
+          tooltip.style.right = '0';
+          rect = tooltip.getBoundingClientRect();
+        }
+
+        if (rect.bottom > viewportHeight - gap) {
+          tooltip.style.top = 'auto';
+          tooltip.style.bottom = 'calc(100% + 10px)';
+        }
+      };
+
+      tooltipContainers.forEach((container) => {
+        container.addEventListener('mouseenter', () => positionTooltip(container));
+        container.addEventListener('focusin', () => positionTooltip(container));
+      });
+    })();
+  </script>
 </body>
 </html>
