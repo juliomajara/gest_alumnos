@@ -44,6 +44,12 @@ $nav_items = [
     'icon' => 'assets/icons/alumnos.svg',
   ],
   [
+    'key' => 'calificaciones',
+    'label' => 'Calificaciones',
+    'href' => 'calificaciones.php',
+    'icon' => 'assets/icons/evaluacion.svg',
+  ],
+  [
     'key' => 'modulos',
     'label' => 'Módulos',
     'href' => 'modulos.php',
