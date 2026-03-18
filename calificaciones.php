@@ -27,6 +27,8 @@ $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $
 $selected_group = (string) ($_GET['id_grupo'] ?? '');
 $selected_group = ctype_digit($selected_group) ? $selected_group : '';
 
+$search_term = trim((string) ($_GET['q'] ?? ''));
+
 $normal_evaluation_names = [
   '1ª evaluación',
   '2ª evaluación',
@@ -149,11 +151,19 @@ if ($show_results) {
      LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
      WHERE ac.id_curso_escolar = :id_curso_escolar
        AND ac.id_grupo = :id_grupo
+       AND (
+         :search_term = \'\'
+         OR a.nombre LIKE :search_term_like
+         OR a.apellido1 LIKE :search_term_like
+         OR a.apellido2 LIKE :search_term_like
+       )
      ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre';
   $students_stmt = $pdo->prepare($students_sql);
   $students_stmt->execute([
     'id_curso_escolar' => $selected_course_id,
     'id_grupo' => (int) $selected_group,
+    'search_term' => $search_term,
+    'search_term_like' => '%' . $search_term . '%',
   ]);
   $students = $students_stmt->fetchAll();
 
@@ -334,7 +344,7 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       </header>
 
       <form class="topbar" method="get">
-        <div class="topbar-actions entity-grid entity-grid--3">
+        <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
             <span class="calendar-select-label">Curso escolar</span>
             <select name="id_curso_escolar" onchange="this.form.submit()">
@@ -368,6 +378,23 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
               <?php endforeach; ?>
             </select>
           </label>
+
+
+          <div class="topbar-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar por nombre o apellidos"
+              aria-label="Buscar por nombre o apellidos"
+              value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+            >
+          </div>
         </div>
       </form>
 
@@ -522,12 +549,42 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
   </div>
   <script>
     (function () {
+      const form = document.querySelector('.topbar');
+      const searchInput = form ? form.querySelector('input[name="q"]') : null;
+      let searchDebounceTimer = null;
+
+      if (form && searchInput) {
+        searchInput.addEventListener('input', () => {
+          if (searchDebounceTimer) {
+            window.clearTimeout(searchDebounceTimer);
+          }
+
+          searchDebounceTimer = window.setTimeout(() => {
+            form.submit();
+          }, 250);
+        });
+      }
+
       const tooltipContainers = document.querySelectorAll('.help-tooltip');
       if (!tooltipContainers.length) {
         return;
       }
 
       const gap = 10;
+      let activeTooltip = null;
+      let activeContainer = null;
+
+      const hideTooltip = (tooltip) => {
+        if (!tooltip) {
+          return;
+        }
+
+        tooltip.style.position = '';
+        tooltip.style.left = '';
+        tooltip.style.top = '';
+        tooltip.style.right = '';
+        tooltip.style.bottom = '';
+      };
 
       const positionTooltip = (container) => {
         const tooltip = container.querySelector('.help-tooltip-content');
@@ -535,31 +592,84 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
           return;
         }
 
-        tooltip.style.left = '0';
+        tooltip.style.position = 'fixed';
+        tooltip.style.left = '0px';
+        tooltip.style.top = '0px';
         tooltip.style.right = 'auto';
-        tooltip.style.top = 'calc(100% + 10px)';
         tooltip.style.bottom = 'auto';
 
-        let rect = tooltip.getBoundingClientRect();
+        const trigger = container.firstElementChild;
+        const anchorRect = (trigger || container).getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 
-        if (rect.right > viewportWidth - gap) {
-          tooltip.style.left = 'auto';
-          tooltip.style.right = '0';
-          rect = tooltip.getBoundingClientRect();
+        let left = anchorRect.left;
+        let top = anchorRect.bottom + gap;
+
+        if (left + tooltipRect.width > viewportWidth - gap) {
+          left = anchorRect.right - tooltipRect.width;
         }
 
-        if (rect.bottom > viewportHeight - gap) {
-          tooltip.style.top = 'auto';
-          tooltip.style.bottom = 'calc(100% + 10px)';
+        if (top + tooltipRect.height > viewportHeight - gap) {
+          top = anchorRect.top - tooltipRect.height - gap;
+        }
+
+        left = Math.max(gap, Math.min(left, viewportWidth - tooltipRect.width - gap));
+        top = Math.max(gap, Math.min(top, viewportHeight - tooltipRect.height - gap));
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+      };
+
+      const showTooltip = (container) => {
+        const tooltip = container.querySelector('.help-tooltip-content');
+        if (!tooltip) {
+          return;
+        }
+
+        activeContainer = container;
+        activeTooltip = tooltip;
+        positionTooltip(container);
+      };
+
+      const clearActiveTooltip = (container) => {
+        const tooltip = container.querySelector('.help-tooltip-content');
+        if (!tooltip) {
+          return;
+        }
+
+        hideTooltip(tooltip);
+
+        if (activeContainer === container) {
+          activeContainer = null;
+          activeTooltip = null;
         }
       };
 
       tooltipContainers.forEach((container) => {
-        container.addEventListener('mouseenter', () => positionTooltip(container));
-        container.addEventListener('focusin', () => positionTooltip(container));
+        container.addEventListener('mouseenter', () => showTooltip(container));
+        container.addEventListener('focusin', () => showTooltip(container));
+        container.addEventListener('mouseleave', () => clearActiveTooltip(container));
+        container.addEventListener('focusout', (event) => {
+          const nextTarget = event.relatedTarget;
+          if (!nextTarget || !container.contains(nextTarget)) {
+            clearActiveTooltip(container);
+          }
+        });
       });
+
+      window.addEventListener('resize', () => {
+        if (activeContainer && activeTooltip) {
+          positionTooltip(activeContainer);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeContainer && activeTooltip) {
+          positionTooltip(activeContainer);
+        }
+      }, { passive: true });
     })();
   </script>
 </body>

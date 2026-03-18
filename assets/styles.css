@@ -257,6 +257,11 @@ body {
   -webkit-mask-image: url("icons/alumnos.svg");
 }
 
+.nav-icon-image[data-icon="calificaciones"] {
+  mask-image: url("icons/calificaciones.svg");
+  -webkit-mask-image: url("icons/calificaciones.svg");
+}
+
 .nav-icon-image[data-icon="modulos"] {
   mask-image: url("icons/modulos.svg");
   -webkit-mask-image: url("icons/modulos.svg");

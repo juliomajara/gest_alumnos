@@ -36,9 +36,14 @@ $active_page = 'configuracion';
               <span>Importar empresas</span>
               <small>Actualiza los datos de empresas colaboradoras.</small>
             </a>
-            <a class="panel-link" href="importar_calificaciones.php">
-              <span>Importar calificaciones</span>
-              <small>Importa notas desde CSV para un contexto académico concreto.</small>
+            <a class="panel-link panel-link-with-icon" href="importar_calificaciones.php">
+              <span class="nav-icon" aria-hidden="true">
+                <img class="nav-icon-image" src="assets/icons/calificaciones.svg" alt="">
+              </span>
+              <span class="panel-link-text">
+                <span>Importar calificaciones</span>
+                <small>Importa notas desde CSV para un contexto académico concreto.</small>
+              </span>
             </a>
             <a class="panel-link panel-link-with-icon" href="practicas_dias.php">
               <span class="nav-icon" aria-hidden="true">
