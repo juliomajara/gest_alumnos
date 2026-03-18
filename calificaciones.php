@@ -34,7 +34,14 @@ $normal_evaluation_names = [
   'Evaluación extraordinaria',
 ];
 $normal_evaluation_order = array_flip($normal_evaluation_names);
-$normal_placeholders = implode(',', array_fill(0, count($normal_evaluation_names), '?'));
+$normal_evaluation_placeholders = [];
+$normal_evaluation_params = [];
+foreach ($normal_evaluation_names as $normal_evaluation_index => $normal_evaluation_name) {
+  $normal_evaluation_param = ':normal_eval_' . $normal_evaluation_index;
+  $normal_evaluation_placeholders[] = $normal_evaluation_param;
+  $normal_evaluation_params['normal_eval_' . $normal_evaluation_index] = $normal_evaluation_name;
+}
+$normal_placeholders = implode(',', $normal_evaluation_placeholders);
 
 $latest_normal_evaluation_sql =
   'SELECT DISTINCT e.id_evaluacion, e.nombre
@@ -44,7 +51,7 @@ $latest_normal_evaluation_sql =
      AND e.nombre IN (' . $normal_placeholders . ')';
 $latest_normal_evaluation_params = array_merge(
   ['id_curso_escolar' => $selected_course_id],
-  $normal_evaluation_names
+  $normal_evaluation_params
 );
 if ($selected_group !== '') {
   $latest_normal_evaluation_sql .= ' AND c.id_grupo = :id_grupo';
@@ -74,7 +81,7 @@ if ($latest_normal_evaluation_id <= 0) {
      FROM evaluaciones
      WHERE nombre IN (' . $normal_placeholders . ')'
   );
-  $fallback_normal_evaluation_stmt->execute($normal_evaluation_names);
+  $fallback_normal_evaluation_stmt->execute($normal_evaluation_params);
   $fallback_normal_evaluations = $fallback_normal_evaluation_stmt->fetchAll();
 
   foreach ($fallback_normal_evaluations as $evaluation_row) {
