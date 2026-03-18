@@ -31,6 +31,7 @@ $evaluaciones = $pdo->query('SELECT id_evaluacion, nombre AS evaluacion FROM eva
 
 function normalize_name(string $value): string {
   $value = str_replace("\xc2\xa0", ' ', $value);
+  $value = str_replace("\xEF\xBB\xBF", '', $value);
   $value = str_replace(',', ' , ', $value);
   $value = mb_strtolower(trim($value), 'UTF-8');
   $translit = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
@@ -39,6 +40,25 @@ function normalize_name(string $value): string {
   }
   $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
   $value = preg_replace('/\s*,\s*/u', ',', $value) ?? $value;
+
+  return trim($value);
+}
+
+function normalize_csv_text(string $value): string {
+  $value = str_replace("\xEF\xBB\xBF", '', $value);
+  $value = str_replace("\xc2\xa0", ' ', $value);
+  $value = trim($value);
+
+  if ($value === '') {
+    return '';
+  }
+
+  if (!mb_check_encoding($value, 'UTF-8')) {
+    $converted = @mb_convert_encoding($value, 'UTF-8', 'Windows-1252,ISO-8859-1,UTF-8');
+    if (is_string($converted) && $converted !== '') {
+      $value = $converted;
+    }
+  }
 
   return trim($value);
 }
@@ -110,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (!is_array($header) || count($header) < 2) {
         $errors[] = 'La cabecera del CSV no es válida.';
       } else {
-        $header = array_map(static fn($v): string => trim((string) $v), $header);
+        $header = array_map(static fn($v): string => normalize_csv_text((string) $v), $header);
         if (mb_strtolower((string) $header[0], 'UTF-8') !== mb_strtolower('Alumno/a', 'UTF-8')) {
           $errors[] = 'La primera columna de la cabecera debe ser "Alumno/a".';
         }
@@ -119,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($errors === []) {
         $module_codes = [];
         for ($i = 1, $total = count($header); $i < $total; $i++) {
-          $code = trim((string) $header[$i]);
+          $code = mb_strtoupper(normalize_csv_text((string) $header[$i]), 'UTF-8');
           if ($code !== '') {
             $module_codes[$i] = $code;
           }
@@ -130,16 +150,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
           $unique_codes = array_values(array_unique(array_values($module_codes)));
           $placeholders = implode(',', array_fill(0, count($unique_codes), '?'));
-          $sql_modules = 'SELECT id_modulo, codigo FROM modulos WHERE id_ciclo = ? AND id_curso = ? AND codigo IN (' . $placeholders . ')';
-          $params_modules = array_merge([$selected['id_ciclo'], $selected['id_curso']], $unique_codes);
+          $sql_modules = 'SELECT id_modulo, id_curso, codigo FROM modulos WHERE id_ciclo = ? AND UPPER(codigo) IN (' . $placeholders . ')';
+          $params_modules = array_merge([$selected['id_ciclo']], $unique_codes);
           $stmt_modules = $pdo->prepare($sql_modules);
           $stmt_modules->execute($params_modules);
 
           $modules_by_code = [];
           while ($module_row = $stmt_modules->fetch(PDO::FETCH_ASSOC)) {
-            $code = (string) $module_row['codigo'];
+            $code = mb_strtoupper((string) $module_row['codigo'], 'UTF-8');
             if (!isset($modules_by_code[$code])) {
-              $modules_by_code[$code] = (int) $module_row['id_modulo'];
+              $modules_by_code[$code] = [
+                'id_modulo' => (int) $module_row['id_modulo'],
+                'id_curso' => (int) $module_row['id_curso'],
+              ];
             }
           }
 
@@ -204,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           try {
             while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
               $line++;
-              $name_csv = trim((string) ($row[0] ?? ''));
+              $name_csv = normalize_csv_text((string) ($row[0] ?? ''));
               if ($name_csv === '') {
                 continue;
               }
@@ -222,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   continue;
                 }
 
-                $raw_grade = trim((string) ($row[$column_index] ?? ''));
+                $raw_grade = normalize_csv_text((string) ($row[$column_index] ?? ''));
                 if ($raw_grade === '') {
                   continue;
                 }
@@ -241,9 +264,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   'id_alumno' => $id_alumno,
                   'id_curso_escolar' => $selected['id_curso_escolar'],
                   'id_ciclo' => $selected['id_ciclo'],
-                  'id_curso' => $selected['id_curso'],
+                  'id_curso' => $modules_by_code[$module_code]['id_curso'],
                   'id_grupo' => $selected['id_grupo'],
-                  'id_modulo' => (int) $modules_by_code[$module_code],
+                  'id_modulo' => (int) $modules_by_code[$module_code]['id_modulo'],
                   'id_evaluacion' => $selected['id_evaluacion'],
                   'calificacion_original' => $parsed['calificacion_original'],
                   'prefijo' => $parsed['prefijo'],
