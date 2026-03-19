@@ -24,11 +24,15 @@ function grade_display(?string $original, $nota): string
 
 function grade_numeric(?string $original, $nota): ?float
 {
+  $calificacion_original = trim((string) ($original ?? ''));
+  if ($calificacion_original !== '' && preg_match('/^(TC|CV)\b/i', $calificacion_original)) {
+    return null;
+  }
+
   if ($nota !== null && $nota !== '') {
     return (float) $nota;
   }
 
-  $calificacion_original = trim((string) ($original ?? ''));
   if ($calificacion_original === '') {
     return null;
   }
@@ -210,6 +214,7 @@ $previous_evaluation_id = 0;
 $group_mean_history = [];
 $total_recoveries = 0;
 $total_falls = 0;
+$selected_group_course_id = 0;
 
 if ($show_results) {
   $students_stmt = $pdo->prepare(
@@ -243,6 +248,21 @@ if ($show_results) {
   ]);
   $students = $students_stmt->fetchAll();
 
+  $selected_group_course_stmt = $pdo->prepare(
+    'SELECT ac.id_curso
+     FROM alumno_curso ac
+     WHERE ac.id_curso_escolar = :id_curso_escolar
+       AND ac.id_grupo = :id_grupo
+     GROUP BY ac.id_curso
+     ORDER BY ac.id_curso
+     LIMIT 1'
+  );
+  $selected_group_course_stmt->execute([
+    'id_curso_escolar' => $selected_course_id,
+    'id_grupo' => (int) $selected_group,
+  ]);
+  $selected_group_course_id = (int) $selected_group_course_stmt->fetchColumn();
+
   $modules_stmt = $pdo->prepare(
     'SELECT DISTINCT
        m.id_modulo,
@@ -258,63 +278,16 @@ if ($show_results) {
       AND ac.id_curso = m.id_curso
      WHERE ac.id_curso_escolar = :id_curso_escolar
        AND ac.id_grupo = :id_grupo
+       AND m.id_curso = :id_curso
        AND COALESCE(m.tipo, "") <> "FFE"
      ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo'
   );
   $modules_stmt->execute([
     'id_curso_escolar' => $selected_course_id,
     'id_grupo' => (int) $selected_group,
+    'id_curso' => $selected_group_course_id,
   ]);
   $modules = $modules_stmt->fetchAll();
-
-  $additional_modules_stmt = $pdo->prepare(
-    'SELECT DISTINCT
-       m.id_modulo,
-       m.id_ciclo,
-       m.id_curso,
-       m.codigo,
-       m.abreviatura,
-       m.materia_general,
-       m.materia_propia
-     FROM calificaciones c
-     INNER JOIN modulos m ON m.id_modulo = c.id_modulo
-     INNER JOIN alumno_curso ac
-       ON ac.id_alumno = c.id_alumno
-      AND ac.id_curso_escolar = c.id_curso_escolar
-      AND ac.id_grupo = c.id_grupo
-     WHERE c.id_curso_escolar = :id_curso_escolar
-       AND c.id_grupo = :id_grupo
-       AND c.id_evaluacion = :id_evaluacion
-       AND (c.nota IS NOT NULL OR TRIM(COALESCE(c.calificacion_original, "")) <> "")
-       AND m.id_ciclo = ac.id_ciclo
-       AND m.id_curso <> ac.id_curso
-       AND COALESCE(m.tipo, "") <> "FFE"
-     ORDER BY m.id_ciclo, m.id_curso, m.codigo, m.id_modulo'
-  );
-  $additional_modules_stmt->execute([
-    'id_curso_escolar' => $selected_course_id,
-    'id_grupo' => (int) $selected_group,
-    'id_evaluacion' => $selected_evaluation,
-  ]);
-  $additional_modules = $additional_modules_stmt->fetchAll();
-
-  if ($additional_modules !== []) {
-    $modules_by_id = [];
-    foreach ($modules as $module) {
-      $modules_by_id[(int) $module['id_modulo']] = $module;
-    }
-    foreach ($additional_modules as $module) {
-      $modules_by_id[(int) $module['id_modulo']] = $module;
-    }
-    $modules = array_values($modules_by_id);
-    usort(
-      $modules,
-      static fn (array $module_a, array $module_b): int =>
-        [(int) $module_a['id_ciclo'], (int) $module_a['id_curso'], (string) $module_a['codigo'], (int) $module_a['id_modulo']]
-        <=>
-        [(int) $module_b['id_ciclo'], (int) $module_b['id_curso'], (string) $module_b['codigo'], (int) $module_b['id_modulo']]
-    );
-  }
 
   $evaluation_ids_in_context_stmt = $pdo->prepare(
     'SELECT DISTINCT c.id_evaluacion
@@ -372,6 +345,14 @@ if ($show_results) {
        WHERE c.id_curso_escolar = :id_curso_escolar
          AND c.id_grupo = :id_grupo
          AND c.nota IS NOT NULL
+         AND c.id_modulo IN (
+           SELECT m2.id_modulo
+           FROM modulos m2
+           WHERE m2.id_curso = :id_curso
+             AND COALESCE(m2.tipo, "") <> "FFE"
+         )
+         AND UPPER(TRIM(COALESCE(c.calificacion_original, ""))) NOT LIKE "TC%"
+         AND UPPER(TRIM(COALESCE(c.calificacion_original, ""))) NOT LIKE "CV%"
          AND COALESCE(m.tipo, "") <> "FFE"
        GROUP BY c.id_evaluacion
        ORDER BY c.id_evaluacion'
@@ -379,6 +360,7 @@ if ($show_results) {
     $history_stmt->execute([
       'id_curso_escolar' => $selected_course_id,
       'id_grupo' => (int) $selected_group,
+      'id_curso' => $selected_group_course_id,
     ]);
     $history_rows = $history_stmt->fetchAll();
     foreach ($history_rows as $history_row) {
@@ -428,6 +410,9 @@ if ($show_results) {
   $same_count = 0;
   $group_pass_current = 0;
   $group_pass_previous = 0;
+  $group_total_valid_grades_current = 0;
+  $group_total_valid_grades_previous = 0;
+  $students_with_comparison = 0;
 
   foreach ($students as $student) {
     $id_alumno = (int) $student['id_alumno'];
@@ -449,6 +434,7 @@ if ($show_results) {
     $bajan = 0;
     $recupera = 0;
     $cae = 0;
+    $comparables = 0;
 
     foreach ($modules as $module) {
       $module_id = (int) $module['id_modulo'];
@@ -460,6 +446,7 @@ if ($show_results) {
         $module_stats[$module_id]['no_evaluados']++;
       } else {
         $notes[] = $current_numeric;
+        $group_total_valid_grades_current++;
         $module_stats[$module_id]['numeric'][] = $current_numeric;
         if ($current_numeric >= 5) {
           $aprobados++;
@@ -481,10 +468,12 @@ if ($show_results) {
 
       if ($previous_numeric !== null) {
         $prev_notes[] = $previous_numeric;
+        $group_total_valid_grades_previous++;
         $module_stats[$module_id]['prev_numeric'][] = $previous_numeric;
       }
 
       if ($current_numeric !== null && $previous_numeric !== null) {
+        $comparables++;
         if ($current_numeric > $previous_numeric) {
           $suben++;
         } elseif ($current_numeric < $previous_numeric) {
@@ -523,6 +512,7 @@ if ($show_results) {
     $evolution = 'Sin evaluación anterior';
     $diff_media = null;
     if ($media !== null && $media_prev !== null) {
+      $students_with_comparison++;
       $diff_media = $media - $media_prev;
       if ($diff_media > 0.01) {
         $evolution = 'Mejora';
@@ -566,6 +556,9 @@ if ($show_results) {
       'bajan' => $bajan,
       'recupera' => $recupera,
       'cae' => $cae,
+      'modulos_computables' => count($notes),
+      'modulos_computables_prev' => count($prev_notes),
+      'modulos_comparables' => $comparables,
     ];
   }
 
@@ -599,6 +592,8 @@ if ($show_results) {
       'cambio_pct' => ($pct_aprobados !== null && $prev_pct !== null) ? ($pct_aprobados - $prev_pct) : null,
       'recuperan' => $module_stat['recuperan'],
       'caen' => $module_stat['caen'],
+      'evaluados' => $evaluados,
+      'evaluados_prev' => count($module_stat['prev_numeric']),
     ];
   }
 
@@ -624,13 +619,16 @@ if ($show_results) {
     'max' => $group_means_current !== [] ? max($group_means_current) : null,
     'min' => $group_means_current !== [] ? min($group_means_current) : null,
     'desviacion' => deviation($group_means_current),
-    'pct_mejoran' => $total_students > 0 ? ($improve_count * 100 / $total_students) : null,
-    'pct_empeoran' => $total_students > 0 ? ($worsen_count * 100 / $total_students) : null,
-    'pct_mantienen' => $total_students > 0 ? ($same_count * 100 / $total_students) : null,
+    'pct_mejoran' => $students_with_comparison > 0 ? ($improve_count * 100 / $students_with_comparison) : null,
+    'pct_empeoran' => $students_with_comparison > 0 ? ($worsen_count * 100 / $students_with_comparison) : null,
+    'pct_mantienen' => $students_with_comparison > 0 ? ($same_count * 100 / $students_with_comparison) : null,
     'var_media' => ($group_mean !== null && $group_prev_mean !== null) ? ($group_mean - $group_prev_mean) : null,
     'var_pct_aprobados' => $total_students > 0 && $previous_evaluation_id > 0
       ? (($group_pass_current * 100 / $total_students) - ($group_pass_previous * 100 / $total_students))
       : null,
+    'notas_computables_actual' => $group_total_valid_grades_current,
+    'notas_computables_anterior' => $group_total_valid_grades_previous,
+    'alumnos_con_comparativa' => $students_with_comparison,
   ];
 
   $summary_rows = [
@@ -641,31 +639,31 @@ if ($show_results) {
     ['Nº alumnos con 3 o más suspensas', (string) $group_stats['tres_o_mas']],
     ['% todo aprobado', fmt($group_stats['pct_todo_aprobado']) . '%'],
     ['% alumnado en riesgo (3 o más)', fmt($group_stats['pct_riesgo']) . '%'],
-    ['Media del grupo', fmt($group_stats['media'])],
-    ['Mediana del grupo', fmt($group_stats['mediana'])],
-    ['Máximo del grupo', fmt($group_stats['max'])],
-    ['Mínimo del grupo', fmt($group_stats['min'])],
+    ['Media del grupo', fmt($group_stats['media']) . ' (calculada sobre ' . $group_stats['notas_computables_actual'] . ' módulos computables)'],
+    ['Mediana del grupo', fmt($group_stats['mediana']) . ' (calculada sobre ' . $group_stats['total'] . ' alumnos)'],
+    ['Máximo del grupo', fmt($group_stats['max']) . ' (sobre ' . $group_stats['total'] . ' alumnos)'],
+    ['Mínimo del grupo', fmt($group_stats['min']) . ' (sobre ' . $group_stats['total'] . ' alumnos)'],
     ['Desviación básica', fmt($group_stats['desviacion'])],
-    ['% mejora', fmt($group_stats['pct_mejoran']) . '%'],
-    ['% empeora', fmt($group_stats['pct_empeoran']) . '%'],
-    ['% se mantiene', fmt($group_stats['pct_mantienen']) . '%'],
-    ['Variación media vs anterior', fmt($group_stats['var_media'])],
-    ['Variación % todo aprobado vs anterior', fmt($group_stats['var_pct_aprobados']) . '%'],
+    ['% mejora', fmt($group_stats['pct_mejoran']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)'],
+    ['% empeora', fmt($group_stats['pct_empeoran']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)'],
+    ['% se mantiene', fmt($group_stats['pct_mantienen']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)'],
+    ['Variación media vs anterior', fmt($group_stats['var_media']) . ' (actual: ' . $group_stats['notas_computables_actual'] . ' módulos computables; anterior: ' . $group_stats['notas_computables_anterior'] . ')'],
+    ['Variación % todo aprobado vs anterior', fmt($group_stats['var_pct_aprobados']) . '% (sobre ' . $group_stats['total'] . ' alumnos)'],
   ];
 
   if ($group_stats['total'] > 0) {
     $conclusions[] = 'El ' . fmt($group_stats['pct_todo_aprobado']) . '% del grupo tiene todo aprobado.';
     if ($hardest_module !== null) {
-      $conclusions[] = 'El módulo más difícil es ' . $hardest_module['codigo'] . ' (' . fmt($hardest_module['pct_aprobados']) . '% de aprobados).';
+      $conclusions[] = 'El módulo más difícil es ' . $hardest_module['codigo'] . ' (' . fmt($hardest_module['pct_aprobados']) . '% de aprobados sobre ' . $hardest_module['evaluados'] . ' módulos computables).';
     }
     if ($easiest_module !== null) {
-      $conclusions[] = 'El módulo más fácil es ' . $easiest_module['codigo'] . ' (' . fmt($easiest_module['pct_aprobados']) . '% de aprobados).';
+      $conclusions[] = 'El módulo más fácil es ' . $easiest_module['codigo'] . ' (' . fmt($easiest_module['pct_aprobados']) . '% de aprobados sobre ' . $easiest_module['evaluados'] . ' módulos computables).';
     }
     $conclusions[] = 'Hay ' . $group_stats['tres_o_mas'] . ' alumnos en riesgo (3 o más suspensas).';
     $conclusions[] = 'Se observan ' . $total_recoveries . ' recuperaciones de módulo y ' . $worsen_count . ' alumnos que empeoran su media.';
     if ($previous_evaluation_id > 0 && $group_stats['var_media'] !== null) {
       $trend = $group_stats['var_media'] > 0.01 ? 'mejora' : ($group_stats['var_media'] < -0.01 ? 'empeora' : 'se mantiene');
-      $conclusions[] = 'Respecto a la evaluación anterior, la media del grupo ' . $trend . ' (' . fmt($group_stats['var_media']) . ').';
+      $conclusions[] = 'Respecto a la evaluación anterior, la media del grupo ' . $trend . ' (' . fmt($group_stats['var_media']) . ', sobre ' . $group_stats['notas_computables_actual'] . ' módulos computables en la evaluación actual).';
     }
   }
 }
@@ -844,16 +842,16 @@ if ($show_results) {
                       <td><?php echo (int) $student_row['aprobados']; ?></td>
                       <td><?php echo (int) $student_row['suspensos']; ?></td>
                       <td><?php echo (int) $student_row['no_evaluados']; ?></td>
-                      <td><?php echo htmlspecialchars(fmt($student_row['media']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($student_row['media']) . ' (sobre ' . (int) $student_row['modulos_computables'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['clasificacion'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['mejor_modulo'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['peor_modulo'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars((string) $student_row['evolucion'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($student_row['diff_media']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) $student_row['suben']; ?></td>
-                      <td><?php echo (int) $student_row['bajan']; ?></td>
-                      <td><?php echo (int) $student_row['recupera']; ?></td>
-                      <td><?php echo (int) $student_row['cae']; ?></td>
+                      <td><?php echo htmlspecialchars((string) $student_row['evolucion'] . ' (sobre ' . (int) $student_row['modulos_comparables'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($student_row['diff_media']) . ' (sobre ' . (int) $student_row['modulos_comparables'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) $student_row['suben']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
+                      <td><?php echo (int) $student_row['bajan']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
+                      <td><?php echo (int) $student_row['recupera']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
+                      <td><?php echo (int) $student_row['cae']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
@@ -892,16 +890,16 @@ if ($show_results) {
                   <?php foreach ($module_rows as $module_row): ?>
                     <tr>
                       <td><?php echo htmlspecialchars((string) $module_row['codigo'], ENT_QUOTES, 'UTF-8'); ?><?php echo $module_row['nombre'] !== '' ? ' · ' . htmlspecialchars((string) $module_row['nombre'], ENT_QUOTES, 'UTF-8') : ''; ?></td>
-                      <td><?php echo (int) $module_row['aprobados']; ?></td>
-                      <td><?php echo (int) $module_row['suspensos']; ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['pct_aprobados']) . '%', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['media']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) $module_row['aprobados']; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ')'; ?></td>
+                      <td><?php echo (int) $module_row['suspensos']; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ')'; ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['pct_aprobados']) . '% (sobre ' . (int) $module_row['evaluados'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['media']) . ' (sobre ' . (int) $module_row['evaluados'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(fmt($module_row['max']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(fmt($module_row['min']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_media']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_pct']) . '%', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) $module_row['recuperan']; ?></td>
-                      <td><?php echo (int) $module_row['caen']; ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_media']) . ' (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_pct']) . '% (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) $module_row['recuperan']; ?><?php echo ' (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ')'; ?></td>
+                      <td><?php echo (int) $module_row['caen']; ?><?php echo ' (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ')'; ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
