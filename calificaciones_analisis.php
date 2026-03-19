@@ -880,20 +880,23 @@ if ($show_results) {
                 <?php else: ?>
                   <?php foreach ($student_rows as $student_row): ?>
                     <tr>
-                      <td><a class="practice-link" href="alumno_detalle.php?id_alumno=<?php echo (int) $student_row['id_alumno']; ?>"><?php echo htmlspecialchars((string) $student_row['nombre'], ENT_QUOTES, 'UTF-8'); ?></a></td>
+                      <td>
+                        <a class="practice-link" href="alumno_detalle.php?id_alumno=<?php echo (int) $student_row['id_alumno']; ?>"><?php echo htmlspecialchars((string) $student_row['nombre'], ENT_QUOTES, 'UTF-8'); ?></a>
+                        <div class="brand-subtitle"><?php echo 'sobre ' . (int) $student_row['modulos_computables'] . ' módulos'; ?></div>
+                      </td>
                       <td><?php echo (int) $student_row['aprobados']; ?></td>
                       <td><?php echo (int) $student_row['suspensos']; ?></td>
                       <td><?php echo (int) $student_row['no_evaluados']; ?></td>
-                      <td><?php echo htmlspecialchars(fmt($student_row['media']) . ' (sobre ' . (int) $student_row['modulos_computables'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($student_row['media']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['clasificacion'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['mejor_modulo'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['peor_modulo'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars((string) $student_row['evolucion'] . ' (sobre ' . (int) $student_row['modulos_comparables'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($student_row['diff_media']) . ' (sobre ' . (int) $student_row['modulos_comparables'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) $student_row['suben']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
-                      <td><?php echo (int) $student_row['bajan']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
-                      <td><?php echo (int) $student_row['recupera']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
-                      <td><?php echo (int) $student_row['cae']; ?><?php echo ' (sobre ' . (int) $student_row['modulos_comparables'] . ')'; ?></td>
+                      <td><?php echo htmlspecialchars((string) $student_row['evolucion'], ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($student_row['diff_media']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) $student_row['suben']; ?></td>
+                      <td><?php echo (int) $student_row['bajan']; ?></td>
+                      <td><?php echo (int) $student_row['recupera']; ?></td>
+                      <td><?php echo (int) $student_row['cae']; ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
@@ -931,17 +934,20 @@ if ($show_results) {
                 <?php else: ?>
                   <?php foreach ($module_rows as $module_row): ?>
                     <tr>
-                      <td><?php echo htmlspecialchars((string) $module_row['codigo'], ENT_QUOTES, 'UTF-8'); ?><?php echo $module_row['nombre'] !== '' ? ' · ' . htmlspecialchars((string) $module_row['nombre'], ENT_QUOTES, 'UTF-8') : ''; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ' alumnos)'; ?></td>
-                      <td><?php echo (int) $module_row['aprobados']; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ')'; ?></td>
-                      <td><?php echo (int) $module_row['suspensos']; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ')'; ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['pct_aprobados']) . '% (sobre ' . (int) $module_row['evaluados'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['media']) . ' (sobre ' . (int) $module_row['evaluados'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td>
+                        <?php echo htmlspecialchars((string) $module_row['codigo'], ENT_QUOTES, 'UTF-8'); ?><?php echo $module_row['nombre'] !== '' ? ' · ' . htmlspecialchars((string) $module_row['nombre'], ENT_QUOTES, 'UTF-8') : ''; ?>
+                        <div class="brand-subtitle"><?php echo 'sobre ' . (int) $module_row['evaluados'] . ' alumnos'; ?></div>
+                      </td>
+                      <td><?php echo (int) $module_row['aprobados']; ?></td>
+                      <td><?php echo (int) $module_row['suspensos']; ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['pct_aprobados']) . '%', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['media']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(fmt($module_row['max']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(fmt($module_row['min']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_media']) . ' (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_pct']) . '% (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo (int) $module_row['recuperan']; ?><?php echo ' (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ')'; ?></td>
-                      <td><?php echo (int) $module_row['caen']; ?><?php echo ' (sobre ' . (int) min((int) $module_row['evaluados'], (int) $module_row['evaluados_prev']) . ')'; ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_media']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars(fmt($module_row['cambio_pct']) . '%', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo (int) $module_row['recuperan']; ?></td>
+                      <td><?php echo (int) $module_row['caen']; ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
