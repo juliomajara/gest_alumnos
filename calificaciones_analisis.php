@@ -215,6 +215,7 @@ $group_mean_history = [];
 $total_recoveries = 0;
 $total_falls = 0;
 $selected_group_course_id = 0;
+$students_with_computable_grades = [];
 
 if ($show_results) {
   $students_stmt = $pdo->prepare(
@@ -337,13 +338,31 @@ if ($show_results) {
     }
   }
 
-  if ($evaluation_ids_in_context !== [] && $modules !== []) {
+  foreach ($students as $student) {
+    $id_alumno = (int) $student['id_alumno'];
+    foreach ($modules as $module) {
+      $module_id = (int) $module['id_modulo'];
+      $current_numeric = $grades_current[$id_alumno][$module_id]['numeric'] ?? null;
+      if ($current_numeric !== null) {
+        $students_with_computable_grades[$id_alumno] = true;
+        break;
+      }
+    }
+  }
+
+  if ($evaluation_ids_in_context !== [] && $modules !== [] && $students_with_computable_grades !== []) {
+    $student_ids = array_keys($students_with_computable_grades);
+    $student_placeholders = [];
+    foreach ($student_ids as $index => $student_id) {
+      $student_placeholders[] = ':id_alumno_' . $index;
+    }
     $history_stmt = $pdo->prepare(
       'SELECT c.id_evaluacion, AVG(c.nota) AS media
        FROM calificaciones c
        INNER JOIN modulos m ON m.id_modulo = c.id_modulo
        WHERE c.id_curso_escolar = :id_curso_escolar
          AND c.id_grupo = :id_grupo
+         AND c.id_alumno IN (' . implode(', ', $student_placeholders) . ')
          AND c.nota IS NOT NULL
          AND c.id_modulo IN (
            SELECT m2.id_modulo
@@ -357,11 +376,15 @@ if ($show_results) {
        GROUP BY c.id_evaluacion
        ORDER BY c.id_evaluacion'
     );
-    $history_stmt->execute([
+    $history_params = [
       'id_curso_escolar' => $selected_course_id,
       'id_grupo' => (int) $selected_group,
       'id_curso' => $selected_group_course_id,
-    ]);
+    ];
+    foreach ($student_ids as $index => $student_id) {
+      $history_params['id_alumno_' . $index] = (int) $student_id;
+    }
+    $history_stmt->execute($history_params);
     $history_rows = $history_stmt->fetchAll();
     foreach ($history_rows as $history_row) {
       $evaluation_id = (int) $history_row['id_evaluacion'];
@@ -435,6 +458,7 @@ if ($show_results) {
     $recupera = 0;
     $cae = 0;
     $comparables = 0;
+    $student_has_computable_grades = isset($students_with_computable_grades[$id_alumno]);
 
     foreach ($modules as $module) {
       $module_id = (int) $module['id_modulo'];
@@ -443,17 +467,21 @@ if ($show_results) {
 
       if ($current_numeric === null) {
         $no_evaluados++;
-        $module_stats[$module_id]['no_evaluados']++;
+        if ($student_has_computable_grades) {
+          $module_stats[$module_id]['no_evaluados']++;
+        }
       } else {
         $notes[] = $current_numeric;
-        $group_total_valid_grades_current++;
-        $module_stats[$module_id]['numeric'][] = $current_numeric;
-        if ($current_numeric >= 5) {
-          $aprobados++;
-          $module_stats[$module_id]['aprobados']++;
-        } else {
-          $suspensos++;
-          $module_stats[$module_id]['suspensos']++;
+        if ($student_has_computable_grades) {
+          $group_total_valid_grades_current++;
+          $module_stats[$module_id]['numeric'][] = $current_numeric;
+          if ($current_numeric >= 5) {
+            $aprobados++;
+            $module_stats[$module_id]['aprobados']++;
+          } else {
+            $suspensos++;
+            $module_stats[$module_id]['suspensos']++;
+          }
         }
 
         if ($best_grade === null || $current_numeric > $best_grade) {
@@ -468,8 +496,10 @@ if ($show_results) {
 
       if ($previous_numeric !== null) {
         $prev_notes[] = $previous_numeric;
-        $group_total_valid_grades_previous++;
-        $module_stats[$module_id]['prev_numeric'][] = $previous_numeric;
+        if ($student_has_computable_grades) {
+          $group_total_valid_grades_previous++;
+          $module_stats[$module_id]['prev_numeric'][] = $previous_numeric;
+        }
       }
 
       if ($current_numeric !== null && $previous_numeric !== null) {
@@ -482,36 +512,42 @@ if ($show_results) {
 
         if ($previous_numeric < 5 && $current_numeric >= 5) {
           $recupera++;
-          $module_stats[$module_id]['recuperan']++;
-          $total_recoveries++;
+          if ($student_has_computable_grades) {
+            $module_stats[$module_id]['recuperan']++;
+            $total_recoveries++;
+          }
         }
         if ($previous_numeric >= 5 && $current_numeric < 5) {
           $cae++;
-          $module_stats[$module_id]['caen']++;
-          $total_falls++;
+          if ($student_has_computable_grades) {
+            $module_stats[$module_id]['caen']++;
+            $total_falls++;
+          }
         }
       }
     }
 
     $media = $notes !== [] ? array_sum($notes) / count($notes) : null;
     $media_prev = $prev_notes !== [] ? array_sum($prev_notes) / count($prev_notes) : null;
-    $classification = classify_student($suspensos);
-    $classification_counts[$classification]++;
+    $classification = $student_has_computable_grades ? classify_student($suspensos) : 'Sin módulos computables';
+    if ($student_has_computable_grades) {
+      $classification_counts[$classification]++;
+    }
 
-    if ($suspensos === 0) {
+    if ($student_has_computable_grades && $suspensos === 0) {
       $group_pass_current++;
     }
 
-    if ($media !== null) {
+    if ($student_has_computable_grades && $media !== null) {
       $group_means_current[] = $media;
     }
-    if ($media_prev !== null) {
+    if ($student_has_computable_grades && $media_prev !== null) {
       $group_means_previous[] = $media_prev;
     }
 
     $evolution = 'Sin evaluación anterior';
     $diff_media = null;
-    if ($media !== null && $media_prev !== null) {
+    if ($student_has_computable_grades && $media !== null && $media_prev !== null) {
       $students_with_comparison++;
       $diff_media = $media - $media_prev;
       if ($diff_media > 0.01) {
@@ -535,7 +571,7 @@ if ($show_results) {
           $prev_suspensos++;
         }
       }
-      if ($prev_suspensos === 0) {
+      if ($student_has_computable_grades && $prev_suspensos === 0) {
         $group_pass_previous++;
       }
     }
@@ -559,6 +595,7 @@ if ($show_results) {
       'modulos_computables' => count($notes),
       'modulos_computables_prev' => count($prev_notes),
       'modulos_comparables' => $comparables,
+      'incluido_en_calculos' => $student_has_computable_grades,
     ];
   }
 
@@ -602,7 +639,7 @@ if ($show_results) {
   $hardest_module = $module_rows !== [] ? $module_rows[0] : null;
   $easiest_module = $module_rows !== [] ? $module_rows[count($module_rows) - 1] : null;
 
-  $total_students = count($student_rows);
+  $total_students = count($students_with_computable_grades);
   $group_mean = $group_means_current !== [] ? array_sum($group_means_current) / count($group_means_current) : null;
   $group_prev_mean = $group_means_previous !== [] ? array_sum($group_means_previous) / count($group_means_previous) : null;
 
