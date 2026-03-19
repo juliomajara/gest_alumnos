@@ -576,31 +576,36 @@ if ($show_results) {
       }
     }
 
-    $student_rows[] = [
-      'id_alumno' => $id_alumno,
-      'nombre' => $full_name,
-      'aprobados' => $aprobados,
-      'suspensos' => $suspensos,
-      'no_evaluados' => $no_evaluados,
-      'media' => $media,
-      'clasificacion' => $classification,
-      'mejor_modulo' => $best_module,
-      'peor_modulo' => $worst_module,
-      'evolucion' => $evolution,
-      'diff_media' => $diff_media,
-      'suben' => $suben,
-      'bajan' => $bajan,
-      'recupera' => $recupera,
-      'cae' => $cae,
-      'modulos_computables' => count($notes),
-      'modulos_computables_prev' => count($prev_notes),
-      'modulos_comparables' => $comparables,
-      'incluido_en_calculos' => $student_has_computable_grades,
-    ];
+    if ($student_has_computable_grades) {
+      $student_rows[] = [
+        'id_alumno' => $id_alumno,
+        'nombre' => $full_name,
+        'aprobados' => $aprobados,
+        'suspensos' => $suspensos,
+        'no_evaluados' => $no_evaluados,
+        'media' => $media,
+        'clasificacion' => $classification,
+        'mejor_modulo' => $best_module,
+        'peor_modulo' => $worst_module,
+        'evolucion' => $evolution,
+        'diff_media' => $diff_media,
+        'suben' => $suben,
+        'bajan' => $bajan,
+        'recupera' => $recupera,
+        'cae' => $cae,
+        'modulos_computables' => count($notes),
+        'modulos_computables_prev' => count($prev_notes),
+        'modulos_comparables' => $comparables,
+        'incluido_en_calculos' => $student_has_computable_grades,
+      ];
+    }
   }
 
   foreach ($module_stats as $module_id => $module_stat) {
     $evaluados = $module_stat['aprobados'] + $module_stat['suspensos'];
+    if ($evaluados === 0) {
+      continue;
+    }
     $pct_aprobados = $evaluados > 0 ? ($module_stat['aprobados'] * 100 / $evaluados) : null;
     $media_modulo = $module_stat['numeric'] !== [] ? array_sum($module_stat['numeric']) / count($module_stat['numeric']) : null;
     $max_modulo = $module_stat['numeric'] !== [] ? max($module_stat['numeric']) : null;
@@ -926,7 +931,7 @@ if ($show_results) {
                 <?php else: ?>
                   <?php foreach ($module_rows as $module_row): ?>
                     <tr>
-                      <td><?php echo htmlspecialchars((string) $module_row['codigo'], ENT_QUOTES, 'UTF-8'); ?><?php echo $module_row['nombre'] !== '' ? ' · ' . htmlspecialchars((string) $module_row['nombre'], ENT_QUOTES, 'UTF-8') : ''; ?></td>
+                      <td><?php echo htmlspecialchars((string) $module_row['codigo'], ENT_QUOTES, 'UTF-8'); ?><?php echo $module_row['nombre'] !== '' ? ' · ' . htmlspecialchars((string) $module_row['nombre'], ENT_QUOTES, 'UTF-8') : ''; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ' alumnos)'; ?></td>
                       <td><?php echo (int) $module_row['aprobados']; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ')'; ?></td>
                       <td><?php echo (int) $module_row['suspensos']; ?><?php echo ' (sobre ' . (int) $module_row['evaluados'] . ')'; ?></td>
                       <td><?php echo htmlspecialchars(fmt($module_row['pct_aprobados']) . '% (sobre ' . (int) $module_row['evaluados'] . ' módulos)', ENT_QUOTES, 'UTF-8'); ?></td>
