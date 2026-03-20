@@ -28,6 +28,7 @@ $selected_group = (string) ($_GET['id_grupo'] ?? '');
 $selected_group = ctype_digit($selected_group) ? $selected_group : '';
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
+$show_all_students = isset($_GET['mostrar_todos']) && (string) $_GET['mostrar_todos'] === '1';
 
 $normal_evaluation_names = [
   '1ª evaluación',
@@ -135,6 +136,7 @@ foreach ($evaluations as $evaluation) {
 
 $show_results = $selected_group !== '';
 $students = [];
+$visible_students = [];
 $modules = [];
 $grades_by_student = [];
 $grades_history_by_student = [];
@@ -322,6 +324,30 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
     ];
   }
 }
+
+if ($show_results && $students !== [] && $modules !== []) {
+  if ($show_all_students) {
+    $visible_students = $students;
+  } else {
+    foreach ($students as $student) {
+      $id_alumno = (int) $student['id_alumno'];
+      $has_grade_in_shown_modules = false;
+
+      foreach ($modules as $module) {
+        $id_modulo = (int) $module['id_modulo'];
+        $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
+        if ($display_grade !== '—') {
+          $has_grade_in_shown_modules = true;
+          break;
+        }
+      }
+
+      if ($has_grade_in_shown_modules) {
+        $visible_students[] = $student;
+      }
+    }
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -347,6 +373,9 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
       </header>
 
       <form class="topbar" method="get">
+        <?php if ($show_all_students): ?>
+          <input type="hidden" name="mostrar_todos" value="1">
+        <?php endif; ?>
         <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
             <select name="id_curso_escolar" onchange="this.form.submit()" aria-label="Curso escolar">
@@ -395,6 +424,18 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
               value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
             >
           </div>
+          <a
+            class="edit-toggle<?php echo $show_all_students ? ' is-active' : ''; ?>"
+            href="calificaciones.php?<?php echo htmlspecialchars(http_build_query([
+              'id_curso_escolar' => $selected_course_id,
+              'id_grupo' => $selected_group,
+              'id_evaluacion' => $selected_evaluation,
+              'q' => $search_term,
+              'mostrar_todos' => $show_all_students ? '0' : '1',
+            ]), ENT_QUOTES, 'UTF-8'); ?>"
+          >
+            Mostrar todos
+          </a>
         </div>
       </form>
 
@@ -466,8 +507,12 @@ if ($show_results && $students !== [] && $modules !== [] && $selected_evaluation
                   <tr>
                     <td>No hay módulos disponibles para el contexto seleccionado.</td>
                   </tr>
+                <?php elseif ($visible_students === []): ?>
+                  <tr>
+                    <td colspan="<?php echo 1 + count($modules); ?>">No hay alumnos con calificaciones para los filtros seleccionados.</td>
+                  </tr>
                 <?php else: ?>
-                  <?php foreach ($students as $student): ?>
+                  <?php foreach ($visible_students as $student): ?>
                     <?php
                       $id_alumno = (int) $student['id_alumno'];
                       $apellido2 = trim((string) ($student['apellido2'] ?? ''));
