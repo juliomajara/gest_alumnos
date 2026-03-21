@@ -436,6 +436,17 @@ if ($show_results && $students !== [] && $modules !== []) {
           >
             Mostrar todos
           </a>
+          <button type="button" class="edit-toggle" id="resaltar-notas">Resaltar</button>
+          <a
+            class="edit-toggle"
+            href="calificaciones_analisis.php?<?php echo htmlspecialchars(http_build_query([
+              'id_curso_escolar' => $selected_course_id,
+              'id_grupo' => $selected_group,
+              'id_evaluacion' => $selected_evaluation,
+            ]), ENT_QUOTES, 'UTF-8'); ?>"
+          >
+            Analizar resultados
+          </a>
         </div>
       </form>
 
@@ -548,7 +559,7 @@ if ($show_results && $students !== [] && $modules !== []) {
                           $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
                           $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
                         ?>
-                        <td>
+                        <td data-grade-cell="1">
                           <span class="help-tooltip">
                             <span tabindex="0"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></span>
                             <span class="help-tooltip-content" role="tooltip">
@@ -725,6 +736,53 @@ if ($show_results && $students !== [] && $modules !== []) {
           positionTooltip(activeContainer);
         }
       }, { passive: true });
+
+      const resaltarNotasButton = document.getElementById('resaltar-notas');
+      const gradeCells = document.querySelectorAll('td[data-grade-cell="1"]');
+      const numericGradePattern = /^\d+(?:\.\d+)?$/;
+      let highlightEnabled = false;
+
+      const clearHighlight = () => {
+        gradeCells.forEach((cell) => {
+          cell.classList.remove('generation-feedback-success', 'generation-feedback-error');
+        });
+      };
+
+      const applyHighlight = () => {
+        clearHighlight();
+        gradeCells.forEach((cell) => {
+          const gradeElement = cell.querySelector('.help-tooltip > span[tabindex]');
+          const gradeText = gradeElement ? gradeElement.textContent.trim() : '';
+          if (!numericGradePattern.test(gradeText)) {
+            return;
+          }
+
+          const numericGrade = Number.parseFloat(gradeText);
+          if (Number.isNaN(numericGrade)) {
+            return;
+          }
+
+          if (numericGrade < 5) {
+            cell.classList.add('generation-feedback-error');
+          } else {
+            cell.classList.add('generation-feedback-success');
+          }
+        });
+      };
+
+      if (resaltarNotasButton && gradeCells.length > 0) {
+        resaltarNotasButton.addEventListener('click', () => {
+          highlightEnabled = !highlightEnabled;
+          resaltarNotasButton.classList.toggle('is-active', highlightEnabled);
+
+          if (highlightEnabled) {
+            applyHighlight();
+            return;
+          }
+
+          clearHighlight();
+        });
+      }
     })();
   </script>
 </body>
