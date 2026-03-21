@@ -74,6 +74,15 @@ function fmt(?float $value, int $decimals = 2): string
   return number_format($value, $decimals, ',', '.');
 }
 
+function fmt_count_pct(?int $count, int $total): string
+{
+  if ($count === null || $total <= 0) {
+    return '—';
+  }
+
+  return $count . ' / ' . fmt($count * 100 / $total) . '%';
+}
+
 function median(array $values): ?float
 {
   if ($values === []) {
@@ -426,6 +435,12 @@ if ($show_results) {
     '2 suspensas' => 0,
     '3 o más suspensas' => 0,
   ];
+  $classification_counts_previous = [
+    'Todo aprobado' => 0,
+    '1 suspensa' => 0,
+    '2 suspensas' => 0,
+    '3 o más suspensas' => 0,
+  ];
   $group_means_current = [];
   $group_means_previous = [];
   $improve_count = 0;
@@ -564,15 +579,22 @@ if ($show_results) {
 
     if ($previous_evaluation_id > 0) {
       $prev_suspensos = 0;
+      $prev_notes_count = 0;
       foreach ($modules as $module) {
         $module_id = (int) $module['id_modulo'];
         $previous_numeric = $grades_previous[$id_alumno][$module_id]['numeric'] ?? null;
-        if ($previous_numeric !== null && $previous_numeric < 5) {
-          $prev_suspensos++;
+        if ($previous_numeric !== null) {
+          $prev_notes_count++;
+          if ($previous_numeric < 5) {
+            $prev_suspensos++;
+          }
         }
       }
       if ($student_has_computable_grades && $prev_suspensos === 0) {
         $group_pass_previous++;
+      }
+      if ($student_has_computable_grades && $prev_notes_count > 0) {
+        $classification_counts_previous[classify_student($prev_suspensos)]++;
       }
     }
 
@@ -674,32 +696,56 @@ if ($show_results) {
   ];
 
   $summary_rows = [
-    ['Métrica', 'Valor'],
-    ['Nº alumnos con todo aprobado', (string) $group_stats['todo_aprobado']],
-    ['Nº alumnos con 1 suspensa', (string) $group_stats['una']],
-    ['Nº alumnos con 2 suspensas', (string) $group_stats['dos']],
-    ['Nº alumnos con 3 o más suspensas', (string) $group_stats['tres_o_mas']],
-    ['% todo aprobado', fmt($group_stats['pct_todo_aprobado']) . '%'],
-    ['% alumnado en riesgo (3 o más)', fmt($group_stats['pct_riesgo']) . '%'],
-    ['Media del grupo', fmt($group_stats['media']) . ' (calculada sobre ' . $group_stats['notas_computables_actual'] . ' módulos computables)'],
-    ['Mediana del grupo', fmt($group_stats['mediana']) . ' (calculada sobre ' . $group_stats['total'] . ' alumnos)'],
-    ['Máximo del grupo', fmt($group_stats['max']) . ' (sobre ' . $group_stats['total'] . ' alumnos)'],
-    ['Mínimo del grupo', fmt($group_stats['min']) . ' (sobre ' . $group_stats['total'] . ' alumnos)'],
-    ['Desviación básica', fmt($group_stats['desviacion'])],
-    ['% mejora', fmt($group_stats['pct_mejoran']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)'],
-    ['% empeora', fmt($group_stats['pct_empeoran']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)'],
-    ['% se mantiene', fmt($group_stats['pct_mantienen']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)'],
-    ['Variación media vs anterior', fmt($group_stats['var_media']) . ' (actual: ' . $group_stats['notas_computables_actual'] . ' módulos computables; anterior: ' . $group_stats['notas_computables_anterior'] . ')'],
-    ['Variación % todo aprobado vs anterior', fmt($group_stats['var_pct_aprobados']) . '% (sobre ' . $group_stats['total'] . ' alumnos)'],
+    ['Métrica', 'Valor', 'Variación con la anterior'],
+    [
+      'Todo aprobado',
+      fmt_count_pct((int) $group_stats['todo_aprobado'], (int) $group_stats['total']),
+      $previous_evaluation_id > 0
+        ? fmt_count_pct((int) $group_stats['todo_aprobado'] - (int) $classification_counts_previous['Todo aprobado'], (int) $group_stats['total'])
+        : '—',
+    ],
+    [
+      '1 suspensa',
+      fmt_count_pct((int) $group_stats['una'], (int) $group_stats['total']),
+      $previous_evaluation_id > 0
+        ? fmt_count_pct((int) $group_stats['una'] - (int) $classification_counts_previous['1 suspensa'], (int) $group_stats['total'])
+        : '—',
+    ],
+    [
+      '2 suspensas',
+      fmt_count_pct((int) $group_stats['dos'], (int) $group_stats['total']),
+      $previous_evaluation_id > 0
+        ? fmt_count_pct((int) $group_stats['dos'] - (int) $classification_counts_previous['2 suspensas'], (int) $group_stats['total'])
+        : '—',
+    ],
+    [
+      '3 o más suspensas',
+      fmt_count_pct((int) $group_stats['tres_o_mas'], (int) $group_stats['total']),
+      $previous_evaluation_id > 0
+        ? fmt_count_pct((int) $group_stats['tres_o_mas'] - (int) $classification_counts_previous['3 o más suspensas'], (int) $group_stats['total'])
+        : '—',
+    ],
+    ['% todo aprobado', fmt($group_stats['pct_todo_aprobado']) . '%', '—'],
+    ['% alumnado en riesgo (3 o más)', fmt($group_stats['pct_riesgo']) . '%', '—'],
+    ['Media del grupo', fmt($group_stats['media']) . ' (calculada sobre ' . $group_stats['notas_computables_actual'] . ' módulos computables)', '—'],
+    ['Mediana del grupo', fmt($group_stats['mediana']) . ' (calculada sobre ' . $group_stats['total'] . ' alumnos)', '—'],
+    ['Máximo del grupo', fmt($group_stats['max']) . ' (sobre ' . $group_stats['total'] . ' alumnos)', '—'],
+    ['Mínimo del grupo', fmt($group_stats['min']) . ' (sobre ' . $group_stats['total'] . ' alumnos)', '—'],
+    ['Desviación básica', fmt($group_stats['desviacion']), '—'],
+    ['% mejora', fmt($group_stats['pct_mejoran']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)', '—'],
+    ['% empeora', fmt($group_stats['pct_empeoran']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)', '—'],
+    ['% se mantiene', fmt($group_stats['pct_mantienen']) . '% (sobre ' . $group_stats['alumnos_con_comparativa'] . ' alumnos con comparativa)', '—'],
+    ['Variación media vs anterior', fmt($group_stats['var_media']) . ' (actual: ' . $group_stats['notas_computables_actual'] . ' módulos computables; anterior: ' . $group_stats['notas_computables_anterior'] . ')', '—'],
+    ['Variación % todo aprobado vs anterior', fmt($group_stats['var_pct_aprobados']) . '% (sobre ' . $group_stats['total'] . ' alumnos)', '—'],
   ];
 
   if ($group_stats['total'] > 0) {
     $conclusions[] = 'El ' . fmt($group_stats['pct_todo_aprobado']) . '% del grupo tiene todo aprobado.';
     if ($hardest_module !== null) {
-      $conclusions[] = 'El módulo más difícil es ' . $hardest_module['codigo'] . ' (' . fmt($hardest_module['pct_aprobados']) . '% de aprobados sobre ' . $hardest_module['evaluados'] . ' módulos computables).';
+      $conclusions[] = 'El módulo con mayor porcentaje de suspensos es ' . $hardest_module['nombre'] . ' (' . $hardest_module['codigo'] . ') (' . fmt(100 - (float) $hardest_module['pct_aprobados']) . '% de suspensos sobre ' . $hardest_module['evaluados'] . ' módulos computables).';
     }
     if ($easiest_module !== null) {
-      $conclusions[] = 'El módulo más fácil es ' . $easiest_module['codigo'] . ' (' . fmt($easiest_module['pct_aprobados']) . '% de aprobados sobre ' . $easiest_module['evaluados'] . ' módulos computables).';
+      $conclusions[] = 'El módulo con mayor porcentaje de aprobados es ' . $easiest_module['nombre'] . ' (' . $easiest_module['codigo'] . ') (' . fmt($easiest_module['pct_aprobados']) . '% de aprobados sobre ' . $easiest_module['evaluados'] . ' módulos computables).';
     }
     $conclusions[] = 'Hay ' . $group_stats['tres_o_mas'] . ' alumnos en riesgo (3 o más suspensas).';
     $conclusions[] = 'Se observan ' . $total_recoveries . ' recuperaciones de módulo y ' . $worsen_count . ' alumnos que empeoran su media.';
@@ -730,6 +776,9 @@ if ($show_results) {
         <div>
           <h1>Análisis de calificaciones</h1>
           <p class="subheading">Métricas individuales, globales y por módulo a partir de la evaluación seleccionada.</p>
+        </div>
+        <div class="header-actions">
+          <a class="ghost-button" href="calificaciones.php">Volver a calificaciones</a>
         </div>
       </header>
 
@@ -835,11 +884,13 @@ if ($show_results) {
                     <tr>
                       <th><?php echo htmlspecialchars((string) $summary_row[0], ENT_QUOTES, 'UTF-8'); ?></th>
                       <th><?php echo htmlspecialchars((string) $summary_row[1], ENT_QUOTES, 'UTF-8'); ?></th>
+                      <th><?php echo htmlspecialchars((string) $summary_row[2], ENT_QUOTES, 'UTF-8'); ?></th>
                     </tr>
                   <?php else: ?>
                     <tr>
                       <td><?php echo htmlspecialchars((string) $summary_row[0], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $summary_row[1], ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars((string) $summary_row[2], ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endif; ?>
                 <?php endforeach; ?>
@@ -859,7 +910,6 @@ if ($show_results) {
                   <th>Alumno</th>
                   <th>Aprobados</th>
                   <th>Suspensos</th>
-                  <th>No evaluados</th>
                   <th>Media</th>
                   <th>Clasificación</th>
                   <th>Mejor módulo</th>
@@ -875,7 +925,7 @@ if ($show_results) {
               <tbody>
                 <?php if ($student_rows === []): ?>
                   <tr>
-                    <td colspan="14">No hay alumnado para el contexto seleccionado.</td>
+                    <td colspan="13">No hay alumnado para el contexto seleccionado.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($student_rows as $student_row): ?>
@@ -886,7 +936,6 @@ if ($show_results) {
                       </td>
                       <td><?php echo (int) $student_row['aprobados']; ?></td>
                       <td><?php echo (int) $student_row['suspensos']; ?></td>
-                      <td><?php echo (int) $student_row['no_evaluados']; ?></td>
                       <td><?php echo htmlspecialchars(fmt($student_row['media']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['clasificacion'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $student_row['mejor_modulo'], ENT_QUOTES, 'UTF-8'); ?></td>
