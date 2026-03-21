@@ -805,6 +805,21 @@ a.edit-toggle:focus {
   margin-top: 6px;
 }
 
+.panel-header-with-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.panel-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .panel-title-with-help {
   display: flex;
   align-items: center;
