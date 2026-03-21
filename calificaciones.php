@@ -347,6 +347,28 @@ if ($show_results && $students !== [] && $modules !== []) {
       }
     }
   }
+
+  $visible_module_ids = [];
+  foreach ($modules as $module) {
+    $id_modulo = (int) $module['id_modulo'];
+    foreach ($visible_students as $student) {
+      $id_alumno = (int) $student['id_alumno'];
+      $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
+      if ($display_grade !== '—') {
+        $visible_module_ids[$id_modulo] = true;
+        break;
+      }
+    }
+  }
+
+  if ($visible_module_ids !== []) {
+    $modules = array_values(array_filter(
+      $modules,
+      static fn (array $module): bool => isset($visible_module_ids[(int) $module['id_modulo']])
+    ));
+  } else {
+    $modules = [];
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -424,35 +446,12 @@ if ($show_results && $students !== [] && $modules !== []) {
               value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
             >
           </div>
-          <a
-            class="edit-toggle<?php echo $show_all_students ? ' is-active' : ''; ?>"
-            href="calificaciones.php?<?php echo htmlspecialchars(http_build_query([
-              'id_curso_escolar' => $selected_course_id,
-              'id_grupo' => $selected_group,
-              'id_evaluacion' => $selected_evaluation,
-              'q' => $search_term,
-              'mostrar_todos' => $show_all_students ? '0' : '1',
-            ]), ENT_QUOTES, 'UTF-8'); ?>"
-          >
-            Mostrar todos
-          </a>
-          <button type="button" class="edit-toggle" id="resaltar-notas">Resaltar</button>
-          <a
-            class="edit-toggle"
-            href="calificaciones_analisis.php?<?php echo htmlspecialchars(http_build_query([
-              'id_curso_escolar' => $selected_course_id,
-              'id_grupo' => $selected_group,
-              'id_evaluacion' => $selected_evaluation,
-            ]), ENT_QUOTES, 'UTF-8'); ?>"
-          >
-            Analizar resultados
-          </a>
         </div>
       </form>
 
       <?php if ($show_results): ?>
         <section class="panel">
-          <div class="panel-header">
+          <div class="panel-header panel-header-with-actions">
             <?php
               $selected_group_name = $selected_group !== '' ? trim((string) ($groups_by_id[(int) $selected_group] ?? '')) : '';
               if ($selected_group_name === '') {
@@ -460,8 +459,35 @@ if ($show_results && $students !== [] && $modules !== []) {
               }
               $selected_evaluation_name = trim((string) ($evaluation_name_by_id[$selected_evaluation] ?? ''));
             ?>
-            <h3>Tabla de calificaciones de <?php echo htmlspecialchars($selected_group_name, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($selected_evaluation_name, ENT_QUOTES, 'UTF-8'); ?></h3>
-            <p>Alumnado del contexto seleccionado y sus notas por módulo para la evaluación elegida.</p>
+            <div>
+              <h3>Tabla de calificaciones de <?php echo htmlspecialchars($selected_group_name, ENT_QUOTES, 'UTF-8'); ?> - <?php echo htmlspecialchars($selected_evaluation_name, ENT_QUOTES, 'UTF-8'); ?></h3>
+              <p>Alumnado del contexto seleccionado y sus notas por módulo para la evaluación elegida.</p>
+            </div>
+            <div class="panel-header-actions">
+              <a
+                class="edit-toggle<?php echo $show_all_students ? ' is-active' : ''; ?>"
+                href="calificaciones.php?<?php echo htmlspecialchars(http_build_query([
+                  'id_curso_escolar' => $selected_course_id,
+                  'id_grupo' => $selected_group,
+                  'id_evaluacion' => $selected_evaluation,
+                  'q' => $search_term,
+                  'mostrar_todos' => $show_all_students ? '0' : '1',
+                ]), ENT_QUOTES, 'UTF-8'); ?>"
+              >
+                Mostrar todos
+              </a>
+              <button type="button" class="edit-toggle" id="resaltar-notas">Resaltar</button>
+              <a
+                class="edit-toggle"
+                href="calificaciones_analisis.php?<?php echo htmlspecialchars(http_build_query([
+                  'id_curso_escolar' => $selected_course_id,
+                  'id_grupo' => $selected_group,
+                  'id_evaluacion' => $selected_evaluation,
+                ]), ENT_QUOTES, 'UTF-8'); ?>"
+              >
+                Analizar
+              </a>
+            </div>
           </div>
 
           <div class="panel-grid">
