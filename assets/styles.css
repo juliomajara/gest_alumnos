@@ -955,13 +955,13 @@ a.edit-toggle:focus {
   .panel-grid table.grade-highlight-active tbody td.generation-feedback-success,
   .panel-grid table.grade-highlight-active tbody tr:nth-child(even) td.generation-feedback-success,
   .panel-grid table.grade-highlight-active tbody tr:hover td.generation-feedback-success {
-    background: #e4f7ec;
+    background-color: #e4f7ec !important;
   }
 
   .panel-grid table.grade-highlight-active tbody td.generation-feedback-error,
   .panel-grid table.grade-highlight-active tbody tr:nth-child(even) td.generation-feedback-error,
   .panel-grid table.grade-highlight-active tbody tr:hover td.generation-feedback-error {
-    background: #fee4e2;
+    background-color: #fee4e2 !important;
   }
 
   .panel-grid tbody td a {
