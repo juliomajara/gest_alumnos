@@ -739,6 +739,7 @@ if ($show_results && $students !== [] && $modules !== []) {
 
       const resaltarNotasButton = document.getElementById('resaltar-notas');
       const gradeCells = document.querySelectorAll('td[data-grade-cell="1"]');
+      const gradesTable = gradeCells.length > 0 ? gradeCells[0].closest('table') : null;
       const numericGradePattern = /^\d+(?:\.\d+)?$/;
       let highlightEnabled = false;
 
@@ -774,6 +775,9 @@ if ($show_results && $students !== [] && $modules !== []) {
         resaltarNotasButton.addEventListener('click', () => {
           highlightEnabled = !highlightEnabled;
           resaltarNotasButton.classList.toggle('is-active', highlightEnabled);
+          if (gradesTable) {
+            gradesTable.classList.toggle('grade-highlight-active', highlightEnabled);
+          }
 
           if (highlightEnabled) {
             applyHighlight();
