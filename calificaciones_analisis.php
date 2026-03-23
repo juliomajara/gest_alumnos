@@ -778,7 +778,10 @@ if ($show_results) {
           <p class="subheading">Métricas individuales, globales y por módulo a partir de la evaluación seleccionada.</p>
         </div>
         <div class="header-actions">
-          <a class="ghost-button" href="calificaciones.php">Volver a calificaciones</a>
+          <a class="ghost-button" href="calificaciones.php?<?php echo htmlspecialchars(http_build_query([
+            'id_grupo' => $selected_group,
+            'id_evaluacion' => $selected_evaluation,
+          ]), ENT_QUOTES, 'UTF-8'); ?>">Volver a calificaciones</a>
         </div>
       </header>
 
