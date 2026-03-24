@@ -297,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   'retrasos' => $totales_r,
                 ]);
                 $result['actualizados']++;
-              } else {
+              } elseif ($totales_j > 0 || $totales_i > 0 || $totales_r > 0) {
                 $insert_stmt->execute([
                   'id_alumno' => (int) $student_index[$student_key],
                   'id_curso_escolar' => $selected['id_curso_escolar'],
