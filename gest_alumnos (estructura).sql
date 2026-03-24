@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-03-2026 a las 10:59:23
+-- Tiempo de generación: 24-03-2026 a las 13:50:17
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -93,7 +93,24 @@ CREATE TABLE `asistencia_mensual` (
   `id_mes` int(10) UNSIGNED NOT NULL,
   `faltas_justificadas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `faltas_injustificadas` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
-  `retrasos` smallint(5) UNSIGNED NOT NULL DEFAULT 0
+  `retrasos` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `asistencia_modulo_acumulada`
+--
+
+CREATE TABLE `asistencia_modulo_acumulada` (
+  `id_asistencia_modulo` int(10) UNSIGNED NOT NULL,
+  `id_alumno` int(10) UNSIGNED NOT NULL,
+  `id_modulo` int(10) UNSIGNED NOT NULL,
+  `id_curso_escolar` int(10) UNSIGNED NOT NULL,
+  `faltas_totales` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `retrasos_totales` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -624,6 +641,16 @@ ALTER TABLE `asistencia_mensual`
   ADD KEY `fk_as_mes` (`id_mes`);
 
 --
+-- Indices de la tabla `asistencia_modulo_acumulada`
+--
+ALTER TABLE `asistencia_modulo_acumulada`
+  ADD PRIMARY KEY (`id_asistencia_modulo`),
+  ADD UNIQUE KEY `uq_asistencia_modulo` (`id_alumno`,`id_modulo`,`id_curso_escolar`),
+  ADD KEY `fk_ama_alumno` (`id_alumno`),
+  ADD KEY `fk_ama_modulo` (`id_modulo`),
+  ADD KEY `fk_ama_curso_escolar` (`id_curso_escolar`);
+
+--
 -- Indices de la tabla `calificaciones`
 --
 ALTER TABLE `calificaciones`
@@ -894,6 +921,12 @@ ALTER TABLE `asistencia_mensual`
   MODIFY `id_asistencia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `asistencia_modulo_acumulada`
+--
+ALTER TABLE `asistencia_modulo_acumulada`
+  MODIFY `id_asistencia_modulo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `calificaciones`
 --
 ALTER TABLE `calificaciones`
@@ -1127,6 +1160,14 @@ ALTER TABLE `asistencia_mensual`
   ADD CONSTRAINT `fk_as_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_as_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_as_mes` FOREIGN KEY (`id_mes`) REFERENCES `meses` (`id_mes`);
+
+--
+-- Filtros para la tabla `asistencia_modulo_acumulada`
+--
+ALTER TABLE `asistencia_modulo_acumulada`
+  ADD CONSTRAINT `fk_ama_alumno` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_ama_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
+  ADD CONSTRAINT `fk_ama_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `calificaciones`
