@@ -1,0 +1,480 @@
+<?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/db.php';
+
+$pdo = db();
+
+$page_title = 'Importar asistencia mensual | Gestor de Alumnos';
+$active_page = 'configuracion';
+
+$messages = [];
+$errors = [];
+$result = [
+  'importados' => 0,
+  'actualizados' => 0,
+  'alumnos_no_encontrados' => [],
+  'filas_error_formato' => [],
+  'errores' => [],
+];
+
+$active_course_id = (int) ($pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 ORDER BY id_curso_escolar DESC LIMIT 1')->fetchColumn() ?: 0);
+$current_month = (int) date('n');
+
+$selected = [
+  'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? $active_course_id),
+  'id_ciclo' => 0,
+  'id_curso' => 0,
+  'id_grupo' => (int) ($_POST['id_grupo'] ?? 0),
+  'id_mes' => (int) ($_POST['id_mes'] ?? $current_month),
+];
+
+$cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
+$grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
+$meses = $pdo->query('SELECT id_mes, mes FROM meses ORDER BY id_mes')->fetchAll(PDO::FETCH_ASSOC);
+
+$mes_valido_actual = false;
+foreach ($meses as $mes_item) {
+  if ((int) $mes_item['id_mes'] === $selected['id_mes']) {
+    $mes_valido_actual = true;
+    break;
+  }
+}
+if (!$mes_valido_actual && $meses !== []) {
+  $selected['id_mes'] = (int) $meses[0]['id_mes'];
+}
+
+function normalize_name(string $value): string {
+  $value = str_replace("\xc2\xa0", ' ', $value);
+  $value = str_replace("\xEF\xBB\xBF", '', $value);
+  $value = str_replace(',', ' , ', $value);
+  $value = mb_strtolower(trim($value), 'UTF-8');
+  $translit = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+  if ($translit !== false) {
+    $value = mb_strtolower($translit, 'UTF-8');
+  }
+  $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+  $value = preg_replace('/\s*,\s*/u', ',', $value) ?? $value;
+
+  return trim($value);
+}
+
+function normalize_csv_text(string $value): string {
+  $value = str_replace("\xEF\xBB\xBF", '', $value);
+  $value = str_replace("\xc2\xa0", ' ', $value);
+  $value = trim($value);
+
+  if ($value === '') {
+    return '';
+  }
+
+  if (!mb_check_encoding($value, 'UTF-8')) {
+    $converted = @mb_convert_encoding($value, 'UTF-8', 'Windows-1252,ISO-8859-1,UTF-8');
+    if (is_string($converted) && $converted !== '') {
+      $value = $converted;
+    }
+  }
+
+  return trim($value);
+}
+
+function parse_asistencia_cell(string $raw): array|false {
+  $raw = trim($raw);
+  if ($raw === '') {
+    return [
+      'J' => 0,
+      'I' => 0,
+      'R' => 0,
+    ];
+  }
+
+  if (preg_match('/^\s*([0-9]+)\s*J\s*-\s*([0-9]+)\s*I\s*-\s*([0-9]+)\s*R\s*$/iu', $raw, $m)) {
+    return [
+      'J' => (int) $m[1],
+      'I' => (int) $m[2],
+      'R' => (int) $m[3],
+    ];
+  }
+
+  return false;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  if ($selected['id_curso_escolar'] <= 0 || $selected['id_grupo'] <= 0 || $selected['id_mes'] <= 0) {
+    $errors[] = 'Debes seleccionar curso escolar, grupo y mes.';
+  }
+
+  if (!isset($_FILES['csv_asistencia']) || !is_uploaded_file($_FILES['csv_asistencia']['tmp_name'])) {
+    $errors[] = 'Debes seleccionar un archivo CSV válido.';
+  } else {
+    $csv_name = (string) ($_FILES['csv_asistencia']['name'] ?? '');
+    $csv_ext = strtolower((string) pathinfo($csv_name, PATHINFO_EXTENSION));
+    $mime = '';
+    if (function_exists('finfo_open')) {
+      $finfo = finfo_open(FILEINFO_MIME_TYPE);
+      if ($finfo !== false) {
+        $detected = finfo_file($finfo, $_FILES['csv_asistencia']['tmp_name']);
+        if (is_string($detected)) {
+          $mime = strtolower($detected);
+        }
+        finfo_close($finfo);
+      }
+    }
+
+    $mime_valid = in_array($mime, ['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/csv'], true);
+    if ($csv_ext !== 'csv' && !$mime_valid) {
+      $errors[] = 'El archivo seleccionado no parece ser un CSV válido.';
+    }
+  }
+
+  if ($errors === []) {
+    $curso_valido_stmt = $pdo->prepare('SELECT 1 FROM cursos_escolares WHERE id_curso_escolar = :id_curso_escolar LIMIT 1');
+    $curso_valido_stmt->execute([
+      'id_curso_escolar' => $selected['id_curso_escolar'],
+    ]);
+
+    if (!$curso_valido_stmt->fetchColumn()) {
+      $errors[] = 'El curso escolar seleccionado no es válido.';
+    }
+
+    $grupo_valido_stmt = $pdo->prepare('SELECT id_ciclo, id_curso FROM grupos WHERE id_grupo = :id_grupo LIMIT 1');
+    $grupo_valido_stmt->execute([
+      'id_grupo' => $selected['id_grupo'],
+    ]);
+    $grupo_contexto = $grupo_valido_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$grupo_contexto) {
+      $errors[] = 'El grupo seleccionado no es válido.';
+    } else {
+      $selected['id_ciclo'] = (int) $grupo_contexto['id_ciclo'];
+      $selected['id_curso'] = (int) $grupo_contexto['id_curso'];
+    }
+
+    $mes_valido_stmt = $pdo->prepare('SELECT 1 FROM meses WHERE id_mes = :id_mes LIMIT 1');
+    $mes_valido_stmt->execute([
+      'id_mes' => $selected['id_mes'],
+    ]);
+
+    if (!$mes_valido_stmt->fetchColumn()) {
+      $errors[] = 'El mes seleccionado no es válido.';
+    }
+  }
+
+  if ($errors === []) {
+    $handle = fopen($_FILES['csv_asistencia']['tmp_name'], 'rb');
+    if (!$handle) {
+      $errors[] = 'No se pudo abrir el archivo CSV.';
+    } else {
+      $header = fgetcsv($handle, 0, ',', '"', '\\');
+      if (!is_array($header) || count($header) < 2) {
+        $errors[] = 'La cabecera del CSV no es válida.';
+      } else {
+        $header = array_map(static fn($v): string => normalize_csv_text((string) $v), $header);
+        if (mb_strtolower((string) $header[0], 'UTF-8') !== mb_strtolower('Alumno/a', 'UTF-8')) {
+          $errors[] = 'La primera columna de la cabecera debe ser "Alumno/a".';
+        }
+      }
+
+      if ($errors === []) {
+        $day_columns = [];
+        for ($i = 1, $total = count($header); $i < $total; $i++) {
+          $day_columns[] = $i;
+        }
+
+        if ($day_columns === []) {
+          $errors[] = 'No se han encontrado columnas de días en la cabecera del CSV.';
+        } else {
+          $students_stmt = $pdo->prepare(
+            'SELECT a.id_alumno, a.apellido1, a.apellido2, a.nombre
+             FROM alumno_curso ac
+             INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
+             WHERE ac.id_curso_escolar = :id_curso_escolar
+               AND ac.id_ciclo = :id_ciclo
+               AND ac.id_curso = :id_curso
+               AND ac.id_grupo = :id_grupo'
+          );
+          $students_stmt->execute([
+            'id_curso_escolar' => $selected['id_curso_escolar'],
+            'id_ciclo' => $selected['id_ciclo'],
+            'id_curso' => $selected['id_curso'],
+            'id_grupo' => $selected['id_grupo'],
+          ]);
+
+          $student_index = [];
+          while ($student = $students_stmt->fetch(PDO::FETCH_ASSOC)) {
+            $id_alumno = (int) $student['id_alumno'];
+            $apellido1 = trim((string) ($student['apellido1'] ?? ''));
+            $apellido2 = trim((string) ($student['apellido2'] ?? ''));
+            $nombre = trim((string) ($student['nombre'] ?? ''));
+
+            $variants = [
+              trim($apellido1 . ' ' . $apellido2 . ', ' . $nombre),
+              trim($apellido1 . ', ' . $nombre),
+              trim($apellido1 . ' ' . $apellido2 . ' ' . $nombre),
+              trim($apellido1 . ' ' . $nombre),
+            ];
+
+            foreach ($variants as $variant) {
+              $key = normalize_name($variant);
+              if ($key !== '' && !isset($student_index[$key])) {
+                $student_index[$key] = $id_alumno;
+              }
+            }
+          }
+
+          $select_existing_stmt = $pdo->prepare(
+            'SELECT id_asistencia
+             FROM asistencia_mensual
+             WHERE id_alumno = :id_alumno
+               AND id_curso_escolar = :id_curso_escolar
+               AND id_mes = :id_mes
+             LIMIT 1'
+          );
+
+          $update_stmt = $pdo->prepare(
+            'UPDATE asistencia_mensual
+             SET faltas_justificadas = :faltas_justificadas,
+                 faltas_injustificadas = :faltas_injustificadas,
+                 retrasos = :retrasos
+             WHERE id_asistencia = :id_asistencia'
+          );
+
+          $insert_stmt = $pdo->prepare(
+            'INSERT INTO asistencia_mensual
+              (id_alumno, id_curso_escolar, id_mes, faltas_justificadas, faltas_injustificadas, retrasos)
+             VALUES
+              (:id_alumno, :id_curso_escolar, :id_mes, :faltas_justificadas, :faltas_injustificadas, :retrasos)'
+          );
+
+          $line = 1;
+          $pdo->beginTransaction();
+          try {
+            while (($row = fgetcsv($handle, 0, ',', '"', '\\')) !== false) {
+              $line++;
+              $name_csv = normalize_csv_text((string) ($row[0] ?? ''));
+              if ($name_csv === '') {
+                continue;
+              }
+
+              $student_key = normalize_name($name_csv);
+              if (!isset($student_index[$student_key])) {
+                $result['alumnos_no_encontrados'][] = $name_csv;
+                continue;
+              }
+
+              $totales_j = 0;
+              $totales_i = 0;
+              $totales_r = 0;
+
+              foreach ($day_columns as $column_index) {
+                $raw_cell = normalize_csv_text((string) ($row[$column_index] ?? ''));
+                $parsed = parse_asistencia_cell($raw_cell);
+
+                if ($parsed === false) {
+                  $result['filas_error_formato'][$line] = true;
+                  $header_label = normalize_csv_text((string) ($header[$column_index] ?? ('Columna ' . ($column_index + 1))));
+                  $result['errores'][] = 'Línea ' . $line . ' (' . $name_csv . ', ' . $header_label . '): formato no válido (' . $raw_cell . ').';
+                  continue;
+                }
+
+                $totales_j += (int) $parsed['J'];
+                $totales_i += (int) $parsed['I'];
+                $totales_r += (int) $parsed['R'];
+              }
+
+              $select_existing_stmt->execute([
+                'id_alumno' => (int) $student_index[$student_key],
+                'id_curso_escolar' => $selected['id_curso_escolar'],
+                'id_mes' => $selected['id_mes'],
+              ]);
+              $existing_id = $select_existing_stmt->fetchColumn();
+
+              if ($existing_id) {
+                $update_stmt->execute([
+                  'id_asistencia' => (int) $existing_id,
+                  'faltas_justificadas' => $totales_j,
+                  'faltas_injustificadas' => $totales_i,
+                  'retrasos' => $totales_r,
+                ]);
+                $result['actualizados']++;
+              } else {
+                $insert_stmt->execute([
+                  'id_alumno' => (int) $student_index[$student_key],
+                  'id_curso_escolar' => $selected['id_curso_escolar'],
+                  'id_mes' => $selected['id_mes'],
+                  'faltas_justificadas' => $totales_j,
+                  'faltas_injustificadas' => $totales_i,
+                  'retrasos' => $totales_r,
+                ]);
+                $result['importados']++;
+              }
+            }
+
+            $pdo->commit();
+          } catch (Throwable $e) {
+            $pdo->rollBack();
+            $errors[] = 'Error durante la importación: ' . $e->getMessage();
+          }
+
+          $result['alumnos_no_encontrados'] = array_values(array_unique($result['alumnos_no_encontrados']));
+          $result['filas_error_formato'] = array_keys($result['filas_error_formato']);
+          sort($result['filas_error_formato']);
+          if ($errors === []) {
+            $messages[] = 'Importación finalizada.';
+          }
+        }
+      }
+
+      fclose($handle);
+    }
+  }
+}
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><?php echo htmlspecialchars($page_title, ENT_QUOTES, 'UTF-8'); ?></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="page">
+    <?php require __DIR__ . '/includes/sidebar.php'; ?>
+
+    <main class="content">
+      <header class="header">
+        <div>
+          <h1>Importar asistencia mensual</h1>
+          <p class="subheading">Selecciona curso escolar, grupo y mes para cargar el CSV de asistencia.</p>
+        </div>
+      </header>
+
+      <?php if ($errors !== []): ?>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Errores</h3>
+          </div>
+          <ul class="form-errors">
+            <?php foreach ($errors as $error): ?>
+              <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+            <?php endforeach; ?>
+          </ul>
+        </section>
+      <?php endif; ?>
+
+      <?php if ($messages !== []): ?>
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Resultado</h3>
+          </div>
+          <div class="panel-grid">
+            <?php foreach ($messages as $message): ?>
+              <p><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
+            <?php endforeach; ?>
+            <p>Alumnos importados correctamente: <?php echo (int) $result['importados']; ?></p>
+            <p>Alumnos actualizados: <?php echo (int) $result['actualizados']; ?></p>
+            <p>Alumnos no encontrados: <?php echo count($result['alumnos_no_encontrados']); ?></p>
+            <p>Filas con errores de formato: <?php echo count($result['filas_error_formato']); ?></p>
+          </div>
+
+          <?php if ($result['alumnos_no_encontrados'] !== []): ?>
+            <div class="panel-header">
+              <h3>Alumnos no encontrados</h3>
+            </div>
+            <ul class="form-errors">
+              <?php foreach ($result['alumnos_no_encontrados'] as $item): ?>
+                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <?php if ($result['filas_error_formato'] !== []): ?>
+            <div class="panel-header">
+              <h3>Filas con errores de formato</h3>
+            </div>
+            <ul class="form-errors">
+              <?php foreach ($result['filas_error_formato'] as $linea): ?>
+                <li>Línea <?php echo (int) $linea; ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <?php if ($result['errores'] !== []): ?>
+            <div class="panel-header">
+              <h3>Errores concretos</h3>
+            </div>
+            <ul class="form-errors">
+              <?php foreach ($result['errores'] as $item): ?>
+                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+        </section>
+      <?php endif; ?>
+
+      <form method="post" enctype="multipart/form-data" class="panel entity-form">
+        <section class="entity-section">
+          <div class="panel-header">
+            <h3>Contexto académico</h3>
+            <p>Selecciona curso escolar, grupo y mes para esta importación.</p>
+          </div>
+
+          <div class="entity-grid entity-grid--4">
+            <label>
+              Curso escolar
+              <select name="id_curso_escolar" required>
+                <option value="">Selecciona curso escolar</option>
+                <?php foreach ($cursos_escolares as $item): ?>
+                  <option value="<?php echo (int) $item['id_curso_escolar']; ?>" <?php echo (int) $item['id_curso_escolar'] === $selected['id_curso_escolar'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars((string) $item['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+
+            <label>
+              Grupo
+              <select name="id_grupo" required>
+                <option value="">Selecciona grupo</option>
+                <?php foreach ($grupos as $item): ?>
+                  <option value="<?php echo (int) $item['id_grupo']; ?>" <?php echo (int) $item['id_grupo'] === $selected['id_grupo'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars((string) $item['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+
+            <label>
+              Mes
+              <select name="id_mes" required>
+                <option value="">Selecciona mes</option>
+                <?php foreach ($meses as $item): ?>
+                  <option value="<?php echo (int) $item['id_mes']; ?>" <?php echo (int) $item['id_mes'] === $selected['id_mes'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars((string) $item['mes'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+          </div>
+
+          <div class="entity-grid">
+            <label>
+              Archivo CSV
+              <input type="file" name="csv_asistencia" accept=".csv,text/csv" required>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="button-primary">Importar asistencia</button>
+            <a class="ghost-button" href="utilidades.php">Volver</a>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+</body>
+</html>
