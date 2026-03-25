@@ -18,6 +18,8 @@ $selected = [
   'id_curso' => 0,
   'id_grupo' => (int) ($_GET['id_grupo'] ?? 0),
 ];
+$vista = (string) ($_GET['vista'] ?? 'faltas');
+$mostrar_retrasos = $vista === 'retrasos';
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
@@ -111,16 +113,16 @@ foreach ($attendance_rows as $row) {
 }
 
 $meses_nombres = [
-  'septiembre',
-  'octubre',
-  'noviembre',
-  'diciembre',
-  'enero',
-  'febrero',
-  'marzo',
-  'abril',
-  'mayo',
-  'junio',
+  'septiembre' => 'sep',
+  'octubre' => 'oct',
+  'noviembre' => 'nov',
+  'diciembre' => 'dic',
+  'enero' => 'ene',
+  'febrero' => 'feb',
+  'marzo' => 'mar',
+  'abril' => 'abr',
+  'mayo' => 'may',
+  'junio' => 'jun',
 ];
 
 $meses_index_nombre = [];
@@ -129,14 +131,16 @@ foreach ($meses as $mes) {
 }
 
 $meses_curso = [];
-foreach ($meses_nombres as $mes_nombre) {
+foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
   $meses_curso[] = [
-    'mes' => $mes_nombre,
+    'mes' => $mes_abreviado,
     'id_mes' => $meses_index_nombre[$mes_nombre] ?? 0,
   ];
 }
 
-$total_columnas_asistencia = 1 + (count($meses_curso) * 3) + 4;
+$total_columnas_asistencia = $mostrar_retrasos
+  ? 1 + count($meses_curso) + 1
+  : 1 + (count($meses_curso) * 2) + 3;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -218,6 +222,12 @@ $total_columnas_asistencia = 1 + (count($meses_curso) * 3) + 4;
         <div class="panel-header">
           <h3>Listado de asistencia</h3>
           <p>Totales mensuales por alumno.</p>
+          <a
+            class="ghost-button"
+            href="?id_curso_escolar=<?php echo $selected['id_curso_escolar']; ?>&id_grupo=<?php echo $selected['id_grupo']; ?>&vista=<?php echo $mostrar_retrasos ? 'faltas' : 'retrasos'; ?>"
+          >
+            <?php echo $mostrar_retrasos ? 'Faltas' : 'Retrasos'; ?>
+          </a>
         </div>
 
         <div class="panel-grid">
@@ -226,20 +236,26 @@ $total_columnas_asistencia = 1 + (count($meses_curso) * 3) + 4;
               <tr>
                 <th rowspan="2">Alumno</th>
                 <?php foreach ($meses_curso as $mes): ?>
-                  <th colspan="3"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
+                  <th colspan="<?php echo $mostrar_retrasos ? 1 : 2; ?>"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
-                <th colspan="4">Totales</th>
+                <th colspan="<?php echo $mostrar_retrasos ? 1 : 3; ?>">Totales</th>
               </tr>
               <tr>
                 <?php foreach ($meses_curso as $mes): ?>
-                  <th>J</th>
-                  <th>I</th>
-                  <th>R</th>
+                  <?php if ($mostrar_retrasos): ?>
+                    <th>R</th>
+                  <?php else: ?>
+                    <th>J</th>
+                    <th>I</th>
+                  <?php endif; ?>
                 <?php endforeach; ?>
-                <th>Total J</th>
-                <th>Total I</th>
-                <th>Total R</th>
-                <th>Total Faltas</th>
+                <?php if ($mostrar_retrasos): ?>
+                  <th>Total R</th>
+                <?php else: ?>
+                  <th>Total J</th>
+                  <th>Total I</th>
+                  <th>Total Faltas</th>
+                <?php endif; ?>
               </tr>
             </thead>
             <tbody>
@@ -284,14 +300,20 @@ $total_columnas_asistencia = 1 + (count($meses_curso) * 3) + 4;
                         $total_i += (int) $totales['faltas_injustificadas'];
                         $total_r += (int) $totales['retrasos'];
                       ?>
-                      <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
-                      <td><?php echo (int) $totales['faltas_injustificadas']; ?></td>
-                      <td><?php echo (int) $totales['retrasos']; ?></td>
+                      <?php if ($mostrar_retrasos): ?>
+                        <td><?php echo (int) $totales['retrasos']; ?></td>
+                      <?php else: ?>
+                        <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
+                        <td><?php echo (int) $totales['faltas_injustificadas']; ?></td>
+                      <?php endif; ?>
                     <?php endforeach; ?>
-                    <td><?php echo $total_j; ?></td>
-                    <td><?php echo $total_i; ?></td>
-                    <td><?php echo $total_r; ?></td>
-                    <td><?php echo $total_j + $total_i; ?></td>
+                    <?php if ($mostrar_retrasos): ?>
+                      <td><?php echo $total_r; ?></td>
+                    <?php else: ?>
+                      <td><?php echo $total_j; ?></td>
+                      <td><?php echo $total_i; ?></td>
+                      <td><?php echo $total_j + $total_i; ?></td>
+                    <?php endif; ?>
                   </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
