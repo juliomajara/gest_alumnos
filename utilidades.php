@@ -32,9 +32,9 @@ $active_page = 'configuracion';
             <p>Accesos rápidos para la gestión de importaciones y utilidades.</p>
           </div>
           <div class="panel-grid">
-            <a class="panel-link" href="empresas_importar.php">
-              <span>Importar empresas</span>
-              <small>Actualiza los datos de empresas colaboradoras.</small>
+            <a class="panel-link" href="asistencia_importar.php">
+              <span>Importar asistencia</span>
+              <small>Importa la asistencia desde el CSV correspondiente.</small>
             </a>
             <a class="panel-link panel-link-with-icon" href="importar_calificaciones.php">
               <span class="nav-icon" aria-hidden="true">
