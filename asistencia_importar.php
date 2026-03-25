@@ -88,6 +88,22 @@ function parse_asistencia_cell(string $raw): array|false {
     ];
   }
 
+  if ($raw === 'CI') {
+    return [
+      'J' => 0,
+      'I' => 6,
+      'R' => 0,
+    ];
+  }
+
+  if ($raw === 'CJ') {
+    return [
+      'J' => 6,
+      'I' => 0,
+      'R' => 0,
+    ];
+  }
+
   if (preg_match('/^\s*([0-9]+)\s*J\s*-\s*([0-9]+)\s*I\s*-\s*([0-9]+)\s*R\s*$/iu', $raw, $m)) {
     return [
       'J' => (int) $m[1],
