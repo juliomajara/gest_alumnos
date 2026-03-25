@@ -109,6 +109,34 @@ foreach ($attendance_rows as $row) {
     'retrasos' => (int) $row['retrasos'],
   ];
 }
+
+$meses_nombres = [
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+];
+
+$meses_index_nombre = [];
+foreach ($meses as $mes) {
+  $meses_index_nombre[strtolower(trim((string) $mes['mes']))] = (int) $mes['id_mes'];
+}
+
+$meses_curso = [];
+foreach ($meses_nombres as $mes_nombre) {
+  $meses_curso[] = [
+    'mes' => $mes_nombre,
+    'id_mes' => $meses_index_nombre[$mes_nombre] ?? 0,
+  ];
+}
+
+$total_columnas_asistencia = 1 + (count($meses_curso) * 3) + 4;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -196,29 +224,36 @@ foreach ($attendance_rows as $row) {
           <table>
             <thead>
               <tr>
-                <th>Alumno</th>
-                <th>Mes</th>
-                <th>Faltas justificadas</th>
-                <th>Faltas injustificadas</th>
-                <th>Retrasos</th>
+                <th rowspan="2">Alumno</th>
+                <?php foreach ($meses_curso as $mes): ?>
+                  <th colspan="3"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
+                <?php endforeach; ?>
+                <th colspan="4">Totales</th>
+              </tr>
+              <tr>
+                <?php foreach ($meses_curso as $mes): ?>
+                  <th>J</th>
+                  <th>I</th>
+                  <th>R</th>
+                <?php endforeach; ?>
+                <th>Total J</th>
+                <th>Total I</th>
+                <th>Total R</th>
+                <th>Total Faltas</th>
               </tr>
             </thead>
             <tbody>
               <?php if ($selected['id_curso_escolar'] <= 0 || $selected['id_grupo'] <= 0): ?>
                 <tr>
-                  <td colspan="5">Selecciona curso escolar y grupo para consultar la asistencia.</td>
+                  <td colspan="<?php echo $total_columnas_asistencia; ?>">Selecciona curso escolar y grupo para consultar la asistencia.</td>
                 </tr>
               <?php elseif ($errors !== []): ?>
                 <tr>
-                  <td colspan="5">No se pudo cargar la asistencia por los errores indicados.</td>
+                  <td colspan="<?php echo $total_columnas_asistencia; ?>">No se pudo cargar la asistencia por los errores indicados.</td>
                 </tr>
               <?php elseif ($students === []): ?>
                 <tr>
-                  <td colspan="5">No hay alumnos matriculados para el filtro seleccionado.</td>
-                </tr>
-              <?php elseif ($meses === []): ?>
-                <tr>
-                  <td colspan="5">No hay meses configurados.</td>
+                  <td colspan="<?php echo $total_columnas_asistencia; ?>">No hay alumnos matriculados para el filtro seleccionado.</td>
                 </tr>
               <?php else: ?>
                 <?php foreach ($students as $student): ?>
@@ -231,24 +266,33 @@ foreach ($attendance_rows as $row) {
                       . (string) ($student['nombre'] ?? '')
                     );
                     $id_alumno = (int) $student['id_alumno'];
+                    $total_j = 0;
+                    $total_i = 0;
+                    $total_r = 0;
                   ?>
-                  <?php foreach ($meses as $mes): ?>
-                    <?php
-                      $id_mes = (int) $mes['id_mes'];
-                      $totales = $attendance_index[$id_alumno][$id_mes] ?? [
-                        'faltas_justificadas' => 0,
-                        'faltas_injustificadas' => 0,
-                        'retrasos' => 0,
-                      ];
-                    ?>
-                    <tr>
-                      <td><?php echo htmlspecialchars($student_name, ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></td>
+                  <tr>
+                    <td><?php echo htmlspecialchars($student_name, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <?php foreach ($meses_curso as $mes): ?>
+                      <?php
+                        $id_mes = (int) $mes['id_mes'];
+                        $totales = $attendance_index[$id_alumno][$id_mes] ?? [
+                          'faltas_justificadas' => 0,
+                          'faltas_injustificadas' => 0,
+                          'retrasos' => 0,
+                        ];
+                        $total_j += (int) $totales['faltas_justificadas'];
+                        $total_i += (int) $totales['faltas_injustificadas'];
+                        $total_r += (int) $totales['retrasos'];
+                      ?>
                       <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
                       <td><?php echo (int) $totales['faltas_injustificadas']; ?></td>
                       <td><?php echo (int) $totales['retrasos']; ?></td>
-                    </tr>
-                  <?php endforeach; ?>
+                    <?php endforeach; ?>
+                    <td><?php echo $total_j; ?></td>
+                    <td><?php echo $total_i; ?></td>
+                    <td><?php echo $total_r; ?></td>
+                    <td><?php echo $total_j + $total_i; ?></td>
+                  </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
             </tbody>
