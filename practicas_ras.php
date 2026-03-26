@@ -688,7 +688,6 @@ if ($filters_ready) {
     <main class="content practicas-ras">
       <header class="header">
         <div>
-          <p class="eyebrow">Configuración de prácticas</p>
           <h1>Porcentaje RA/CE en empresa</h1>
           <p class="subheading">Define el porcentaje cedido a la empresa por cada resultado de aprendizaje en un curso y ciclo concretos.</p>
         </div>
@@ -704,8 +703,8 @@ if ($filters_ready) {
           <div class="entity-grid entity-grid--3">
             <?php if ($can_filter_by_select_course): ?>
               <label>
-                Curso escolar
                 <select name="curso" required>
+                  <option value="">Selecciona curso escolar</option>
                   <?php foreach ($courses as $course): ?>
                     <?php $course_value = (string) (int) $course['id_curso_escolar']; ?>
                     <option value="<?php echo htmlspecialchars($course_value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_course_id === $course_value ? 'selected' : ''; ?>>
@@ -716,13 +715,11 @@ if ($filters_ready) {
               </label>
             <?php else: ?>
               <label>
-                Curso escolar
                 <input type="text" name="curso_texto" value="<?php echo htmlspecialchars($selected_course_text, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Ej. 2024/2025" required>
               </label>
             <?php endif; ?>
 
             <label>
-              Ciclo
               <select name="ciclo" required>
                 <option value="">Selecciona ciclo</option>
                 <?php foreach ($cycles as $cycle): ?>
@@ -789,7 +786,7 @@ if ($filters_ready) {
           <?php if (!$modules): ?>
             <p>No hay módulos para el ciclo seleccionado.</p>
           <?php else: ?>
-            <div class="practicas-ras-modules-grid">
+            <div class="entity-grid entity-grid--3">
               <?php foreach ($modules as $module): ?>
                 <?php
                   $module_id = (int) $module['id_modulo'];
