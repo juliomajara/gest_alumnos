@@ -187,7 +187,6 @@ $total_columnas_asistencia = $mostrar_retrasos
 
           <div class="entity-grid entity-grid--4">
             <label>
-              Curso escolar
               <select name="id_curso_escolar" required>
                 <option value="">Selecciona curso escolar</option>
                 <?php foreach ($cursos_escolares as $item): ?>
@@ -199,7 +198,6 @@ $total_columnas_asistencia = $mostrar_retrasos
             </label>
 
             <label>
-              Grupo
               <select name="id_grupo" required>
                 <option value="">Selecciona grupo</option>
                 <?php foreach ($grupos as $item): ?>
@@ -209,25 +207,28 @@ $total_columnas_asistencia = $mostrar_retrasos
                 <?php endforeach; ?>
               </select>
             </label>
-          </div>
 
-          <div class="form-actions">
-            <button type="submit" class="button-primary">Mostrar asistencia</button>
-            <a class="ghost-button" href="utilidades.php">Volver</a>
+            <div class="panel-header-actions">
+              <button type="submit" class="button-primary">Mostrar asistencia</button>
+            </div>
           </div>
         </section>
       </form>
 
       <section class="panel">
-        <div class="panel-header">
-          <h3>Listado de asistencia</h3>
-          <p>Totales mensuales por alumno.</p>
-          <a
-            class="ghost-button"
-            href="?id_curso_escolar=<?php echo $selected['id_curso_escolar']; ?>&id_grupo=<?php echo $selected['id_grupo']; ?>&vista=<?php echo $mostrar_retrasos ? 'faltas' : 'retrasos'; ?>"
-          >
-            <?php echo $mostrar_retrasos ? 'Faltas' : 'Retrasos'; ?>
-          </a>
+        <div class="panel-header panel-header-with-actions">
+          <div>
+            <h3>Listado de asistencia</h3>
+            <p>Totales mensuales por alumno.</p>
+          </div>
+          <div class="panel-header-actions">
+            <a
+              class="ghost-button"
+              href="?id_curso_escolar=<?php echo $selected['id_curso_escolar']; ?>&id_grupo=<?php echo $selected['id_grupo']; ?>&vista=<?php echo $mostrar_retrasos ? 'faltas' : 'retrasos'; ?>"
+            >
+              <?php echo $mostrar_retrasos ? 'Faltas' : 'Retrasos'; ?>
+            </a>
+          </div>
         </div>
 
         <div class="panel-grid">
