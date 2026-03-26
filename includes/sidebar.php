@@ -111,6 +111,9 @@ $nav_items = [
           <span
             class="nav-icon-image"
             data-icon="<?php echo htmlspecialchars((string) $icon_key, ENT_QUOTES, 'UTF-8'); ?>"
+            <?php if ($item['key'] === 'asistencia'): ?>
+              style="mask-image: url('assets/icons/asistencia.svg'); -webkit-mask-image: url('assets/icons/asistencia.svg');"
+            <?php endif; ?>
           ></span>
         </span>
         <span class="nav-text"><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -170,4 +173,3 @@ $nav_items = [
     window.addEventListener('scroll', updateScrollTopVisibility, { passive: true });
   })();
 </script>
-
