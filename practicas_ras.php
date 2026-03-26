@@ -591,30 +591,30 @@ if ($filters_ready) {
       $course_saved_conditions = [];
       $saved_conditions = [];
       if ($practicas_has_course_id_column) {
-        $course_saved_conditions[] = 'id_curso_escolar = :curso_id';
+        $course_saved_conditions[] = 'pr.id_curso_escolar = :curso_id';
       }
       if ($practicas_has_course_text_column) {
-        $course_saved_conditions[] = 'curso_escolar = :curso';
+        $course_saved_conditions[] = 'pr.curso_escolar = :curso';
       }
       if (!$course_saved_conditions && $practicas_course_column !== null) {
-        $course_saved_conditions[] = $practicas_course_column . ' = :curso';
+        $course_saved_conditions[] = 'pr.' . $practicas_course_column . ' = :curso';
       }
       $course_saved_filter = build_course_filter_sql($course_saved_conditions);
       if ($course_saved_filter !== '') {
         $saved_conditions[] = $course_saved_filter;
       }
       if ($practicas_cycle_column !== null) {
-        $saved_conditions[] = $practicas_cycle_column . ' = :ciclo';
+        $saved_conditions[] = 'pr.' . $practicas_cycle_column . ' = :ciclo';
       }
 
       $saved_stmt = $pdo->prepare(
         sprintf(
           'SELECT %s AS id_ra, %s AS id_modulo, %s AS porcentaje
-           FROM practicas_ras
+           FROM practicas_ras pr
            WHERE %s',
-          'id_ra',
-          $practicas_module_column !== null ? $practicas_module_column : 'NULL',
-          'porcentaje',
+          'pr.id_ra',
+          $practicas_module_column !== null ? 'pr.' . $practicas_module_column : 'NULL',
+          'pr.porcentaje',
           implode(' AND ', $saved_conditions)
         )
       );
