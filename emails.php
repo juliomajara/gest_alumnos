@@ -51,17 +51,29 @@ if ($grupo_id !== '' && !ctype_digit($grupo_id)) {
 }
 
 $emails = [];
+$alumnos = [];
 
 if ($tipo === 'alumno') {
   $sql_alumnos =
-    'SELECT DISTINCT c.direccion_correo
+    'SELECT
+      a.id_alumno,
+      a.apellido1,
+      a.apellido2,
+      a.nombre,
+      MIN(CASE
+        WHEN TRIM(COALESCE(c.etiqueta, "")) = "Personal" THEN TRIM(COALESCE(c.direccion_correo, ""))
+        ELSE NULL
+      END) AS correo_personal,
+      MIN(CASE
+        WHEN TRIM(COALESCE(c.etiqueta, "")) = "EducaMadrid" THEN TRIM(COALESCE(c.direccion_correo, ""))
+        ELSE NULL
+      END) AS correo_educamadrid
      FROM alumno_curso ac
      INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
-     INNER JOIN correos c
+     LEFT JOIN correos c
        ON c.id_entidad = a.id_alumno
       AND c.entidad_tipo = "alumno"
-     WHERE ac.id_curso_escolar = :id_curso_escolar
-       AND TRIM(COALESCE(c.direccion_correo, "")) <> ""';
+     WHERE ac.id_curso_escolar = :id_curso_escolar';
 
   $params_alumnos = ['id_curso_escolar' => $curso_escolar_id];
 
@@ -70,11 +82,68 @@ if ($tipo === 'alumno') {
     $params_alumnos['id_grupo'] = (int) $grupo_id;
   }
 
-  $sql_alumnos .= ' ORDER BY c.direccion_correo';
+  $sql_alumnos .= '
+     GROUP BY a.id_alumno, a.apellido1, a.apellido2, a.nombre
+     ORDER BY a.apellido1, a.apellido2, a.nombre';
 
   $emails_stmt = $pdo->prepare($sql_alumnos);
   $emails_stmt->execute($params_alumnos);
-  $emails = $emails_stmt->fetchAll(PDO::FETCH_COLUMN);
+  $alumnos = $emails_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+  $alumnos_seleccionados = [];
+  if (isset($_GET['alumnos']) && is_array($_GET['alumnos'])) {
+    foreach ($_GET['alumnos'] as $id_alumno_seleccionado) {
+      if (ctype_digit((string) $id_alumno_seleccionado)) {
+        $alumnos_seleccionados[] = (int) $id_alumno_seleccionado;
+      }
+    }
+  }
+  $correos_personales_seleccionados = [];
+  if (isset($_GET['correos_personales']) && is_array($_GET['correos_personales'])) {
+    foreach ($_GET['correos_personales'] as $id_alumno_seleccionado) {
+      if (ctype_digit((string) $id_alumno_seleccionado)) {
+        $correos_personales_seleccionados[] = (int) $id_alumno_seleccionado;
+      }
+    }
+  }
+  $correos_educamadrid_seleccionados = [];
+  if (isset($_GET['correos_educamadrid']) && is_array($_GET['correos_educamadrid'])) {
+    foreach ($_GET['correos_educamadrid'] as $id_alumno_seleccionado) {
+      if (ctype_digit((string) $id_alumno_seleccionado)) {
+        $correos_educamadrid_seleccionados[] = (int) $id_alumno_seleccionado;
+      }
+    }
+  }
+
+  $seleccion_manual = isset($_GET['seleccion']) && (string) $_GET['seleccion'] === '1';
+
+  foreach ($alumnos as $alumno_item) {
+    $id_alumno_item = (int) ($alumno_item['id_alumno'] ?? 0);
+    $correo_personal_item = trim((string) ($alumno_item['correo_personal'] ?? ''));
+    $correo_educamadrid_item = trim((string) ($alumno_item['correo_educamadrid'] ?? ''));
+
+    $incluir_alumno = $seleccion_manual
+      ? in_array($id_alumno_item, $alumnos_seleccionados, true)
+      : true;
+
+    if (!$incluir_alumno) {
+      continue;
+    }
+
+    $incluir_correo_personal = $seleccion_manual
+      ? in_array($id_alumno_item, $correos_personales_seleccionados, true)
+      : true;
+    if ($incluir_correo_personal && $correo_personal_item !== '') {
+      $emails[] = $correo_personal_item;
+    }
+
+    $incluir_correo_educamadrid = $seleccion_manual
+      ? in_array($id_alumno_item, $correos_educamadrid_seleccionados, true)
+      : true;
+    if ($incluir_correo_educamadrid && $correo_educamadrid_item !== '') {
+      $emails[] = $correo_educamadrid_item;
+    }
+  }
 } elseif ($tipo === 'empresa') {
   $emails_stmt = $pdo->prepare(
     'SELECT DISTINCT c.direccion_correo
@@ -197,6 +266,57 @@ $emails_texto = implode('; ', $emails);
           <h3>Correos encontrados</h3>
           <p><?php echo count($emails); ?> correo(s) disponible(s) para copiar.</p>
         </div>
+
+        <?php if ($tipo === 'alumno'): ?>
+          <form class="panel-grid" method="get">
+            <input type="hidden" name="id_curso_escolar" value="<?php echo (int) $curso_escolar_id; ?>">
+            <input type="hidden" name="tipo" value="alumno">
+            <input type="hidden" name="id_grupo" value="<?php echo htmlspecialchars($grupo_id, ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="hidden" name="seleccion" value="1">
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Nombre del alumno</th>
+                  <th>Correo personal</th>
+                  <th>Correo de EducaMadrid</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($alumnos as $alumno): ?>
+                  <?php
+                  $id_alumno = (int) ($alumno['id_alumno'] ?? 0);
+                  $apellido1 = trim((string) ($alumno['apellido1'] ?? ''));
+                  $apellido2 = trim((string) ($alumno['apellido2'] ?? ''));
+                  $nombre = trim((string) ($alumno['nombre'] ?? ''));
+                  $correo_personal = trim((string) ($alumno['correo_personal'] ?? ''));
+                  $correo_educamadrid = trim((string) ($alumno['correo_educamadrid'] ?? ''));
+                  $nombre_completo = sprintf('%s%s, %s', $apellido1, $apellido2 !== '' ? ' ' . $apellido2 : '', $nombre);
+                  $alumno_checked = !isset($_GET['seleccion']) || in_array($id_alumno, $alumnos_seleccionados, true);
+                  $correo_personal_checked = !isset($_GET['seleccion']) || in_array($id_alumno, $correos_personales_seleccionados, true);
+                  $correo_educamadrid_checked = !isset($_GET['seleccion']) || in_array($id_alumno, $correos_educamadrid_seleccionados, true);
+                  ?>
+                  <tr>
+                    <td><input type="checkbox" name="alumnos[]" value="<?php echo $id_alumno; ?>" <?php echo $alumno_checked ? 'checked' : ''; ?>></td>
+                    <td><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td>
+                      <input type="checkbox" name="correos_personales[]" value="<?php echo $id_alumno; ?>" <?php echo $correo_personal_checked ? 'checked' : ''; ?>>
+                      <?php echo htmlspecialchars($correo_personal, ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                    <td>
+                      <input type="checkbox" name="correos_educamadrid[]" value="<?php echo $id_alumno; ?>" <?php echo $correo_educamadrid_checked ? 'checked' : ''; ?>>
+                      <?php echo htmlspecialchars($correo_educamadrid, ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+            <div>
+              <button type="submit" class="edit-toggle">Actualizar correos</button>
+            </div>
+          </form>
+        <?php endif; ?>
 
         <div class="panel-grid">
           <textarea rows="10" readonly><?php echo htmlspecialchars($emails_texto, ENT_QUOTES, 'UTF-8'); ?></textarea>
