@@ -20,9 +20,9 @@ function format_module_name(array $module): string {
     $main = 'Módulo sin nombre';
   }
 
-  $code = trim((string) ($module['abreviatura'] ?? ''));
+  $code = trim((string) ($module['codigo'] ?? ''));
   if ($code !== '') {
-    return $code . ' · ' . $main;
+    return $code . ' - ' . $main;
   }
 
   return $main;
@@ -525,6 +525,7 @@ if ($filters_ready) {
   $modules_stmt = $pdo->prepare(
     'SELECT
       m.id_modulo,
+      m.codigo,
       m.abreviatura,
       m.materia_general,
       m.materia_propia,
@@ -535,7 +536,7 @@ if ($filters_ready) {
      INNER JOIN resultados_aprendizaje ra ON ra.id_modulo = m.id_modulo
      WHERE c.id_ciclo = :id_ciclo
        AND cu.curso = 2
-     GROUP BY m.id_modulo, m.abreviatura, m.materia_general, m.materia_propia
+     GROUP BY m.id_modulo, m.codigo, m.abreviatura, m.materia_general, m.materia_propia
      ORDER BY m.abreviatura, m.materia_propia, m.materia_general, m.id_modulo'
   );
   $modules_stmt->execute(['id_ciclo' => (int) $selected_cycle_id]);
@@ -654,7 +655,7 @@ if ($filters_ready) {
 
       $saved_rows_stmt = $pdo->prepare(
         sprintf(
-          'SELECT %s AS id_ra, %s AS porcentaje, ra.numero, ra.descripcion AS ra_descripcion, m.id_modulo, m.abreviatura, m.materia_general, m.materia_propia
+          'SELECT %s AS id_ra, %s AS porcentaje, ra.numero, ra.descripcion AS ra_descripcion, m.id_modulo, m.codigo, m.abreviatura, m.materia_general, m.materia_propia
            FROM practicas_ras pr
            INNER JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
            INNER JOIN modulos m ON m.id_modulo = ra.id_modulo
@@ -786,7 +787,7 @@ if ($filters_ready) {
           <?php if (!$modules): ?>
             <p>No hay módulos para el ciclo seleccionado.</p>
           <?php else: ?>
-            <div class="entity-grid entity-grid--3">
+            <div class="entity-grid entity-grid--4" style="align-items: start;">
               <?php foreach ($modules as $module): ?>
                 <?php
                   $module_id = (int) $module['id_modulo'];
@@ -794,13 +795,13 @@ if ($filters_ready) {
                 ?>
                 <section class="practicas-ras-module panel panel-grid">
                   <div class="panel-header">
-                    <h3><?php echo htmlspecialchars(format_module_name($module) . ' (' . count($module_ras) . ' RAs)', ENT_QUOTES, 'UTF-8'); ?></h3>
+                    <h3><?php echo htmlspecialchars(format_module_name($module), ENT_QUOTES, 'UTF-8'); ?></h3>
                   </div>
 
                   <?php if (!$module_ras): ?>
                     <p>Este módulo no tiene resultados de aprendizaje registrados.</p>
                   <?php else: ?>
-                    <table class="practicas-ras-table">
+                    <table class="practicas-ras-table" style="font-size: 0.9rem;">
                       <thead>
                         <tr>
                           <th scope="col">% cedido a la empresa</th>
