@@ -339,6 +339,7 @@ $modules = [];
 $ras_by_module = [];
 $criteria_by_ra = [];
 $saved_percentages = [];
+$saved_percentages_rows = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guardar') {
   if (!$practicas_table_ready) {
@@ -584,8 +585,9 @@ if ($filters_ready) {
     if ($practicas_has_course_id_column) {
       $course_storage_value = (int) $selected_course_id;
     }
+  }
 
-    if ($practicas_table_ready && $course_storage_value !== '') {
+  if ($practicas_table_ready && $course_storage_value !== '') {
       $course_saved_conditions = [];
       $saved_conditions = [];
       if ($practicas_has_course_id_column) {
@@ -649,7 +651,22 @@ if ($filters_ready) {
           $saved_percentages[$legacy_saved_key] = (string) ($saved['porcentaje'] ?? '');
         }
       }
-    }
+
+      $saved_rows_stmt = $pdo->prepare(
+        sprintf(
+          'SELECT %s AS id_ra, %s AS porcentaje, ra.numero, ra.descripcion AS ra_descripcion, m.id_modulo, m.abreviatura, m.materia_general, m.materia_propia
+           FROM practicas_ras pr
+           INNER JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
+           INNER JOIN modulos m ON m.id_modulo = ra.id_modulo
+           WHERE %s
+           ORDER BY m.abreviatura, m.materia_propia, m.materia_general, m.id_modulo, ra.numero, ra.id_ra',
+          'pr.id_ra',
+          'pr.porcentaje',
+          implode(' AND ', $saved_conditions)
+        )
+      );
+      $saved_rows_stmt->execute($saved_params);
+      $saved_percentages_rows = $saved_rows_stmt->fetchAll();
   }
 }
 ?>
@@ -845,6 +862,43 @@ if ($filters_ready) {
             </div>
           <?php endif; ?>
         </form>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Porcentajes guardados</h3>
+            <p>Resumen del módulo, el RA con porcentaje asignado, el porcentaje y la descripción del resultado de aprendizaje.</p>
+          </div>
+
+          <?php if (!$saved_percentages_rows): ?>
+            <p>No hay porcentajes guardados para el curso escolar y ciclo seleccionados.</p>
+          <?php else: ?>
+            <table class="practicas-ras-table">
+              <thead>
+                <tr>
+                  <th scope="col">Módulo</th>
+                  <th scope="col">RA</th>
+                  <th scope="col">Porcentaje asignado</th>
+                  <th scope="col">Descripción del RA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($saved_percentages_rows as $saved_row): ?>
+                  <?php
+                    $saved_ra_id = (int) ($saved_row['id_ra'] ?? 0);
+                    $saved_ra_label = format_ra_label($saved_row['numero'] ?? '', $saved_ra_id);
+                  ?>
+                  <tr>
+                    <td><?php echo htmlspecialchars(format_module_name($saved_row), ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($saved_ra_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars((string) ($saved_row['porcentaje'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>%</td>
+                    <td><?php echo htmlspecialchars((string) ($saved_row['ra_descripcion'] ?? 'Sin descripción'), ENT_QUOTES, 'UTF-8'); ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          <?php endif; ?>
+        </section>
+
       <?php endif; ?>
     </main>
   </div>
