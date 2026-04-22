@@ -164,6 +164,14 @@ $plan_file_path = null;
 $plan_file_name = null;
 $reactivate_status = null;
 $reactivate_error = null;
+$anexos_status = null;
+$anexos_error = null;
+$anexos_catalog = [];
+$fases_catalog = [];
+$anexos_seguimiento_rows = [];
+$anexos_fases_marcadas = [];
+$anexo7_seguimientos = [];
+$anexo_7_id = 7;
 
 $document_status_code = isset($_GET['doc_status']) ? (string) $_GET['doc_status'] : '';
 if ($document_status_code === 'calendar_generated') {
@@ -458,6 +466,217 @@ if ($id_practica === false || $id_practica === null) {
         }
       }
 
+      $anexos_stmt = $pdo->query(
+        'SELECT id_practicas_anexo, anexo, descripcion
+         FROM practicas_anexos
+         ORDER BY id_practicas_anexo ASC'
+      );
+      $anexos_catalog = $anexos_stmt->fetchAll();
+
+      $fases_stmt = $pdo->query(
+        'SELECT id_practicas_anexo_estado, estado
+         FROM practicas_anexos_estados
+         ORDER BY id_practicas_anexo_estado ASC'
+      );
+      $fases_catalog = $fases_stmt->fetchAll();
+
+      $anexos_validos = [];
+      foreach ($anexos_catalog as $anexo_row) {
+        $anexos_validos[(int) $anexo_row['id_practicas_anexo']] = true;
+      }
+
+      $fases_validas = [];
+      foreach ($fases_catalog as $fase_row) {
+        $fases_validas[(int) $fase_row['id_practicas_anexo_estado']] = true;
+      }
+
+      if ($post_action === 'guardar_anexo_fases' || $post_action === 'guardar_anexo_7_fases' || $post_action === 'crear_anexo_7_fases') {
+        $id_practicas_anexo_post = filter_var($_POST['id_practicas_anexo'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $fases_post_raw = $_POST['fases'] ?? [];
+        $fases_post_ids = [];
+
+        if (is_array($fases_post_raw)) {
+          foreach ($fases_post_raw as $fase_post_raw) {
+            $fase_post_id = filter_var($fase_post_raw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if ($fase_post_id !== false && $fase_post_id !== null) {
+              $fases_post_ids[(int) $fase_post_id] = true;
+            }
+          }
+        }
+
+        $fases_post = array_keys($fases_post_ids);
+        $fases_invalidas = [];
+        foreach ($fases_post as $fase_post_id) {
+          if (!isset($fases_validas[(int) $fase_post_id])) {
+            $fases_invalidas[] = (int) $fase_post_id;
+          }
+        }
+
+        if ($id_practicas_anexo_post === false || $id_practicas_anexo_post === null || !isset($anexos_validos[(int) $id_practicas_anexo_post])) {
+          $anexos_error = 'Anexo no válido.';
+        } elseif ($fases_invalidas !== []) {
+          $anexos_error = 'Fases no válidas.';
+        } elseif ($post_action === 'guardar_anexo_fases') {
+          if ((int) $id_practicas_anexo_post === (int) $anexo_7_id) {
+            $anexos_error = 'Acción no válida para el anexo 7.';
+          } else {
+            $delete_stmt = $pdo->prepare(
+              'DELETE FROM practicas_anexos_seguimiento
+               WHERE id_practica = :id_practica
+                 AND id_practicas_anexo = :id_practicas_anexo
+                 AND numero_seguimiento = 1'
+            );
+            $delete_stmt->execute([
+              'id_practica' => $id_practica,
+              'id_practicas_anexo' => $id_practicas_anexo_post,
+            ]);
+
+            if ($fases_post !== []) {
+              $insert_stmt = $pdo->prepare(
+                'INSERT INTO practicas_anexos_seguimiento
+                  (id_practica, id_practicas_anexo, id_practicas_anexo_estado, numero_seguimiento, fecha_creacion, fecha_actualizacion)
+                 VALUES
+                  (:id_practica, :id_practicas_anexo, :id_practicas_anexo_estado, 1, NOW(), NOW())'
+              );
+
+              foreach ($fases_post as $fase_post_id) {
+                $insert_stmt->execute([
+                  'id_practica' => $id_practica,
+                  'id_practicas_anexo' => $id_practicas_anexo_post,
+                  'id_practicas_anexo_estado' => (int) $fase_post_id,
+                ]);
+              }
+            }
+
+            $anexos_status = 'Seguimiento guardado correctamente.';
+          }
+        } elseif ($post_action === 'guardar_anexo_7_fases') {
+          $numero_seguimiento_post = filter_var($_POST['numero_seguimiento'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+          if ((int) $id_practicas_anexo_post !== (int) $anexo_7_id) {
+            $anexos_error = 'Acción válida solo para el anexo 7.';
+          } elseif ($numero_seguimiento_post === false || $numero_seguimiento_post === null) {
+            $anexos_error = 'Número de seguimiento no válido.';
+          } else {
+            $delete_stmt = $pdo->prepare(
+              'DELETE FROM practicas_anexos_seguimiento
+               WHERE id_practica = :id_practica
+                 AND id_practicas_anexo = :id_practicas_anexo
+                 AND numero_seguimiento = :numero_seguimiento'
+            );
+            $delete_stmt->execute([
+              'id_practica' => $id_practica,
+              'id_practicas_anexo' => $id_practicas_anexo_post,
+              'numero_seguimiento' => $numero_seguimiento_post,
+            ]);
+
+            if ($fases_post !== []) {
+              $insert_stmt = $pdo->prepare(
+                'INSERT INTO practicas_anexos_seguimiento
+                  (id_practica, id_practicas_anexo, id_practicas_anexo_estado, numero_seguimiento, fecha_creacion, fecha_actualizacion)
+                 VALUES
+                  (:id_practica, :id_practicas_anexo, :id_practicas_anexo_estado, :numero_seguimiento, NOW(), NOW())'
+              );
+
+              foreach ($fases_post as $fase_post_id) {
+                $insert_stmt->execute([
+                  'id_practica' => $id_practica,
+                  'id_practicas_anexo' => $id_practicas_anexo_post,
+                  'id_practicas_anexo_estado' => (int) $fase_post_id,
+                  'numero_seguimiento' => (int) $numero_seguimiento_post,
+                ]);
+              }
+            }
+
+            $anexos_status = 'Seguimiento guardado correctamente.';
+          }
+        } elseif ($post_action === 'crear_anexo_7_fases') {
+          if ((int) $id_practicas_anexo_post !== (int) $anexo_7_id) {
+            $anexos_error = 'Acción válida solo para el anexo 7.';
+          } elseif ($fases_post === []) {
+            $anexos_error = 'Debes seleccionar al menos una fase para crear el seguimiento.';
+          } else {
+            $max_stmt = $pdo->prepare(
+              'SELECT MAX(numero_seguimiento)
+               FROM practicas_anexos_seguimiento
+               WHERE id_practica = :id_practica
+                 AND id_practicas_anexo = :id_practicas_anexo'
+            );
+            $max_stmt->execute([
+              'id_practica' => $id_practica,
+              'id_practicas_anexo' => $id_practicas_anexo_post,
+            ]);
+            $siguiente_numero_seguimiento = (int) ($max_stmt->fetchColumn() ?: 0) + 1;
+
+            $insert_stmt = $pdo->prepare(
+              'INSERT INTO practicas_anexos_seguimiento
+                (id_practica, id_practicas_anexo, id_practicas_anexo_estado, numero_seguimiento, fecha_creacion, fecha_actualizacion)
+               VALUES
+                (:id_practica, :id_practicas_anexo, :id_practicas_anexo_estado, :numero_seguimiento, NOW(), NOW())'
+            );
+
+            foreach ($fases_post as $fase_post_id) {
+              $insert_stmt->execute([
+                'id_practica' => $id_practica,
+                'id_practicas_anexo' => $id_practicas_anexo_post,
+                'id_practicas_anexo_estado' => (int) $fase_post_id,
+                'numero_seguimiento' => $siguiente_numero_seguimiento,
+              ]);
+            }
+
+            $anexos_status = 'Nuevo seguimiento creado correctamente.';
+          }
+        }
+      }
+
+      $seguimiento_anexos_stmt = $pdo->prepare(
+        'SELECT id_practica_anexo_seguimiento, id_practica, id_practicas_anexo, id_practicas_anexo_estado, numero_seguimiento, fecha_creacion, fecha_actualizacion
+         FROM practicas_anexos_seguimiento
+         WHERE id_practica = :id_practica
+         ORDER BY id_practicas_anexo ASC, numero_seguimiento ASC, id_practicas_anexo_estado ASC'
+      );
+      $seguimiento_anexos_stmt->execute(['id_practica' => $id_practica]);
+      $anexos_seguimiento_rows = $seguimiento_anexos_stmt->fetchAll();
+
+      foreach ($anexos_seguimiento_rows as $seguimiento_anexo_row) {
+        $id_practicas_anexo_row = (int) $seguimiento_anexo_row['id_practicas_anexo'];
+        $numero_seguimiento_row = (int) $seguimiento_anexo_row['numero_seguimiento'];
+        $id_fase_row = (int) $seguimiento_anexo_row['id_practicas_anexo_estado'];
+        $fecha_creacion_row = isset($seguimiento_anexo_row['fecha_creacion']) ? (string) $seguimiento_anexo_row['fecha_creacion'] : '';
+        $fecha_actualizacion_row = isset($seguimiento_anexo_row['fecha_actualizacion']) ? (string) $seguimiento_anexo_row['fecha_actualizacion'] : '';
+
+        if (!isset($anexos_fases_marcadas[$id_practicas_anexo_row])) {
+          $anexos_fases_marcadas[$id_practicas_anexo_row] = [];
+        }
+        if (!isset($anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row])) {
+          $anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row] = [
+            'fases' => [],
+            'fecha_creacion_min' => null,
+            'fecha_actualizacion_max' => null,
+          ];
+        }
+
+        $anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fases'][$id_fase_row] = true;
+
+        if ($fecha_creacion_row !== '') {
+          if ($anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fecha_creacion_min'] === null
+            || $fecha_creacion_row < $anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fecha_creacion_min']) {
+            $anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fecha_creacion_min'] = $fecha_creacion_row;
+          }
+        }
+
+        if ($fecha_actualizacion_row !== '') {
+          if ($anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fecha_actualizacion_max'] === null
+            || $fecha_actualizacion_row > $anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fecha_actualizacion_max']) {
+            $anexos_fases_marcadas[$id_practicas_anexo_row][$numero_seguimiento_row]['fecha_actualizacion_max'] = $fecha_actualizacion_row;
+          }
+        }
+      }
+
+      if (isset($anexos_fases_marcadas[(int) $anexo_7_id]) && is_array($anexos_fases_marcadas[(int) $anexo_7_id])) {
+        $anexo7_seguimientos = $anexos_fases_marcadas[(int) $anexo_7_id];
+        ksort($anexo7_seguimientos);
+      }
+
       $schedule_stmt = $pdo->prepare(
         'SELECT id_practicas_horario, dia_semana, hora_entrada, hora_salida
          FROM practicas_horario
@@ -699,7 +918,7 @@ if ($practice_found) {
           </div>
         </section>
       <?php else: ?>
-        <?php if ($reactivate_status !== null || $reactivate_error !== null || $calendar_status !== null || $calendar_error !== null || $plan_status !== null || $plan_error !== null || $calendar_generated_at !== null || $plan_generated_at !== null): ?>
+        <?php if ($reactivate_status !== null || $reactivate_error !== null || $calendar_status !== null || $calendar_error !== null || $plan_status !== null || $plan_error !== null || $anexos_status !== null || $anexos_error !== null || $calendar_generated_at !== null || $plan_generated_at !== null): ?>
         <section class="panel">
           <div class="panel-header">
             <h3>Estado de documentos</h3>
@@ -720,6 +939,12 @@ if ($practice_found) {
               <?php endif; ?>
               <?php if ($plan_error !== null): ?>
                 <p><?php echo htmlspecialchars($plan_error, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($anexos_status !== null): ?>
+                <p><?php echo htmlspecialchars($anexos_status, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($anexos_error !== null): ?>
+                <p><?php echo htmlspecialchars($anexos_error, ENT_QUOTES, 'UTF-8'); ?></p>
               <?php endif; ?>
               <?php if ($calendar_generated_at !== null): ?>
                 <p>Calendario generado el <?php echo htmlspecialchars($calendar_generated_at, ENT_QUOTES, 'UTF-8'); ?>.</p>
@@ -915,6 +1140,126 @@ if ($practice_found) {
                   <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
                 <?php endif; ?>
               </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="practica-detalle-grid practica-detalle-grid--fila-5">
+          <section class="panel practica-detalle-bloque">
+            <div class="panel-header">
+              <h3>Seguimiento de anexos</h3>
+            </div>
+            <div class="panel-grid">
+              <?php foreach ($anexos_catalog as $anexo_item): ?>
+                <?php $id_anexo_item = (int) $anexo_item['id_practicas_anexo']; ?>
+                <?php if ($id_anexo_item === (int) $anexo_7_id): ?>
+                  <?php continue; ?>
+                <?php endif; ?>
+                <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => [], 'fecha_creacion_min' => null, 'fecha_actualizacion_max' => null]; ?>
+                <?php
+                  $anexo_fecha_creacion = '—';
+                  if (!empty($anexo_item_data['fecha_creacion_min'])) {
+                    $anexo_fecha_creacion_ts = strtotime((string) $anexo_item_data['fecha_creacion_min']);
+                    if ($anexo_fecha_creacion_ts !== false) {
+                      $anexo_fecha_creacion = date('d/m/Y H:i', $anexo_fecha_creacion_ts);
+                    }
+                  }
+                  $anexo_fecha_actualizacion = '—';
+                  if (!empty($anexo_item_data['fecha_actualizacion_max'])) {
+                    $anexo_fecha_actualizacion_ts = strtotime((string) $anexo_item_data['fecha_actualizacion_max']);
+                    if ($anexo_fecha_actualizacion_ts !== false) {
+                      $anexo_fecha_actualizacion = date('d/m/Y H:i', $anexo_fecha_actualizacion_ts);
+                    }
+                  }
+                ?>
+                <div class="panel">
+                  <div class="panel-header">
+                    <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
+                    <p>Creado: <?php echo htmlspecialchars($anexo_fecha_creacion, ENT_QUOTES, 'UTF-8'); ?> | Actualizado: <?php echo htmlspecialchars($anexo_fecha_actualizacion, ENT_QUOTES, 'UTF-8'); ?></p>
+                  </div>
+                  <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+                    <input type="hidden" name="action" value="guardar_anexo_fases">
+                    <input type="hidden" name="id_practicas_anexo" value="<?php echo (int) $id_anexo_item; ?>">
+                    <?php foreach ($fases_catalog as $fase_item): ?>
+                      <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                      <label>
+                        <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? 'checked' : ''; ?>>
+                        <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                      </label><br>
+                    <?php endforeach; ?>
+                    <button type="submit" class="primary-button">Guardar</button>
+                  </form>
+                </div>
+              <?php endforeach; ?>
+
+              <?php foreach ($anexos_catalog as $anexo_item): ?>
+                <?php $id_anexo_item = (int) $anexo_item['id_practicas_anexo']; ?>
+                <?php if ($id_anexo_item !== (int) $anexo_7_id): ?>
+                  <?php continue; ?>
+                <?php endif; ?>
+                <div class="panel">
+                  <div class="panel-header">
+                    <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
+                  </div>
+                  <?php if ($anexo7_seguimientos !== []): ?>
+                    <?php foreach ($anexo7_seguimientos as $numero_seguimiento => $anexo7_data): ?>
+                      <?php
+                        $anexo7_fecha_creacion = '—';
+                        if (!empty($anexo7_data['fecha_creacion_min'])) {
+                          $anexo7_fecha_creacion_ts = strtotime((string) $anexo7_data['fecha_creacion_min']);
+                          if ($anexo7_fecha_creacion_ts !== false) {
+                            $anexo7_fecha_creacion = date('d/m/Y H:i', $anexo7_fecha_creacion_ts);
+                          }
+                        }
+                        $anexo7_fecha_actualizacion = '—';
+                        if (!empty($anexo7_data['fecha_actualizacion_max'])) {
+                          $anexo7_fecha_actualizacion_ts = strtotime((string) $anexo7_data['fecha_actualizacion_max']);
+                          if ($anexo7_fecha_actualizacion_ts !== false) {
+                            $anexo7_fecha_actualizacion = date('d/m/Y H:i', $anexo7_fecha_actualizacion_ts);
+                          }
+                        }
+                      ?>
+                      <div class="panel">
+                        <div class="panel-header">
+                          <h3>Seguimiento <?php echo (int) $numero_seguimiento; ?></h3>
+                          <p>Creado: <?php echo htmlspecialchars($anexo7_fecha_creacion, ENT_QUOTES, 'UTF-8'); ?> | Actualizado: <?php echo htmlspecialchars($anexo7_fecha_actualizacion, ENT_QUOTES, 'UTF-8'); ?></p>
+                        </div>
+                        <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+                          <input type="hidden" name="action" value="guardar_anexo_7_fases">
+                          <input type="hidden" name="id_practicas_anexo" value="<?php echo (int) $id_anexo_item; ?>">
+                          <input type="hidden" name="numero_seguimiento" value="<?php echo (int) $numero_seguimiento; ?>">
+                          <?php foreach ($fases_catalog as $fase_item): ?>
+                            <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                            <label>
+                              <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo7_data['fases'][$id_fase_item]) ? 'checked' : ''; ?>>
+                              <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                            </label><br>
+                          <?php endforeach; ?>
+                          <button type="submit" class="primary-button">Guardar</button>
+                        </form>
+                      </div>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+
+                  <div class="panel">
+                    <div class="panel-header">
+                      <h3>Nuevo seguimiento</h3>
+                    </div>
+                    <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+                      <input type="hidden" name="action" value="crear_anexo_7_fases">
+                      <input type="hidden" name="id_practicas_anexo" value="<?php echo (int) $id_anexo_item; ?>">
+                      <?php foreach ($fases_catalog as $fase_item): ?>
+                        <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                        <label>
+                          <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>">
+                          <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                        </label><br>
+                      <?php endforeach; ?>
+                      <button type="submit" class="primary-button">Crear nuevo seguimiento</button>
+                    </form>
+                  </div>
+                </div>
+              <?php endforeach; ?>
             </div>
           </section>
         </div>
