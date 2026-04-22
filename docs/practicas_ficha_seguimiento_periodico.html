@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de seguimiento periódico</title>
+    <style>
+        /* Plantilla pensada para mPDF: maquetación con tablas, sin flex/grid */
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            margin: 18px;
+            color: #000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 0 10px 0;
+        }
+
+        td, th {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: middle;
+        }
+
+        .outer {
+            border: 2px solid #000;
+        }
+
+        .no-border {
+            border: 0 !important;
+        }
+
+        .section-title {
+            font-weight: bold;
+            background: #f0f0f0;
+            text-align: left;
+        }
+
+        .section-title-center {
+            text-align: center;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .muted {
+            color: #333;
+        }
+
+        .value-text {
+            color: #333;
+            font-weight: normal;
+        }
+
+        .header-wrap td {
+            vertical-align: middle;
+        }
+
+        .logo-cell {
+            width: 18%;
+            text-align: center;
+        }
+
+        .header-text {
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 110px;
+            height: auto;
+        }
+
+        .doc-pretitle {
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .doc-title {
+            font-size: 14pt;
+            font-weight: bold;
+        }
+
+        .meta-table td,
+        .meta-table th {
+            text-align: center;
+        }
+
+        .meta-header {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .label-inline {
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .checkbox {
+            display: inline-block;
+            width: 13px;
+            min-width: 13px;
+            height: 13px;
+            line-height: 13px;
+            border: 1px solid #000;
+            text-align: center;
+            vertical-align: middle;
+            font-weight: bold;
+            font-size: 10px;
+            box-sizing: border-box;
+        }
+
+        .checkbox.checked::after {
+            content: "X";
+        }
+
+        .small {
+            font-size: 9pt;
+        }
+
+        .signature-box {
+            height: 60px;
+            vertical-align: bottom;
+            text-align: center;
+            padding-top: 35px;
+        }
+
+        .date-box {
+            text-align: center;
+            height: 34px;
+        }
+
+        .status-col {
+            width: 8%;
+            text-align: center;
+        }
+
+        .activity-col {
+            width: 32%;
+        }
+
+        .module-col {
+            width: 10%;
+            text-align: center;
+        }
+
+        .ra-col {
+            width: 8%;
+            text-align: center;
+        }
+
+        .obs-col {
+            width: 20%;
+        }
+
+        .row-fill {
+            height: 24px;
+        }
+
+        .footer-note {
+            font-weight: bold;
+        }
+
+        table, tr, td, th {
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+
+<!-- CABECERA -->
+<table class="outer header-wrap">
+    <tr>
+        <td class="logo-cell no-border" style="border-right: 0 !important; width: 22%;">
+            <img style="max-width: 70px;" src="bandera_CM.png" alt="Comunidad de Madrid">
+        </td>
+        <td class="logo-cell no-border" style="border-left: 0 !important; width: 22%;">
+            <img style="max-width: 180px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
+        </td>
+        <td class="logo-cell no-border" style="border-left: 0 !important; width: 22%;">
+            <img style="max-width: 180px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3" class="no-border" style="border-top: 0 !important; text-align: center;">
+            <div class="doc-pretitle">Anexo</div>
+            <div class="doc-title">Ficha de seguimiento periódico</div>
+        </td>
+    </tr>
+
+</table>
+
+<!-- DATOS SUPERIORES -->
+<table class="outer meta-table">
+    <tr class="meta-header">
+        <td style="width: 34%;">Curso académico</td>
+        <td style="width: 33%;">Nº del Convenio o Acuerdo de aprendizaje</td>
+        <td style="width: 33%;">Nº del Anexo Relación de alumnos</td>
+    </tr>
+    <tr>
+        <td><span class="value-text">{{CURSO_ACADEMICO}}</span></td>
+        <td><span class="value-text">{{NUM_CONVENIO}}</span></td>
+        <td><span class="value-text">{{NUM_ANEXO_RELACION}}</span></td>
+    </tr>
+</table>
+
+<!-- DATOS DEL ALUMNO -->
+<table class="outer">
+    <tr>
+        <td colspan="2" class="section-title">Datos del alumno</td>
+    </tr>
+    <tr>
+        <td style="width: 58%;"><span class="label-inline">Apellidos</span> <span class="value-text">{{ALUMNO_APELLIDOS}}</span></td>
+        <td style="width: 42%;"><span class="label-inline">Nombre</span> <span class="value-text">{{ALUMNO_NOMBRE}}</span></td>
+    </tr>
+    <tr>
+        <td colspan="2"><span class="label-inline">E-mail de contacto:</span> <span class="value-text">{{ALUMNO_EMAIL}}</span></td>
+    </tr>
+</table>
+
+<!-- DATOS DEL CENTRO DE TRABAJO -->
+<table class="outer">
+    <tr>
+        <td colspan="3" class="section-title">Datos del centro de trabajo</td>
+    </tr>
+    <tr>
+        <td colspan="3"><span class="label-inline">DENOMINACIÓN:</span> <span class="value-text">{{CENTRO_TRABAJO_DENOMINACION}}</span></td>
+    </tr>
+    <tr>
+        <td colspan="3" class="section-title"><em>Tutor/a de la empresa u organismo equiparado</em></td>
+    </tr>
+    <tr>
+        <td style="width: 33%;"><span class="label-inline">Apellidos</span> <span class="value-text">{{TUTOR_EMPRESA_APELLIDOS}}</span></td>
+        <td style="width: 33%;"><span class="label-inline">Nombre</span> <span class="value-text">{{TUTOR_EMPRESA_NOMBRE}}</span></td>
+        <td style="width: 34%;"><span class="label-inline">Email:</span> <span class="value-text">{{TUTOR_EMPRESA_EMAIL}}</span></td>
+    </tr>
+</table>
+
+<!-- PERIODO -->
+<table class="outer">
+    <tr>
+        <td colspan="4" class="section-title">Periodo de seguimiento de las actividades formativas</td>
+    </tr>
+    <tr>
+        <td style="width: 7%;" class="center"><span class="label-inline">De</span></td>
+        <td style="width: 18%;"><span class="value-text">{{FECHA_INICIO}}</span></td>
+        <td style="width: 7%;" class="center"><span class="label-inline">a</span></td>
+        <td style="width: 68%;"><span class="value-text">{{FECHA_FIN}}</span> <span class="muted small">(dd/mm/aa)</span></td>
+    </tr>
+</table>
+
+<!-- TABLA PRINCIPAL -->
+<table class="outer">
+    <tr>
+        <td colspan="7" class="section-title section-title-center">Resultados de aprendizaje contenidos en el plan de formación, asociados a las actividades desarrolladas</td>
+    </tr>
+    <tr class="meta-header">
+        <td class="activity-col">Actividad formativa desarrollada</td>
+        <td class="module-col">Código módulo profesional</td>
+        <td class="ra-col">R.A</td>
+        <td class="status-col">No superado</td>
+        <td class="status-col">En proceso</td>
+        <td class="status-col">Superado</td>
+        <td class="obs-col">Observaciones</td>
+    </tr>
+
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_1_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_1_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_1_RA}}</span></td>
+        <td class="center">{{FILA_1_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_1_EN_PROCESO}}</td>
+        <td class="center">{{FILA_1_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_1_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_2_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_2_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_2_RA}}</span></td>
+        <td class="center">{{FILA_2_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_2_EN_PROCESO}}</td>
+        <td class="center">{{FILA_2_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_2_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_3_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_3_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_3_RA}}</span></td>
+        <td class="center">{{FILA_3_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_3_EN_PROCESO}}</td>
+        <td class="center">{{FILA_3_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_3_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_4_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_4_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_4_RA}}</span></td>
+        <td class="center">{{FILA_4_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_4_EN_PROCESO}}</td>
+        <td class="center">{{FILA_4_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_4_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_5_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_5_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_5_RA}}</span></td>
+        <td class="center">{{FILA_5_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_5_EN_PROCESO}}</td>
+        <td class="center">{{FILA_5_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_5_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_6_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_6_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_6_RA}}</span></td>
+        <td class="center">{{FILA_6_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_6_EN_PROCESO}}</td>
+        <td class="center">{{FILA_6_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_6_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_7_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_7_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_7_RA}}</span></td>
+        <td class="center">{{FILA_7_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_7_EN_PROCESO}}</td>
+        <td class="center">{{FILA_7_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_7_OBSERVACIONES}}</span></td>
+    </tr>
+    <tr class="row-fill">
+        <td><span class="value-text">{{FILA_8_ACTIVIDAD}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_8_CODIGO_MODULO}}</span></td>
+        <td class="center"><span class="value-text">{{FILA_8_RA}}</span></td>
+        <td class="center">{{FILA_8_NO_SUPERADO}}</td>
+        <td class="center">{{FILA_8_EN_PROCESO}}</td>
+        <td class="center">{{FILA_8_SUPERADO}}</td>
+        <td><span class="value-text">{{FILA_8_OBSERVACIONES}}</span></td>
+    </tr>
+</table>
+
+<!-- FIRMA -->
+<table class="outer">
+    <tr>
+        <td class="signature-box">
+            El/la tutor/a de la empresa u organismo equiparado <span class="muted">(Firma digital preferentemente)</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="date-box"><span class="label-inline">Fecha:</span> <span class="value-text">{{FECHA_FIRMA}}</span></td>
+    </tr>
+</table>
+
+<!-- DESTINATARIO -->
+<table class="outer">
+    <tr>
+        <td class="footer-note">Destinatario: profesor/a tutor/a del centro docente</td>
+    </tr>
+</table>
+
+</body>
+</html>
