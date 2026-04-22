@@ -164,6 +164,12 @@ $plan_file_path = null;
 $plan_file_name = null;
 $reactivate_status = null;
 $reactivate_error = null;
+$anexo_seguimiento_status = null;
+$anexo_seguimiento_error = null;
+$practicas_anexos = [];
+$practicas_anexos_estados = [];
+$practicas_anexos_seguimientos = [];
+$practicas_anexos_seguimientos_por_anexo = [];
 
 $document_status_code = isset($_GET['doc_status']) ? (string) $_GET['doc_status'] : '';
 if ($document_status_code === 'calendar_generated') {
@@ -456,6 +462,197 @@ if ($id_practica === false || $id_practica === null) {
             }
           }
         }
+      }
+
+      if ($post_action === 'guardar_anexo_seguimiento') {
+        $id_practicas_anexo = filter_var($_POST['id_practicas_anexo'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $id_practicas_anexo_estado = filter_var($_POST['id_practicas_anexo_estado'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        if ($id_practica <= 0 || !$practice) {
+          $anexo_seguimiento_error = 'No se puede guardar el seguimiento del anexo.';
+        } elseif ($id_practicas_anexo === false || $id_practicas_anexo === null) {
+          $anexo_seguimiento_error = 'El anexo indicado no es válido.';
+        } elseif ($id_practicas_anexo_estado === false || $id_practicas_anexo_estado === null) {
+          $anexo_seguimiento_error = 'El estado indicado no es válido.';
+        } else {
+          $anexo_valido_stmt = $pdo->prepare(
+            'SELECT id_practicas_anexo
+             FROM practicas_anexos
+             WHERE id_practicas_anexo = :id_practicas_anexo
+             LIMIT 1'
+          );
+          $anexo_valido_stmt->execute(['id_practicas_anexo' => $id_practicas_anexo]);
+          $anexo_valido = $anexo_valido_stmt->fetchColumn();
+
+          $estado_valido_stmt = $pdo->prepare(
+            'SELECT id_practicas_anexo_estado
+             FROM practicas_anexos_estados
+             WHERE id_practicas_anexo_estado = :id_practicas_anexo_estado
+             LIMIT 1'
+          );
+          $estado_valido_stmt->execute(['id_practicas_anexo_estado' => $id_practicas_anexo_estado]);
+          $estado_valido = $estado_valido_stmt->fetchColumn();
+
+          if ($anexo_valido === false) {
+            $anexo_seguimiento_error = 'El anexo seleccionado no existe.';
+          } elseif ($estado_valido === false) {
+            $anexo_seguimiento_error = 'El estado seleccionado no existe.';
+          } elseif ((int) $id_practicas_anexo === 7) {
+            $anexo_seguimiento_error = 'Para el anexo 7 debes usar su formulario específico.';
+          } else {
+            $seguimiento_existente_stmt = $pdo->prepare(
+              'SELECT id_practica_anexo_seguimiento
+               FROM practicas_anexos_seguimiento
+               WHERE id_practica = :id_practica
+                 AND id_practicas_anexo = :id_practicas_anexo
+                 AND numero_seguimiento = 1
+               LIMIT 1'
+            );
+            $seguimiento_existente_stmt->execute([
+              'id_practica' => $id_practica,
+              'id_practicas_anexo' => $id_practicas_anexo,
+            ]);
+            $id_practica_anexo_seguimiento = $seguimiento_existente_stmt->fetchColumn();
+
+            if ($id_practica_anexo_seguimiento !== false) {
+              $actualizar_seguimiento_stmt = $pdo->prepare(
+                'UPDATE practicas_anexos_seguimiento
+                 SET id_practicas_anexo_estado = :id_practicas_anexo_estado
+                 WHERE id_practica_anexo_seguimiento = :id_practica_anexo_seguimiento'
+              );
+              $actualizar_seguimiento_stmt->execute([
+                'id_practicas_anexo_estado' => $id_practicas_anexo_estado,
+                'id_practica_anexo_seguimiento' => $id_practica_anexo_seguimiento,
+              ]);
+            } else {
+              $crear_seguimiento_stmt = $pdo->prepare(
+                'INSERT INTO practicas_anexos_seguimiento (
+                   id_practica,
+                   id_practicas_anexo,
+                   id_practicas_anexo_estado,
+                   numero_seguimiento
+                 ) VALUES (
+                   :id_practica,
+                   :id_practicas_anexo,
+                   :id_practicas_anexo_estado,
+                   1
+                 )'
+              );
+              $crear_seguimiento_stmt->execute([
+                'id_practica' => $id_practica,
+                'id_practicas_anexo' => $id_practicas_anexo,
+                'id_practicas_anexo_estado' => $id_practicas_anexo_estado,
+              ]);
+            }
+
+            $anexo_seguimiento_status = 'Seguimiento de anexo guardado correctamente.';
+          }
+        }
+      }
+
+      if ($post_action === 'guardar_anexo_7_seguimiento') {
+        $id_practicas_anexo = filter_var($_POST['id_practicas_anexo'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $id_practicas_anexo_estado = filter_var($_POST['id_practicas_anexo_estado'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        if ($id_practica <= 0 || !$practice) {
+          $anexo_seguimiento_error = 'No se puede guardar el seguimiento del anexo.';
+        } elseif ($id_practicas_anexo === false || $id_practicas_anexo === null) {
+          $anexo_seguimiento_error = 'El anexo indicado no es válido.';
+        } elseif ($id_practicas_anexo_estado === false || $id_practicas_anexo_estado === null) {
+          $anexo_seguimiento_error = 'El estado indicado no es válido.';
+        } else {
+          $anexo_valido_stmt = $pdo->prepare(
+            'SELECT id_practicas_anexo
+             FROM practicas_anexos
+             WHERE id_practicas_anexo = :id_practicas_anexo
+             LIMIT 1'
+          );
+          $anexo_valido_stmt->execute(['id_practicas_anexo' => $id_practicas_anexo]);
+          $anexo_valido = $anexo_valido_stmt->fetchColumn();
+
+          $estado_valido_stmt = $pdo->prepare(
+            'SELECT id_practicas_anexo_estado
+             FROM practicas_anexos_estados
+             WHERE id_practicas_anexo_estado = :id_practicas_anexo_estado
+             LIMIT 1'
+          );
+          $estado_valido_stmt->execute(['id_practicas_anexo_estado' => $id_practicas_anexo_estado]);
+          $estado_valido = $estado_valido_stmt->fetchColumn();
+
+          if ($anexo_valido === false) {
+            $anexo_seguimiento_error = 'El anexo seleccionado no existe.';
+          } elseif ($estado_valido === false) {
+            $anexo_seguimiento_error = 'El estado seleccionado no existe.';
+          } elseif ((int) $id_practicas_anexo !== 7) {
+            $anexo_seguimiento_error = 'Este formulario solo permite guardar seguimientos del anexo 7.';
+          } else {
+            $maximo_seguimiento_stmt = $pdo->prepare(
+              'SELECT MAX(numero_seguimiento)
+               FROM practicas_anexos_seguimiento
+               WHERE id_practica = :id_practica
+                 AND id_practicas_anexo = :id_practicas_anexo'
+            );
+            $maximo_seguimiento_stmt->execute([
+              'id_practica' => $id_practica,
+              'id_practicas_anexo' => $id_practicas_anexo,
+            ]);
+            $ultimo_numero_seguimiento = (int) ($maximo_seguimiento_stmt->fetchColumn() ?: 0);
+            $nuevo_numero_seguimiento = $ultimo_numero_seguimiento + 1;
+
+            $crear_seguimiento_stmt = $pdo->prepare(
+              'INSERT INTO practicas_anexos_seguimiento (
+                 id_practica,
+                 id_practicas_anexo,
+                 id_practicas_anexo_estado,
+                 numero_seguimiento
+               ) VALUES (
+                 :id_practica,
+                 :id_practicas_anexo,
+                 :id_practicas_anexo_estado,
+                 :numero_seguimiento
+               )'
+            );
+            $crear_seguimiento_stmt->execute([
+              'id_practica' => $id_practica,
+              'id_practicas_anexo' => $id_practicas_anexo,
+              'id_practicas_anexo_estado' => $id_practicas_anexo_estado,
+              'numero_seguimiento' => $nuevo_numero_seguimiento,
+            ]);
+
+            $anexo_seguimiento_status = 'Seguimiento del anexo 7 guardado correctamente.';
+          }
+        }
+      }
+
+      $practicas_anexos_stmt = $pdo->query(
+        'SELECT id_practicas_anexo, anexo
+         FROM practicas_anexos
+         ORDER BY id_practicas_anexo ASC'
+      );
+      $practicas_anexos = $practicas_anexos_stmt->fetchAll();
+
+      $practicas_anexos_estados_stmt = $pdo->query(
+        'SELECT id_practicas_anexo_estado, estado
+         FROM practicas_anexos_estados
+         ORDER BY id_practicas_anexo_estado ASC'
+      );
+      $practicas_anexos_estados = $practicas_anexos_estados_stmt->fetchAll();
+
+      $practicas_anexos_seguimientos_stmt = $pdo->prepare(
+        'SELECT id_practica_anexo_seguimiento, id_practica, id_practicas_anexo, id_practicas_anexo_estado, numero_seguimiento, fecha_creacion, fecha_actualizacion
+         FROM practicas_anexos_seguimiento
+         WHERE id_practica = :id_practica
+         ORDER BY id_practicas_anexo ASC, numero_seguimiento ASC'
+      );
+      $practicas_anexos_seguimientos_stmt->execute(['id_practica' => $id_practica]);
+      $practicas_anexos_seguimientos = $practicas_anexos_seguimientos_stmt->fetchAll();
+
+      foreach ($practicas_anexos_seguimientos as $practica_anexo_seguimiento_row) {
+        $anexo_id = (int) ($practica_anexo_seguimiento_row['id_practicas_anexo'] ?? 0);
+        if (!isset($practicas_anexos_seguimientos_por_anexo[$anexo_id])) {
+          $practicas_anexos_seguimientos_por_anexo[$anexo_id] = [];
+        }
+        $practicas_anexos_seguimientos_por_anexo[$anexo_id][] = $practica_anexo_seguimiento_row;
       }
 
       $schedule_stmt = $pdo->prepare(
@@ -915,6 +1112,167 @@ if ($practice_found) {
                   <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
                 <?php endif; ?>
               </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="practica-detalle-grid practica-detalle-grid--fila-5">
+          <section class="panel practica-detalle-bloque">
+            <div class="panel-header">
+              <h3>Seguimiento de anexos</h3>
+              <?php if ($anexo_seguimiento_status !== null): ?>
+                <p><?php echo htmlspecialchars($anexo_seguimiento_status, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+              <?php if ($anexo_seguimiento_error !== null): ?>
+                <p><?php echo htmlspecialchars($anexo_seguimiento_error, ENT_QUOTES, 'UTF-8'); ?></p>
+              <?php endif; ?>
+            </div>
+            <div class="panel-grid">
+              <table class="practica-horario-detalle-table">
+                <thead>
+                  <tr>
+                    <th>Anexo</th>
+                    <th>Estado actual</th>
+                    <th>Fecha creación</th>
+                    <th>Fecha actualización</th>
+                    <th>Guardar estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($practicas_anexos as $practica_anexo): ?>
+                    <?php
+                      $id_practica_anexo_tabla = (int) ($practica_anexo['id_practicas_anexo'] ?? 0);
+                      if ($id_practica_anexo_tabla === 7) {
+                        continue;
+                      }
+                      $seguimiento_anexo_actual = $practicas_anexos_seguimientos_por_anexo[$id_practica_anexo_tabla][0] ?? null;
+                      $estado_actual_id = is_array($seguimiento_anexo_actual) ? (int) ($seguimiento_anexo_actual['id_practicas_anexo_estado'] ?? 0) : 0;
+                      $estado_actual_nombre = 'No guardado';
+                      foreach ($practicas_anexos_estados as $practica_anexo_estado_tabla) {
+                        if ((int) ($practica_anexo_estado_tabla['id_practicas_anexo_estado'] ?? 0) === $estado_actual_id) {
+                          $estado_actual_nombre = trim((string) ($practica_anexo_estado_tabla['estado'] ?? ''));
+                          break;
+                        }
+                      }
+                      if ($estado_actual_nombre === '') {
+                        $estado_actual_nombre = 'No guardado';
+                      }
+                      $fecha_creacion_anexo = is_array($seguimiento_anexo_actual) ? trim((string) ($seguimiento_anexo_actual['fecha_creacion'] ?? '')) : '';
+                      $fecha_actualizacion_anexo = is_array($seguimiento_anexo_actual) ? trim((string) ($seguimiento_anexo_actual['fecha_actualizacion'] ?? '')) : '';
+                      $fecha_creacion_anexo_label = '—';
+                      $fecha_actualizacion_anexo_label = '—';
+                      if ($fecha_creacion_anexo !== '') {
+                        $fecha_creacion_anexo_ts = strtotime($fecha_creacion_anexo);
+                        if ($fecha_creacion_anexo_ts !== false) {
+                          $fecha_creacion_anexo_label = date('d/m/Y H:i', $fecha_creacion_anexo_ts);
+                        }
+                      }
+                      if ($fecha_actualizacion_anexo !== '') {
+                        $fecha_actualizacion_anexo_ts = strtotime($fecha_actualizacion_anexo);
+                        if ($fecha_actualizacion_anexo_ts !== false) {
+                          $fecha_actualizacion_anexo_label = date('d/m/Y H:i', $fecha_actualizacion_anexo_ts);
+                        }
+                      }
+                      $anexo_nombre_tabla = trim((string) ($practica_anexo['anexo'] ?? ''));
+                      if ($anexo_nombre_tabla === '') {
+                        $anexo_nombre_tabla = 'Anexo ' . $id_practica_anexo_tabla;
+                      }
+                    ?>
+                    <tr>
+                      <td><?php echo htmlspecialchars($anexo_nombre_tabla, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($estado_actual_nombre, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($fecha_creacion_anexo_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($fecha_actualizacion_anexo_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td>
+                        <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+                          <input type="hidden" name="action" value="guardar_anexo_seguimiento">
+                          <input type="hidden" name="id_practicas_anexo" value="<?php echo $id_practica_anexo_tabla; ?>">
+                          <select name="id_practicas_anexo_estado" required>
+                            <?php foreach ($practicas_anexos_estados as $practica_anexo_estado_form): ?>
+                              <?php $id_practica_anexo_estado_form = (int) ($practica_anexo_estado_form['id_practicas_anexo_estado'] ?? 0); ?>
+                              <option value="<?php echo $id_practica_anexo_estado_form; ?>" <?php echo $id_practica_anexo_estado_form === $estado_actual_id ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars((string) ($practica_anexo_estado_form['estado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                              </option>
+                            <?php endforeach; ?>
+                          </select>
+                          <button type="submit" class="primary-button">Guardar</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+
+              <p><strong>Anexo 7</strong></p>
+              <table class="practica-horario-detalle-table">
+                <thead>
+                  <tr>
+                    <th>Número de seguimiento</th>
+                    <th>Estado actual</th>
+                    <th>Fecha creación</th>
+                    <th>Fecha actualización</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php $anexo_7_seguimientos = $practicas_anexos_seguimientos_por_anexo[7] ?? []; ?>
+                  <?php if ($anexo_7_seguimientos !== []): ?>
+                    <?php foreach ($anexo_7_seguimientos as $anexo_7_seguimiento): ?>
+                      <?php
+                        $anexo_7_estado_id = (int) ($anexo_7_seguimiento['id_practicas_anexo_estado'] ?? 0);
+                        $anexo_7_estado_nombre = 'No guardado';
+                        foreach ($practicas_anexos_estados as $anexo_7_estado) {
+                          if ((int) ($anexo_7_estado['id_practicas_anexo_estado'] ?? 0) === $anexo_7_estado_id) {
+                            $anexo_7_estado_nombre = trim((string) ($anexo_7_estado['estado'] ?? ''));
+                            break;
+                          }
+                        }
+                        if ($anexo_7_estado_nombre === '') {
+                          $anexo_7_estado_nombre = 'No guardado';
+                        }
+                        $anexo_7_fecha_creacion = trim((string) ($anexo_7_seguimiento['fecha_creacion'] ?? ''));
+                        $anexo_7_fecha_actualizacion = trim((string) ($anexo_7_seguimiento['fecha_actualizacion'] ?? ''));
+                        $anexo_7_fecha_creacion_label = '—';
+                        $anexo_7_fecha_actualizacion_label = '—';
+                        if ($anexo_7_fecha_creacion !== '') {
+                          $anexo_7_fecha_creacion_ts = strtotime($anexo_7_fecha_creacion);
+                          if ($anexo_7_fecha_creacion_ts !== false) {
+                            $anexo_7_fecha_creacion_label = date('d/m/Y H:i', $anexo_7_fecha_creacion_ts);
+                          }
+                        }
+                        if ($anexo_7_fecha_actualizacion !== '') {
+                          $anexo_7_fecha_actualizacion_ts = strtotime($anexo_7_fecha_actualizacion);
+                          if ($anexo_7_fecha_actualizacion_ts !== false) {
+                            $anexo_7_fecha_actualizacion_label = date('d/m/Y H:i', $anexo_7_fecha_actualizacion_ts);
+                          }
+                        }
+                      ?>
+                      <tr>
+                        <td><?php echo htmlspecialchars((string) ($anexo_7_seguimiento['numero_seguimiento'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($anexo_7_estado_nombre, ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($anexo_7_fecha_creacion_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($anexo_7_fecha_actualizacion_label, ENT_QUOTES, 'UTF-8'); ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <tr>
+                      <td colspan="4">No hay seguimientos guardados para el anexo 7.</td>
+                    </tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+
+              <form method="post" action="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>">
+                <input type="hidden" name="action" value="guardar_anexo_7_seguimiento">
+                <input type="hidden" name="id_practicas_anexo" value="7">
+                <select name="id_practicas_anexo_estado" required>
+                  <?php foreach ($practicas_anexos_estados as $practica_anexo_estado_nuevo_anexo_7): ?>
+                    <option value="<?php echo (int) ($practica_anexo_estado_nuevo_anexo_7['id_practicas_anexo_estado'] ?? 0); ?>">
+                      <?php echo htmlspecialchars((string) ($practica_anexo_estado_nuevo_anexo_7['estado'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+                <button type="submit" class="primary-button">Guardar nuevo seguimiento</button>
+              </form>
             </div>
           </section>
         </div>
