@@ -146,7 +146,7 @@ $dias_semana = [
   7 => 'Domingo',
 ];
 
-$id_practica_raw = $_GET['id_practica'] ?? ($_GET['id'] ?? null);
+$id_practica_raw = $_GET['id_practica'] ?? ($_GET['id'] ?? ($_POST['id_practica'] ?? ($_POST['id'] ?? null)));
 $id_practica = filter_var($id_practica_raw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 $action = isset($_GET['action']) ? (string) $_GET['action'] : '';
 $post_action = isset($_POST['action']) ? (string) $_POST['action'] : '';
