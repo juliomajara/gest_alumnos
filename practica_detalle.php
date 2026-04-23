@@ -298,6 +298,7 @@ if ($is_ajax_request) {
 
     if ($ajax_action === 'ajax_crear_anexo_7_seguimiento') {
       $id_practicas_anexo_ajax = filter_var($_REQUEST['id_practicas_anexo'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+      $numero_seguimiento_base_ajax = filter_var($_REQUEST['numero_seguimiento_base'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
       if ($id_practicas_anexo_ajax === false || $id_practicas_anexo_ajax === null || !isset($anexos_validos_ajax[(int) $id_practicas_anexo_ajax])) {
         echo json_encode(['ok' => false, 'message' => 'Anexo no válido.']);
         exit;
@@ -317,52 +318,18 @@ if ($is_ajax_request) {
         'id_practica' => $id_practica,
         'id_practicas_anexo' => $id_practicas_anexo_ajax,
       ]);
-      $siguiente_numero_seguimiento_ajax = (int) ($max_stmt_ajax->fetchColumn() ?: 0) + 1;
-
-      $id_sin_iniciar_ajax = null;
-      foreach ($fases_catalog_ajax as $fase_row_ajax) {
-        if (mb_strtolower(trim((string) $fase_row_ajax['estado']), 'UTF-8') === 'sin iniciar') {
-          $id_sin_iniciar_ajax = (int) $fase_row_ajax['id_practicas_anexo_estado'];
-          break;
-        }
+      $max_numero_db_ajax = (int) ($max_stmt_ajax->fetchColumn() ?: 0);
+      $max_base_ajax = 0;
+      if ($numero_seguimiento_base_ajax !== false && $numero_seguimiento_base_ajax !== null) {
+        $max_base_ajax = (int) $numero_seguimiento_base_ajax;
       }
-
-      if ($id_sin_iniciar_ajax !== null) {
-        $insert_stmt_ajax = $pdo->prepare(
-          'INSERT INTO practicas_anexos_seguimiento
-            (id_practica, id_practicas_anexo, id_practicas_anexo_estado, numero_seguimiento, fecha_creacion, fecha_actualizacion)
-           VALUES
-            (:id_practica, :id_practicas_anexo, :id_practicas_anexo_estado, :numero_seguimiento, NOW(), NOW())'
-        );
-        $insert_stmt_ajax->execute([
-          'id_practica' => $id_practica,
-          'id_practicas_anexo' => $id_practicas_anexo_ajax,
-          'id_practicas_anexo_estado' => $id_sin_iniciar_ajax,
-          'numero_seguimiento' => $siguiente_numero_seguimiento_ajax,
-        ]);
-      }
-
-      $fechas_stmt_ajax = $pdo->prepare(
-        'SELECT MIN(fecha_creacion) AS fecha_creacion, MAX(fecha_actualizacion) AS fecha_actualizacion
-         FROM practicas_anexos_seguimiento
-         WHERE id_practica = :id_practica
-           AND id_practicas_anexo = :id_practicas_anexo
-           AND numero_seguimiento = :numero_seguimiento'
-      );
-      $fechas_stmt_ajax->execute([
-        'id_practica' => $id_practica,
-        'id_practicas_anexo' => $id_practicas_anexo_ajax,
-        'numero_seguimiento' => $siguiente_numero_seguimiento_ajax,
-      ]);
-      $fechas_row_ajax = $fechas_stmt_ajax->fetch();
+      $siguiente_numero_seguimiento_ajax = max($max_numero_db_ajax, $max_base_ajax) + 1;
 
       echo json_encode([
         'ok' => true,
         'message' => 'Nuevo seguimiento creado correctamente.',
         'numero_seguimiento' => (int) $siguiente_numero_seguimiento_ajax,
         'id_practicas_anexo' => (int) $id_practicas_anexo_ajax,
-        'fecha_creacion' => isset($fechas_row_ajax['fecha_creacion']) && $fechas_row_ajax['fecha_creacion'] !== null ? (string) $fechas_row_ajax['fecha_creacion'] : '',
-        'fecha_actualizacion' => isset($fechas_row_ajax['fecha_actualizacion']) && $fechas_row_ajax['fecha_actualizacion'] !== null ? (string) $fechas_row_ajax['fecha_actualizacion'] : '',
       ]);
       exit;
     }
@@ -1384,35 +1351,18 @@ if ($practice_found) {
                 <?php if ($id_anexo_item === (int) $anexo_7_id): ?>
                   <?php continue; ?>
                 <?php endif; ?>
-                <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => [], 'fecha_creacion_min' => null, 'fecha_actualizacion_max' => null]; ?>
-                <?php
-                  $anexo_fecha_creacion = '—';
-                  if (!empty($anexo_item_data['fecha_creacion_min'])) {
-                    $anexo_fecha_creacion_ts = strtotime((string) $anexo_item_data['fecha_creacion_min']);
-                    if ($anexo_fecha_creacion_ts !== false) {
-                      $anexo_fecha_creacion = date('d/m/Y H:i', $anexo_fecha_creacion_ts);
-                    }
-                  }
-                  $anexo_fecha_actualizacion = '—';
-                  if (!empty($anexo_item_data['fecha_actualizacion_max'])) {
-                    $anexo_fecha_actualizacion_ts = strtotime((string) $anexo_item_data['fecha_actualizacion_max']);
-                    if ($anexo_fecha_actualizacion_ts !== false) {
-                      $anexo_fecha_actualizacion = date('d/m/Y H:i', $anexo_fecha_actualizacion_ts);
-                    }
-                  }
-                ?>
+                <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => []]; ?>
                 <div class="panel">
-                  <div class="panel-header">
-                    <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
-                    <p data-anexo-fechas data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-numero-seguimiento="1">Creado: <span data-fecha-creacion><?php echo htmlspecialchars($anexo_fecha_creacion, ENT_QUOTES, 'UTF-8'); ?></span> | Actualizado: <span data-fecha-actualizacion><?php echo htmlspecialchars($anexo_fecha_actualizacion, ENT_QUOTES, 'UTF-8'); ?></span></p>
-                  </div>
-                  <?php foreach ($fases_catalog as $fase_item): ?>
-                    <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
-                    <label>
-                      <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="1">
-                      <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
-                    </label><br>
-                  <?php endforeach; ?>
+                  <p>
+                    <strong><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>:</strong>
+                    <?php foreach ($fases_catalog as $fase_item): ?>
+                      <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                      <label>
+                        <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="1">
+                        <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                      </label>
+                    <?php endforeach; ?>
+                  </p>
                 </div>
               <?php endforeach; ?>
 
@@ -1424,46 +1374,25 @@ if ($practice_found) {
                 <div class="panel">
                   <div class="panel-header">
                     <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
+                    <button type="button" class="primary-button" data-anexo-7-add-button data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">Añadir seguimiento</button>
                   </div>
+                  <div data-anexo-7-seguimientos-list>
                   <?php if ($anexo7_seguimientos !== []): ?>
                     <?php foreach ($anexo7_seguimientos as $numero_seguimiento => $anexo7_data): ?>
-                      <?php
-                        $anexo7_fecha_creacion = '—';
-                        if (!empty($anexo7_data['fecha_creacion_min'])) {
-                          $anexo7_fecha_creacion_ts = strtotime((string) $anexo7_data['fecha_creacion_min']);
-                          if ($anexo7_fecha_creacion_ts !== false) {
-                            $anexo7_fecha_creacion = date('d/m/Y H:i', $anexo7_fecha_creacion_ts);
-                          }
-                        }
-                        $anexo7_fecha_actualizacion = '—';
-                        if (!empty($anexo7_data['fecha_actualizacion_max'])) {
-                          $anexo7_fecha_actualizacion_ts = strtotime((string) $anexo7_data['fecha_actualizacion_max']);
-                          if ($anexo7_fecha_actualizacion_ts !== false) {
-                            $anexo7_fecha_actualizacion = date('d/m/Y H:i', $anexo7_fecha_actualizacion_ts);
-                          }
-                        }
-                      ?>
-                      <div class="panel">
-                        <div class="panel-header">
-                          <h3>Seguimiento <?php echo (int) $numero_seguimiento; ?></h3>
-                          <p data-anexo-fechas data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">Creado: <span data-fecha-creacion><?php echo htmlspecialchars($anexo7_fecha_creacion, ENT_QUOTES, 'UTF-8'); ?></span> | Actualizado: <span data-fecha-actualizacion><?php echo htmlspecialchars($anexo7_fecha_actualizacion, ENT_QUOTES, 'UTF-8'); ?></span></p>
-                        </div>
-                        <?php foreach ($fases_catalog as $fase_item): ?>
-                          <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
-                          <label>
-                            <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo7_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_7_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
-                            <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
-                          </label><br>
-                        <?php endforeach; ?>
+                      <div class="panel" data-anexo-7-seguimiento-item data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
+                        <p>
+                          <strong>Seguimiento <?php echo (int) $numero_seguimiento; ?>:</strong>
+                          <?php foreach ($fases_catalog as $fase_item): ?>
+                            <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                            <label>
+                              <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo7_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_7_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
+                              <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                            </label>
+                          <?php endforeach; ?>
+                        </p>
                       </div>
                     <?php endforeach; ?>
                   <?php endif; ?>
-
-                  <div class="panel" data-anexo-7-seguimientos-container data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">
-                    <div class="panel-header">
-                      <h3>Nuevo seguimiento</h3>
-                    </div>
-                    <button type="button" class="primary-button" data-anexo-7-add-button data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">Añadir seguimiento</button>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -1542,52 +1471,6 @@ if ($practice_found) {
       <?php endforeach; ?>
     ];
 
-    const formatAjaxDate = (value) => {
-      if (!value) {
-        return '—';
-      }
-
-      const parts = String(value).split(/[- :]/);
-      if (parts.length < 5) {
-        return value;
-      }
-
-      const year = Number(parts[0]);
-      const month = Number(parts[1]) - 1;
-      const day = Number(parts[2]);
-      const hour = Number(parts[3]);
-      const minute = Number(parts[4]);
-      const date = new Date(year, month, day, hour, minute);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      const dd = String(date.getDate()).padStart(2, '0');
-      const mm = String(date.getMonth() + 1).padStart(2, '0');
-      const yyyy = String(date.getFullYear());
-      const hh = String(date.getHours()).padStart(2, '0');
-      const min = String(date.getMinutes()).padStart(2, '0');
-      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-    };
-
-    const actualizarFechasAnexo = (idPractica, idAnexo, numeroSeguimiento, fechaCreacion, fechaActualizacion) => {
-      const selector = `[data-anexo-fechas][data-id-practica="${idPractica}"][data-id-practicas-anexo="${idAnexo}"][data-numero-seguimiento="${numeroSeguimiento}"]`;
-      const fechasNode = document.querySelector(selector);
-      if (!fechasNode) {
-        return;
-      }
-
-      const fechaCreacionNode = fechasNode.querySelector('[data-fecha-creacion]');
-      const fechaActualizacionNode = fechasNode.querySelector('[data-fecha-actualizacion]');
-      if (fechaCreacionNode) {
-        fechaCreacionNode.textContent = formatAjaxDate(fechaCreacion);
-      }
-      if (fechaActualizacionNode) {
-        fechaActualizacionNode.textContent = formatAjaxDate(fechaActualizacion);
-      }
-    };
-
     const guardarFaseAnexoAjax = (checkbox) => {
       const idPractica = checkbox.dataset.idPractica;
       const idAnexo = checkbox.dataset.idPracticasAnexo;
@@ -1620,7 +1503,6 @@ if ($practice_found) {
             checkbox.checked = !checkbox.checked;
             return;
           }
-          actualizarFechasAnexo(idPractica, idAnexo, String(data.numero_seguimiento), data.fecha_creacion, data.fecha_actualizacion);
         })
         .catch(() => {
           checkbox.checked = !checkbox.checked;
@@ -1636,25 +1518,17 @@ if ($practice_found) {
       guardarFaseAnexoAjax(checkbox);
     });
 
-    const crearBloqueSeguimientoAnexo7 = (idPractica, idAnexo, numeroSeguimiento, fechaCreacion, fechaActualizacion) => {
+    const crearBloqueSeguimientoAnexo7 = (idPractica, idAnexo, numeroSeguimiento) => {
       const panel = document.createElement('div');
       panel.className = 'panel';
+      panel.dataset.anexo7SeguimientoItem = '1';
+      panel.dataset.numeroSeguimiento = String(numeroSeguimiento);
 
-      const header = document.createElement('div');
-      header.className = 'panel-header';
-
-      const title = document.createElement('h3');
-      title.textContent = `Seguimiento ${numeroSeguimiento}`;
-      header.appendChild(title);
-
-      const dates = document.createElement('p');
-      dates.setAttribute('data-anexo-fechas', '');
-      dates.setAttribute('data-id-practica', idPractica);
-      dates.setAttribute('data-id-practicas-anexo', idAnexo);
-      dates.setAttribute('data-numero-seguimiento', String(numeroSeguimiento));
-      dates.innerHTML = `Creado: <span data-fecha-creacion>${formatAjaxDate(fechaCreacion)}</span> | Actualizado: <span data-fecha-actualizacion>${formatAjaxDate(fechaActualizacion)}</span>`;
-      header.appendChild(dates);
-      panel.appendChild(header);
+      const line = document.createElement('p');
+      const title = document.createElement('strong');
+      title.textContent = `Seguimiento ${numeroSeguimiento}:`;
+      line.appendChild(title);
+      line.append(' ');
 
       anexosFasesCatalog.forEach((fase) => {
         const label = document.createElement('label');
@@ -1670,9 +1544,10 @@ if ($practice_found) {
         checkbox.dataset.numeroSeguimiento = String(numeroSeguimiento);
         label.appendChild(checkbox);
         label.append(` ${fase.estado}`);
-        panel.appendChild(label);
-        panel.appendChild(document.createElement('br'));
+        line.appendChild(label);
+        line.append(' ');
       });
+      panel.appendChild(line);
 
       return panel;
     };
@@ -1690,6 +1565,22 @@ if ($practice_found) {
       params.append('action', 'ajax_crear_anexo_7_seguimiento');
       params.append('id_practica', idPractica);
       params.append('id_practicas_anexo', idAnexo);
+      const panel = button.closest('.panel');
+      if (!panel) {
+        return;
+      }
+      const list = panel.querySelector('[data-anexo-7-seguimientos-list]');
+      if (!list) {
+        return;
+      }
+      let numeroSeguimientoBase = 0;
+      list.querySelectorAll('[data-anexo-7-seguimiento-item]').forEach((item) => {
+        const value = Number(item.dataset.numeroSeguimiento || '0');
+        if (value > numeroSeguimientoBase) {
+          numeroSeguimientoBase = value;
+        }
+      });
+      params.append('numero_seguimiento_base', String(numeroSeguimientoBase));
 
       fetch('practica_detalle.php', {
         method: 'POST',
@@ -1703,18 +1594,8 @@ if ($practice_found) {
           if (!data || data.ok !== true) {
             return;
           }
-
-          const rootPanel = button.closest('.panel');
-          if (!rootPanel) {
-            return;
-          }
-          const parentPanel = rootPanel.parentElement;
-          if (!parentPanel) {
-            return;
-          }
-
-          const bloque = crearBloqueSeguimientoAnexo7(idPractica, idAnexo, data.numero_seguimiento, data.fecha_creacion, data.fecha_actualizacion);
-          parentPanel.insertBefore(bloque, rootPanel);
+          const bloque = crearBloqueSeguimientoAnexo7(idPractica, idAnexo, data.numero_seguimiento);
+          list.appendChild(bloque);
         })
         .catch(() => {
         });
