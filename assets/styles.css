@@ -2095,3 +2095,40 @@ a.edit-toggle:focus {
   color: var(--muted);
   font-weight: 600;
 }
+
+.anexos-ruta-card {
+  display: grid;
+  gap: 8px;
+}
+
+.anexos-ruta-title {
+  margin: 0;
+  line-height: 1.3;
+}
+
+.anexos-ruta-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.anexos-ruta-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.3;
+}
+
+.anexos-ruta-step input[type="checkbox"] {
+  margin: 0;
+}
+
+.anexos-ruta-separador {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.anexos-ruta-card--seguimiento + .anexos-ruta-card--seguimiento {
+  margin-top: 10px;
+}
