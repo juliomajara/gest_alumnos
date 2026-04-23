@@ -1457,7 +1457,7 @@ if ($practice_found) {
                   ];
                   $orden_objetivo = [];
                   foreach ($orden_fases_por_anexo as $codigo_anexo_orden => $fases_anexo_orden) {
-                    if (strpos($anexo_codigo_limpio, $codigo_anexo_orden) !== false) {
+                    if (strpos($anexo_codigo_limpio, (string) $codigo_anexo_orden) !== false) {
                       $orden_objetivo = $fases_anexo_orden;
                       break;
                     }
