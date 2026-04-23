@@ -887,41 +887,63 @@ if ($id_practica === false || $id_practica === null) {
 
       $anexos_estados_permitidos = [
         '2.1' => [
-          'Datos solicitados' => true,
-          'Enviado a firmar por la empresa' => true,
-          'Firmado por la empresa' => true,
-          'Enviado a firmar por el director' => true,
-          'Firmado por el director' => true,
-          'Devuelto a la empresa' => true,
+          'datos solicitados',
+          'enviado a firmar por la empresa',
+          'firmado por la empresa',
+          'enviado a firmar por el director',
+          'firmado por el director',
+          'devuelto a la empresa',
         ],
         '2.2' => [
-          'Enviado a firmar por el director' => true,
-          'Firmado por el director' => true,
+          'enviado a firmar por el director',
+          'firmado por el director',
         ],
         '3' => [
-          'Enviado a firmar por la empresa' => true,
-          'Firmado por la empresa' => true,
-          'Devuelto a la empresa' => true,
+          'enviado a firmar por la empresa',
+          'firmado por la empresa',
+          'devuelto a la empresa',
         ],
         '4' => [
-          'Enviado a la DAT' => true,
-          'Autorizado' => true,
+          'enviado a la dat',
+          'autorizado',
         ],
         '7' => [
-          'Enviado a firmar por la empresa' => true,
-          'Firmado por la empresa' => true,
+          'enviado a firmar por la empresa',
+          'firmado por la empresa',
         ],
         '8' => [
-          'Enviado a firmar por la empresa' => true,
-          'Firmado por la empresa' => true,
+          'enviado a firmar por la empresa',
+          'firmado por la empresa',
         ],
       ];
+      $fases_catalog_por_estado_clave = [];
+      foreach ($fases_catalog as $fase_row) {
+        $fase_estado_row = trim((string) ($fase_row['estado'] ?? ''));
+        if ($fase_estado_row === '') {
+          continue;
+        }
+        $fase_estado_normalizada = preg_replace('/\s+/u', ' ', $fase_estado_row);
+        $fase_estado_normalizada = $fase_estado_normalizada !== null ? $fase_estado_normalizada : $fase_estado_row;
+        $fase_estado_normalizada = function_exists('mb_strtolower') ? mb_strtolower($fase_estado_normalizada, 'UTF-8') : strtolower($fase_estado_normalizada);
+        $fase_estado_clave = strtr($fase_estado_normalizada, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n']);
+        $fases_catalog_por_estado_clave[$fase_estado_clave] = (int) $fase_row['id_practicas_anexo_estado'];
+      }
       $anexos_estados_permitidos_por_id = [];
       foreach ($anexos_catalog as $anexo_row) {
         $id_anexo_row = (int) $anexo_row['id_practicas_anexo'];
         $anexo_codigo_row = trim((string) ($anexo_row['anexo'] ?? ''));
-        if (isset($anexos_estados_permitidos[$anexo_codigo_row])) {
-          $anexos_estados_permitidos_por_id[$id_anexo_row] = $anexos_estados_permitidos[$anexo_codigo_row];
+        $anexo_codigo_clave = '';
+        if (preg_match('/(^|\D)(2\.1|2\.2|3|4|7|8)(\D|$)/', $anexo_codigo_row, $anexo_codigo_matches) === 1) {
+          $anexo_codigo_clave = (string) $anexo_codigo_matches[2];
+        }
+        if ($anexo_codigo_clave === '' || !isset($anexos_estados_permitidos[$anexo_codigo_clave])) {
+          continue;
+        }
+        $anexos_estados_permitidos_por_id[$id_anexo_row] = [];
+        foreach ($anexos_estados_permitidos[$anexo_codigo_clave] as $estado_permitido_clave) {
+          if (isset($fases_catalog_por_estado_clave[$estado_permitido_clave])) {
+            $anexos_estados_permitidos_por_id[$id_anexo_row][$fases_catalog_por_estado_clave[$estado_permitido_clave]] = true;
+          }
         }
       }
 
@@ -1411,7 +1433,7 @@ if ($practice_found) {
                     <?php foreach ($fases_catalog as $fase_item): ?>
                       <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
                       <?php $fase_estado_item = (string) ($fase_item['estado'] ?? ''); ?>
-                      <?php if (!isset($estados_permitidos_anexo[$fase_estado_item])): ?>
+                      <?php if (!isset($estados_permitidos_anexo[$id_fase_item])): ?>
                         <?php continue; ?>
                       <?php endif; ?>
                       <label>
@@ -1447,7 +1469,7 @@ if ($practice_found) {
                           <?php foreach ($fases_catalog as $fase_item): ?>
                             <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
                             <?php $fase_estado_item = (string) ($fase_item['estado'] ?? ''); ?>
-                            <?php if (!isset($estados_permitidos_anexo[$fase_estado_item])): ?>
+                            <?php if (!isset($estados_permitidos_anexo[$id_fase_item])): ?>
                               <?php continue; ?>
                             <?php endif; ?>
                             <label>
@@ -1530,7 +1552,7 @@ if ($practice_found) {
 
     const anexosFasesCatalog = [
       <?php foreach ($fases_catalog as $fase_item): ?>
-        <?php if (!isset($anexos_estados_permitidos_por_id[(int) $anexo_7_id][(string) ($fase_item['estado'] ?? '')])): ?>
+        <?php if (!isset($anexos_estados_permitidos_por_id[(int) $anexo_7_id][(int) $fase_item['id_practicas_anexo_estado']])): ?>
           <?php continue; ?>
         <?php endif; ?>
         {
