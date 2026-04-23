@@ -873,6 +873,38 @@ if ($id_practica === false || $id_practica === null) {
         ksort($anexo7_seguimientos);
       }
 
+      $anexos_estados_permitidos = [
+        '2.1' => [
+          'Datos solicitados' => true,
+          'Enviado a firmar por la empresa' => true,
+          'Firmado por la empresa' => true,
+          'Enviado a firmar por el director' => true,
+          'Firmado por el director' => true,
+          'Devuelto a la empresa' => true,
+        ],
+        '2.2' => [
+          'Enviado a firmar por el director' => true,
+          'Firmado por el director' => true,
+        ],
+        '3' => [
+          'Enviado a firmar por la empresa' => true,
+          'Firmado por la empresa' => true,
+          'Devuelto a la empresa' => true,
+        ],
+        '4' => [
+          'Enviado a la DAT' => true,
+          'Autorizado' => true,
+        ],
+        '7' => [
+          'Enviado a firmar por la empresa' => true,
+          'Firmado por la empresa' => true,
+        ],
+        '8' => [
+          'Enviado a firmar por la empresa' => true,
+          'Firmado por la empresa' => true,
+        ],
+      ];
+
       $schedule_stmt = $pdo->prepare(
         'SELECT id_practicas_horario, dia_semana, hora_entrada, hora_salida
          FROM practicas_horario
@@ -1352,25 +1384,40 @@ if ($practice_found) {
                   <?php continue; ?>
                 <?php endif; ?>
                 <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => []]; ?>
+                <?php $anexo_item_codigo = trim((string) ($anexo_item['anexo'] ?? '')); ?>
+                <?php $estados_permitidos_anexo = $anexos_estados_permitidos[$anexo_item_codigo] ?? []; ?>
                 <div class="panel">
                   <p>
                     <strong><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>:</strong>
                     <?php foreach ($fases_catalog as $fase_item): ?>
                       <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                      <?php $fase_estado_item = (string) ($fase_item['estado'] ?? ''); ?>
+                      <?php if (!isset($estados_permitidos_anexo[$fase_estado_item])): ?>
+                        <?php continue; ?>
+                      <?php endif; ?>
                       <label>
                         <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="1">
-                        <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                        <?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?>
                       </label>
                     <?php endforeach; ?>
                   </p>
                 </div>
               <?php endforeach; ?>
+            </div>
+          </section>
 
+          <section class="panel practica-detalle-bloque">
+            <div class="panel-header">
+              <h3>Seguimiento de anexos</h3>
+            </div>
+            <div class="panel-grid">
               <?php foreach ($anexos_catalog as $anexo_item): ?>
                 <?php $id_anexo_item = (int) $anexo_item['id_practicas_anexo']; ?>
                 <?php if ($id_anexo_item !== (int) $anexo_7_id): ?>
                   <?php continue; ?>
                 <?php endif; ?>
+                <?php $anexo_item_codigo = trim((string) ($anexo_item['anexo'] ?? '')); ?>
+                <?php $estados_permitidos_anexo = $anexos_estados_permitidos[$anexo_item_codigo] ?? []; ?>
                 <div class="panel">
                   <div class="panel-header">
                     <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
@@ -1384,9 +1431,13 @@ if ($practice_found) {
                           <strong>Seguimiento <?php echo (int) $numero_seguimiento; ?>:</strong>
                           <?php foreach ($fases_catalog as $fase_item): ?>
                             <?php $id_fase_item = (int) $fase_item['id_practicas_anexo_estado']; ?>
+                            <?php $fase_estado_item = (string) ($fase_item['estado'] ?? ''); ?>
+                            <?php if (!isset($estados_permitidos_anexo[$fase_estado_item])): ?>
+                              <?php continue; ?>
+                            <?php endif; ?>
                             <label>
                               <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo7_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_7_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
-                              <?php echo htmlspecialchars((string) $fase_item['estado'], ENT_QUOTES, 'UTF-8'); ?>
+                              <?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?>
                             </label>
                           <?php endforeach; ?>
                         </p>
@@ -1464,6 +1515,9 @@ if ($practice_found) {
 
     const anexosFasesCatalog = [
       <?php foreach ($fases_catalog as $fase_item): ?>
+        <?php if (!isset($anexos_estados_permitidos['7'][(string) ($fase_item['estado'] ?? '')])): ?>
+          <?php continue; ?>
+        <?php endif; ?>
         {
           id: <?php echo (int) $fase_item['id_practicas_anexo_estado']; ?>,
           estado: <?php echo json_encode((string) $fase_item['estado'], JSON_UNESCAPED_UNICODE); ?>
