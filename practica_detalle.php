@@ -1425,6 +1425,10 @@ if ($practice_found) {
                 <?php if ($id_anexo_item === (int) $anexo_7_id): ?>
                   <?php continue; ?>
                 <?php endif; ?>
+                <?php $anexo_codigo_item = trim((string) ($anexo_item['anexo'] ?? '')); ?>
+                <?php if ((isset($practice['circ_excep']) ? (int) $practice['circ_excep'] : 0) !== 1 && preg_match('/(^|\\D)4(\\D|$)/', $anexo_codigo_item) === 1): ?>
+                  <?php continue; ?>
+                <?php endif; ?>
                 <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => []]; ?>
                 <?php $estados_permitidos_anexo = $anexos_estados_permitidos_por_id[$id_anexo_item] ?? []; ?>
                 <div class="panel">
