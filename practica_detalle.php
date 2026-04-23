@@ -1429,7 +1429,12 @@ if ($practice_found) {
             <div class="panel-header">
               <h3>Seguimiento de anexos</h3>
             </div>
-            <div class="panel-grid">
+            <div class="panel-grid anexos-estado-tabla">
+              <div class="anexos-estado-tabla-head" role="row">
+                <div class="anexos-estado-col anexo-col" role="columnheader">Anexo</div>
+                <div class="anexos-estado-col pasos-col" role="columnheader">Pasos</div>
+                <div class="anexos-estado-col progreso-col" role="columnheader">Progreso</div>
+              </div>
               <?php foreach ($anexos_catalog as $anexo_item): ?>
                 <?php $id_anexo_item = (int) $anexo_item['id_practicas_anexo']; ?>
                 <?php if ($id_anexo_item === (int) $anexo_7_id): ?>
@@ -1441,20 +1446,66 @@ if ($practice_found) {
                 <?php endif; ?>
                 <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => []]; ?>
                 <?php $fases_ordenadas_anexo = $anexos_fases_ordenadas_por_id[$id_anexo_item] ?? []; ?>
-                <div class="panel anexos-ruta-card">
-                  <p class="anexos-ruta-title"><strong><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></strong></p>
-                  <div class="anexos-ruta-steps">
-                    <?php foreach ($fases_ordenadas_anexo as $fase_index => $fase_item): ?>
+                <?php
+                  $anexo_codigo_limpio = trim((string) ($anexo_item['anexo'] ?? ''));
+                  $orden_fases_por_anexo = [
+                    '2.1' => ['Datos solicitados', 'Enviado a firmar por la empresa', 'Firmado por la empresa', 'Enviado a firmar por el director', 'Firmado por el director', 'Devuelto a la empresa'],
+                    '2.2' => ['Enviado a firmar por el director', 'Firmado por el director'],
+                    '3' => ['Enviado a firmar por la empresa', 'Firmado por la empresa', 'Devuelto a la empresa'],
+                    '4' => ['Enviado a la DAT', 'Autorizado'],
+                    '8' => ['Enviado a firmar por la empresa', 'Firmado por la empresa'],
+                  ];
+                  $orden_objetivo = [];
+                  foreach ($orden_fases_por_anexo as $codigo_anexo_orden => $fases_anexo_orden) {
+                    if (strpos($anexo_codigo_limpio, $codigo_anexo_orden) !== false) {
+                      $orden_objetivo = $fases_anexo_orden;
+                      break;
+                    }
+                  }
+                  $fases_por_nombre = [];
+                  foreach ($fases_ordenadas_anexo as $fase_item) {
+                    $fases_por_nombre[trim((string) ($fase_item['estado'] ?? ''))] = $fase_item;
+                  }
+                  $fases_visuales = [];
+                  foreach ($orden_objetivo as $fase_objetivo) {
+                    if (isset($fases_por_nombre[$fase_objetivo])) {
+                      $fases_visuales[] = $fases_por_nombre[$fase_objetivo];
+                    }
+                  }
+                  if ($fases_visuales === []) {
+                    $fases_visuales = $fases_ordenadas_anexo;
+                  }
+                  $fases_totales = count($fases_visuales);
+                  $fases_marcadas = 0;
+                  foreach ($fases_visuales as $fase_visual_item) {
+                    $id_fase_visual = (int) ($fase_visual_item['id'] ?? 0);
+                    if (isset($anexo_item_data['fases'][$id_fase_visual])) {
+                      $fases_marcadas++;
+                    }
+                  }
+                  $progreso_anexo = $fases_totales > 0 ? (int) round(($fases_marcadas / $fases_totales) * 100) : 0;
+                ?>
+                <div class="anexos-estado-row" data-anexo-status-row>
+                  <div class="anexos-estado-col anexo-col">
+                    <p class="anexos-estado-anexo-titulo"><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <p class="anexos-estado-anexo-subtitulo"><?php echo htmlspecialchars(trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></p>
+                  </div>
+                  <div class="anexos-estado-col pasos-col" data-fases-container>
+                    <?php foreach ($fases_visuales as $fase_index => $fase_item): ?>
                       <?php $id_fase_item = (int) ($fase_item['id'] ?? 0); ?>
-                      <?php $fase_estado_item = (string) ($fase_item['estado'] ?? ''); ?>
-                      <?php if ($fase_index > 0): ?>
-                        <span class="anexos-ruta-separador" aria-hidden="true">→</span>
-                      <?php endif; ?>
-                      <label class="anexos-ruta-step">
-                        <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="1">
-                        <span><?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?></span>
+                      <?php $fase_estado_item = trim((string) ($fase_item['estado'] ?? '')); ?>
+                      <label class="anexos-estado-hito-wrap<?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? ' is-checked' : ''; ?>" data-hito-wrap>
+                        <input class="anexos-estado-input" type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="1">
+                        <span class="anexos-estado-hito" title="<?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?>"><?php echo isset($anexo_item_data['fases'][$id_fase_item]) ? '✓' : ''; ?></span>
+                        <span class="sr-only"><?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?></span>
                       </label>
                     <?php endforeach; ?>
+                  </div>
+                  <div class="anexos-estado-col progreso-col">
+                    <span class="anexos-estado-progreso-valor" data-progreso-valor><?php echo (int) $progreso_anexo; ?>%</span>
+                    <div class="anexos-estado-progreso-barra">
+                      <span class="anexos-estado-progreso-barra-fill" data-progreso-fill style="width: <?php echo (int) $progreso_anexo; ?>%;"></span>
+                    </div>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -1474,23 +1525,56 @@ if ($practice_found) {
                     <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
                     <button type="button" class="primary-button" data-anexo-7-add-button data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">Añadir seguimiento</button>
                   </div>
-                  <div data-anexo-7-seguimientos-list>
+                  <?php
+                    $fases_anexo_7_por_nombre = [];
+                    foreach ($fases_ordenadas_anexo as $fase_anexo_7_item) {
+                      $fases_anexo_7_por_nombre[trim((string) ($fase_anexo_7_item['estado'] ?? ''))] = $fase_anexo_7_item;
+                    }
+                    $fases_anexo_7_orden_objetivo = ['Enviado a firmar por la empresa', 'Firmado por la empresa'];
+                    $fases_visuales_anexo_7 = [];
+                    foreach ($fases_anexo_7_orden_objetivo as $fase_anexo_7_objetivo) {
+                      if (isset($fases_anexo_7_por_nombre[$fase_anexo_7_objetivo])) {
+                        $fases_visuales_anexo_7[] = $fases_anexo_7_por_nombre[$fase_anexo_7_objetivo];
+                      }
+                    }
+                    if ($fases_visuales_anexo_7 === []) {
+                      $fases_visuales_anexo_7 = $fases_ordenadas_anexo;
+                    }
+                  ?>
+                  <div class="anexos-estado-tabla anexos-estado-tabla--seguimiento" data-anexo-7-seguimientos-list>
                   <?php if ($anexo7_seguimientos !== []): ?>
                     <?php foreach ($anexo7_seguimientos as $numero_seguimiento => $anexo7_data): ?>
-                      <div class="panel anexos-ruta-card anexos-ruta-card--seguimiento" data-anexo-7-seguimiento-item data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
-                        <p class="anexos-ruta-title"><strong>Seguimiento <?php echo (int) $numero_seguimiento; ?></strong></p>
-                        <div class="anexos-ruta-steps">
-                          <?php foreach ($fases_ordenadas_anexo as $fase_index => $fase_item): ?>
+                      <?php
+                        $fases_totales_anexo_7 = count($fases_visuales_anexo_7);
+                        $fases_marcadas_anexo_7 = 0;
+                        foreach ($fases_visuales_anexo_7 as $fase_visual_anexo_7_item) {
+                          $id_fase_visual_anexo_7 = (int) ($fase_visual_anexo_7_item['id'] ?? 0);
+                          if (isset($anexo7_data['fases'][$id_fase_visual_anexo_7])) {
+                            $fases_marcadas_anexo_7++;
+                          }
+                        }
+                        $progreso_anexo_7 = $fases_totales_anexo_7 > 0 ? (int) round(($fases_marcadas_anexo_7 / $fases_totales_anexo_7) * 100) : 0;
+                      ?>
+                      <div class="anexos-estado-row anexos-estado-row--seguimiento" data-anexo-7-seguimiento-item data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>" data-anexo-status-row>
+                        <div class="anexos-estado-col anexo-col">
+                          <p class="anexos-estado-anexo-titulo">Seguimiento <?php echo (int) $numero_seguimiento; ?></p>
+                        </div>
+                        <div class="anexos-estado-col pasos-col" data-fases-container>
+                          <?php foreach ($fases_visuales_anexo_7 as $fase_index => $fase_item): ?>
                             <?php $id_fase_item = (int) ($fase_item['id'] ?? 0); ?>
-                            <?php $fase_estado_item = (string) ($fase_item['estado'] ?? ''); ?>
-                            <?php if ($fase_index > 0): ?>
-                              <span class="anexos-ruta-separador" aria-hidden="true">→</span>
-                            <?php endif; ?>
-                            <label class="anexos-ruta-step">
-                              <input type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo7_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_7_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
-                              <span><?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <?php $fase_estado_item = trim((string) ($fase_item['estado'] ?? '')); ?>
+                            <label class="anexos-estado-hito-wrap<?php echo isset($anexo7_data['fases'][$id_fase_item]) ? ' is-checked' : ''; ?>" data-hito-wrap>
+                              <input class="anexos-estado-input" type="checkbox" name="fases[]" value="<?php echo (int) $id_fase_item; ?>" <?php echo isset($anexo7_data['fases'][$id_fase_item]) ? 'checked' : ''; ?> data-anexo-ajax="1" data-ajax-action="ajax_guardar_anexo_7_fase" data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>" data-id-practicas-anexo-estado="<?php echo (int) $id_fase_item; ?>" data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>">
+                              <span class="anexos-estado-hito" title="<?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?>"><?php echo isset($anexo7_data['fases'][$id_fase_item]) ? '✓' : ''; ?></span>
+                              <span class="sr-only"><?php echo htmlspecialchars($fase_estado_item, ENT_QUOTES, 'UTF-8'); ?></span>
                             </label>
                           <?php endforeach; ?>
+                        </div>
+                        <div class="anexos-estado-col progreso-col">
+                          <span class="anexos-estado-progreso-valor" data-progreso-valor><?php echo (int) $progreso_anexo_7; ?>%</span>
+                          <div class="anexos-estado-progreso-barra">
+                            <span class="anexos-estado-progreso-barra-fill" data-progreso-fill style="width: <?php echo (int) $progreso_anexo_7; ?>%;"></span>
+                          </div>
                         </div>
                       </div>
                     <?php endforeach; ?>
@@ -1565,13 +1649,63 @@ if ($practice_found) {
     });
 
     const anexosFasesCatalog = [
-      <?php foreach (($anexos_fases_ordenadas_por_id[(int) $anexo_7_id] ?? []) as $fase_item): ?>
+      <?php
+        $anexo_7_catalog_base = $anexos_fases_ordenadas_por_id[(int) $anexo_7_id] ?? [];
+        $anexo_7_catalog_por_nombre = [];
+        foreach ($anexo_7_catalog_base as $fase_item_catalog) {
+          $anexo_7_catalog_por_nombre[trim((string) ($fase_item_catalog['estado'] ?? ''))] = $fase_item_catalog;
+        }
+        $anexo_7_catalog_orden = ['Enviado a firmar por la empresa', 'Firmado por la empresa'];
+        $anexo_7_catalog = [];
+        foreach ($anexo_7_catalog_orden as $estado_catalog) {
+          if (isset($anexo_7_catalog_por_nombre[$estado_catalog])) {
+            $anexo_7_catalog[] = $anexo_7_catalog_por_nombre[$estado_catalog];
+          }
+        }
+        if ($anexo_7_catalog === []) {
+          $anexo_7_catalog = $anexo_7_catalog_base;
+        }
+      ?>
+      <?php foreach ($anexo_7_catalog as $fase_item): ?>
         {
           id: <?php echo (int) ($fase_item['id'] ?? 0); ?>,
           estado: <?php echo json_encode((string) ($fase_item['estado'] ?? ''), JSON_UNESCAPED_UNICODE); ?>
         },
       <?php endforeach; ?>
     ];
+
+    const actualizarEstadoVisualAnexo = (checkbox) => {
+      const wrap = checkbox.closest('[data-hito-wrap]');
+      if (wrap) {
+        wrap.classList.toggle('is-checked', checkbox.checked);
+      }
+      const hito = wrap ? wrap.querySelector('.anexos-estado-hito') : null;
+      if (hito) {
+        hito.textContent = checkbox.checked ? '✓' : '';
+      }
+
+      const row = checkbox.closest('[data-anexo-status-row]');
+      if (!row) {
+        return;
+      }
+      const checkboxes = row.querySelectorAll('input[type="checkbox"][data-anexo-ajax="1"]');
+      const total = checkboxes.length;
+      let marcadas = 0;
+      checkboxes.forEach((item) => {
+        if (item.checked) {
+          marcadas += 1;
+        }
+      });
+      const porcentaje = total > 0 ? Math.round((marcadas / total) * 100) : 0;
+      const valor = row.querySelector('[data-progreso-valor]');
+      if (valor) {
+        valor.textContent = `${porcentaje}%`;
+      }
+      const fill = row.querySelector('[data-progreso-fill]');
+      if (fill) {
+        fill.style.width = `${porcentaje}%`;
+      }
+    };
 
     const guardarFaseAnexoAjax = (checkbox) => {
       const idPractica = checkbox.dataset.idPractica;
@@ -1603,11 +1737,14 @@ if ($practice_found) {
         .then((data) => {
           if (!data || data.ok !== true) {
             checkbox.checked = !checkbox.checked;
+            actualizarEstadoVisualAnexo(checkbox);
             return;
           }
+          actualizarEstadoVisualAnexo(checkbox);
         })
         .catch(() => {
           checkbox.checked = !checkbox.checked;
+          actualizarEstadoVisualAnexo(checkbox);
         });
     };
 
@@ -1622,32 +1759,30 @@ if ($practice_found) {
 
     const crearBloqueSeguimientoAnexo7 = (idPractica, idAnexo, numeroSeguimiento) => {
       const panel = document.createElement('div');
-      panel.className = 'panel anexos-ruta-card anexos-ruta-card--seguimiento';
+      panel.className = 'anexos-estado-row anexos-estado-row--seguimiento';
       panel.setAttribute('data-anexo-7-seguimiento-item', '1');
       panel.dataset.numeroSeguimiento = String(numeroSeguimiento);
+      panel.setAttribute('data-anexo-status-row', '1');
 
-      const line = document.createElement('p');
-      line.className = 'anexos-ruta-title';
-      const title = document.createElement('strong');
+      const colAnexo = document.createElement('div');
+      colAnexo.className = 'anexos-estado-col anexo-col';
+      const title = document.createElement('p');
+      title.className = 'anexos-estado-anexo-titulo';
       title.textContent = `Seguimiento ${numeroSeguimiento}`;
-      line.appendChild(title);
-      panel.appendChild(line);
+      colAnexo.appendChild(title);
+      panel.appendChild(colAnexo);
 
       const steps = document.createElement('div');
-      steps.className = 'anexos-ruta-steps';
+      steps.className = 'anexos-estado-col pasos-col';
+      steps.setAttribute('data-fases-container', '1');
 
-      anexosFasesCatalog.forEach((fase, index) => {
-        if (index > 0) {
-          const separator = document.createElement('span');
-          separator.className = 'anexos-ruta-separador';
-          separator.setAttribute('aria-hidden', 'true');
-          separator.textContent = '→';
-          steps.appendChild(separator);
-        }
+      anexosFasesCatalog.forEach((fase) => {
         const label = document.createElement('label');
-        label.className = 'anexos-ruta-step';
+        label.className = 'anexos-estado-hito-wrap';
+        label.setAttribute('data-hito-wrap', '1');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
+        checkbox.className = 'anexos-estado-input';
         checkbox.name = 'fases[]';
         checkbox.value = String(fase.id);
         checkbox.dataset.anexoAjax = '1';
@@ -1657,12 +1792,34 @@ if ($practice_found) {
         checkbox.dataset.idPracticasAnexoEstado = String(fase.id);
         checkbox.dataset.numeroSeguimiento = String(numeroSeguimiento);
         label.appendChild(checkbox);
-        const text = document.createElement('span');
-        text.textContent = fase.estado;
-        label.appendChild(text);
+        const hito = document.createElement('span');
+        hito.className = 'anexos-estado-hito';
+        hito.title = fase.estado;
+        label.appendChild(hito);
+        const sr = document.createElement('span');
+        sr.className = 'sr-only';
+        sr.textContent = fase.estado;
+        label.appendChild(sr);
         steps.appendChild(label);
       });
       panel.appendChild(steps);
+
+      const progreso = document.createElement('div');
+      progreso.className = 'anexos-estado-col progreso-col';
+      const progresoValor = document.createElement('span');
+      progresoValor.className = 'anexos-estado-progreso-valor';
+      progresoValor.setAttribute('data-progreso-valor', '1');
+      progresoValor.textContent = '0%';
+      progreso.appendChild(progresoValor);
+      const progresoBarra = document.createElement('div');
+      progresoBarra.className = 'anexos-estado-progreso-barra';
+      const progresoFill = document.createElement('span');
+      progresoFill.className = 'anexos-estado-progreso-barra-fill';
+      progresoFill.setAttribute('data-progreso-fill', '1');
+      progresoFill.style.width = '0%';
+      progresoBarra.appendChild(progresoFill);
+      progreso.appendChild(progresoBarra);
+      panel.appendChild(progreso);
 
       return panel;
     };
