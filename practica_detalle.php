@@ -151,7 +151,7 @@ $id_practica = filter_var($id_practica_raw, FILTER_VALIDATE_INT, ['options' => [
 $action = isset($_GET['action']) ? (string) $_GET['action'] : '';
 $post_action = isset($_POST['action']) ? (string) $_POST['action'] : '';
 $is_ajax_request = isset($_REQUEST['ajax']) && (string) $_REQUEST['ajax'] === '1';
-$anexo_7_id = 7;
+$anexo_7_id = null;
 
 if ($is_ajax_request) {
   header('Content-Type: application/json; charset=UTF-8');
@@ -169,14 +169,19 @@ if ($is_ajax_request) {
     $ajax_action = isset($_REQUEST['action']) ? (string) $_REQUEST['action'] : '';
 
     $anexos_stmt_ajax = $pdo->query(
-      'SELECT id_practicas_anexo
+      'SELECT id_practicas_anexo, anexo
        FROM practicas_anexos
        ORDER BY id_practicas_anexo ASC'
     );
     $anexos_catalog_ajax = $anexos_stmt_ajax->fetchAll();
     $anexos_validos_ajax = [];
     foreach ($anexos_catalog_ajax as $anexo_row_ajax) {
-      $anexos_validos_ajax[(int) $anexo_row_ajax['id_practicas_anexo']] = true;
+      $id_anexo_ajax = (int) $anexo_row_ajax['id_practicas_anexo'];
+      $anexos_validos_ajax[$id_anexo_ajax] = true;
+      $anexo_codigo_ajax = trim((string) ($anexo_row_ajax['anexo'] ?? ''));
+      if ($anexo_7_id === null && preg_match('/(^|\D)7(\D|$)/', $anexo_codigo_ajax) === 1) {
+        $anexo_7_id = $id_anexo_ajax;
+      }
     }
 
     $fases_stmt_ajax = $pdo->query(
@@ -669,6 +674,13 @@ if ($id_practica === false || $id_practica === null) {
       );
       $anexos_catalog = $anexos_stmt->fetchAll();
 
+      foreach ($anexos_catalog as $anexo_row) {
+        $anexo_codigo = trim((string) ($anexo_row['anexo'] ?? ''));
+        if ($anexo_7_id === null && preg_match('/(^|\D)7(\D|$)/', $anexo_codigo) === 1) {
+          $anexo_7_id = (int) $anexo_row['id_practicas_anexo'];
+        }
+      }
+
       $fases_stmt = $pdo->query(
         'SELECT id_practicas_anexo_estado, estado
          FROM practicas_anexos_estados
@@ -904,6 +916,14 @@ if ($id_practica === false || $id_practica === null) {
           'Firmado por la empresa' => true,
         ],
       ];
+      $anexos_estados_permitidos_por_id = [];
+      foreach ($anexos_catalog as $anexo_row) {
+        $id_anexo_row = (int) $anexo_row['id_practicas_anexo'];
+        $anexo_codigo_row = trim((string) ($anexo_row['anexo'] ?? ''));
+        if (isset($anexos_estados_permitidos[$anexo_codigo_row])) {
+          $anexos_estados_permitidos_por_id[$id_anexo_row] = $anexos_estados_permitidos[$anexo_codigo_row];
+        }
+      }
 
       $schedule_stmt = $pdo->prepare(
         'SELECT id_practicas_horario, dia_semana, hora_entrada, hora_salida
@@ -1384,8 +1404,7 @@ if ($practice_found) {
                   <?php continue; ?>
                 <?php endif; ?>
                 <?php $anexo_item_data = $anexos_fases_marcadas[$id_anexo_item][1] ?? ['fases' => []]; ?>
-                <?php $anexo_item_codigo = trim((string) ($anexo_item['anexo'] ?? '')); ?>
-                <?php $estados_permitidos_anexo = $anexos_estados_permitidos[$anexo_item_codigo] ?? []; ?>
+                <?php $estados_permitidos_anexo = $anexos_estados_permitidos_por_id[$id_anexo_item] ?? []; ?>
                 <div class="panel">
                   <p>
                     <strong><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>:</strong>
@@ -1407,17 +1426,13 @@ if ($practice_found) {
           </section>
 
           <section class="panel practica-detalle-bloque">
-            <div class="panel-header">
-              <h3>Seguimiento de anexos</h3>
-            </div>
             <div class="panel-grid">
               <?php foreach ($anexos_catalog as $anexo_item): ?>
                 <?php $id_anexo_item = (int) $anexo_item['id_practicas_anexo']; ?>
                 <?php if ($id_anexo_item !== (int) $anexo_7_id): ?>
                   <?php continue; ?>
                 <?php endif; ?>
-                <?php $anexo_item_codigo = trim((string) ($anexo_item['anexo'] ?? '')); ?>
-                <?php $estados_permitidos_anexo = $anexos_estados_permitidos[$anexo_item_codigo] ?? []; ?>
+                <?php $estados_permitidos_anexo = $anexos_estados_permitidos_por_id[$id_anexo_item] ?? []; ?>
                 <div class="panel">
                   <div class="panel-header">
                     <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
@@ -1515,7 +1530,7 @@ if ($practice_found) {
 
     const anexosFasesCatalog = [
       <?php foreach ($fases_catalog as $fase_item): ?>
-        <?php if (!isset($anexos_estados_permitidos['7'][(string) ($fase_item['estado'] ?? '')])): ?>
+        <?php if (!isset($anexos_estados_permitidos_por_id[(int) $anexo_7_id][(string) ($fase_item['estado'] ?? '')])): ?>
           <?php continue; ?>
         <?php endif; ?>
         {
