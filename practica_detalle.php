@@ -1612,7 +1612,7 @@ if ($practice_found) {
     const crearBloqueSeguimientoAnexo7 = (idPractica, idAnexo, numeroSeguimiento) => {
       const panel = document.createElement('div');
       panel.className = 'panel';
-      panel.dataset.anexo7SeguimientoItem = '1';
+      panel.setAttribute('data-anexo-7-seguimiento-item', '1');
       panel.dataset.numeroSeguimiento = String(numeroSeguimiento);
 
       const line = document.createElement('p');
