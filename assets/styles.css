@@ -2104,7 +2104,7 @@ a.edit-toggle:focus {
 .anexos-estado-tabla-head,
 .anexos-estado-row {
   display: grid;
-  grid-template-columns: minmax(220px, 1.1fr) minmax(250px, 1.4fr) minmax(120px, 0.6fr);
+  grid-template-columns: minmax(180px, 1.15fr) minmax(180px, 1.25fr) minmax(96px, 0.6fr);
   gap: 16px;
   align-items: center;
   padding: 10px 0;
@@ -2141,7 +2141,11 @@ a.edit-toggle:focus {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
 }
 
 .anexos-estado-hito-wrap {
@@ -2171,8 +2175,8 @@ a.edit-toggle:focus {
 }
 
 .anexos-estado-hito {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   border: 1px solid #cfd7e8;
   background: #f5f7fb;
@@ -2236,6 +2240,10 @@ a.edit-toggle:focus {
   border-top: 1px solid var(--border);
 }
 
+.anexos-estado-row--compacta {
+  grid-template-columns: minmax(140px, 1fr) minmax(96px, 1fr) minmax(86px, 0.65fr);
+}
+
 .anexos-estado-seguimiento-panel {
   gap: 0;
 }
@@ -2243,6 +2251,16 @@ a.edit-toggle:focus {
 .anexos-estado-seguimiento-card {
   border: 1px solid var(--border);
   background: #fbfcff;
+}
+
+.anexos-estado-btn-add {
+  border-color: #4b831d;
+  background: #5e9f23;
+}
+
+.anexos-estado-btn-add:hover {
+  background: #4b831d;
+  border-color: #3b6717;
 }
 
 @media (max-width: 960px) {
