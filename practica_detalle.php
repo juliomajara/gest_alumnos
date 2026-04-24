@@ -1429,7 +1429,7 @@ if ($practice_found) {
             <div class="panel-header">
               <h3>Seguimiento de anexos</h3>
             </div>
-            <div class="panel-grid anexos-estado-tabla">
+            <div class="panel-grid anexos-estado-tabla anexos-estado-tabla--principal">
               <div class="anexos-estado-tabla-head" role="row">
                 <div class="anexos-estado-col anexo-col" role="columnheader">Anexo</div>
                 <div class="anexos-estado-col pasos-col" role="columnheader">Pasos</div>
@@ -1513,14 +1513,14 @@ if ($practice_found) {
           </section>
 
           <section class="panel practica-detalle-bloque">
-            <div class="panel-grid">
+            <div class="panel-grid anexos-estado-seguimiento-panel">
               <?php foreach ($anexos_catalog as $anexo_item): ?>
                 <?php $id_anexo_item = (int) $anexo_item['id_practicas_anexo']; ?>
                 <?php if ($id_anexo_item !== (int) $anexo_7_id): ?>
                   <?php continue; ?>
                 <?php endif; ?>
                 <?php $fases_ordenadas_anexo = $anexos_fases_ordenadas_por_id[$id_anexo_item] ?? []; ?>
-                <div class="panel">
+                <div class="panel anexos-estado-seguimiento-card">
                   <div class="panel-header">
                     <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
                     <button type="button" class="primary-button" data-anexo-7-add-button data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">Añadir seguimiento</button>
