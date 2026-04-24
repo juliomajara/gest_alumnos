@@ -1523,7 +1523,7 @@ if ($practice_found) {
                 <div class="panel anexos-estado-seguimiento-card">
                   <div class="panel-header">
                     <h3><?php echo htmlspecialchars(trim((string) ($anexo_item['anexo'] ?? 'Anexo')) . ' - ' . trim((string) ($anexo_item['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></h3>
-                    <button type="button" class="primary-button" data-anexo-7-add-button data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">Añadir seguimiento</button>
+                    <button type="button" class="primary-button anexos-estado-btn-add" data-anexo-7-add-button data-id-practica="<?php echo (int) $id_practica; ?>" data-id-practicas-anexo="<?php echo (int) $id_anexo_item; ?>">Añadir seguimiento</button>
                   </div>
                   <?php
                     $fases_anexo_7_por_nombre = [];
@@ -1555,7 +1555,7 @@ if ($practice_found) {
                         }
                         $progreso_anexo_7 = $fases_totales_anexo_7 > 0 ? (int) round(($fases_marcadas_anexo_7 / $fases_totales_anexo_7) * 100) : 0;
                       ?>
-                      <div class="anexos-estado-row anexos-estado-row--seguimiento" data-anexo-7-seguimiento-item data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>" data-anexo-status-row>
+                      <div class="anexos-estado-row anexos-estado-row--seguimiento anexos-estado-row--compacta" data-anexo-7-seguimiento-item data-numero-seguimiento="<?php echo (int) $numero_seguimiento; ?>" data-anexo-status-row>
                         <div class="anexos-estado-col anexo-col">
                           <p class="anexos-estado-anexo-titulo">Seguimiento <?php echo (int) $numero_seguimiento; ?></p>
                         </div>
@@ -1759,7 +1759,7 @@ if ($practice_found) {
 
     const crearBloqueSeguimientoAnexo7 = (idPractica, idAnexo, numeroSeguimiento) => {
       const panel = document.createElement('div');
-      panel.className = 'anexos-estado-row anexos-estado-row--seguimiento';
+      panel.className = 'anexos-estado-row anexos-estado-row--seguimiento anexos-estado-row--compacta';
       panel.setAttribute('data-anexo-7-seguimiento-item', '1');
       panel.dataset.numeroSeguimiento = String(numeroSeguimiento);
       panel.setAttribute('data-anexo-status-row', '1');
