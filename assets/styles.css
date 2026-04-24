@@ -2104,19 +2104,20 @@ a.edit-toggle:focus {
 .anexos-estado-tabla-head,
 .anexos-estado-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.1fr) minmax(220px, 1.4fr) minmax(120px, 0.6fr);
-  gap: 14px;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(250px, 1.4fr) minmax(120px, 0.6fr);
+  gap: 16px;
   align-items: center;
-  padding: 12px 0;
+  padding: 10px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .anexos-estado-tabla-head {
   padding-top: 0;
   color: var(--muted);
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
 }
 
 .anexos-estado-col {
@@ -2139,7 +2140,7 @@ a.edit-toggle:focus {
 .anexos-estado-row .pasos-col {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
@@ -2151,46 +2152,51 @@ a.edit-toggle:focus {
 
 .anexos-estado-hito-wrap:not(:last-child)::after {
   content: '';
-  width: 18px;
+  width: 12px;
   height: 1px;
   background: var(--border);
-  margin-left: 8px;
+  margin-left: 5px;
 }
 
 .anexos-estado-input {
   position: absolute;
-  inset: 0;
+  width: 1px;
+  height: 1px;
   opacity: 0;
   margin: 0;
+  padding: 0;
+  border: 0;
+  pointer-events: none;
   cursor: pointer;
 }
 
 .anexos-estado-hito {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  border: 1px solid #c6d2eb;
-  background: #f4f7ff;
+  border: 1px solid #cfd7e8;
+  background: #f5f7fb;
   color: transparent;
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-weight: 800;
+  font-size: 0.88rem;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
 }
 
 .anexos-estado-hito-wrap.is-checked .anexos-estado-hito,
 .anexos-estado-input:checked + .anexos-estado-hito {
-  background: var(--primary);
-  border-color: var(--primary-dark);
+  background: #5e9f23;
+  border-color: #4b831d;
   color: #fff;
 }
 
 .anexos-estado-hito-wrap:hover .anexos-estado-hito,
 .anexos-estado-hito-wrap:focus-within .anexos-estado-hito {
-  border-color: var(--primary-dark);
+  border-color: #9ea9bf;
 }
 
 .anexos-estado-row .progreso-col {
@@ -2205,12 +2211,16 @@ a.edit-toggle:focus {
   font-weight: 700;
 }
 
+.anexos-estado-row[data-anexo-status-row] .anexos-estado-progreso-valor {
+  color: #325f1f;
+}
+
 .anexos-estado-progreso-barra {
   width: 100%;
-  max-width: 150px;
-  height: 5px;
+  max-width: 140px;
+  height: 4px;
   border-radius: 999px;
-  background: #e3e8f5;
+  background: #d7dbe2;
   overflow: hidden;
 }
 
@@ -2218,12 +2228,21 @@ a.edit-toggle:focus {
   display: block;
   height: 100%;
   width: 0;
-  background: var(--primary);
+  background: #5e9f23;
   border-radius: 999px;
 }
 
 .anexos-estado-tabla--seguimiento .anexos-estado-row:first-child {
   border-top: 1px solid var(--border);
+}
+
+.anexos-estado-seguimiento-panel {
+  gap: 0;
+}
+
+.anexos-estado-seguimiento-card {
+  border: 1px solid var(--border);
+  background: #fbfcff;
 }
 
 @media (max-width: 960px) {
