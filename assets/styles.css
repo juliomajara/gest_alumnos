@@ -2349,14 +2349,15 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-tarjetas {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
 }
 
 .practicas-anexos-card {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 999px;
   background: #f8faff;
 }
 
@@ -2365,20 +2366,20 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-card-head {
-  width: 100%;
+  width: auto;
   border: 0;
   background: transparent;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
   text-align: left;
   cursor: pointer;
 }
 
 .practicas-anexos-progress-ring {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -2387,14 +2388,14 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-progress-ring span {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 700;
   color: var(--text);
 }
@@ -2407,8 +2408,9 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-card-title-wrap strong {
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--text);
+  font-weight: 600;
 }
 
 .practicas-anexos-card-title-wrap small {
@@ -2418,7 +2420,7 @@ a.edit-toggle:focus {
 .practicas-anexos-card-icons {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   margin-left: auto;
 }
 
@@ -2435,15 +2437,17 @@ a.edit-toggle:focus {
   font-weight: 700;
 }
 
-.practicas-anexos-arrow {
-  color: var(--muted);
-  font-size: 0.84rem;
-}
-
 .practicas-anexos-card-panel {
-  border-top: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 10px 14px 12px;
   background: #fff;
+  margin-top: 8px;
+}
+
+.practicas-anexos-detalles {
+  display: grid;
+  gap: 8px;
 }
 
 .practicas-anexos-steps {
@@ -2469,12 +2473,12 @@ a.edit-toggle:focus {
 
 .practicas-anexos-add-tracking-wrap {
   display: flex;
-  justify-content: flex-end;
 }
 
 .practicas-anexos-add-tracking {
-  padding: 7px 14px;
-  font-size: 0.92rem;
+  padding: 7px 12px;
+  font-size: 0.84rem;
+  border-radius: 999px;
 }
 
 .practicas-anexos-practica-total {
