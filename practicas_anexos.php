@@ -530,9 +530,6 @@ $active_page = 'practicas';
                           <strong><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></strong>
                           <small data-card-summary hidden><?php echo $completadas; ?> de <?php echo $total_fases; ?> pasos completados</small>
                         </span>
-                        <span class="practicas-anexos-card-icons">
-                          <span class="practicas-anexos-complete-icon" data-complete-icon <?php echo $is_done ? '' : 'hidden'; ?>>✓</span>
-                        </span>
                       </button>
                     </section>
                   <?php endforeach; ?>
