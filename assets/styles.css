@@ -2326,6 +2326,11 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-practica-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
   text-align: right;
 }
 
@@ -2340,11 +2345,14 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-practica-meta p {
+  width: 100%;
+  margin-left: auto;
   margin: 6px 0 2px;
   font-size: 0.86rem;
 }
 
 .practicas-anexos-practica-meta strong {
+  width: 100%;
   color: var(--primary);
 }
 
@@ -2352,7 +2360,7 @@ a.edit-toggle:focus {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .practicas-anexos-card {
@@ -2371,15 +2379,15 @@ a.edit-toggle:focus {
   background: transparent;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px 6px 6px;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
   text-align: left;
   cursor: pointer;
 }
 
 .practicas-anexos-progress-ring {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -2388,29 +2396,30 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-progress-ring span {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.66rem;
+  font-size: 0.61rem;
   font-weight: 700;
   color: var(--text);
 }
 
 .practicas-anexos-card-title-wrap {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
 }
 
 .practicas-anexos-card-title-wrap strong {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text);
   font-weight: 600;
+  line-height: 1.15;
 }
 
 .practicas-anexos-card-title-wrap small {
@@ -2425,15 +2434,15 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-complete-icon {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--primary);
+  background: #16a34a;
   color: #fff;
-  font-size: 0.84rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -2471,13 +2480,9 @@ a.edit-toggle:focus {
   accent-color: var(--primary);
 }
 
-.practicas-anexos-add-tracking-wrap {
-  display: flex;
-}
-
 .practicas-anexos-add-tracking {
-  padding: 7px 12px;
-  font-size: 0.84rem;
+  padding: 5px 10px;
+  font-size: 0.78rem;
   border-radius: 999px;
 }
 
