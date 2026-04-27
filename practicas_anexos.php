@@ -467,8 +467,6 @@ $active_page = 'practicas';
                     </button>
                   <?php endif; ?>
                   <span class="practicas-anexos-practica-estado"><?php echo htmlspecialchars($estado_practica, ENT_QUOTES, 'UTF-8'); ?></span>
-                  <p data-practice-summary-text>0 de 0 pasos completados</p>
-                  <strong data-practice-summary-percent>0%</strong>
                 </div>
               </header>
 
