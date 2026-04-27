@@ -454,6 +454,18 @@ $active_page = 'practicas';
                   <p><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
                 <div class="practicas-anexos-practica-meta">
+                  <?php if (in_array('7', $anexos_mostrar, true)): ?>
+                    <button
+                      type="button"
+                      class="primary-button practicas-anexos-add-tracking"
+                      data-add-anexo7
+                      data-id-practica="<?php echo $id_practica; ?>"
+                      data-id-practicas-anexo="<?php echo (int) $anexos_definiciones['7']['id']; ?>"
+                      data-anexo7-fases='<?php echo htmlspecialchars((string) json_encode($anexos_definiciones['7']['fases'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>'
+                    >
+                      Añadir seguimiento Anexo 7
+                    </button>
+                  <?php endif; ?>
                   <span class="practicas-anexos-practica-estado"><?php echo htmlspecialchars($estado_practica, ENT_QUOTES, 'UTF-8'); ?></span>
                   <p data-practice-summary-text>0 de 0 pasos completados</p>
                   <strong data-practice-summary-percent>0%</strong>
@@ -524,21 +536,6 @@ $active_page = 'practicas';
                       </button>
                     </section>
                   <?php endforeach; ?>
-
-                  <?php if ($code === '7'): ?>
-                    <div class="practicas-anexos-add-tracking-wrap">
-                      <button
-                        type="button"
-                        class="primary-button practicas-anexos-add-tracking"
-                        data-add-anexo7
-                        data-id-practica="<?php echo $id_practica; ?>"
-                        data-id-practicas-anexo="<?php echo (int) $anexo_data['id']; ?>"
-                        data-anexo7-fases='<?php echo htmlspecialchars((string) json_encode($anexo_data['fases'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>'
-                      >
-                        Añadir seguimiento Anexo 7
-                      </button>
-                    </div>
-                  <?php endif; ?>
                 <?php endforeach; ?>
               </div>
 
@@ -700,6 +697,20 @@ $active_page = 'practicas';
           if (!panel) return;
 
           const expanded = toggleButton.getAttribute('aria-expanded') === 'true';
+          const practiceCard = toggleButton.closest('[data-practice-card]');
+          if (!expanded && practiceCard) {
+            const openToggles = practiceCard.querySelectorAll('[data-accordion-toggle][aria-expanded="true"]');
+            openToggles.forEach((openToggle) => {
+              if (openToggle === toggleButton) return;
+              openToggle.setAttribute('aria-expanded', 'false');
+              const openPanelId = openToggle.getAttribute('aria-controls');
+              const openPanel = openPanelId ? document.getElementById(openPanelId) : null;
+              if (openPanel) {
+                openPanel.hidden = true;
+              }
+            });
+          }
+
           toggleButton.setAttribute('aria-expanded', expanded ? 'false' : 'true');
           panel.hidden = expanded;
 
@@ -787,12 +798,7 @@ $active_page = 'practicas';
           list.appendChild(li);
         });
 
-        const addWrap = practiceCard.querySelector('.practicas-anexos-add-tracking-wrap');
-        if (addWrap) {
-          panelContainer.insertBefore(card, addWrap);
-        } else {
-          panelContainer.appendChild(card);
-        }
+        panelContainer.appendChild(card);
         const detailsContainer = practiceCard.querySelector('.practicas-anexos-detalles');
         if (detailsContainer) {
           detailsContainer.appendChild(panel);
