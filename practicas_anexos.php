@@ -567,7 +567,14 @@ $active_page = 'practicas';
                       $card_id = 'anexo-card-' . $id_practica . '-' . $id_anexo . '-' . $numero_seguimiento;
                       $panel_id = $card_id . '-panel';
                     ?>
-                    <div class="practicas-anexos-card-panel" id="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>" hidden>
+                    <div
+                      class="practicas-anexos-card-panel"
+                      id="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>"
+                      data-id-practica="<?php echo $id_practica; ?>"
+                      data-id-practicas-anexo="<?php echo $id_anexo; ?>"
+                      data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
+                      hidden
+                    >
                       <ul class="practicas-anexos-steps">
                         <?php foreach ($fases as $fase): ?>
                           <?php
@@ -608,6 +615,21 @@ $active_page = 'practicas';
 
   <script>
     (function () {
+      const getCardPanel = (card) => {
+        const toggle = card ? card.querySelector('[data-accordion-toggle]') : null;
+        const panelId = toggle ? toggle.getAttribute('aria-controls') : null;
+        return panelId ? document.getElementById(panelId) : null;
+      };
+
+      const findCardFromInput = (input) => {
+        const practiceCard = input.closest('[data-practice-card]');
+        if (!practiceCard) return null;
+
+        return practiceCard.querySelector(
+          '[data-anexo-card][data-id-practica="' + (input.dataset.idPractica || '') + '"][data-id-practicas-anexo="' + (input.dataset.idPracticasAnexo || '') + '"][data-numero-seguimiento="' + (input.dataset.numeroSeguimiento || '1') + '"]'
+        );
+      };
+
       const updateRing = (ring) => {
         if (!ring) return;
         const percent = Number(ring.dataset.percent || '0');
@@ -615,12 +637,12 @@ $active_page = 'practicas';
       };
 
       const refreshPracticeSummary = (practiceCard) => {
-        const cards = practiceCard.querySelectorAll('[data-anexo-card]');
+        const panels = practiceCard.querySelectorAll('.practicas-anexos-card-panel');
         let total = 0;
         let completed = 0;
 
-        cards.forEach((card) => {
-          const inputs = card.querySelectorAll('input[type="checkbox"][data-ajax-step]');
+        panels.forEach((panel) => {
+          const inputs = panel.querySelectorAll('input[type="checkbox"][data-ajax-step]');
           total += inputs.length;
           inputs.forEach((input) => {
             if (input.checked) completed += 1;
@@ -640,8 +662,9 @@ $active_page = 'practicas';
       };
 
       const refreshCard = (card) => {
-        const checkboxes = card.querySelectorAll('input[type="checkbox"][data-ajax-step]');
-        const done = card.querySelectorAll('input[type="checkbox"][data-ajax-step]:checked').length;
+        const panel = getCardPanel(card);
+        const checkboxes = panel ? panel.querySelectorAll('input[type="checkbox"][data-ajax-step]') : [];
+        const done = panel ? panel.querySelectorAll('input[type="checkbox"][data-ajax-step]:checked').length : 0;
         const total = checkboxes.length;
         const percent = total > 0 ? Math.round((done / total) * 100) : 0;
         const summary = card.querySelector('[data-card-summary]');
@@ -710,7 +733,7 @@ $active_page = 'practicas';
             input.checked = previous;
           }
 
-          const card = input.closest('[data-anexo-card]');
+          const card = findCardFromInput(input);
           if (card) {
             refreshCard(card);
           }
@@ -747,6 +770,9 @@ $active_page = 'practicas';
         const panel = document.createElement('div');
         panel.className = 'practicas-anexos-card-panel';
         panel.id = panelId;
+        panel.dataset.idPractica = String(idPractica);
+        panel.dataset.idPracticasAnexo = String(idAnexo);
+        panel.dataset.numeroSeguimiento = String(numeroSeguimiento);
         panel.hidden = true;
         panel.innerHTML = '<ul class="practicas-anexos-steps"></ul>';
         const list = panel.querySelector('.practicas-anexos-steps');
@@ -775,8 +801,9 @@ $active_page = 'practicas';
         const toggle = card.querySelector('[data-accordion-toggle]');
         if (toggle) bindAccordion(toggle);
 
-        card.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
+        panel.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
         updateRing(card.querySelector('[data-progress-ring]'));
+        refreshCard(card);
         refreshPracticeSummary(practiceCard);
 
         return card;
@@ -785,6 +812,7 @@ $active_page = 'practicas';
       document.querySelectorAll('[data-progress-ring]').forEach(updateRing);
       document.querySelectorAll('[data-accordion-toggle]').forEach(bindAccordion);
       document.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
+      document.querySelectorAll('[data-anexo-card]').forEach(refreshCard);
       document.querySelectorAll('[data-practice-card]').forEach(refreshPracticeSummary);
 
       document.querySelectorAll('[data-add-anexo7]').forEach((button) => {
