@@ -447,11 +447,10 @@ $active_page = 'practicas';
               $global_completados = 0;
             ?>
 
-            <article class="practicas-anexos-practica" data-practice-card>
+            <article class="practicas-anexos-practica" data-practice-card data-search="<?php echo htmlspecialchars(normalize_text($alumno . ' ' . $empresa), ENT_QUOTES, 'UTF-8'); ?>">
               <header class="practicas-anexos-practica-head">
                 <div>
-                  <h4><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?></h4>
-                  <p><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></p>
+                  <h4><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?> <span><?php echo htmlspecialchars('— ' . $empresa, ENT_QUOTES, 'UTF-8'); ?></span></h4>
                 </div>
                 <div class="practicas-anexos-practica-meta">
                   <?php if (in_array('7', $anexos_mostrar, true)): ?>
@@ -808,6 +807,19 @@ $active_page = 'practicas';
       document.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
       document.querySelectorAll('[data-anexo-card]').forEach(refreshCard);
       document.querySelectorAll('[data-practice-card]').forEach(refreshPracticeSummary);
+
+      const searchInput = document.querySelector('input[name="q"]');
+      const applyLiveFilter = () => {
+        const term = (searchInput ? searchInput.value : '').toLowerCase();
+        document.querySelectorAll('[data-practice-card]').forEach((card) => {
+          const haystack = (card.dataset.search || '').toLowerCase();
+          card.hidden = term !== '' && !haystack.includes(term);
+        });
+      };
+
+      if (searchInput) {
+        searchInput.addEventListener('input', applyLiveFilter);
+      }
 
       document.querySelectorAll('[data-add-anexo7]').forEach((button) => {
         button.addEventListener('click', async () => {
