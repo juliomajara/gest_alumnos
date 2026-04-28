@@ -523,10 +523,13 @@ $active_page = 'practicas';
                       data-total-steps="<?php echo $total_fases; ?>"
                     >
                       <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>" data-accordion-toggle>
-                        <span class="practicas-anexos-progress-ring" data-progress-ring data-percent="<?php echo $percent; ?>"><span><?php echo $percent; ?>%</span></span>
                         <span class="practicas-anexos-card-title-wrap">
                           <strong><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></strong>
+                          <span class="practicas-anexos-card-percent" data-progress-text>(<?php echo $percent; ?>%)</span>
                           <small data-card-summary hidden><?php echo $completadas; ?> de <?php echo $total_fases; ?> pasos completados</small>
+                        </span>
+                        <span class="practicas-anexos-card-icons">
+                          <span class="practicas-anexos-complete-icon" data-complete-icon <?php echo $is_done ? '' : 'hidden'; ?>>✓</span>
                         </span>
                       </button>
                     </section>
@@ -622,12 +625,6 @@ $active_page = 'practicas';
         );
       };
 
-      const updateRing = (ring) => {
-        if (!ring) return;
-        const percent = Number(ring.dataset.percent || '0');
-        ring.style.background = `conic-gradient(var(--primary) ${percent}%, #d9deea ${percent}% 100%)`;
-      };
-
       const refreshPracticeSummary = (practiceCard) => {
         const panels = practiceCard.querySelectorAll('.practicas-anexos-card-panel');
         let total = 0;
@@ -660,17 +657,15 @@ $active_page = 'practicas';
         const total = checkboxes.length;
         const percent = total > 0 ? Math.round((done / total) * 100) : 0;
         const summary = card.querySelector('[data-card-summary]');
-        const ring = card.querySelector('[data-progress-ring]');
+        const progressText = card.querySelector('[data-progress-text]');
         const completeIcon = card.querySelector('[data-complete-icon]');
 
         if (summary) {
           summary.textContent = `${done} de ${total} pasos completados`;
         }
 
-        if (ring) {
-          ring.dataset.percent = String(percent);
-          ring.querySelector('span').textContent = `${percent}%`;
-          updateRing(ring);
+        if (progressText) {
+          progressText.textContent = `(${percent}%)`;
         }
 
         if (completeIcon) {
@@ -762,9 +757,9 @@ $active_page = 'practicas';
 
         card.innerHTML = `
           <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="${panelId}" data-accordion-toggle>
-            <span class="practicas-anexos-progress-ring" data-progress-ring data-percent="0"><span>0%</span></span>
             <span class="practicas-anexos-card-title-wrap">
               <strong>Anexo 7 - Seg. ${numeroSeguimiento}</strong>
+              <span class="practicas-anexos-card-percent" data-progress-text>(0%)</span>
               <small data-card-summary hidden>0 de ${fases.length} pasos completados</small>
             </span>
             <span class="practicas-anexos-card-icons">
@@ -803,14 +798,12 @@ $active_page = 'practicas';
         if (toggle) bindAccordion(toggle);
 
         panel.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
-        updateRing(card.querySelector('[data-progress-ring]'));
         refreshCard(card);
         refreshPracticeSummary(practiceCard);
 
         return card;
       };
 
-      document.querySelectorAll('[data-progress-ring]').forEach(updateRing);
       document.querySelectorAll('[data-accordion-toggle]').forEach(bindAccordion);
       document.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
       document.querySelectorAll('[data-anexo-card]').forEach(refreshCard);
