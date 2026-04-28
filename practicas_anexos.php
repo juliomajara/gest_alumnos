@@ -481,6 +481,7 @@ if (($_POST['ajax'] ?? '') === '1') {
 }
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
+$show_incomplete_only = (string) ($_GET['incompletos'] ?? '') === '1';
 $params = [];
 $where = [];
 
@@ -567,6 +568,57 @@ foreach ($seguimiento_rows as $row) {
   }
 }
 
+if ($show_incomplete_only) {
+  $practices = array_values(array_filter(
+    $practices,
+    static function (array $practice) use ($anexos_definiciones, $marcados): bool {
+      $id_practica = (int) $practice['id_practica'];
+      $anexos_mostrar = ['2.1', '2.2', '3', '7', '8'];
+      if ((int) ($practice['circ_excep'] ?? 0) === 1) {
+        $anexos_mostrar[] = '4';
+      }
+
+      $anexos_mostrar = array_values(array_filter($anexos_mostrar, static fn(string $code): bool => isset($anexos_definiciones[$code])));
+
+      foreach ($anexos_mostrar as $code) {
+        $anexo_data = $anexos_definiciones[$code];
+        $id_anexo = (int) $anexo_data['id'];
+        $fases = $anexo_data['fases'];
+        $seguimientos = [1];
+
+        if ($code === '7') {
+          $seguimientos = [];
+          if (isset($marcados[$id_practica][$id_anexo]) && is_array($marcados[$id_practica][$id_anexo])) {
+            $seguimientos = array_keys($marcados[$id_practica][$id_anexo]);
+            sort($seguimientos);
+          }
+          if ($seguimientos === []) {
+            $seguimientos = [1];
+          }
+        }
+
+        foreach ($seguimientos as $numero_seguimiento) {
+          $numero_seguimiento = (int) $numero_seguimiento;
+          $total_fases = count($fases);
+          $completadas = 0;
+          foreach ($fases as $fase) {
+            $id_fase = (int) $fase['id'];
+            if (isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][$id_fase])) {
+              $completadas++;
+            }
+          }
+
+          if (!($total_fases > 0 && $completadas === $total_fases)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+  ));
+}
+
 $listado_html = render_practicas_anexos_lista($practices, $anexos_definiciones, $marcados);
 
 if (($_GET['ajax'] ?? '') === '1') {
@@ -617,7 +669,16 @@ $active_page = 'practicas';
             value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
           >
         </div>
-        <div class="topbar-actions"></div>
+        <div class="topbar-actions">
+          <button
+            type="button"
+            class="primary-button"
+            data-toggle-incompletos
+            data-incompletos="<?php echo $show_incomplete_only ? '1' : '0'; ?>"
+          >
+            <?php echo $show_incomplete_only ? 'Mostrar todos' : 'Mostrar incompletos'; ?>
+          </button>
+        </div>
       </form>
 
       <section class="panel practicas-anexos-panel">
@@ -878,13 +939,22 @@ $active_page = 'practicas';
 
       const searchForm = document.querySelector('form.topbar');
       const searchInput = document.querySelector('input[name="q"]');
+      const incompleteToggleButton = document.querySelector('[data-toggle-incompletos]');
+      let incompletosActivos = incompleteToggleButton ? incompleteToggleButton.dataset.incompletos === '1' : false;
       let searchDebounceTimer = null;
+
+      const refreshIncompleteButton = () => {
+        if (!incompleteToggleButton) return;
+        incompleteToggleButton.textContent = incompletosActivos ? 'Mostrar todos' : 'Mostrar incompletos';
+        incompleteToggleButton.dataset.incompletos = incompletosActivos ? '1' : '0';
+      };
 
       const fetchPracticas = async () => {
         if (!searchInput) return;
         const url = new URL('practicas_anexos.php', window.location.href);
         url.searchParams.set('ajax', '1');
         url.searchParams.set('q', searchInput.value || '');
+        url.searchParams.set('incompletos', incompletosActivos ? '1' : '0');
 
         try {
           const response = await fetch(url.toString(), {
@@ -911,6 +981,16 @@ $active_page = 'practicas';
           fetchPracticas();
         });
       }
+
+      if (incompleteToggleButton) {
+        incompleteToggleButton.addEventListener('click', () => {
+          incompletosActivos = !incompletosActivos;
+          refreshIncompleteButton();
+          fetchPracticas();
+        });
+      }
+
+      refreshIncompleteButton();
 
       if (searchInput) {
         searchInput.addEventListener('input', () => {
