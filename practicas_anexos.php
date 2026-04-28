@@ -285,15 +285,22 @@ $where = [];
 
 if ($search_term !== '') {
   $where[] = '(
-    a.nombre LIKE :q
-    OR a.apellido1 LIKE :q
-    OR a.apellido2 LIKE :q
-    OR e.nombre LIKE :q
-    OR e.apellido1 LIKE :q
-    OR e.apellido2 LIKE :q
-    OR e.nombre_comercial LIKE :q
+    a.nombre LIKE :q_alumno_nombre
+    OR a.apellido1 LIKE :q_alumno_apellido1
+    OR a.apellido2 LIKE :q_alumno_apellido2
+    OR e.nombre LIKE :q_empresa_nombre
+    OR e.apellido1 LIKE :q_empresa_apellido1
+    OR e.apellido2 LIKE :q_empresa_apellido2
+    OR e.nombre_comercial LIKE :q_empresa_nombre_comercial
   )';
-  $params['q'] = '%' . $search_term . '%';
+  $query_like = '%' . $search_term . '%';
+  $params['q_alumno_nombre'] = $query_like;
+  $params['q_alumno_apellido1'] = $query_like;
+  $params['q_alumno_apellido2'] = $query_like;
+  $params['q_empresa_nombre'] = $query_like;
+  $params['q_empresa_apellido1'] = $query_like;
+  $params['q_empresa_apellido2'] = $query_like;
+  $params['q_empresa_nombre_comercial'] = $query_like;
 }
 
 $where_sql = $where !== [] ? ('WHERE ' . implode(' AND ', $where)) : '';
@@ -450,7 +457,7 @@ $active_page = 'practicas';
             <article class="practicas-anexos-practica" data-practice-card data-search="<?php echo htmlspecialchars(normalize_text($alumno . ' ' . $empresa), ENT_QUOTES, 'UTF-8'); ?>">
               <header class="practicas-anexos-practica-head">
                 <div>
-                  <h4><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?> <span><?php echo htmlspecialchars('— ' . $empresa, ENT_QUOTES, 'UTF-8'); ?></span></h4>
+                  <h4><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?> <span class="practicas-anexos-empresa"><?php echo htmlspecialchars('(' . $empresa . ')', ENT_QUOTES, 'UTF-8'); ?></span></h4>
                 </div>
                 <div class="practicas-anexos-practica-meta">
                   <?php if (in_array('7', $anexos_mostrar, true)): ?>
@@ -808,7 +815,10 @@ $active_page = 'practicas';
       document.querySelectorAll('[data-anexo-card]').forEach(refreshCard);
       document.querySelectorAll('[data-practice-card]').forEach(refreshPracticeSummary);
 
+      const searchForm = document.querySelector('form.topbar');
       const searchInput = document.querySelector('input[name="q"]');
+      let searchDebounceTimer = null;
+
       const applyLiveFilter = () => {
         const term = (searchInput ? searchInput.value : '').toLowerCase();
         document.querySelectorAll('[data-practice-card]').forEach((card) => {
@@ -817,8 +827,18 @@ $active_page = 'practicas';
         });
       };
 
+      if (searchForm) {
+        searchForm.addEventListener('submit', (event) => {
+          event.preventDefault();
+          applyLiveFilter();
+        });
+      }
+
       if (searchInput) {
-        searchInput.addEventListener('input', applyLiveFilter);
+        searchInput.addEventListener('input', () => {
+          window.clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = window.setTimeout(applyLiveFilter, 220);
+        });
       }
 
       document.querySelectorAll('[data-add-anexo7]').forEach((button) => {

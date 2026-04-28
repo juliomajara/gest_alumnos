@@ -2320,6 +2320,11 @@ a.edit-toggle:focus {
   font-size: 1rem;
 }
 
+.practicas-anexos-empresa {
+  color: var(--muted);
+  font-weight: 400;
+}
+
 .practicas-anexos-practica-head p {
   margin: 3px 0 0;
   color: var(--muted);
