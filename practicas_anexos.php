@@ -525,7 +525,7 @@ $active_page = 'practicas';
                       <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>" data-accordion-toggle>
                         <span class="practicas-anexos-card-title-wrap">
                           <strong><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></strong>
-                          <span class="practicas-anexos-card-percent" data-progress-text>(<?php echo $percent; ?>%)</span>
+                          <span class="practicas-anexos-card-percent anexo-percent" data-progress-text>(<?php echo $percent; ?>%)</span>
                           <small data-card-summary hidden><?php echo $completadas; ?> de <?php echo $total_fases; ?> pasos completados</small>
                         </span>
                         <span class="practicas-anexos-card-icons">
@@ -759,7 +759,7 @@ $active_page = 'practicas';
           <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="${panelId}" data-accordion-toggle>
             <span class="practicas-anexos-card-title-wrap">
               <strong>Anexo 7 - Seg. ${numeroSeguimiento}</strong>
-              <span class="practicas-anexos-card-percent" data-progress-text>(0%)</span>
+              <span class="practicas-anexos-card-percent anexo-percent" data-progress-text>(0%)</span>
               <small data-card-summary hidden>0 de ${fases.length} pasos completados</small>
             </span>
             <span class="practicas-anexos-card-icons">
