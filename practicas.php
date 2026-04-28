@@ -404,7 +404,9 @@ $active_page = 'practicas';
           >
           <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
         </div>
-        <div class="topbar-actions"></div>
+        <div class="topbar-actions">
+          <a class="primary-button" href="practicas_anexos.php">Seguimiento de Anexos</a>
+        </div>
       </form>
 
       <section class="panel">
