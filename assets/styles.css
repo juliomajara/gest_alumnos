@@ -2388,10 +2388,11 @@ a.edit-toggle:focus {
 
 .practicas-anexos-card-title-wrap {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 4px;
   min-width: 0;
   flex: 1;
+  white-space: nowrap;
 }
 
 .practicas-anexos-card-title-wrap strong {
@@ -2402,10 +2403,14 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-card-percent {
-  color: #7a859f;
-  font-size: 0.68rem;
-  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 400;
   line-height: 1.15;
+}
+
+.anexo-percent {
+  color: var(--muted);
 }
 
 .practicas-anexos-card-title-wrap small {
