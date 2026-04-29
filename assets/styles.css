@@ -2499,3 +2499,75 @@ a.edit-toggle:focus {
     text-align: left;
   }
 }
+
+.horarios-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.8fr);
+  gap: 16px;
+}
+
+.horarios-grid {
+  table-layout: fixed;
+}
+
+.horarios-grid th,
+.horarios-grid td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.horario-dropzone {
+  min-height: 56px;
+}
+
+.horario-cell-module,
+.horarios-modulo-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f7f9ff;
+  padding: 8px;
+}
+
+.horario-cell-module {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: grab;
+}
+
+.horario-cell-module button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.horarios-modulos {
+  padding: 14px;
+}
+
+.horarios-modulos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.horarios-modulo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: grab;
+}
+
+.horarios-modulo-item.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 980px) {
+  .horarios-editor {
+    grid-template-columns: 1fr;
+  }
+}
