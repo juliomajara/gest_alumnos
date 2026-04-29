@@ -90,7 +90,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $day = (int) ($_POST['dia_semana'] ?? 0);
       $tramoId = (int) ($_POST['id_horario_tramo'] ?? 0);
       $moduleId = (int) ($_POST['id_modulo'] ?? 0);
-      $profesorId = isset($_POST['id_profesor']) && $_POST['id_profesor'] !== '' ? (int) $_POST['id_profesor'] : null;
+      $profesorId = null;
+      if (isset($_POST['id_profesor'])) {
+        $rawProfesorId = trim((string) $_POST['id_profesor']);
+        if ($rawProfesorId !== '' && ctype_digit($rawProfesorId)) {
+          $parsedProfesorId = (int) $rawProfesorId;
+          if ($parsedProfesorId > 0) {
+            $profesorId = $parsedProfesorId;
+          }
+        }
+      }
       $sourceDay = (int) ($_POST['source_dia_semana'] ?? 0);
       $sourceTramoId = (int) ($_POST['source_id_horario_tramo'] ?? 0);
 
@@ -130,16 +139,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       if ($hasProfesorColumn) {
         $column = $profesorColumn;
         $allowNullProfesor = isset($column['Null']) && strtoupper((string) $column['Null']) === 'YES';
-        if ($profesorId === null) {
-          $profesorLookupStmt = $pdo->prepare('SELECT mp.id_profesor FROM alumno_curso ac INNER JOIN alumno_modulo am ON am.id_alumno = ac.id_alumno INNER JOIN modulos_profesores mp ON mp.id_modulo = am.id_modulo AND mp.id_curso_escolar = ac.id_curso_escolar WHERE ac.id_curso_escolar = :id_curso_escolar AND ac.id_grupo = :id_grupo AND am.id_modulo = :id_modulo LIMIT 1');
-          $profesorLookupStmt->execute(['id_curso_escolar' => $courseId, 'id_grupo' => $groupId, 'id_modulo' => $moduleId]);
-          $lookupProfesorId = $profesorLookupStmt->fetchColumn();
-          if ($lookupProfesorId !== false) {
-            $profesorId = (int) $lookupProfesorId;
+
+        if ($profesorId !== null) {
+          $profesorExistsStmt = $pdo->prepare('SELECT 1 FROM profesores WHERE id_profesor = :id LIMIT 1');
+          $profesorExistsStmt->execute(['id' => $profesorId]);
+          $profesorExists = (bool) $profesorExistsStmt->fetchColumn();
+          if (!$profesorExists) {
+            if ($allowNullProfesor) {
+              $profesorId = null;
+            } else {
+              json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'El id_profesor recibido no existe y la columna id_profesor no permite NULL.']);
+            }
           }
         }
+
         if ($profesorId === null && !$allowNullProfesor) {
-          json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta profesor asociado para el módulo seleccionado.']);
+          json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta profesor válido y la columna id_profesor no permite NULL.']);
         }
       }
 
@@ -192,7 +207,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     json_response(['ok' => false, 'message' => 'Acción no permitida.']);
   } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => $e->getMessage()]);
+    json_response([
+      'ok' => false,
+      'message' => 'No se pudo guardar el horario.',
+      'detail' => $e->getMessage(),
+      'debug' => [
+        'action' => isset($action) ? $action : null,
+        'id_curso_escolar' => isset($courseId) ? $courseId : null,
+        'id_grupo' => isset($groupId) ? $groupId : null,
+        'dia_semana' => isset($day) ? $day : null,
+        'id_horario_tramo' => isset($tramoId) ? $tramoId : null,
+        'id_modulo' => isset($moduleId) ? $moduleId : null,
+        'id_profesor' => isset($profesorId) ? $profesorId : null,
+        'source_dia_semana' => isset($sourceDay) ? $sourceDay : null,
+        'source_id_horario_tramo' => isset($sourceTramoId) ? $sourceTramoId : null,
+      ],
+    ]);
   }
 }
 
@@ -225,7 +255,7 @@ function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div');
 function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
 async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
 const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
-if(!res.ok){alert(res.detail?`${res.message}\n${res.detail}`:(res.message||'No se pudo guardar'));return;} await loadData();}
+if(!res.ok){alert([res.message,res.detail,res.debug?JSON.stringify(res.debug):''].filter(Boolean).join("\n"));return;} await loadData();}
 async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(res.message||'No se pudo borrar');return;} await loadData();}
 async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(res.message||'Error de carga');return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
 courseSel.addEventListener('change',loadData); groupSel.addEventListener('change',loadData); loadData();
