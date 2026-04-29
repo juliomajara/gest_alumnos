@@ -293,9 +293,14 @@ function formatApiError(res, fallback){
   return parts.join('\n');
 }
 function toTitleCase(value){
-  return String(value||'')
-    .toLocaleLowerCase('es-ES')
-    .replace(/\b([a-záéíóúüñ])/g,(match)=>match.toLocaleUpperCase('es-ES'));
+  const text=String(value||'');
+  return text.split(/(\s+)/).map((token)=>{
+    if(!token.trim()) return token;
+    const hasLetters=/\p{L}/u.test(token);
+    if(hasLetters&&token===token.toLocaleUpperCase('es-ES')) return token;
+    const lower=token.toLocaleLowerCase('es-ES');
+    return lower.replace(/^\p{L}/u,(char)=>char.toLocaleUpperCase('es-ES'));
+  }).join('');
 }
 async function post(action,payload={}){const fd=new FormData(); fd.append('action',action); Object.entries(payload).forEach(([k,v])=>fd.append(k,v)); const r=await fetch('horarios_editar.php',{method:'POST',body:fd}); let data; try{data=await r.json();}catch(_e){const text=await r.text(); console.error('Respuesta no JSON:',text); alert(text); throw new Error('Respuesta no JSON');} if(!r.ok){console.error('HTTP error:',data); alert(JSON.stringify(data,null,2));} return data;}
 function render(){const list=document.getElementById('modulosList'); const empty=document.getElementById('modulosEmpty');
