@@ -16,6 +16,11 @@ $section_pages = [
     'datos_centro.php',
     'calendario.php',
   ],
+  'horarios' => [
+    'horarios.php',
+    'horarios_editar.php',
+    'horarios_importar.php',
+  ],
 ];
 
 $detected_active_page = '';
@@ -60,6 +65,12 @@ $nav_items = [
     'label' => 'Módulos',
     'href' => 'modulos.php',
     'icon' => 'assets/icons/modulos.svg',
+  ],
+  [
+    'key' => 'horarios',
+    'label' => 'Horarios',
+    'href' => 'horarios.php',
+    'icon' => 'assets/icons/horarios.svg',
   ],
   [
     'key' => 'empresas',

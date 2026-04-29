@@ -6,7 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $page_title = 'Importar horarios | Gestor de Alumnos';
-$active_page = 'calendario';
+$active_page = 'horarios';
 
 $messages = [];
 $errors = [];
@@ -158,8 +158,8 @@ if ($defaultCurso <= 0 && isset($cursos_escolares[0]['id_curso_escolar'])) {
 }
 
 $selected = [
-  'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? $defaultCurso),
-  'id_grupo' => (int) ($_POST['id_grupo'] ?? 0),
+  'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? ($_GET['id_curso_escolar'] ?? $defaultCurso)),
+  'id_grupo' => (int) ($_POST['id_grupo'] ?? ($_GET['id_grupo'] ?? 0)),
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
