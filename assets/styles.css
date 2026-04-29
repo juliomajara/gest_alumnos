@@ -2598,20 +2598,33 @@ a.edit-toggle:focus {
   cursor: not-allowed;
 }
 
+.panel-grid .horarios-grid tbody tr:nth-child(even) td,
+.panel-grid .horarios-grid tbody tr:hover td,
+.panel-grid .horarios-grid tbody td:hover {
+  background: transparent;
+}
 
+.module-color-1 { background: #1d4ed8; border-color: #1e40af; color: #fff; }
+.module-color-2 { background: #059669; border-color: #047857; color: #fff; }
+.module-color-3 { background: #ea580c; border-color: #c2410c; color: #fff; }
+.module-color-4 { background: #7c3aed; border-color: #6d28d9; color: #fff; }
+.module-color-5 { background: #dc2626; border-color: #b91c1c; color: #fff; }
+.module-color-6 { background: #0891b2; border-color: #0e7490; color: #fff; }
+.module-color-7 { background: #ca8a04; border-color: #a16207; color: #111827; }
+.module-color-8 { background: #db2777; border-color: #be185d; color: #fff; }
+.module-color-9 { background: #4f46e5; border-color: #4338ca; color: #fff; }
+.module-color-10 { background: #0f766e; border-color: #115e59; color: #fff; }
+.module-color-11 { background: #b45309; border-color: #92400e; color: #fff; }
+.module-color-12 { background: #be123c; border-color: #9f1239; color: #fff; }
 
-.module-color-1 { background: #eaf4ff; }
-.module-color-2 { background: #eef7ed; }
-.module-color-3 { background: #fff4e8; }
-.module-color-4 { background: #f3efff; }
-.module-color-5 { background: #fdeef2; }
-.module-color-6 { background: #ecf8f8; }
-.module-color-7 { background: #fff8e5; }
-.module-color-8 { background: #e9f2f1; }
-.module-color-9 { background: #f7efe7; }
-.module-color-10 { background: #eef0fb; }
-.module-color-11 { background: #f1f7e8; }
-.module-color-12 { background: #fbeee8; }
+.module-color-7 small {
+  color: rgba(17, 24, 39, 0.9);
+}
+
+.horario-cell-module small,
+.horarios-modulo-item small {
+  color: rgba(255, 255, 255, 0.86);
+}
 
 @media (max-width: 980px) {
   .horarios-modulos-list {
