@@ -2617,6 +2617,12 @@ a.edit-toggle:focus {
   background: transparent;
 }
 
+.horarios-grid td[class^="module-color-"],
+.horarios-grid td.module-color-disabled {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
 .module-color-1 { background: #fff100; border-color: #d5c900; color: #111827; }
 .module-color-2 { background: #e81123; border-color: #bc0e1c; color: #fff; }
 .module-color-3 { background: #68217a; border-color: #531a62; color: #fff; }
