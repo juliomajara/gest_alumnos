@@ -25,7 +25,8 @@ function fetch_schedule_data(PDO $pdo, int $courseId, int $groupId): array {
       COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), m.abreviatura, m.codigo, CONCAT("Módulo ", m.id_modulo)) AS nombre,
       COALESCE(m.horas_semanales, 0) AS horas_semanales,
       p.nombre AS profesor_nombre,
-      p.apellidos AS profesor_apellidos
+      p.apellidos AS profesor_apellidos,
+      mp.id_profesor
     FROM alumno_curso ac
     INNER JOIN alumno_modulo am ON am.id_alumno = ac.id_alumno
     INNER JOIN modulos m ON m.id_modulo = am.id_modulo
@@ -33,7 +34,7 @@ function fetch_schedule_data(PDO $pdo, int $courseId, int $groupId): array {
     LEFT JOIN profesores p ON p.id_profesor = mp.id_profesor
     WHERE ac.id_curso_escolar = :id_curso_escolar
       AND ac.id_grupo = :id_grupo
-    GROUP BY m.id_modulo, m.codigo, m.abreviatura, m.materia_propia, m.materia_general, m.horas_semanales
+    GROUP BY m.id_modulo, m.codigo, m.abreviatura, m.materia_propia, m.materia_general, m.horas_semanales, mp.id_profesor
     ORDER BY nombre'
   );
   $modulesStmt->execute(['id_curso_escolar' => $courseId, 'id_grupo' => $groupId]);
@@ -89,6 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $day = (int) ($_POST['dia_semana'] ?? 0);
       $tramoId = (int) ($_POST['id_horario_tramo'] ?? 0);
       $moduleId = (int) ($_POST['id_modulo'] ?? 0);
+      $profesorId = isset($_POST['id_profesor']) && $_POST['id_profesor'] !== '' ? (int) $_POST['id_profesor'] : null;
       $sourceDay = (int) ($_POST['source_dia_semana'] ?? 0);
       $sourceTramoId = (int) ($_POST['source_id_horario_tramo'] ?? 0);
 
@@ -120,6 +122,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       if (!$moduleRow) json_response(['ok' => false, 'message' => 'Módulo inválido.']);
 
       $isMove = $sourceDay >= 1 && $sourceDay <= 5 && $sourceTramoId > 0;
+
+      $profesorColumnStmt = $pdo->query("SHOW COLUMNS FROM horarios_grupos LIKE 'id_profesor'");
+      $profesorColumn = $profesorColumnStmt->fetch(PDO::FETCH_ASSOC);
+      $hasProfesorColumn = (bool) $profesorColumn;
+      $allowNullProfesor = true;
+      if ($hasProfesorColumn) {
+        $column = $profesorColumn;
+        $allowNullProfesor = isset($column['Null']) && strtoupper((string) $column['Null']) === 'YES';
+        if ($profesorId === null) {
+          $profesorLookupStmt = $pdo->prepare('SELECT mp.id_profesor FROM alumno_curso ac INNER JOIN alumno_modulo am ON am.id_alumno = ac.id_alumno INNER JOIN modulos_profesores mp ON mp.id_modulo = am.id_modulo AND mp.id_curso_escolar = ac.id_curso_escolar WHERE ac.id_curso_escolar = :id_curso_escolar AND ac.id_grupo = :id_grupo AND am.id_modulo = :id_modulo LIMIT 1');
+          $profesorLookupStmt->execute(['id_curso_escolar' => $courseId, 'id_grupo' => $groupId, 'id_modulo' => $moduleId]);
+          $lookupProfesorId = $profesorLookupStmt->fetchColumn();
+          if ($lookupProfesorId !== false) {
+            $profesorId = (int) $lookupProfesorId;
+          }
+        }
+        if ($profesorId === null && !$allowNullProfesor) {
+          json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta profesor asociado para el módulo seleccionado.']);
+        }
+      }
 
       $pdo->beginTransaction();
       $currentStmt = $pdo->prepare('SELECT id_modulo FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t LIMIT 1');
@@ -155,8 +177,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $pdo->prepare('DELETE FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t')
         ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId]);
 
-      $pdo->prepare('INSERT INTO horarios_grupos (id_curso_escolar,id_grupo,dia_semana,id_horario_tramo,id_modulo) VALUES (:c,:g,:d,:t,:m)')
-        ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId, 'm' => $moduleId]);
+      if ($hasProfesorColumn) {
+        $pdo->prepare('INSERT INTO horarios_grupos (id_curso_escolar,id_grupo,dia_semana,id_horario_tramo,id_modulo,id_profesor) VALUES (:c,:g,:d,:t,:m,:p)')
+          ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId, 'm' => $moduleId, 'p' => $profesorId]);
+      } else {
+        $pdo->prepare('INSERT INTO horarios_grupos (id_curso_escolar,id_grupo,dia_semana,id_horario_tramo,id_modulo) VALUES (:c,:g,:d,:t,:m)')
+          ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId, 'm' => $moduleId]);
+      }
 
       $pdo->commit();
       json_response(['ok' => true, 'message' => 'Horario actualizado.']);
@@ -193,11 +220,11 @@ state.tramos.forEach(t=>{const tr=document.createElement('tr'); const label=(t.h
 for(let d=1;d<=5;d++){const td=document.createElement('td'); td.className='horario-dropzone'; td.dataset.day=d; td.dataset.tramo=t.id_horario_tramo; td.addEventListener('dragover',e=>e.preventDefault()); td.addEventListener('drop',onDrop);
 const key=`${d}-${t.id_horario_tramo}`; if(state.schedule[key]) td.appendChild(cellModule(state.schedule[key],d,t.id_horario_tramo,true)); tr.appendChild(td);} tb.appendChild(tr);});
 const list=document.getElementById('modulosList'); list.innerHTML=''; const empty=document.getElementById('modulosEmpty'); empty.hidden=state.modules.length>0;
-state.modules.forEach(m=>{const used=state.counts[m.id_modulo]||0; const limit=parseInt(m.horas_semanales||0,10)||0; const disabled=limit>0&&used>=limit; const item=document.createElement('div'); item.className='horarios-modulo-item'+(disabled?' is-disabled':''); item.draggable=!disabled; item.dataset.module=m.id_modulo; item.dataset.origin='list'; const profesorNombre=[m.profesor_nombre,m.profesor_apellidos].filter(Boolean).join(' ').trim(); item.title=profesorNombre?`${m.nombre} — Profesor: ${profesorNombre}`:m.nombre; item.innerHTML=`<strong>${m.abreviatura||m.nombre}${m.codigo?` (${m.codigo})`:''}</strong><small>${used}/${limit>0?limit:'-' } horas</small>`; if(!disabled)item.addEventListener('dragstart',onDragStart); list.appendChild(item);});}
-function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div'); d.className='horario-cell-module'; d.draggable=true; d.dataset.module=m.id_modulo; d.dataset.origin='grid'; d.dataset.day=day; d.dataset.tramo=tramo; d.innerHTML=`<span>${m.abreviatura||m.nombre}</span><button type='button' aria-label='Quitar'>×</button>`; d.addEventListener('dragstart',onDragStart); d.querySelector('button').addEventListener('click',()=>clearCell(day,tramo)); return d;}
+state.modules.forEach(m=>{const used=state.counts[m.id_modulo]||0; const limit=parseInt(m.horas_semanales||0,10)||0; const disabled=limit>0&&used>=limit; const item=document.createElement('div'); item.className='horarios-modulo-item'+(disabled?' is-disabled':''); item.draggable=!disabled; item.dataset.module=m.id_modulo; item.dataset.origin='list'; item.dataset.profesor=m.id_profesor||''; const profesorNombre=[m.profesor_nombre,m.profesor_apellidos].filter(Boolean).join(' ').trim(); item.title=profesorNombre?`${m.nombre} — Profesor: ${profesorNombre}`:m.nombre; item.innerHTML=`<strong>${m.abreviatura||m.nombre}${m.codigo?` (${m.codigo})`:''}</strong><small>${used}/${limit>0?limit:'-' } horas</small>`; if(!disabled)item.addEventListener('dragstart',onDragStart); list.appendChild(item);});}
+function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div'); d.className='horario-cell-module'; d.draggable=true; d.dataset.module=m.id_modulo; d.dataset.origin='grid'; d.dataset.day=day; d.dataset.tramo=tramo; if(m.id_profesor!==undefined)d.dataset.profesor=m.id_profesor||''; d.innerHTML=`<span>${m.abreviatura||m.nombre}</span><button type='button' aria-label='Quitar'>×</button>`; d.addEventListener('dragstart',onDragStart); d.querySelector('button').addEventListener('click',()=>clearCell(day,tramo)); return d;}
 function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
 async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
-const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
+const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
 if(!res.ok){alert(res.detail?`${res.message}\n${res.detail}`:(res.message||'No se pudo guardar'));return;} await loadData();}
 async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(res.message||'No se pudo borrar');return;} await loadData();}
 async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(res.message||'Error de carga');return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
