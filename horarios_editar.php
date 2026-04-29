@@ -25,7 +25,7 @@ function fetch_schedule_data(PDO $pdo, int $courseId, int $groupId): array {
       COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), m.abreviatura, m.codigo, CONCAT("Módulo ", m.id_modulo)) AS nombre,
       COALESCE(m.horas_semanales, 0) AS horas_semanales,
       p.nombre AS profesor_nombre,
-      p.apellidos AS profesor_apellidos,
+      TRIM(CONCAT_WS(" ", p.apellido1, p.apellido2)) AS profesor_apellidos,
       mp.id_profesor
     FROM alumno_curso ac
     INNER JOIN alumno_modulo am ON am.id_alumno = ac.id_alumno
