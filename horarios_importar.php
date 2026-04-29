@@ -19,6 +19,8 @@ $result = [
   'modulos_no_encontrados' => [],
   'tramos_no_encontrados' => [],
   'errores' => [],
+  'avisos' => [],
+  'modulos_horas_descuadradas' => [],
 ];
 
 function normalize_csv_text(string $value): string {
@@ -189,10 +191,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $targetGroup = (string) ($grupoRow['grupo'] ?? '');
     $targetGroupKey = normalize_key($targetGroup);
 
-    $modulesRows = $pdo->query('SELECT id_modulo, codigo, abreviatura, materia_general, materia_propia FROM modulos')->fetchAll(PDO::FETCH_ASSOC);
+    $modulesRows = $pdo->query('SELECT id_modulo, codigo, abreviatura, materia_general, materia_propia, horas_semanales FROM modulos')->fetchAll(PDO::FETCH_ASSOC);
     $moduleMap = [];
+    $moduleInfo = [];
     foreach ($modulesRows as $m) {
       $idModulo = (int) $m['id_modulo'];
+      $horasSemanales = null;
+      if (isset($m['horas_semanales']) && $m['horas_semanales'] !== null) {
+        $horasSemanales = (int) $m['horas_semanales'];
+      }
+      $moduleInfo[$idModulo] = [
+        'codigo' => (string) ($m['codigo'] ?? ''),
+        'abreviatura' => (string) ($m['abreviatura'] ?? ''),
+        'materia_general' => (string) ($m['materia_general'] ?? ''),
+        'materia_propia' => (string) ($m['materia_propia'] ?? ''),
+        'horas_semanales' => $horasSemanales,
+      ];
       $candidates = [
         (string) ($m['codigo'] ?? ''),
         (string) ($m['abreviatura'] ?? ''),
@@ -210,8 +224,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tramosRows = $pdo->query('SELECT id_horario_tramo, numero_tramo, nombre, hora_inicio, hora_fin FROM horarios_tramos ORDER BY numero_tramo')->fetchAll(PDO::FETCH_ASSOC);
     $tramosByRange = [];
     $tramosByToken = [];
+    $tramosNumero = [];
     foreach ($tramosRows as $t) {
       $idTramo = (int) $t['id_horario_tramo'];
+      $tramosNumero[$idTramo] = (int) ($t['numero_tramo'] ?? 0);
       $rangeKey = (string) $t['hora_inicio'] . '-' . (string) $t['hora_fin'];
       $tramosByRange[$rangeKey] = $idTramo;
 
@@ -337,10 +353,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               continue;
             }
 
+            $hasValidHours = isset($moduleInfo[$moduleId]['horas_semanales']) && (int) $moduleInfo[$moduleId]['horas_semanales'] > 0;
+            if (!$hasValidHours) {
+              $result['avisos'][] = 'Módulo sin horas semanales válidas (no se usará para inferencias): ' . $moduleRaw;
+            }
+
             foreach ($tramoIds as $tramoId) {
               $slotKey = $dia . '-' . $tramoId;
               if (isset($slots[$slotKey]) && (int) $slots[$slotKey]['id_modulo'] !== (int) $moduleId) {
                 $result['errores'][] = 'Conflicto slot en línea ' . $line . ': día ' . $dia . ', tramo ' . $tramoId . ', módulo anterior ' . $slots[$slotKey]['id_modulo'] . ', módulo nuevo ' . $moduleId;
+                continue;
               }
               $slots[$slotKey] = [
                 'dia_semana' => $dia,
@@ -351,8 +373,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           }
         }
 
+        if ($errors === [] && $slots !== []) {
+          $moduleCount = [];
+          foreach ($slots as $slot) {
+            $mid = (int) $slot['id_modulo'];
+            $moduleCount[$mid] = ($moduleCount[$mid] ?? 0) + 1;
+          }
+
+          for ($dia = 1; $dia <= 5; $dia++) {
+            $daySlots = [];
+            foreach ($slots as $slotKey => $slot) {
+              if ((int) $slot['dia_semana'] === $dia) {
+                $daySlots[$slotKey] = $slot;
+              }
+            }
+            if ($daySlots === []) {
+              continue;
+            }
+
+            uasort($daySlots, static function (array $a, array $b) use ($tramosNumero): int {
+              $na = (int) ($tramosNumero[(int) $a['id_horario_tramo']] ?? 0);
+              $nb = (int) ($tramosNumero[(int) $b['id_horario_tramo']] ?? 0);
+              return $na <=> $nb;
+            });
+
+            $ordered = array_values($daySlots);
+            $total = count($ordered);
+            for ($i = 0; $i < $total - 1; $i++) {
+              $current = $ordered[$i];
+              $next = $ordered[$i + 1];
+              $currentModulo = (int) $current['id_modulo'];
+              $nextModulo = (int) $next['id_modulo'];
+              $currentTramo = (int) $current['id_horario_tramo'];
+              $nextTramo = (int) $next['id_horario_tramo'];
+              $currentNumero = (int) ($tramosNumero[$currentTramo] ?? 0);
+              $nextNumero = (int) ($tramosNumero[$nextTramo] ?? 0);
+
+              if ($nextModulo !== $currentModulo && ($nextNumero - $currentNumero) === 1) {
+                $horasEsperadas = (int) ($moduleInfo[$currentModulo]['horas_semanales'] ?? 0);
+                if ($horasEsperadas <= 0) {
+                  continue;
+                }
+                $actuales = (int) ($moduleCount[$currentModulo] ?? 0);
+                if ($actuales >= $horasEsperadas) {
+                  continue;
+                }
+                $slotKey = $dia . '-' . $nextTramo;
+                if (isset($slots[$slotKey]) && (int) $slots[$slotKey]['id_modulo'] !== $currentModulo) {
+                  $result['errores'][] = 'Conflicto inferencia día ' . $dia . ', tramo ' . $nextTramo . ': módulo existente ' . $slots[$slotKey]['id_modulo'] . ', módulo inferido ' . $currentModulo;
+                  continue;
+                }
+                $slots[$slotKey] = [
+                  'dia_semana' => $dia,
+                  'id_horario_tramo' => $nextTramo,
+                  'id_modulo' => $currentModulo,
+                ];
+                $moduleCount[$currentModulo] = ($moduleCount[$currentModulo] ?? 0) + 1;
+                $ordered[$i + 1]['id_modulo'] = $currentModulo;
+              }
+            }
+          }
+        }
+
         if ($errors === [] && $slots === []) {
           $errors[] = 'No se han detectado slots válidos para importar en el grupo seleccionado.';
+        }
+
+        if ($errors === [] && $slots !== []) {
+          $moduleCountFinal = [];
+          foreach ($slots as $slot) {
+            $mid = (int) $slot['id_modulo'];
+            $moduleCountFinal[$mid] = ($moduleCountFinal[$mid] ?? 0) + 1;
+          }
+          foreach ($moduleCountFinal as $mid => $detectadas) {
+            $esperadas = (int) ($moduleInfo[(int) $mid]['horas_semanales'] ?? 0);
+            if ($esperadas <= 0) {
+              continue;
+            }
+            if ($detectadas !== $esperadas) {
+              $nombre = (string) ($moduleInfo[(int) $mid]['materia_general'] ?? '');
+              if ($nombre === '') {
+                $nombre = (string) ($moduleInfo[(int) $mid]['materia_propia'] ?? '');
+              }
+              $codigoAbrev = (string) ($moduleInfo[(int) $mid]['codigo'] ?? '');
+              if ($codigoAbrev === '') {
+                $codigoAbrev = (string) ($moduleInfo[(int) $mid]['abreviatura'] ?? '');
+              }
+              $etiqueta = $nombre !== '' ? $nombre : ('Módulo ID ' . $mid);
+              if ($codigoAbrev !== '') {
+                $etiqueta .= ' (' . $codigoAbrev . ')';
+              }
+              $result['modulos_horas_descuadradas'][] = $etiqueta . ': esperadas ' . $esperadas . ' horas, detectadas ' . $detectadas . ' horas. Diferencia: ' . ($detectadas - $esperadas) . '.';
+            }
+          }
+          if ($result['modulos_horas_descuadradas'] !== []) {
+            $result['avisos'][] = 'Advertencia: el horario podría no ser correcto porque no coinciden las horas semanales de algunos módulos.';
+          }
         }
 
         if ($errors === []) {
@@ -402,6 +518,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $result['modulos_no_encontrados'] = array_values(array_unique($result['modulos_no_encontrados']));
         $result['tramos_no_encontrados'] = array_values(array_unique($result['tramos_no_encontrados']));
+        $result['avisos'] = array_values(array_unique($result['avisos']));
+        $result['modulos_horas_descuadradas'] = array_values(array_unique($result['modulos_horas_descuadradas']));
       }
 
       fclose($handle);
@@ -469,6 +587,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>Módulos no encontrados: <?php echo count($result['modulos_no_encontrados']); ?></p>
             <p>Tramos no encontrados: <?php echo count($result['tramos_no_encontrados']); ?></p>
             <p>Errores detectados: <?php echo count($result['errores']); ?></p>
+            <p>Avisos: <?php echo count($result['avisos']); ?></p>
+            <p>Módulos con horas descuadradas: <?php echo count($result['modulos_horas_descuadradas']); ?></p>
           </div>
 
           <?php if ($result['modulos_no_encontrados'] !== []): ?>
@@ -493,6 +613,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="panel-header"><h3>Errores concretos</h3></div>
             <ul class="form-errors">
               <?php foreach ($result['errores'] as $item): ?>
+                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <?php if ($result['avisos'] !== []): ?>
+            <div class="panel-header"><h3>Avisos</h3></div>
+            <ul class="form-errors">
+              <?php foreach ($result['avisos'] as $item): ?>
+                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <?php if ($result['modulos_horas_descuadradas'] !== []): ?>
+            <div class="panel-header"><h3>Módulos con horas semanales descuadradas</h3></div>
+            <ul class="form-errors">
+              <?php foreach ($result['modulos_horas_descuadradas'] as $item): ?>
                 <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
               <?php endforeach; ?>
             </ul>
