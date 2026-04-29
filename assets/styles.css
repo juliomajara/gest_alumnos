@@ -2500,10 +2500,19 @@ a.edit-toggle:focus {
   }
 }
 
+.horarios-configuracion {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
 .horarios-editor {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(250px, 0.8fr);
   gap: 16px;
+  align-items: start;
 }
 
 .horarios-grid {
@@ -2514,10 +2523,11 @@ a.edit-toggle:focus {
 .horarios-grid td {
   text-align: center;
   vertical-align: middle;
+  padding: 8px 10px;
 }
 
 .horario-dropzone {
-  min-height: 56px;
+  min-height: 0;
 }
 
 .horario-cell-module,
@@ -2552,6 +2562,8 @@ a.edit-toggle:focus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .horarios-modulo-item {
@@ -2559,6 +2571,14 @@ a.edit-toggle:focus {
   flex-direction: column;
   gap: 2px;
   cursor: grab;
+}
+
+.horarios-modulo-item strong {
+  line-height: 1.25;
+}
+
+.horarios-modulo-item small {
+  color: var(--muted);
 }
 
 .horarios-modulo-item.is-disabled {
