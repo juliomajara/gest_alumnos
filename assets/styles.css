@@ -2623,6 +2623,27 @@ a.edit-toggle:focus {
   border-radius: 10px;
 }
 
+
+.horarios-view-table tbody tr,
+.horarios-view-table tbody tr:hover {
+  background: transparent;
+}
+
+.horarios-view-table td.horarios-empty-cell,
+.horarios-view-table tbody tr:hover td.horarios-empty-cell {
+  background: #fff;
+  color: var(--text);
+}
+
+.horarios-view-table td.horarios-module-cell {
+  text-align: center;
+  vertical-align: middle;
+  padding: 10px 12px;
+  font-weight: 600;
+  min-height: 44px;
+}
+
+
 .module-color-1 { background: #fff100; border-color: #d5c900; color: #111827; }
 .module-color-2 { background: #e81123; border-color: #bc0e1c; color: #fff; }
 .module-color-3 { background: #68217a; border-color: #531a62; color: #fff; }
