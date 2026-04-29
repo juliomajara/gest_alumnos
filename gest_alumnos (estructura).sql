@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-04-2026 a las 09:30:27
+-- Tiempo de generación: 29-04-2026 a las 19:24:05
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -332,6 +332,39 @@ CREATE TABLE `grupos_tutores` (
   `id_grupo` int(10) UNSIGNED NOT NULL,
   `id_profesor` int(10) UNSIGNED NOT NULL,
   `id_curso_escolar` int(10) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `horarios_grupos`
+--
+
+CREATE TABLE `horarios_grupos` (
+  `id_horario_grupo` int(10) UNSIGNED NOT NULL,
+  `id_curso_escolar` int(10) UNSIGNED NOT NULL,
+  `id_grupo` int(10) UNSIGNED NOT NULL,
+  `dia_semana` tinyint(1) UNSIGNED NOT NULL,
+  `id_horario_tramo` int(10) UNSIGNED NOT NULL,
+  `id_modulo` int(10) UNSIGNED NOT NULL,
+  `id_profesor` int(10) UNSIGNED DEFAULT NULL,
+  `observaciones` varchar(255) DEFAULT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `horarios_tramos`
+--
+
+CREATE TABLE `horarios_tramos` (
+  `id_horario_tramo` int(10) UNSIGNED NOT NULL,
+  `numero_tramo` tinyint(1) UNSIGNED NOT NULL,
+  `nombre` varchar(20) NOT NULL,
+  `hora_inicio` time DEFAULT NULL,
+  `hora_fin` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -784,6 +817,25 @@ ALTER TABLE `grupos_tutores`
   ADD KEY `fk_gt_curso_escolar` (`id_curso_escolar`);
 
 --
+-- Indices de la tabla `horarios_grupos`
+--
+ALTER TABLE `horarios_grupos`
+  ADD PRIMARY KEY (`id_horario_grupo`),
+  ADD UNIQUE KEY `uq_horario_grupo_slot` (`id_curso_escolar`,`id_grupo`,`dia_semana`,`id_horario_tramo`),
+  ADD KEY `idx_horarios_grupos_curso_grupo` (`id_curso_escolar`,`id_grupo`),
+  ADD KEY `idx_horarios_grupos_modulo` (`id_modulo`),
+  ADD KEY `idx_horarios_grupos_profesor` (`id_profesor`),
+  ADD KEY `fk_hg_grupo` (`id_grupo`),
+  ADD KEY `fk_hg_tramo` (`id_horario_tramo`);
+
+--
+-- Indices de la tabla `horarios_tramos`
+--
+ALTER TABLE `horarios_tramos`
+  ADD PRIMARY KEY (`id_horario_tramo`),
+  ADD UNIQUE KEY `uq_horarios_tramos_numero` (`numero_tramo`);
+
+--
 -- Indices de la tabla `localidades`
 --
 ALTER TABLE `localidades`
@@ -1038,6 +1090,18 @@ ALTER TABLE `grupos_tutores`
   MODIFY `id_grupo_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `horarios_grupos`
+--
+ALTER TABLE `horarios_grupos`
+  MODIFY `id_horario_grupo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `horarios_tramos`
+--
+ALTER TABLE `horarios_tramos`
+  MODIFY `id_horario_tramo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `localidades`
 --
 ALTER TABLE `localidades`
@@ -1257,6 +1321,16 @@ ALTER TABLE `grupos_tutores`
   ADD CONSTRAINT `fk_gt_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`),
   ADD CONSTRAINT `fk_gt_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_gt_profesor` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`);
+
+--
+-- Filtros para la tabla `horarios_grupos`
+--
+ALTER TABLE `horarios_grupos`
+  ADD CONSTRAINT `fk_hg_curso_escolar` FOREIGN KEY (`id_curso_escolar`) REFERENCES `cursos_escolares` (`id_curso_escolar`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hg_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `grupos` (`id_grupo`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hg_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulos` (`id_modulo`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hg_profesor` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hg_tramo` FOREIGN KEY (`id_horario_tramo`) REFERENCES `horarios_tramos` (`id_horario_tramo`) ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `localidades`
