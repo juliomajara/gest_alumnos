@@ -212,15 +212,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       'message' => 'No se pudo guardar el horario.',
       'detail' => $e->getMessage(),
       'debug' => [
-        'action' => isset($action) ? $action : null,
-        'id_curso_escolar' => isset($courseId) ? $courseId : null,
-        'id_grupo' => isset($groupId) ? $groupId : null,
-        'dia_semana' => isset($day) ? $day : null,
-        'id_horario_tramo' => isset($tramoId) ? $tramoId : null,
-        'id_modulo' => isset($moduleId) ? $moduleId : null,
-        'id_profesor' => isset($profesorId) ? $profesorId : null,
-        'source_dia_semana' => isset($sourceDay) ? $sourceDay : null,
-        'source_id_horario_tramo' => isset($sourceTramoId) ? $sourceTramoId : null,
+        'action' => $_POST['action'] ?? null,
+        'id_curso_escolar' => $_POST['id_curso_escolar'] ?? null,
+        'id_grupo' => $_POST['id_grupo'] ?? null,
+        'dia_semana' => $_POST['dia_semana'] ?? null,
+        'id_horario_tramo' => $_POST['id_horario_tramo'] ?? null,
+        'id_modulo' => $_POST['id_modulo'] ?? null,
+        'id_profesor' => $_POST['id_profesor'] ?? null,
+        'source_dia_semana' => $_POST['source_dia_semana'] ?? null,
+        'source_id_horario_tramo' => $_POST['source_id_horario_tramo'] ?? null
       ],
     ]);
   }
@@ -255,7 +255,7 @@ function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div');
 function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
 async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
 const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
-if(!res.ok){alert([res.message,res.detail,res.debug?JSON.stringify(res.debug):''].filter(Boolean).join("\n"));return;} await loadData();}
+if(!res.ok){const parts=[res.message||'No se pudo guardar el horario.']; if(res.detail) parts.push(res.detail); if(res.debug) parts.push(JSON.stringify(res.debug,null,2)); alert(parts.join('\n'));return;} await loadData();}
 async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(res.message||'No se pudo borrar');return;} await loadData();}
 async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(res.message||'Error de carga');return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
 courseSel.addEventListener('change',loadData); groupSel.addEventListener('change',loadData); loadData();
