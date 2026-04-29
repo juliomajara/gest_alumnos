@@ -248,8 +248,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       'ok' => false,
       'message' => 'No se pudo guardar el horario.',
       'detail' => $e->getMessage(),
-      'post' => $_POST,
       'stage' => $stage ?? 'unknown',
+      'error_type' => get_class($e),
+      'error_code' => (string) $e->getCode(),
+      'post' => $_POST,
     ]);
   }
 }
@@ -272,6 +274,17 @@ $active_page = 'calendario';
 const dayNames={1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie'};
 let state={tramos:[],modules:[],schedule:{},counts:{}};
 const courseSel=document.getElementById('id_curso_escolar'); const groupSel=document.getElementById('id_grupo');
+
+function formatApiError(res, fallback){
+  if(!res) return fallback;
+  const parts=[];
+  if(res.message) parts.push(res.message);
+  if(res.detail) parts.push(`Detalle: ${res.detail}`);
+  if(res.stage) parts.push(`Paso: ${res.stage}`);
+  if(res.error_type||res.error_code) parts.push(`Error técnico: ${(res.error_type||'desconocido')} (${res.error_code||'sin código'})`);
+  if(Array.isArray(res.missing_fields)&&res.missing_fields.length) parts.push(`Campos faltantes: ${res.missing_fields.join(', ')}`);
+  return parts.join('\n');
+}
 async function post(action,payload={}){const fd=new FormData(); fd.append('action',action); Object.entries(payload).forEach(([k,v])=>fd.append(k,v)); const r=await fetch('horarios_editar.php',{method:'POST',body:fd}); let data; try{data=await r.json();}catch(_e){const text=await r.text(); console.error('Respuesta no JSON:',text); alert(text); throw new Error('Respuesta no JSON');} if(!r.ok){console.error('HTTP error:',data); alert(JSON.stringify(data,null,2));} return data;}
 function render(){const tb=document.querySelector('#horariosGrid tbody'); tb.innerHTML='';
 state.tramos.forEach(t=>{const tr=document.createElement('tr'); const label=(t.hora_inicio&&t.hora_fin)?`${t.numero_tramo}ª (${t.hora_inicio.slice(0,5)}-${t.hora_fin.slice(0,5)})`:`${t.numero_tramo}ª`; tr.innerHTML=`<td>${label}</td>`;
@@ -283,8 +296,8 @@ function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div');
 function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
 async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
 try{const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
-if(!res.ok){console.error('Error guardando horario:',res); alert(JSON.stringify(res,null,2)); return;} await loadData();}catch(err){console.error('Fallo de fetch/save_cell:',err); alert(String(err));}}
-async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(res.message||'No se pudo borrar');return;} await loadData();}
-async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(res.message||'Error de carga');return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
+if(!res.ok){console.error('Error guardando horario:',res); alert(formatApiError(res,'No se pudo guardar el horario.')); return;} await loadData();}catch(err){console.error('Fallo de fetch/save_cell:',err); alert(String(err));}}
+async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(formatApiError(res,'No se pudo borrar la celda.'));return;} await loadData();}
+async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(formatApiError(res,'Error de carga de horario.'));return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
 courseSel.addEventListener('change',loadData); groupSel.addEventListener('change',loadData); loadData();
 </script></body></html>
