@@ -85,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     if ($action === 'save_cell' || $action === 'clear_cell') {
+      $stage = 'start';
       $courseId = (int) ($_POST['id_curso_escolar'] ?? 0);
       $groupId = (int) ($_POST['id_grupo'] ?? 0);
       $day = (int) ($_POST['dia_semana'] ?? 0);
@@ -103,41 +104,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $sourceDay = (int) ($_POST['source_dia_semana'] ?? 0);
       $sourceTramoId = (int) ($_POST['source_id_horario_tramo'] ?? 0);
 
-      if ($courseId <= 0 || $groupId <= 0 || $day < 1 || $day > 5 || $tramoId <= 0) {
-        json_response(['ok' => false, 'message' => 'Datos inválidos.']);
+      if ($courseId <= 0) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta id_curso_escolar válido.', 'post' => $_POST, 'stage' => 'validate_id_curso_escolar']);
+      if ($groupId <= 0) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta id_grupo válido.', 'post' => $_POST, 'stage' => 'validate_id_grupo']);
+      if ($day < 1 || $day > 5) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta dia_semana válido.', 'post' => $_POST, 'stage' => 'validate_dia_semana']);
+      if ($tramoId <= 0) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta id_horario_tramo válido.', 'post' => $_POST, 'stage' => 'validate_id_horario_tramo']);
+      if ($action === 'save_cell' && $moduleId <= 0) {
+        json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta id_modulo válido.', 'post' => $_POST, 'stage' => 'validate_id_modulo']);
       }
 
+      $stage = 'validate_course_fk';
       $validCheck = $pdo->prepare('SELECT 1 FROM cursos_escolares WHERE id_curso_escolar=:id');
       $validCheck->execute(['id' => $courseId]);
-      if (!$validCheck->fetchColumn()) json_response(['ok' => false, 'message' => 'Curso inválido.']);
+      if (!$validCheck->fetchColumn()) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'id_curso_escolar no existe.', 'post' => $_POST, 'stage' => $stage]);
 
+      $stage = 'validate_group_fk';
       $validCheck = $pdo->prepare('SELECT 1 FROM grupos WHERE id_grupo=:id');
       $validCheck->execute(['id' => $groupId]);
-      if (!$validCheck->fetchColumn()) json_response(['ok' => false, 'message' => 'Grupo inválido.']);
+      if (!$validCheck->fetchColumn()) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'id_grupo no existe.', 'post' => $_POST, 'stage' => $stage]);
 
+      $stage = 'validate_tramo_fk';
       $validCheck = $pdo->prepare('SELECT 1 FROM horarios_tramos WHERE id_horario_tramo=:id');
       $validCheck->execute(['id' => $tramoId]);
-      if (!$validCheck->fetchColumn()) json_response(['ok' => false, 'message' => 'Tramo inválido.']);
+      if (!$validCheck->fetchColumn()) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'id_horario_tramo no existe.', 'post' => $_POST, 'stage' => $stage]);
 
       if ($action === 'clear_cell') {
+        $stage = 'clear_cell_delete';
         $del = $pdo->prepare('DELETE FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t');
         $del->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId]);
         json_response(['ok' => true, 'message' => 'Celda vaciada.']);
       }
 
+      $stage = 'validate_module_fk';
       $validCheck = $pdo->prepare('SELECT horas_semanales, COALESCE(horas_semanales, 0) AS limite FROM modulos WHERE id_modulo=:id');
       $validCheck->execute(['id' => $moduleId]);
       $moduleRow = $validCheck->fetch(PDO::FETCH_ASSOC);
-      if (!$moduleRow) json_response(['ok' => false, 'message' => 'Módulo inválido.']);
+      if (!$moduleRow) json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'id_modulo no existe.', 'post' => $_POST, 'stage' => $stage]);
 
       $isMove = $sourceDay >= 1 && $sourceDay <= 5 && $sourceTramoId > 0;
 
-      $profesorColumnStmt = $pdo->query("SHOW COLUMNS FROM horarios_grupos LIKE 'id_profesor'");
-      $profesorColumn = $profesorColumnStmt->fetch(PDO::FETCH_ASSOC);
-      $hasProfesorColumn = (bool) $profesorColumn;
+      $stage = 'inspect_columns';
+      $columnsStmt = $pdo->query('SHOW COLUMNS FROM horarios_grupos');
+      $tableColumns = $columnsStmt->fetchAll(PDO::FETCH_ASSOC);
+      $columnMap = [];
+      foreach ($tableColumns as $col) {
+        $columnMap[(string) $col['Field']] = $col;
+      }
+      $requiredMissing = [];
+      foreach ($tableColumns as $col) {
+        $field = (string) $col['Field'];
+        $nullable = strtoupper((string) ($col['Null'] ?? 'YES')) === 'YES';
+        $default = $col['Default'] ?? null;
+        $extra = strtolower((string) ($col['Extra'] ?? ''));
+        if (!$nullable && $default === null && strpos($extra, 'auto_increment') === false && !in_array($field, ['id_curso_escolar', 'id_grupo', 'dia_semana', 'id_horario_tramo', 'id_modulo', 'id_profesor'], true)) {
+          $requiredMissing[] = $field;
+        }
+      }
+      if ($requiredMissing !== []) {
+        json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Faltan columnas obligatorias en INSERT: ' . implode(', ', $requiredMissing), 'post' => $_POST, 'stage' => $stage]);
+      }
+
+      $hasProfesorColumn = isset($columnMap['id_profesor']);
       $allowNullProfesor = true;
       if ($hasProfesorColumn) {
-        $column = $profesorColumn;
+        $column = $columnMap['id_profesor'];
         $allowNullProfesor = isset($column['Null']) && strtoupper((string) $column['Null']) === 'YES';
 
         if ($profesorId !== null) {
@@ -148,22 +177,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if ($allowNullProfesor) {
               $profesorId = null;
             } else {
-              json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'El id_profesor recibido no existe y la columna id_profesor no permite NULL.']);
+              json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'El id_profesor recibido no existe y la columna id_profesor no permite NULL.', 'post' => $_POST, 'stage' => 'validate_profesor_fk']);
             }
           }
         }
 
         if ($profesorId === null && !$allowNullProfesor) {
-          json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta profesor válido y la columna id_profesor no permite NULL.']);
+          json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => 'Falta profesor válido y la columna id_profesor no permite NULL.', 'post' => $_POST, 'stage' => 'validate_profesor_required']);
         }
       }
 
+      $stage = 'begin_transaction';
       $pdo->beginTransaction();
+      $stage = 'select_current_slot';
       $currentStmt = $pdo->prepare('SELECT id_modulo FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t LIMIT 1');
       $currentStmt->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId]);
       $currentModule = (int) ($currentStmt->fetchColumn() ?: 0);
 
       if ($isMove) {
+        $stage = 'validate_source_slot';
         $sourceStmt = $pdo->prepare('SELECT id_modulo FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t LIMIT 1');
         $sourceStmt->execute(['c' => $courseId, 'g' => $groupId, 'd' => $sourceDay, 't' => $sourceTramoId]);
         $sourceModule = (int) ($sourceStmt->fetchColumn() ?: 0);
@@ -173,6 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
       }
 
+      $stage = 'count_module_hours';
       $countStmt = $pdo->prepare('SELECT COUNT(*) FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND id_modulo=:m');
       $countStmt->execute(['c' => $courseId, 'g' => $groupId, 'm' => $moduleId]);
       $used = (int) $countStmt->fetchColumn();
@@ -185,13 +218,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       }
 
       if ($isMove) {
+        $stage = 'delete_source_slot';
         $pdo->prepare('DELETE FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t')
           ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $sourceDay, 't' => $sourceTramoId]);
       }
 
+      $stage = 'delete_target_slot';
       $pdo->prepare('DELETE FROM horarios_grupos WHERE id_curso_escolar=:c AND id_grupo=:g AND dia_semana=:d AND id_horario_tramo=:t')
         ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId]);
 
+      $stage = 'insert_target_slot';
       if ($hasProfesorColumn) {
         $pdo->prepare('INSERT INTO horarios_grupos (id_curso_escolar,id_grupo,dia_semana,id_horario_tramo,id_modulo,id_profesor) VALUES (:c,:g,:d,:t,:m,:p)')
           ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId, 'm' => $moduleId, 'p' => $profesorId]);
@@ -200,8 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
           ->execute(['c' => $courseId, 'g' => $groupId, 'd' => $day, 't' => $tramoId, 'm' => $moduleId]);
       }
 
+      $stage = 'commit_transaction';
       $pdo->commit();
-      json_response(['ok' => true, 'message' => 'Horario actualizado.']);
+      json_response(['ok' => true, 'message' => 'Horario guardado correctamente.']);
     }
 
     json_response(['ok' => false, 'message' => 'Acción no permitida.']);
@@ -211,17 +248,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       'ok' => false,
       'message' => 'No se pudo guardar el horario.',
       'detail' => $e->getMessage(),
-      'debug' => [
-        'action' => $_POST['action'] ?? null,
-        'id_curso_escolar' => $_POST['id_curso_escolar'] ?? null,
-        'id_grupo' => $_POST['id_grupo'] ?? null,
-        'dia_semana' => $_POST['dia_semana'] ?? null,
-        'id_horario_tramo' => $_POST['id_horario_tramo'] ?? null,
-        'id_modulo' => $_POST['id_modulo'] ?? null,
-        'id_profesor' => $_POST['id_profesor'] ?? null,
-        'source_dia_semana' => $_POST['source_dia_semana'] ?? null,
-        'source_id_horario_tramo' => $_POST['source_id_horario_tramo'] ?? null
-      ],
+      'post' => $_POST,
+      'stage' => $stage ?? 'unknown',
     ]);
   }
 }
@@ -244,7 +272,7 @@ $active_page = 'calendario';
 const dayNames={1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie'};
 let state={tramos:[],modules:[],schedule:{},counts:{}};
 const courseSel=document.getElementById('id_curso_escolar'); const groupSel=document.getElementById('id_grupo');
-async function post(action,payload={}){const fd=new FormData(); fd.append('action',action); Object.entries(payload).forEach(([k,v])=>fd.append(k,v)); const r=await fetch('horarios_editar.php',{method:'POST',body:fd}); return r.json();}
+async function post(action,payload={}){const fd=new FormData(); fd.append('action',action); Object.entries(payload).forEach(([k,v])=>fd.append(k,v)); const r=await fetch('horarios_editar.php',{method:'POST',body:fd}); let data; try{data=await r.json();}catch(_e){const text=await r.text(); console.error('Respuesta no JSON:',text); alert(text); throw new Error('Respuesta no JSON');} if(!r.ok){console.error('HTTP error:',data); alert(JSON.stringify(data,null,2));} return data;}
 function render(){const tb=document.querySelector('#horariosGrid tbody'); tb.innerHTML='';
 state.tramos.forEach(t=>{const tr=document.createElement('tr'); const label=(t.hora_inicio&&t.hora_fin)?`${t.numero_tramo}ª (${t.hora_inicio.slice(0,5)}-${t.hora_fin.slice(0,5)})`:`${t.numero_tramo}ª`; tr.innerHTML=`<td>${label}</td>`;
 for(let d=1;d<=5;d++){const td=document.createElement('td'); td.className='horario-dropzone'; td.dataset.day=d; td.dataset.tramo=t.id_horario_tramo; td.addEventListener('dragover',e=>e.preventDefault()); td.addEventListener('drop',onDrop);
@@ -254,8 +282,8 @@ state.modules.forEach(m=>{const used=state.counts[m.id_modulo]||0; const limit=p
 function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div'); d.className='horario-cell-module'; d.draggable=true; d.dataset.module=m.id_modulo; d.dataset.origin='grid'; d.dataset.day=day; d.dataset.tramo=tramo; if(m.id_profesor!==undefined)d.dataset.profesor=m.id_profesor||''; d.innerHTML=`<span>${m.abreviatura||m.nombre}</span><button type='button' aria-label='Quitar'>×</button>`; d.addEventListener('dragstart',onDragStart); d.querySelector('button').addEventListener('click',()=>clearCell(day,tramo)); return d;}
 function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
 async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
-const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
-if(!res.ok){const parts=[res.message||'No se pudo guardar el horario.']; if(res.detail) parts.push(res.detail); if(res.debug) parts.push(JSON.stringify(res.debug,null,2)); alert(parts.join('\n'));return;} await loadData();}
+try{const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
+if(!res.ok){console.error('Error guardando horario:',res); alert(JSON.stringify(res,null,2)); return;} await loadData();}catch(err){console.error('Fallo de fetch/save_cell:',err); alert(String(err));}}
 async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(res.message||'No se pudo borrar');return;} await loadData();}
 async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(res.message||'Error de carga');return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
 courseSel.addEventListener('change',loadData); groupSel.addEventListener('change',loadData); loadData();
