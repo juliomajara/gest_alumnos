@@ -380,57 +380,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $moduleCount[$mid] = ($moduleCount[$mid] ?? 0) + 1;
           }
 
+          $tramosOrdenados = $tramosRows;
+          usort($tramosOrdenados, static function (array $a, array $b): int {
+            $na = (int) ($a['numero_tramo'] ?? 0);
+            $nb = (int) ($b['numero_tramo'] ?? 0);
+            return $na <=> $nb;
+          });
+
           for ($dia = 1; $dia <= 5; $dia++) {
-            $daySlots = [];
-            foreach ($slots as $slotKey => $slot) {
-              if ((int) $slot['dia_semana'] === $dia) {
-                $daySlots[$slotKey] = $slot;
+            $lastModuloId = null;
+
+            foreach ($tramosOrdenados as $tramo) {
+              $tramoId = (int) $tramo['id_horario_tramo'];
+              $slotKey = $dia . '-' . $tramoId;
+
+              if (isset($slots[$slotKey])) {
+                $lastModuloId = (int) $slots[$slotKey]['id_modulo'];
+                continue;
               }
-            }
-            if ($daySlots === []) {
-              continue;
-            }
 
-            uasort($daySlots, static function (array $a, array $b) use ($tramosNumero): int {
-              $na = (int) ($tramosNumero[(int) $a['id_horario_tramo']] ?? 0);
-              $nb = (int) ($tramosNumero[(int) $b['id_horario_tramo']] ?? 0);
-              return $na <=> $nb;
-            });
-
-            $ordered = array_values($daySlots);
-            $total = count($ordered);
-            for ($i = 0; $i < $total - 1; $i++) {
-              $current = $ordered[$i];
-              $next = $ordered[$i + 1];
-              $currentModulo = (int) $current['id_modulo'];
-              $nextModulo = (int) $next['id_modulo'];
-              $currentTramo = (int) $current['id_horario_tramo'];
-              $nextTramo = (int) $next['id_horario_tramo'];
-              $currentNumero = (int) ($tramosNumero[$currentTramo] ?? 0);
-              $nextNumero = (int) ($tramosNumero[$nextTramo] ?? 0);
-
-              if ($nextModulo !== $currentModulo && ($nextNumero - $currentNumero) === 1) {
-                $horasEsperadas = (int) ($moduleInfo[$currentModulo]['horas_semanales'] ?? 0);
-                if ($horasEsperadas <= 0) {
-                  continue;
-                }
-                $actuales = (int) ($moduleCount[$currentModulo] ?? 0);
-                if ($actuales >= $horasEsperadas) {
-                  continue;
-                }
-                $slotKey = $dia . '-' . $nextTramo;
-                if (isset($slots[$slotKey]) && (int) $slots[$slotKey]['id_modulo'] !== $currentModulo) {
-                  $result['errores'][] = 'Conflicto inferencia día ' . $dia . ', tramo ' . $nextTramo . ': módulo existente ' . $slots[$slotKey]['id_modulo'] . ', módulo inferido ' . $currentModulo;
-                  continue;
-                }
-                $slots[$slotKey] = [
-                  'dia_semana' => $dia,
-                  'id_horario_tramo' => $nextTramo,
-                  'id_modulo' => $currentModulo,
-                ];
-                $moduleCount[$currentModulo] = ($moduleCount[$currentModulo] ?? 0) + 1;
-                $ordered[$i + 1]['id_modulo'] = $currentModulo;
+              if ($lastModuloId === null) {
+                continue;
               }
+
+              $horasEsperadas = (int) ($moduleInfo[$lastModuloId]['horas_semanales'] ?? 0);
+              if ($horasEsperadas <= 0) {
+                continue;
+              }
+
+              $actuales = (int) ($moduleCount[$lastModuloId] ?? 0);
+              if ($actuales >= $horasEsperadas) {
+                continue;
+              }
+
+              $slots[$slotKey] = [
+                'dia_semana' => $dia,
+                'id_horario_tramo' => $tramoId,
+                'id_modulo' => $lastModuloId,
+              ];
+              $moduleCount[$lastModuloId] = $actuales + 1;
             }
           }
         }
