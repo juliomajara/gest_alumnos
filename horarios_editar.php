@@ -23,7 +23,7 @@ function fetch_schedule_data(PDO $pdo, int $courseId, int $groupId): array {
       m.codigo,
       m.abreviatura,
       COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), m.abreviatura, m.codigo, CONCAT("Módulo ", m.id_modulo)) AS nombre,
-      COALESCE(m.horas_semanales, m.horas, 0) AS horas_semanales
+      COALESCE(m.horas_semanales, 0) AS horas_semanales
     FROM alumno_curso ac
     INNER JOIN alumno_modulo am ON am.id_alumno = ac.id_alumno
     INNER JOIN modulos m ON m.id_modulo = am.id_modulo
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         json_response(['ok' => true, 'message' => 'Celda vaciada.']);
       }
 
-      $validCheck = $pdo->prepare('SELECT horas_semanales, COALESCE(horas_semanales, horas, 0) AS limite FROM modulos WHERE id_modulo=:id');
+      $validCheck = $pdo->prepare('SELECT horas_semanales, COALESCE(horas_semanales, 0) AS limite FROM modulos WHERE id_modulo=:id');
       $validCheck->execute(['id' => $moduleId]);
       $moduleRow = $validCheck->fetch(PDO::FETCH_ASSOC);
       if (!$moduleRow) json_response(['ok' => false, 'message' => 'Módulo inválido.']);
@@ -160,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     json_response(['ok' => false, 'message' => 'Acción no permitida.']);
   } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.']);
+    json_response(['ok' => false, 'message' => 'No se pudo guardar el horario.', 'detail' => $e->getMessage()]);
   }
 }
 
@@ -193,7 +193,7 @@ function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div');
 function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
 async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
 const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
-if(!res.ok){alert(res.message||'No se pudo guardar');return;} await loadData();}
+if(!res.ok){alert(res.detail?`${res.message}\n${res.detail}`:(res.message||'No se pudo guardar'));return;} await loadData();}
 async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(res.message||'No se pudo borrar');return;} await loadData();}
 async function loadData(){const res=await post('load',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value}); if(!res.ok){alert(res.message||'Error de carga');return;} state={tramos:res.data.tramos,modules:res.data.modules,schedule:res.data.schedule,counts:res.data.module_counts}; render();}
 courseSel.addEventListener('change',loadData); groupSel.addEventListener('change',loadData); loadData();
