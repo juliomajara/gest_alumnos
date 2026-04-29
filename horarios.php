@@ -64,9 +64,12 @@ $scheduleRows = [];
 if ($selectedCourse > 0 && $selectedGroup > 0) {
   $scheduleStmt = $pdo->prepare(
     'SELECT hg.dia_semana, hg.id_horario_tramo, hg.id_modulo,
-            COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), m.abreviatura, m.codigo, CONCAT("Módulo ", m.id_modulo)) AS nombre
+            COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), m.abreviatura, m.codigo, CONCAT("Módulo ", m.id_modulo)) AS nombre,
+            m.codigo,
+            CONCAT_WS(" ", p.nombre, p.apellido1, p.apellido2) AS profesor
      FROM horarios_grupos hg
      INNER JOIN modulos m ON m.id_modulo = hg.id_modulo
+     LEFT JOIN profesores p ON p.id_profesor = hg.id_profesor
      WHERE hg.id_curso_escolar = :id_curso_escolar
        AND hg.id_grupo = :id_grupo
      ORDER BY hg.dia_semana, hg.id_horario_tramo'
@@ -92,7 +95,7 @@ $active_page = 'horarios';
 <?php if ($scheduleRows === []): ?>
   <p class="subheading">No hay horario guardado para el curso y grupo seleccionados.</p>
 <?php else: ?>
-  <div class="panel-grid horarios-grid-wrap"><table class="horarios-grid horarios-view-table"><thead><tr><th>Tramo</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th></tr></thead><tbody><?php foreach ($tramos as $tramo): ?><tr><td><?php echo (int) $tramo['numero_tramo']; ?>ª<?php if (!empty($tramo['hora_inicio']) && !empty($tramo['hora_fin'])): ?> (<?php echo htmlspecialchars(substr((string) $tramo['hora_inicio'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>-<?php echo htmlspecialchars(substr((string) $tramo['hora_fin'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>)<?php endif; ?></td><?php for ($day = 1; $day <= 5; $day++): $key = $day . '-' . (int) $tramo['id_horario_tramo']; $cell = $scheduleMap[$key] ?? null; ?><?php if ($cell !== null): $moduleId = (int) $cell['id_modulo']; $colorClass = $moduleColorMap[$moduleId] ?? 'module-color-disabled'; ?><td class="horarios-module-cell <?php echo htmlspecialchars($colorClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars((string) $cell['nombre'], ENT_QUOTES, 'UTF-8'); ?></td><?php else: ?><td class="horarios-empty-cell"></td><?php endif; ?><?php endfor; ?></tr><?php endforeach; ?></tbody></table></div>
+  <div class="panel-grid horarios-grid-wrap"><table class="horarios-grid horarios-view-table"><thead><tr><th>Tramo</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th></tr></thead><tbody><?php foreach ($tramos as $tramo): ?><tr><td><?php echo (int) $tramo['numero_tramo']; ?>ª<?php if (!empty($tramo['hora_inicio']) && !empty($tramo['hora_fin'])): ?> (<?php echo htmlspecialchars(substr((string) $tramo['hora_inicio'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>-<?php echo htmlspecialchars(substr((string) $tramo['hora_fin'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>)<?php endif; ?></td><?php for ($day = 1; $day <= 5; $day++): $key = $day . '-' . (int) $tramo['id_horario_tramo']; $cell = $scheduleMap[$key] ?? null; ?><?php if ($cell !== null): $moduleId = (int) $cell['id_modulo']; $colorClass = $moduleColorMap[$moduleId] ?? 'module-color-disabled'; $moduleName = trim((string) ($cell['nombre'] ?? '')); $moduleCode = trim((string) ($cell['codigo'] ?? '')); $moduleTeacher = trim((string) ($cell['profesor'] ?? '')); $titleParts = [$moduleName]; if ($moduleCode !== '') { $titleParts[] = 'Código: ' . $moduleCode; } if ($moduleTeacher !== '') { $titleParts[] = 'Profesor: ' . $moduleTeacher; } $moduleTitle = implode(' | ', $titleParts); ?><td class="horarios-module-cell <?php echo htmlspecialchars($colorClass, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($moduleTitle, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($moduleName, ENT_QUOTES, 'UTF-8'); ?></td><?php else: ?><td class="horarios-empty-cell"></td><?php endif; ?><?php endfor; ?></tr><?php endforeach; ?></tbody></table></div>
 <?php endif; ?>
 </section>
 </main></div></body></html>
