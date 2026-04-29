@@ -392,10 +392,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             foreach ($tramosOrdenados as $tramo) {
               $tramoId = (int) $tramo['id_horario_tramo'];
+              $numeroTramo = (int) ($tramo['numero_tramo'] ?? 0);
               $slotKey = $dia . '-' . $tramoId;
 
               if (isset($slots[$slotKey])) {
                 $lastModuloId = (int) $slots[$slotKey]['id_modulo'];
+                continue;
+              }
+
+              if ($numeroTramo > 6) {
                 continue;
               }
 
