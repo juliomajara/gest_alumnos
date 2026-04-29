@@ -2630,19 +2630,10 @@ a.edit-toggle:focus {
 
 .module-color-disabled { background: #9ca3af; border-color: #6b7280; color: #111827; }
 
-.module-color-2 small,
-.module-color-3 small,
-.module-color-5 small,
-.module-color-7 small,
-.module-color-8 small,
-.module-color-disabled small,
-.horarios-modulo-item.is-zero-hours small {
-  color: rgba(17, 24, 39, 0.9);
-}
-
 .horario-cell-module small,
 .horarios-modulo-item small {
-  color: rgba(255, 255, 255, 0.86);
+  color: currentColor;
+  opacity: 0.9;
 }
 
 @media (max-width: 980px) {
