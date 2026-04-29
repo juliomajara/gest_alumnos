@@ -2554,9 +2554,10 @@ a.edit-toggle:focus {
 .horario-cell-module {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
   cursor: grab;
+  text-align: center;
 }
 
 .horario-cell-module button {
@@ -2606,8 +2607,8 @@ a.edit-toggle:focus {
 }
 
 .horarios-modulo-item.is-completed {
-  opacity: 0.4;
-  filter: saturate(0.5);
+  opacity: 0.7;
+  filter: saturate(0.8);
 }
 
 .panel-grid .horarios-grid tbody tr:nth-child(even) td,
@@ -2616,25 +2617,24 @@ a.edit-toggle:focus {
   background: transparent;
 }
 
-.module-color-1 { background: #E63946; border-color: #C22E39; color: #fff; }
-.module-color-2 { background: #F77F00; border-color: #CC6900; color: #111827; }
-.module-color-3 { background: #FCBF49; border-color: #D19E3C; color: #111827; }
-.module-color-4 { background: #2A9D8F; border-color: #227F73; color: #fff; }
-.module-color-5 { background: #457B9D; border-color: #38647F; color: #fff; }
-.module-color-6 { background: #1D3557; border-color: #172B46; color: #fff; }
-.module-color-7 { background: #8338EC; border-color: #6B2EC1; color: #fff; }
-.module-color-8 { background: #FF006E; border-color: #CC0058; color: #fff; }
-.module-color-9 { background: #06D6A0; border-color: #05AB80; color: #111827; }
-.module-color-10 { background: #118AB2; border-color: #0D6F8F; color: #fff; }
-.module-color-11 { background: #EF476F; border-color: #C03A59; color: #fff; }
-.module-color-12 { background: #8AC926; border-color: #6EA11E; color: #111827; }
+.module-color-1 { background: #fff100; border-color: #d5c900; color: #111827; }
+.module-color-2 { background: #e81123; border-color: #bc0e1c; color: #fff; }
+.module-color-3 { background: #68217a; border-color: #531a62; color: #fff; }
+.module-color-4 { background: #00bcf2; border-color: #0099c5; color: #111827; }
+.module-color-5 { background: #009e49; border-color: #007d3a; color: #fff; }
+.module-color-6 { background: #ff8c00; border-color: #cc7000; color: #111827; }
+.module-color-7 { background: #ec008c; border-color: #bd0070; color: #fff; }
+.module-color-8 { background: #00188f; border-color: #001271; color: #fff; }
+.module-color-9 { background: #00b294; border-color: #008f76; color: #111827; }
+.module-color-10 { background: #bad80a; border-color: #95ad08; color: #111827; }
 
 .module-color-disabled { background: #9ca3af; border-color: #6b7280; color: #111827; }
 
 .module-color-2 small,
 .module-color-3 small,
-.module-color-9 small,
-.module-color-12 small,
+.module-color-5 small,
+.module-color-7 small,
+.module-color-8 small,
 .module-color-disabled small,
 .horarios-modulo-item.is-zero-hours small {
   color: rgba(17, 24, 39, 0.9);
