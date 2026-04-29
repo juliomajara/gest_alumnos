@@ -2611,9 +2611,9 @@ a.edit-toggle:focus {
   filter: saturate(0.8);
 }
 
-.panel-grid .horarios-grid tbody tr:nth-child(even) td,
-.panel-grid .horarios-grid tbody tr:hover td,
-.panel-grid .horarios-grid tbody td:hover {
+.panel-grid .horarios-grid tbody tr:nth-child(even) td:not([class^="module-color-"]):not(.module-color-disabled),
+.panel-grid .horarios-grid tbody tr:hover td:not([class^="module-color-"]):not(.module-color-disabled),
+.panel-grid .horarios-grid tbody td:hover:not([class^="module-color-"]):not(.module-color-disabled) {
   background: transparent;
 }
 
