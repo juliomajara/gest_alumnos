@@ -2625,12 +2625,17 @@ a.edit-toggle:focus {
 
 
 .horarios-view-table tbody tr,
+.horarios-view-table tbody tr:nth-child(odd),
+.horarios-view-table tbody tr:nth-child(even),
 .horarios-view-table tbody tr:hover {
   background: transparent;
 }
 
 .horarios-view-table td.horarios-empty-cell,
-.horarios-view-table tbody tr:hover td.horarios-empty-cell {
+.horarios-view-table tbody tr:nth-child(odd) td.horarios-empty-cell,
+.horarios-view-table tbody tr:nth-child(even) td.horarios-empty-cell,
+.horarios-view-table tbody tr:hover td.horarios-empty-cell,
+.horarios-view-table td.horarios-empty-cell:hover {
   background: #fff;
   color: var(--text);
 }
@@ -2642,6 +2647,45 @@ a.edit-toggle:focus {
   font-weight: 600;
   min-height: 44px;
 }
+
+.horarios-view-table tbody td:hover,
+.horarios-view-table tbody tr:hover td {
+  background-color: inherit;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-1,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-1,
+.horarios-view-table td.horarios-module-cell.module-color-1:hover { background-color: #fff100; }
+.horarios-view-table td.horarios-module-cell.module-color-2,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-2,
+.horarios-view-table td.horarios-module-cell.module-color-2:hover { background-color: #e81123; }
+.horarios-view-table td.horarios-module-cell.module-color-3,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-3,
+.horarios-view-table td.horarios-module-cell.module-color-3:hover { background-color: #68217a; }
+.horarios-view-table td.horarios-module-cell.module-color-4,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-4,
+.horarios-view-table td.horarios-module-cell.module-color-4:hover { background-color: #00bcf2; }
+.horarios-view-table td.horarios-module-cell.module-color-5,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-5,
+.horarios-view-table td.horarios-module-cell.module-color-5:hover { background-color: #009e49; }
+.horarios-view-table td.horarios-module-cell.module-color-6,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-6,
+.horarios-view-table td.horarios-module-cell.module-color-6:hover { background-color: #ff8c00; }
+.horarios-view-table td.horarios-module-cell.module-color-7,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-7,
+.horarios-view-table td.horarios-module-cell.module-color-7:hover { background-color: #ec008c; }
+.horarios-view-table td.horarios-module-cell.module-color-8,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-8,
+.horarios-view-table td.horarios-module-cell.module-color-8:hover { background-color: #00188f; }
+.horarios-view-table td.horarios-module-cell.module-color-9,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-9,
+.horarios-view-table td.horarios-module-cell.module-color-9:hover { background-color: #00b294; }
+.horarios-view-table td.horarios-module-cell.module-color-10,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-10,
+.horarios-view-table td.horarios-module-cell.module-color-10:hover { background-color: #bad80a; }
+.horarios-view-table td.horarios-module-cell.module-color-disabled,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-disabled,
+.horarios-view-table td.horarios-module-cell.module-color-disabled:hover { background-color: #9ca3af; }
 
 
 .module-color-1 { background: #fff100; border-color: #d5c900; color: #111827; }
