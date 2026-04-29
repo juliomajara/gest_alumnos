@@ -211,8 +211,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
       $used = (int) $countStmt->fetchColumn();
       $limit = (int) ($moduleRow['limite'] ?? 0);
 
+      if ($limit <= 0) {
+        $pdo->rollBack();
+        json_response(['ok' => false, 'message' => 'El módulo no tiene horas semanales asignables.']);
+      }
+
       $addsNewOccurrence = $currentModule !== $moduleId && !$isMove;
-      if ($limit > 0 && $addsNewOccurrence && $used >= $limit) {
+      if ($addsNewOccurrence && $used >= $limit) {
         $pdo->rollBack();
         json_response(['ok' => false, 'message' => 'El módulo ya alcanzó sus horas semanales.', 'used_hours' => $used, 'limit_hours' => $limit]);
       }
@@ -272,8 +277,9 @@ $active_page = 'calendario';
 </main></div>
 <script>
 const dayNames={1:'Lun',2:'Mar',3:'Mié',4:'Jue',5:'Vie'};
-const moduleColorCount=12;
+const modulePalette=['#E63946','#F77F00','#FCBF49','#2A9D8F','#457B9D','#1D3557','#8338EC','#FF006E','#06D6A0','#118AB2','#EF476F','#8AC926'];
 let state={tramos:[],modules:[],schedule:{},counts:{}};
+let moduleColorMap={};
 const courseSel=document.getElementById('id_curso_escolar'); const groupSel=document.getElementById('id_grupo');
 
 function formatApiError(res, fallback){
@@ -292,11 +298,13 @@ state.tramos.forEach(t=>{const tr=document.createElement('tr'); const label=(t.h
 for(let d=1;d<=5;d++){const td=document.createElement('td'); td.className='horario-dropzone'; td.dataset.day=d; td.dataset.tramo=t.id_horario_tramo; td.addEventListener('dragover',e=>e.preventDefault()); td.addEventListener('drop',onDrop);
 const key=`${d}-${t.id_horario_tramo}`; if(state.schedule[key]) td.appendChild(cellModule(state.schedule[key],d,t.id_horario_tramo,true)); tr.appendChild(td);} tb.appendChild(tr);});
 const list=document.getElementById('modulosList'); list.innerHTML=''; const empty=document.getElementById('modulosEmpty'); empty.hidden=state.modules.length>0;
-state.modules.forEach(m=>{const used=state.counts[m.id_modulo]||0; const limit=parseInt(m.horas_semanales||0,10)||0; const disabled=limit>0&&used>=limit; const item=document.createElement('div'); const colorClass=getModuleColorClass(m.id_modulo); item.className='horarios-modulo-item '+colorClass+(disabled?' is-disabled':''); item.draggable=!disabled; item.dataset.module=m.id_modulo; item.dataset.origin='list'; item.dataset.profesor=m.id_profesor||''; const profesorNombre=[m.profesor_nombre,m.profesor_apellidos].filter(Boolean).join(' ').trim(); const codigoInfo=[m.codigo,m.abreviatura].filter(Boolean).join(' · '); item.title=profesorNombre?`${m.nombre} — Profesor: ${profesorNombre}${codigoInfo?` — ${codigoInfo}`:''}`:`${m.nombre}${codigoInfo?` — ${codigoInfo}`:''}`; item.innerHTML=`<strong>${m.nombre}</strong><small>${used}/${limit>0?limit:'-' } horas</small>`; if(!disabled)item.addEventListener('dragstart',onDragStart); list.appendChild(item);});}
+moduleColorMap={}; let paletteIndex=0;
+state.modules.forEach(m=>{const limit=parseInt(m.horas_semanales,10); if(Number.isInteger(limit)&&limit>0){moduleColorMap[m.id_modulo]=`module-color-${(paletteIndex%modulePalette.length)+1}`; paletteIndex++;}});
+state.modules.forEach(m=>{const used=state.counts[m.id_modulo]||0; const rawLimit=parseInt(m.horas_semanales,10); const limit=Number.isInteger(rawLimit)?rawLimit:0; const noHours=limit<=0; const completed=!noHours&&used>=limit; const disabled=noHours||completed; const item=document.createElement('div'); const colorClass=getModuleColorClass(m.id_modulo); item.className='horarios-modulo-item '+colorClass+(noHours?' is-zero-hours':'')+(completed?' is-completed':'')+(disabled?' is-disabled':''); item.draggable=!disabled; item.dataset.module=m.id_modulo; item.dataset.origin='list'; item.dataset.profesor=m.id_profesor||''; const profesorNombre=[m.profesor_nombre,m.profesor_apellidos].filter(Boolean).join(' ').trim(); const codigoInfo=[m.codigo,m.abreviatura].filter(Boolean).join(' · '); item.title=profesorNombre?`${m.nombre} — Profesor: ${profesorNombre}${codigoInfo?` — ${codigoInfo}`:''}`:`${m.nombre}${codigoInfo?` — ${codigoInfo}`:''}`; item.innerHTML=`<strong>${m.nombre}</strong><small>${used}/${limit>0?limit:0} horas</small>`; if(!disabled)item.addEventListener('dragstart',onDragStart); list.appendChild(item);});}
 function cellModule(m,day,tramo,fromGrid){const d=document.createElement('div'); d.className='horario-cell-module '+getModuleColorClass(m.id_modulo); d.draggable=true; d.dataset.module=m.id_modulo; d.dataset.origin='grid'; d.dataset.day=day; d.dataset.tramo=tramo; if(m.id_profesor!==undefined)d.dataset.profesor=m.id_profesor||''; d.title=m.codigo||m.abreviatura?`${m.nombre} — ${[m.codigo,m.abreviatura].filter(Boolean).join(' · ')}`:m.nombre; d.innerHTML=`<span>${m.nombre}</span>`; d.addEventListener('dragstart',onDragStart); d.addEventListener('contextmenu',e=>{e.preventDefault(); clearCell(day,tramo);}); return d;}
-function getModuleColorClass(moduleId){const id=parseInt(moduleId,10)||0; const idx=((id%moduleColorCount)+moduleColorCount)%moduleColorCount; return `module-color-${idx+1}`;}
-function onDragStart(e){e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
-async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return;
+function getModuleColorClass(moduleId){return moduleColorMap[moduleId]||'module-color-disabled';}
+function onDragStart(e){if(e.currentTarget.draggable===false||e.currentTarget.classList.contains('is-disabled')){e.preventDefault(); return;} e.dataTransfer.setData('text/plain',JSON.stringify(e.currentTarget.dataset));}
+async function onDrop(e){e.preventDefault(); const data=JSON.parse(e.dataTransfer.getData('text/plain')||'{}'); const day=e.currentTarget.dataset.day; const tramo=e.currentTarget.dataset.tramo; if(!data.module) return; if(data.origin==='list'){const moduleData=state.modules.find(m=>String(m.id_modulo)===String(data.module)); const rawLimit=moduleData?parseInt(moduleData.horas_semanales,10):0; const limit=Number.isInteger(rawLimit)?rawLimit:0; const used=state.counts[data.module]||0; if(limit<=0||used>=limit) return;}
 try{const res=await post('save_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo,id_modulo:data.module,id_profesor:data.profesor||'',source_dia_semana:data.day||'',source_id_horario_tramo:data.tramo||''});
 if(!res.ok){console.error('Error guardando horario:',res); alert(formatApiError(res,'No se pudo guardar el horario.')); return;} await loadData();}catch(err){console.error('Fallo de fetch/save_cell:',err); alert(String(err));}}
 async function clearCell(day,tramo){const res=await post('clear_cell',{id_curso_escolar:courseSel.value,id_grupo:groupSel.value,dia_semana:day,id_horario_tramo:tramo}); if(!res.ok){alert(formatApiError(res,'No se pudo borrar la celda.'));return;} await loadData();}
