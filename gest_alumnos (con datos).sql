@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-03-2026 a las 13:50:01
+-- Tiempo de generación: 29-04-2026 a las 09:30:05
 -- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -81,21 +81,21 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (20, '9854796', '49746404A', '281579749616', 'Hurtado', 'Paredes', 'Darío', '2006-12-09', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'thejahc@gmail.com', NULL, NULL, 'rparedessierra@gmail.com', NULL, 0, NULL, 0, NULL),
 (21, '13694494', '49704977E', '281356573228', 'Ikubor', 'Aimienoho', 'Wisdom Osamwenuyi', '2008-11-06', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'linda.aimienoho@yahoo.com', NULL, NULL, 'kevinvincent10@yahoo.com', NULL, 0, NULL, 0, NULL),
 (22, '7626425', '55138304J', '281547259868', 'Jiménez', 'Ramiro', 'Roberto', '2006-10-23', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'narcisarg@gmail.com', NULL, 0, NULL, 0, NULL),
-(23, '12748235', '06625477M', '281631745252', 'López', 'López', 'José Ignacio', '2007-10-01', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'belencalzada8@gmail.com', NULL, NULL, 'ignaciolopez-999@outlook.es', NULL, 0, NULL, 0, NULL),
+(23, '12748235', '06625477M', '281631745252', 'López', 'López', 'José Ignacio', '2007-10-01', NULL, 28, NULL, NULL, 0, NULL, NULL, 'belencalzada8@gmail.com', NULL, NULL, 'ignaciolopez-999@outlook.es', NULL, 0, NULL, 0, NULL),
 (24, '9859524', '54299675X', '281543120901', 'Mangas', 'Martínez', 'Daniel', '2006-07-08', 0, 28, NULL, NULL, 0, NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, 0, NULL, 0, NULL),
 (25, '12329830', '49589590A', '281079016519', 'Martín', 'León', 'Mario', '2008-03-13', 0, 28, NULL, NULL, 0, NULL, NULL, 'gmartin_sanchez@hotmail.com', NULL, NULL, 'mudita-rl@hotmail.com', NULL, 0, NULL, 0, NULL),
 (26, '13796525', 'Y1652928R', '281684451719', 'Mielnik', NULL, 'Bartosz', '2008-08-17', 0, 28, NULL, NULL, 0, NULL, NULL, 'krisloro@interia.pl', NULL, NULL, 'dorciam9@interia.pl', NULL, 0, NULL, 0, NULL),
 (27, '11831358', '02745808E', '281501532957', 'Moncada', 'Bueno', 'Sebastián', '2007-11-09', 0, 28, NULL, NULL, 0, NULL, NULL, 'moncadaosoriodidier@gmail.com', NULL, NULL, 'osoriojuly@hotmail.com', NULL, 0, NULL, 0, NULL),
 (28, '14675492', '51818089D', '281375971006', 'Nieto', 'Gómez', 'Daniel', '2006-05-07', 0, 28, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (29, '9854833', '55139532E', '281576636219', 'Orovio', 'Fernández', 'Adrián', '2006-04-21', 0, 28, NULL, NULL, 0, NULL, NULL, 'oroviosan@hotmail.com', NULL, NULL, 'anabascuana@gmail.com', NULL, 0, NULL, 0, NULL),
-(30, '4545521', '49702188Q', '281444582641', 'Pascual', 'González', 'Alejandro', '1998-02-08', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
+(30, '4545521', '49702188Q', '281444582641', 'Pascual', 'González', 'Alejandro', '1998-02-08', NULL, 28, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (31, '9631236', '03489468T', '281462321618', 'Pérez', 'Alonso', 'Rubén', '2005-12-14', 130, 28, NULL, NULL, 0, NULL, NULL, 'hectorperezaparicio333@gmail.com', NULL, NULL, 'pilaralonso555@gmail.com', NULL, 0, NULL, 0, NULL),
-(32, '12277735', '01867649A', '201055952475', 'Pérez', 'Marín', 'Rubén', '2008-07-12', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'luisamartincamara@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
+(32, '12277735', '01867649A', '201055952475', 'Pérez', 'Marín', 'Rubén', '2008-07-12', NULL, 28, NULL, NULL, 0, NULL, NULL, 'luisamartincamara@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (33, '48532358', 'Z1978609Q', '281655816814', 'Pomarino', 'Mejía', 'Eduardo Gianfranco', '2005-03-25', NULL, 28, NULL, NULL, 0, NULL, NULL, 'carlascargglioni@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
-(34, '9019508', '49588427J', '281572721661', 'Puras', 'García', 'César', '2005-08-03', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'tonigarmar@hotmail.es', NULL, NULL, 'cespurn@hotmail.com', NULL, 0, NULL, 0, NULL),
+(34, '9019508', '49588427J', '281572721661', 'Puras', 'García', 'César', '2005-08-03', NULL, 28, NULL, NULL, 0, NULL, NULL, 'tonigarmar@hotmail.es', NULL, NULL, 'cespurn@hotmail.com', NULL, 0, NULL, 0, NULL),
 (35, '11550457', '54993476Q', '281550184925', 'Rodríguez', 'Mateos', 'Adrián', '2007-07-26', 0, 28, NULL, NULL, 0, NULL, NULL, 'daromanad@gmail.com', NULL, NULL, 'natadriblan@gmail.com', NULL, 0, NULL, 0, NULL),
 (36, '10859827', '01867899T', '281323189363', 'Rubio', 'Alonso', 'Antonio', '2007-12-18', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'antoniorubio963@gmail.com', NULL, NULL, 'mareamorada.6@gmail.com', NULL, 0, NULL, 0, NULL),
-(37, '12197446', '54033379P', '281537763063', 'Ruiz', 'Blanca', 'Marcos', '2007-08-30', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'dimasruiz242@yahoo.es', NULL, NULL, 'oblancaplaza@yahoo.es', NULL, 0, NULL, 0, NULL),
+(37, '12197446', '54033379P', '281537763063', 'Ruiz', 'Blanca', 'Marcos', '2007-08-30', NULL, 28, NULL, NULL, 0, NULL, NULL, 'dimasruiz242@yahoo.es', NULL, NULL, 'oblancaplaza@yahoo.es', NULL, 0, NULL, 0, NULL),
 (38, '13762278', '48161087F', '281560350424', 'Sánchez', 'Martín', 'Diego', '2008-01-04', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'albertorepor@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (39, '9758179', '49150194E', '281576429889', 'Sánchez', 'Palomar', 'Míriam', '2006-03-31', 130, 28, 5, '28943', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (40, '9854901', '49591353H', '281632191048', 'Sánchez', 'Sánchez', 'Adrián', '2006-12-20', 130, 28, NULL, NULL, 0, NULL, NULL, 'danisanguti@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
@@ -689,6 +689,123 @@ CREATE TABLE `asistencia_mensual` (
   `retrasos` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `asistencia_mensual`
+--
+
+INSERT INTO `asistencia_mensual` (`id_asistencia`, `id_alumno`, `id_curso_escolar`, `id_mes`, `faltas_justificadas`, `faltas_injustificadas`, `retrasos`, `fecha_actualizacion`) VALUES
+(1, 11, 1, 9, 5, 5, 0, '2026-03-25 07:41:31'),
+(2, 23, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(3, 26, 1, 9, 0, 6, 0, '2026-03-25 07:41:31'),
+(4, 27, 1, 9, 0, 2, 0, '2026-03-25 07:41:31'),
+(5, 28, 1, 9, 0, 9, 0, '2026-03-25 07:41:31'),
+(6, 30, 1, 9, 0, 2, 0, '2026-03-25 07:41:31'),
+(7, 32, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(8, 33, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(9, 34, 1, 9, 42, 7, 0, '2026-03-25 07:41:31'),
+(10, 35, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(11, 37, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(12, 39, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(13, 46, 1, 9, 0, 18, 0, '2026-03-25 07:41:31'),
+(14, 48, 1, 9, 0, 1, 0, '2026-03-25 07:41:31'),
+(15, 2, 1, 10, 3, 29, 0, '2026-03-25 07:42:04'),
+(16, 11, 1, 10, 5, 27, 1, '2026-03-25 07:42:04'),
+(17, 23, 1, 10, 1, 7, 1, '2026-03-25 07:42:04'),
+(18, 24, 1, 10, 2, 13, 0, '2026-03-25 07:42:04'),
+(19, 25, 1, 10, 0, 0, 1, '2026-03-25 07:42:04'),
+(20, 26, 1, 10, 2, 22, 1, '2026-03-25 07:42:04'),
+(21, 27, 1, 10, 3, 16, 0, '2026-03-25 07:42:04'),
+(22, 28, 1, 10, 2, 23, 0, '2026-03-25 07:42:04'),
+(23, 29, 1, 10, 3, 18, 0, '2026-03-25 07:42:04'),
+(24, 30, 1, 10, 3, 44, 0, '2026-03-25 07:42:04'),
+(25, 32, 1, 10, 2, 19, 0, '2026-03-25 07:42:04'),
+(26, 33, 1, 10, 0, 9, 0, '2026-03-25 07:42:04'),
+(27, 34, 1, 10, 36, 56, 0, '2026-03-25 07:42:04'),
+(28, 35, 1, 10, 3, 20, 0, '2026-03-25 07:42:04'),
+(29, 37, 1, 10, 2, 20, 0, '2026-03-25 07:42:04'),
+(30, 39, 1, 10, 2, 14, 0, '2026-03-25 07:42:04'),
+(31, 44, 1, 10, 0, 6, 0, '2026-03-25 07:42:04'),
+(32, 45, 1, 10, 3, 50, 1, '2026-03-25 07:42:04'),
+(33, 46, 1, 10, 2, 21, 0, '2026-03-25 07:42:04'),
+(34, 47, 1, 10, 0, 1, 0, '2026-03-25 07:42:04'),
+(35, 48, 1, 10, 0, 3, 0, '2026-03-25 07:42:04'),
+(36, 2, 1, 11, 1, 7, 0, '2026-03-25 07:42:13'),
+(37, 11, 1, 11, 1, 11, 0, '2026-03-25 07:42:13'),
+(38, 23, 1, 11, 2, 0, 0, '2026-03-25 07:42:13'),
+(39, 25, 1, 11, 15, 0, 0, '2026-03-25 07:42:13'),
+(40, 26, 1, 11, 0, 16, 0, '2026-03-25 07:42:13'),
+(41, 27, 1, 11, 0, 7, 0, '2026-03-25 07:42:13'),
+(42, 28, 1, 11, 2, 8, 0, '2026-03-25 07:42:13'),
+(43, 29, 1, 11, 1, 0, 0, '2026-03-25 07:42:13'),
+(44, 30, 1, 11, 1, 47, 0, '2026-03-25 07:42:13'),
+(45, 32, 1, 11, 7, 4, 0, '2026-03-25 07:42:13'),
+(46, 33, 1, 11, 0, 33, 1, '2026-03-25 07:42:13'),
+(47, 34, 1, 11, 30, 31, 0, '2026-03-25 07:42:13'),
+(48, 35, 1, 11, 2, 9, 0, '2026-03-25 07:42:13'),
+(49, 37, 1, 11, 0, 2, 0, '2026-03-25 07:42:13'),
+(50, 39, 1, 11, 0, 2, 0, '2026-03-25 07:42:13'),
+(51, 45, 1, 11, 1, 38, 1, '2026-03-25 07:42:13'),
+(52, 46, 1, 11, 2, 19, 0, '2026-03-25 07:42:13'),
+(53, 48, 1, 11, 2, 5, 0, '2026-03-25 07:42:13'),
+(54, 11, 1, 12, 0, 18, 0, '2026-03-25 07:42:23'),
+(55, 24, 1, 12, 0, 9, 0, '2026-03-25 07:42:23'),
+(56, 25, 1, 12, 0, 1, 0, '2026-03-25 07:42:23'),
+(57, 26, 1, 12, 0, 11, 0, '2026-03-25 07:42:23'),
+(58, 27, 1, 12, 0, 4, 0, '2026-03-25 07:42:23'),
+(59, 28, 1, 12, 0, 11, 0, '2026-03-25 07:42:23'),
+(60, 30, 1, 12, 0, 24, 0, '2026-03-25 07:42:23'),
+(61, 32, 1, 12, 0, 4, 0, '2026-03-25 07:42:23'),
+(62, 33, 1, 12, 0, 36, 0, '2026-03-25 07:42:23'),
+(63, 34, 1, 12, 0, 36, 0, '2026-03-25 07:42:23'),
+(64, 35, 1, 12, 0, 10, 0, '2026-03-25 07:42:23'),
+(65, 37, 1, 12, 0, 4, 0, '2026-03-25 07:42:23'),
+(66, 39, 1, 12, 5, 17, 0, '2026-03-25 07:42:23'),
+(67, 44, 1, 12, 2, 1, 0, '2026-03-25 07:42:23'),
+(68, 45, 1, 12, 0, 18, 0, '2026-03-25 07:42:23'),
+(69, 46, 1, 12, 0, 14, 1, '2026-03-25 07:42:23'),
+(70, 47, 1, 12, 0, 1, 0, '2026-03-25 07:42:23'),
+(71, 48, 1, 12, 0, 3, 0, '2026-03-25 07:42:23'),
+(72, 11, 1, 1, 0, 35, 0, '2026-03-25 07:42:32'),
+(73, 24, 1, 1, 0, 1, 0, '2026-03-25 07:42:32'),
+(74, 25, 1, 1, 1, 21, 0, '2026-03-25 07:42:32'),
+(75, 26, 1, 1, 0, 14, 4, '2026-03-25 07:42:32'),
+(76, 27, 1, 1, 0, 8, 0, '2026-03-25 07:42:32'),
+(77, 28, 1, 1, 0, 32, 0, '2026-03-25 07:42:32'),
+(78, 29, 1, 1, 0, 5, 0, '2026-03-25 07:42:32'),
+(79, 30, 1, 1, 0, 23, 0, '2026-03-25 07:42:32'),
+(80, 32, 1, 1, 0, 2, 0, '2026-03-25 07:42:32'),
+(81, 33, 1, 1, 0, 102, 0, '2026-03-25 07:42:32'),
+(82, 34, 1, 1, 4, 9, 1, '2026-03-25 07:42:32'),
+(83, 35, 1, 1, 0, 6, 0, '2026-03-25 07:42:32'),
+(84, 37, 1, 1, 0, 2, 1, '2026-03-25 07:42:32'),
+(85, 39, 1, 1, 0, 2, 0, '2026-03-25 07:42:32'),
+(86, 44, 1, 1, 2, 0, 0, '2026-03-25 07:42:32'),
+(87, 45, 1, 1, 0, 13, 0, '2026-03-25 07:42:32'),
+(88, 46, 1, 1, 0, 5, 0, '2026-03-25 07:42:32'),
+(89, 47, 1, 1, 0, 6, 0, '2026-03-25 07:42:32'),
+(90, 48, 1, 1, 0, 5, 0, '2026-03-25 07:42:32'),
+(91, 2, 1, 2, 2, 0, 0, '2026-03-25 07:42:40'),
+(92, 11, 1, 2, 0, 11, 1, '2026-03-25 07:42:40'),
+(93, 23, 1, 2, 0, 5, 2, '2026-03-25 07:42:40'),
+(94, 24, 1, 2, 0, 1, 0, '2026-03-25 07:42:40'),
+(95, 25, 1, 2, 1, 0, 0, '2026-03-25 07:42:40'),
+(96, 26, 1, 2, 2, 18, 2, '2026-03-25 07:42:40'),
+(97, 27, 1, 2, 0, 9, 0, '2026-03-25 07:42:40'),
+(98, 28, 1, 2, 0, 21, 1, '2026-03-25 07:42:40'),
+(99, 29, 1, 2, 0, 3, 0, '2026-03-25 07:42:40'),
+(100, 30, 1, 2, 0, 3, 0, '2026-03-25 07:42:40'),
+(101, 32, 1, 2, 0, 4, 0, '2026-03-25 07:42:40'),
+(102, 33, 1, 2, 0, 53, 0, '2026-03-25 07:42:40'),
+(103, 34, 1, 2, 7, 7, 0, '2026-03-25 07:42:40'),
+(104, 35, 1, 2, 0, 13, 1, '2026-03-25 07:42:40'),
+(105, 37, 1, 2, 0, 5, 0, '2026-03-25 07:42:40'),
+(106, 39, 1, 2, 14, 5, 0, '2026-03-25 07:42:40'),
+(107, 45, 1, 2, 0, 10, 0, '2026-03-25 07:42:40'),
+(108, 46, 1, 2, 0, 2, 1, '2026-03-25 07:42:40'),
+(109, 47, 1, 2, 0, 2, 0, '2026-03-25 07:42:40'),
+(110, 48, 1, 2, 0, 9, 0, '2026-03-25 07:42:40'),
+(111, 34, 1, 3, 9, 2, 0, '2026-03-25 07:42:48');
 
 -- --------------------------------------------------------
 
@@ -16139,7 +16256,23 @@ INSERT INTO `correos` (`id_correo`, `entidad_tipo`, `id_entidad`, `direccion_cor
 (226, 'empresa_tutor', 23, 'cmartin@gestionlan.com', 'Trabajo'),
 (227, 'empresa_contacto', 31, 'valdetea2020@gmail.com', 'Trabajo'),
 (228, 'empresa_tutor', 22, 'valdetea2020@gmail.com', 'Trabajo'),
-(229, 'empresa', 25, 'web@caycon.es', 'Trabajo');
+(229, 'empresa', 25, 'web@caycon.es', 'Trabajo'),
+(230, 'alumno', 2, 'gonzalo.blazquez2@educa.madrid.org', 'EducaMadrid'),
+(231, 'alumno', 23, 'jose.lopez197@educa.madrid.org', 'EducaMadrid'),
+(232, 'alumno', 24, 'daniel.mangas@educa.madrid.org', 'EducaMadrid'),
+(233, 'alumno', 26, 'bartosz.mielnik@educa.madrid.org', 'EducaMadrid'),
+(234, 'alumno', 29, 'adrian.orovio@educa.madrid.org', 'EducaMadrid'),
+(235, 'alumno', 30, 'alejandro.pascual1@educa.madrid.org', NULL),
+(236, 'alumno', 32, 'ruben.perez22@educa.madrid.org', 'EducaMadrid'),
+(237, 'alumno', 34, 'cesar.puras@educa.madrid.org', 'EducaMadrid'),
+(238, 'alumno', 35, 'adrian.rodriguez215@educa.madrid.org', NULL),
+(239, 'alumno', 37, 'marcos.ruiz20@educa.madrid.org', 'EducaMadrid'),
+(240, 'alumno', 45, 'anderson.tul@educa.madrid.org', 'EducaMadrid'),
+(241, 'alumno', 46, 'adrian.vega10@educa.madrid.org', NULL),
+(242, 'empresa', 26, 'pedro.almagro@sirfenix.es', 'Trabajo'),
+(243, 'empresa_contacto', 33, 'pedro.almagro@sirfenix.es', 'Trabajo'),
+(244, 'empresa_tutor', 24, 'pedro.almagro@sirfenix.es', 'Trabajo'),
+(245, 'profesor', 3, 'sonia.almodovar@educa.madrid.org', 'EducaMadrid');
 
 -- --------------------------------------------------------
 
@@ -16819,7 +16952,8 @@ INSERT INTO `direcciones` (`id_direccion`, `id_empresa`, `id_pais`, `id_provinci
 (29, 22, 1, 28, 5, 10, 'Valdeón', '12', NULL, NULL, NULL, NULL, 'Local 57', 'Centro de Trabajo', '28947', 0),
 (30, 23, 1, 28, 62, 10, 'Río Manzanares', '4', NULL, NULL, '2', NULL, 'Centro de Asociaciones Pedro Zerolo', 'Principal', '28342', 1),
 (31, 24, 1, 28, 1, 5, 'Leonardo Da Vinci', '8', NULL, NULL, NULL, NULL, 'Oficina 121', 'Principal', '28906', 1),
-(32, 25, 1, 28, 4, 10, 'Ciudad de Frías', '25', NULL, NULL, NULL, NULL, 'Nave 8', 'Principal', '28021', 1);
+(32, 25, 1, 28, 4, 10, 'Ciudad de Frías', '25', NULL, NULL, NULL, NULL, 'Nave 8', 'Principal', '28021', 1),
+(33, 26, 1, 28, 66, 10, 'Guazalate', '18', NULL, NULL, NULL, NULL, NULL, 'Principal', '28670', 1);
 
 -- --------------------------------------------------------
 
@@ -16865,7 +16999,8 @@ INSERT INTO `empresas` (`id_empresa`, `cif`, `nombre`, `apellido1`, `apellido2`,
 (22, '03188516A', 'Beder David', 'García', 'Cardoza', 'Astrid Technology', 1573, NULL),
 (23, 'G02929891', 'Asociación Valdetea', NULL, NULL, 'Asociación Valdetea', 1331, NULL),
 (24, 'B86967502', 'Gestionlan Informática, S.L.', NULL, NULL, 'Gestionlan Informática, S.L.', 15666, NULL),
-(25, 'B82522418', 'Cableados y Conexiones, S.L.', NULL, NULL, 'Cableados y Conexiones, S.L.', 1308, NULL);
+(25, 'B82522418', 'Cableados y Conexiones, S.L.', NULL, NULL, 'Cableados y Conexiones, S.L.', 1308, NULL),
+(26, 'B01837913', 'Sirfénix Consultoría, S.L.', NULL, NULL, 'Sirfénix Consultoría, S.L.', 931, NULL);
 
 -- --------------------------------------------------------
 
@@ -16914,7 +17049,8 @@ INSERT INTO `empresas_contactos` (`id_empresa_contacto`, `id_empresa`, `apellido
 (29, 13, 'Torrijos', 'Azores', 'Javier', NULL, NULL),
 (30, 22, 'García', 'Cardoza', 'Beder David', NULL, NULL),
 (31, 23, 'Alonso de Liébana', 'Sierra', 'Patricia', NULL, NULL),
-(32, 24, 'Martín', 'Sánchez', 'Juan Carlos', NULL, NULL);
+(32, 24, 'Martín', 'Sánchez', 'Juan Carlos', NULL, NULL),
+(33, 26, 'Almagro', 'Fernández', 'Pedro', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -16958,7 +17094,8 @@ INSERT INTO `empresas_tutores` (`id_empresas_tutor`, `id_empresa`, `apellido1`, 
 (20, 19, 'Grande', 'Santamaría', 'Julián', '52100377H', NULL),
 (21, 22, 'García', 'Cardoza', 'Beder David', '03188516A', NULL),
 (22, 23, 'Alonso de Liébana', 'Sierra', 'Patricia', '70417341N', NULL),
-(23, 24, 'Martín', 'Sánchez', 'Juan Carlos', '51397405H', NULL);
+(23, 24, 'Martín', 'Sánchez', 'Juan Carlos', '51397405H', NULL),
+(24, 26, 'Almagro', 'Fernández', 'Pedro', '47035329F', NULL);
 
 -- --------------------------------------------------------
 
@@ -17286,7 +17423,7 @@ INSERT INTO `modulos_profesores` (`id_modulo_profesor`, `id_modulo`, `id_profeso
 (34, 11, 7, 1),
 (35, 8, 2, 1),
 (36, 15, 8, 1),
-(37, 14, 3, 1);
+(38, 14, 3, 1);
 
 -- --------------------------------------------------------
 
@@ -17498,8 +17635,8 @@ INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion
 (18, 1, 19, 23, 20, 16, '2025-10-01', '2025-12-17', NULL, NULL, NULL, 0, '2025-12-17', 370, 0, 0, 0, 0, NULL, NULL),
 (19, 26, 13, 17, 14, 166, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
 (20, 27, 13, 17, 14, 166, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
-(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
-(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 500, 0, 0, 0, 0, NULL, NULL),
+(21, 29, 12, 16, 13, 165, '2026-02-23', '2026-06-03', '2026-03-27', 'Renuncia de la empresa', NULL, 1, '2026-06-04', 500, 0, 1, 192, 0, NULL, NULL),
+(22, 24, 12, 16, 13, 165, '2026-02-23', '2026-06-03', '2026-03-27', 'Renuncia de la empresa', NULL, 1, '2026-06-04', 500, 0, 1, 192, 0, NULL, NULL),
 (23, 35, 15, 19, 16, 167, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, 0, NULL, NULL),
 (24, 45, 15, 19, 16, 167, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 0, 0, 0, 0, NULL, NULL),
 (25, 37, 6, 9, 7, 174, '2026-02-23', '2026-06-03', NULL, NULL, NULL, 0, '2026-06-03', 500, 0, 0, 0, 0, NULL, NULL),
@@ -17507,7 +17644,8 @@ INSERT INTO `practicas` (`id_practica`, `id_alumno`, `id_empresa`, `id_direccion
 (27, 32, 9, 13, 10, 177, '2026-02-26', '2026-06-08', NULL, NULL, NULL, 0, '2026-06-08', 500, 0, 0, 0, 0, NULL, NULL),
 (30, 46, 8, 12, 9, 193, '2026-03-02', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 500, 1, 0, 0, 1, NULL, NULL),
 (33, 44, 23, 30, 22, 201, '2026-03-02', '2026-06-03', '2026-03-06', 'Cambio de empresa', NULL, 0, '2026-06-03', 460, 0, 1, 40, 0, NULL, NULL),
-(34, 44, 24, 31, 23, 202, '2026-03-09', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 420, 0, 0, 0, 0, NULL, NULL);
+(34, 44, 24, 31, 23, 202, '2026-03-09', '2026-06-03', NULL, NULL, NULL, 1, '2026-06-04', 420, 0, 0, 0, 0, NULL, NULL),
+(36, 34, 26, 33, 24, 206, '2026-04-15', '2026-06-10', NULL, NULL, NULL, 0, '2026-06-10', 228, 0, 0, 0, 1, NULL, 'No da tiempo a que termine las 500 horas antes de la evaluación extraordinaria. Tendrá que terminar las 272 horas restantes el curso que viene.');
 
 -- --------------------------------------------------------
 
@@ -17558,7 +17696,102 @@ INSERT INTO `practicas_anexos_estados` (`id_practicas_anexo_estado`, `estado`) V
 (6, 'Firmado por el director'),
 (7, 'Completado'),
 (8, 'Enviado al alumno'),
-(9, 'Devuelto a la empresa');
+(9, 'Devuelto a la empresa'),
+(10, 'Enviado a la DAT'),
+(11, 'Autorizado');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `practicas_anexos_seguimiento`
+--
+
+CREATE TABLE `practicas_anexos_seguimiento` (
+  `id_practica_anexo_seguimiento` int(10) UNSIGNED NOT NULL,
+  `id_practica` int(10) UNSIGNED NOT NULL,
+  `id_practicas_anexo` int(10) UNSIGNED NOT NULL,
+  `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL,
+  `numero_seguimiento` int(10) UNSIGNED NOT NULL DEFAULT 1,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `practicas_anexos_seguimiento`
+--
+
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES
+(2, 2, 1, 2, 1, '2026-04-23 10:26:01', '2026-04-23 10:26:01'),
+(3, 2, 1, 3, 1, '2026-04-23 10:26:09', '2026-04-23 10:26:09'),
+(4, 2, 1, 4, 1, '2026-04-23 10:26:14', '2026-04-23 10:26:14'),
+(5, 2, 1, 5, 1, '2026-04-23 10:26:17', '2026-04-23 10:26:17'),
+(6, 2, 1, 6, 1, '2026-04-23 10:26:18', '2026-04-23 10:26:18'),
+(8, 2, 1, 7, 1, '2026-04-23 10:36:49', '2026-04-23 10:36:49'),
+(10, 2, 2, 6, 1, '2026-04-23 11:07:07', '2026-04-23 11:07:07'),
+(12, 2, 2, 5, 1, '2026-04-23 11:54:06', '2026-04-23 11:54:06'),
+(13, 2, 5, 3, 1, '2026-04-23 12:08:32', '2026-04-23 12:08:32'),
+(14, 30, 1, 2, 1, '2026-04-23 15:04:20', '2026-04-23 15:04:20'),
+(15, 30, 1, 3, 1, '2026-04-23 15:04:22', '2026-04-23 15:04:22'),
+(16, 30, 1, 4, 1, '2026-04-23 15:04:23', '2026-04-23 15:04:23'),
+(17, 30, 1, 5, 1, '2026-04-23 15:04:25', '2026-04-23 15:04:25'),
+(18, 30, 1, 6, 1, '2026-04-23 15:04:27', '2026-04-23 15:04:27'),
+(19, 30, 2, 5, 1, '2026-04-23 15:04:28', '2026-04-23 15:04:28'),
+(20, 30, 2, 6, 1, '2026-04-23 15:04:30', '2026-04-23 15:04:30'),
+(21, 30, 3, 3, 1, '2026-04-23 15:04:33', '2026-04-23 15:04:33'),
+(22, 30, 4, 10, 1, '2026-04-23 15:04:36', '2026-04-23 15:04:36'),
+(23, 30, 4, 11, 1, '2026-04-23 15:04:37', '2026-04-23 15:04:37'),
+(26, 19, 1, 2, 1, '2026-04-25 06:33:44', '2026-04-25 06:33:44'),
+(27, 12, 1, 2, 1, '2026-04-25 14:49:25', '2026-04-25 14:49:25'),
+(28, 12, 1, 3, 1, '2026-04-25 14:49:25', '2026-04-25 14:49:25'),
+(29, 12, 1, 4, 1, '2026-04-25 14:49:28', '2026-04-25 14:49:28'),
+(32, 18, 1, 2, 1, '2026-04-27 11:08:03', '2026-04-27 11:08:03'),
+(33, 18, 1, 3, 1, '2026-04-27 11:08:04', '2026-04-27 11:08:04'),
+(34, 18, 1, 4, 1, '2026-04-27 11:26:45', '2026-04-27 11:26:45'),
+(35, 18, 1, 5, 1, '2026-04-27 11:26:48', '2026-04-27 11:26:48'),
+(36, 18, 1, 6, 1, '2026-04-27 11:26:59', '2026-04-27 11:26:59'),
+(37, 18, 1, 9, 1, '2026-04-27 11:27:00', '2026-04-27 11:27:00'),
+(38, 18, 2, 5, 1, '2026-04-27 11:27:03', '2026-04-27 11:27:03'),
+(39, 18, 2, 6, 1, '2026-04-27 11:27:04', '2026-04-27 11:27:04'),
+(40, 18, 3, 3, 1, '2026-04-27 11:27:14', '2026-04-27 11:27:14'),
+(41, 18, 3, 4, 1, '2026-04-27 11:27:15', '2026-04-27 11:27:15'),
+(42, 18, 3, 9, 1, '2026-04-27 11:27:16', '2026-04-27 11:27:16'),
+(43, 18, 5, 3, 1, '2026-04-27 11:27:20', '2026-04-27 11:27:20'),
+(44, 18, 5, 4, 1, '2026-04-27 11:27:20', '2026-04-27 11:27:20'),
+(45, 18, 6, 3, 1, '2026-04-27 11:27:23', '2026-04-27 11:27:23'),
+(46, 18, 6, 4, 1, '2026-04-27 11:27:25', '2026-04-27 11:27:25'),
+(47, 14, 1, 2, 1, '2026-04-27 12:02:16', '2026-04-27 12:02:16'),
+(48, 14, 1, 3, 1, '2026-04-27 12:02:17', '2026-04-27 12:02:17'),
+(49, 14, 1, 4, 1, '2026-04-27 12:02:17', '2026-04-27 12:02:17'),
+(50, 14, 1, 5, 1, '2026-04-27 12:02:17', '2026-04-27 12:02:17'),
+(51, 14, 1, 6, 1, '2026-04-27 12:02:18', '2026-04-27 12:02:18'),
+(52, 14, 1, 9, 1, '2026-04-27 12:02:18', '2026-04-27 12:02:18'),
+(53, 14, 2, 5, 1, '2026-04-27 12:02:31', '2026-04-27 12:02:31'),
+(54, 14, 2, 6, 1, '2026-04-27 12:02:31', '2026-04-27 12:02:31'),
+(55, 14, 3, 3, 1, '2026-04-27 12:02:33', '2026-04-27 12:02:33'),
+(56, 14, 3, 4, 1, '2026-04-27 12:02:33', '2026-04-27 12:02:33'),
+(57, 14, 3, 9, 1, '2026-04-27 12:02:34', '2026-04-27 12:02:34'),
+(58, 14, 5, 3, 1, '2026-04-27 12:02:36', '2026-04-27 12:02:36'),
+(59, 14, 5, 4, 1, '2026-04-27 12:02:36', '2026-04-27 12:02:36'),
+(60, 14, 6, 3, 1, '2026-04-27 12:02:38', '2026-04-27 12:02:38'),
+(61, 14, 6, 4, 1, '2026-04-27 12:02:38', '2026-04-27 12:02:38'),
+(62, 14, 4, 10, 1, '2026-04-27 12:02:40', '2026-04-27 12:02:40'),
+(63, 14, 4, 11, 1, '2026-04-27 12:02:41', '2026-04-27 12:02:41'),
+(64, 19, 2, 5, 1, '2026-04-27 12:29:12', '2026-04-27 12:29:12'),
+(65, 19, 2, 6, 1, '2026-04-27 12:29:12', '2026-04-27 12:29:12'),
+(66, 20, 2, 5, 1, '2026-04-27 12:29:15', '2026-04-27 12:29:15'),
+(67, 20, 2, 6, 1, '2026-04-27 12:29:15', '2026-04-27 12:29:15'),
+(68, 3, 2, 5, 1, '2026-04-27 12:29:17', '2026-04-27 12:29:17'),
+(69, 3, 2, 6, 1, '2026-04-27 12:29:18', '2026-04-27 12:29:18'),
+(70, 21, 2, 5, 1, '2026-04-27 12:29:19', '2026-04-27 12:29:19'),
+(71, 21, 2, 6, 1, '2026-04-27 12:29:20', '2026-04-27 12:29:20'),
+(72, 4, 2, 5, 1, '2026-04-27 12:29:22', '2026-04-27 12:29:22'),
+(73, 4, 2, 6, 1, '2026-04-27 12:29:22', '2026-04-27 12:29:22'),
+(74, 5, 2, 5, 1, '2026-04-27 12:29:24', '2026-04-27 12:29:24'),
+(75, 5, 2, 6, 1, '2026-04-27 12:29:25', '2026-04-27 12:29:25'),
+(76, 27, 2, 5, 1, '2026-04-27 12:29:26', '2026-04-27 12:29:26'),
+(77, 27, 2, 6, 1, '2026-04-27 12:29:27', '2026-04-27 12:29:27'),
+(78, 36, 2, 5, 1, '2026-04-27 12:29:29', '2026-04-27 12:29:29'),
+(79, 36, 2, 6, 1, '2026-04-27 12:29:30', '2026-04-27 12:29:30');
 
 -- --------------------------------------------------------
 
@@ -17760,7 +17993,12 @@ INSERT INTO `practicas_horario` (`id_practicas_horario`, `id_practica`, `dia_sem
 (224, 34, 4, '09:00:00', '14:00:00'),
 (225, 34, 4, '15:00:00', '18:00:00'),
 (226, 34, 5, '09:00:00', '14:00:00'),
-(227, 34, 5, '15:00:00', '18:00:00');
+(227, 34, 5, '15:00:00', '18:00:00'),
+(233, 36, 1, '08:30:00', '14:30:00'),
+(234, 36, 2, '08:30:00', '14:30:00'),
+(235, 36, 3, '08:30:00', '14:30:00'),
+(236, 36, 4, '08:30:00', '14:30:00'),
+(237, 36, 5, '08:30:00', '14:30:00');
 
 -- --------------------------------------------------------
 
@@ -18230,7 +18468,10 @@ INSERT INTO `telefonos` (`id_telefono`, `entidad_tipo`, `id_entidad`, `telefono`
 (216, 'empresa', 24, '917375777', 'Trabajo'),
 (217, 'empresa_contacto', 32, '634284642', 'Trabajo'),
 (218, 'empresa_tutor', 23, '634284642', 'Trabajo'),
-(219, 'empresa', 25, '914280036', 'Trabajo');
+(219, 'empresa', 25, '914280036', 'Trabajo'),
+(220, 'empresa', 26, '666486999', 'Trabajo'),
+(221, 'empresa_contacto', 33, '666486999', 'Trabajo'),
+(222, 'empresa_tutor', 24, '666486999', 'Trabajo');
 
 -- --------------------------------------------------------
 
@@ -18583,6 +18824,17 @@ ALTER TABLE `practicas_anexos_estados`
   ADD PRIMARY KEY (`id_practicas_anexo_estado`);
 
 --
+-- Indices de la tabla `practicas_anexos_seguimiento`
+--
+ALTER TABLE `practicas_anexos_seguimiento`
+  ADD PRIMARY KEY (`id_practica_anexo_seguimiento`),
+  ADD UNIQUE KEY `uq_practica_anexo_seguimiento` (`id_practica`,`id_practicas_anexo`,`id_practicas_anexo_estado`,`numero_seguimiento`),
+  ADD KEY `idx_pas_practica` (`id_practica`),
+  ADD KEY `idx_pas_anexo` (`id_practicas_anexo`),
+  ADD KEY `idx_pas_estado` (`id_practicas_anexo_estado`),
+  ADD KEY `idx_pas_practica_anexo_numero` (`id_practica`,`id_practicas_anexo`,`numero_seguimiento`);
+
+--
 -- Indices de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
@@ -18660,7 +18912,7 @@ ALTER TABLE `alumnos`
 -- AUTO_INCREMENT de la tabla `asistencia_mensual`
 --
 ALTER TABLE `asistencia_mensual`
-  MODIFY `id_asistencia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_asistencia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
 
 --
 -- AUTO_INCREMENT de la tabla `asistencia_modulo_acumulada`
@@ -18690,7 +18942,7 @@ ALTER TABLE `codigos_postales`
 -- AUTO_INCREMENT de la tabla `correos`
 --
 ALTER TABLE `correos`
-  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
+  MODIFY `id_correo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=246;
 
 --
 -- AUTO_INCREMENT de la tabla `criterios_evaluacion`
@@ -18714,25 +18966,25 @@ ALTER TABLE `cursos_escolares`
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id_direccion` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas`
 --
 ALTER TABLE `empresas`
-  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id_empresa` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_contactos`
 --
 ALTER TABLE `empresas_contactos`
-  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id_empresa_contacto` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `empresas_tutores`
 --
 ALTER TABLE `empresas_tutores`
-  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id_empresas_tutor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de la tabla `evaluaciones`
@@ -18774,7 +19026,7 @@ ALTER TABLE `modulos`
 -- AUTO_INCREMENT de la tabla `modulos_profesores`
 --
 ALTER TABLE `modulos_profesores`
-  MODIFY `id_modulo_profesor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id_modulo_profesor` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT de la tabla `niveles`
@@ -18798,7 +19050,7 @@ ALTER TABLE `paises`
 -- AUTO_INCREMENT de la tabla `practicas`
 --
 ALTER TABLE `practicas`
-  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id_practica` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_anexos`
@@ -18810,13 +19062,19 @@ ALTER TABLE `practicas_anexos`
 -- AUTO_INCREMENT de la tabla `practicas_anexos_estados`
 --
 ALTER TABLE `practicas_anexos_estados`
-  MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT de la tabla `practicas_anexos_seguimiento`
+--
+ALTER TABLE `practicas_anexos_seguimiento`
+  MODIFY `id_practica_anexo_seguimiento` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
-  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=233;
+  MODIFY `id_practicas_horario` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=238;
 
 --
 -- AUTO_INCREMENT de la tabla `practicas_pasos`
@@ -18852,7 +19110,7 @@ ALTER TABLE `resultados_aprendizaje`
 -- AUTO_INCREMENT de la tabla `telefonos`
 --
 ALTER TABLE `telefonos`
-  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
+  MODIFY `id_telefono` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
 
 --
 -- AUTO_INCREMENT de la tabla `tutorias`
@@ -18997,6 +19255,14 @@ ALTER TABLE `practicas`
   ADD CONSTRAINT `fk_pra_direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`),
   ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_tutor` FOREIGN KEY (`id_empresa_tutor`) REFERENCES `empresas_tutores` (`id_empresas_tutor`);
+
+--
+-- Filtros para la tabla `practicas_anexos_seguimiento`
+--
+ALTER TABLE `practicas_anexos_seguimiento`
+  ADD CONSTRAINT `fk_pas_anexo` FOREIGN KEY (`id_practicas_anexo`) REFERENCES `practicas_anexos` (`id_practicas_anexo`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_pas_estado` FOREIGN KEY (`id_practicas_anexo_estado`) REFERENCES `practicas_anexos_estados` (`id_practicas_anexo_estado`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_pas_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `practicas_horario`

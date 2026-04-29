@@ -2296,16 +2296,16 @@ a.edit-toggle:focus {
 
 .practicas-anexos-lista {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .practicas-anexos-practica {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: #fff;
-  padding: 14px;
+  padding: 10px;
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .practicas-anexos-practica-head {

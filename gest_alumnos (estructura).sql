@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 24-03-2026 a las 13:50:17
+-- Tiempo de generación: 29-04-2026 a las 09:30:27
 -- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Versión de PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -483,6 +483,22 @@ CREATE TABLE `practicas_anexos_estados` (
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `practicas_anexos_seguimiento`
+--
+
+CREATE TABLE `practicas_anexos_seguimiento` (
+  `id_practica_anexo_seguimiento` int(10) UNSIGNED NOT NULL,
+  `id_practica` int(10) UNSIGNED NOT NULL,
+  `id_practicas_anexo` int(10) UNSIGNED NOT NULL,
+  `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL,
+  `numero_seguimiento` int(10) UNSIGNED NOT NULL DEFAULT 1,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `practicas_horario`
 --
 
@@ -841,6 +857,17 @@ ALTER TABLE `practicas_anexos_estados`
   ADD PRIMARY KEY (`id_practicas_anexo_estado`);
 
 --
+-- Indices de la tabla `practicas_anexos_seguimiento`
+--
+ALTER TABLE `practicas_anexos_seguimiento`
+  ADD PRIMARY KEY (`id_practica_anexo_seguimiento`),
+  ADD UNIQUE KEY `uq_practica_anexo_seguimiento` (`id_practica`,`id_practicas_anexo`,`id_practicas_anexo_estado`,`numero_seguimiento`),
+  ADD KEY `idx_pas_practica` (`id_practica`),
+  ADD KEY `idx_pas_anexo` (`id_practicas_anexo`),
+  ADD KEY `idx_pas_estado` (`id_practicas_anexo_estado`),
+  ADD KEY `idx_pas_practica_anexo_numero` (`id_practica`,`id_practicas_anexo`,`numero_seguimiento`);
+
+--
 -- Indices de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
@@ -1071,6 +1098,12 @@ ALTER TABLE `practicas_anexos_estados`
   MODIFY `id_practicas_anexo_estado` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `practicas_anexos_seguimiento`
+--
+ALTER TABLE `practicas_anexos_seguimiento`
+  MODIFY `id_practica_anexo_seguimiento` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `practicas_horario`
 --
 ALTER TABLE `practicas_horario`
@@ -1255,6 +1288,14 @@ ALTER TABLE `practicas`
   ADD CONSTRAINT `fk_pra_direccion` FOREIGN KEY (`id_direccion`) REFERENCES `direcciones` (`id_direccion`),
   ADD CONSTRAINT `fk_pra_empresa` FOREIGN KEY (`id_empresa`) REFERENCES `empresas` (`id_empresa`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_pra_tutor` FOREIGN KEY (`id_empresa_tutor`) REFERENCES `empresas_tutores` (`id_empresas_tutor`);
+
+--
+-- Filtros para la tabla `practicas_anexos_seguimiento`
+--
+ALTER TABLE `practicas_anexos_seguimiento`
+  ADD CONSTRAINT `fk_pas_anexo` FOREIGN KEY (`id_practicas_anexo`) REFERENCES `practicas_anexos` (`id_practicas_anexo`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_pas_estado` FOREIGN KEY (`id_practicas_anexo_estado`) REFERENCES `practicas_anexos_estados` (`id_practicas_anexo_estado`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_pas_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `practicas_horario`
