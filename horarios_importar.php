@@ -63,6 +63,84 @@ function parse_time_range(string $raw): ?array {
   return null;
 }
 
+function split_tramo_tokens(string $raw): array {
+  $raw = trim($raw);
+  if ($raw === '') {
+    return [];
+  }
+
+  $parts = preg_split('/\s*[\/,;]+\s*/u', $raw) ?: [];
+  $tokens = [];
+  foreach ($parts as $part) {
+    $part = trim((string) $part);
+    if ($part !== '') {
+      $tokens[] = $part;
+    }
+  }
+
+  if ($tokens === []) {
+    return [$raw];
+  }
+
+  return $tokens;
+}
+
+function resolve_tramo_ids_from_csv(string $tramoRaw, array $tramosRows, array $tramosByRange, array $tramosByToken): array {
+  $resolved = [];
+  $tokens = split_tramo_tokens($tramoRaw);
+  if ($tokens === []) {
+    $tokens = [$tramoRaw];
+  }
+
+  foreach ($tokens as $token) {
+    $range = parse_time_range($token);
+    if ($range !== null) {
+      $rangeKey = $range[0] . '-' . $range[1];
+      if (isset($tramosByRange[$rangeKey])) {
+        $resolved[] = (int) $tramosByRange[$rangeKey];
+        continue;
+      }
+
+      $matches = [];
+      foreach ($tramosRows as $tramo) {
+        $horaInicio = (string) ($tramo['hora_inicio'] ?? '');
+        $horaFin = (string) ($tramo['hora_fin'] ?? '');
+        if ($horaInicio >= $range[0] && $horaFin <= $range[1]) {
+          $matches[] = (int) $tramo['id_horario_tramo'];
+        }
+      }
+
+      if ($matches !== []) {
+        foreach ($matches as $id) {
+          $resolved[] = $id;
+        }
+        continue;
+      }
+    }
+
+    $tramoId = null;
+    $tk = normalize_key($token);
+    if (isset($tramosByToken[$tk])) {
+      $tramoId = (int) $tramosByToken[$tk];
+    }
+
+    if ($tramoId === null && preg_match('/\d+/', $token, $nm)) {
+      $numKey = normalize_key($nm[0]);
+      if ($numKey !== '' && isset($tramosByToken[$numKey])) {
+        $tramoId = (int) $tramosByToken[$numKey];
+      }
+    }
+
+    if ($tramoId !== null) {
+      $resolved[] = $tramoId;
+    }
+  }
+
+  $resolved = array_values(array_unique($resolved));
+  sort($resolved);
+  return $resolved;
+}
+
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar, activo FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
 
@@ -252,40 +330,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               continue;
             }
 
-            $tramoId = null;
-            $range = parse_time_range($tramoRaw);
-            if ($range !== null) {
-              $rangeKey = $range[0] . '-' . $range[1];
-              if (isset($tramosByRange[$rangeKey])) {
-                $tramoId = (int) $tramosByRange[$rangeKey];
-              }
-            }
+            $tramoIds = resolve_tramo_ids_from_csv($tramoRaw, $tramosRows, $tramosByRange, $tramosByToken);
 
-            if ($tramoId === null) {
-              $tk = normalize_key($tramoRaw);
-              if (isset($tramosByToken[$tk])) {
-                $tramoId = (int) $tramosByToken[$tk];
-              }
-            }
-
-            if ($tramoId === null && preg_match('/\d+/', $tramoRaw, $nm)) {
-              $numKey = normalize_key($nm[0]);
-              if ($numKey !== '' && isset($tramosByToken[$numKey])) {
-                $tramoId = (int) $tramosByToken[$numKey];
-              }
-            }
-
-            if ($tramoId === null) {
+            if ($tramoIds === []) {
               $result['tramos_no_encontrados'][] = 'Línea ' . $line . ' [' . $tramoRaw . ']';
               continue;
             }
 
-            $slotKey = $dia . '-' . $tramoId;
-            $slots[$slotKey] = [
-              'dia_semana' => $dia,
-              'id_horario_tramo' => $tramoId,
-              'id_modulo' => $moduleId,
-            ];
+            foreach ($tramoIds as $tramoId) {
+              $slotKey = $dia . '-' . $tramoId;
+              if (isset($slots[$slotKey]) && (int) $slots[$slotKey]['id_modulo'] !== (int) $moduleId) {
+                $result['errores'][] = 'Conflicto slot en línea ' . $line . ': día ' . $dia . ', tramo ' . $tramoId . ', módulo anterior ' . $slots[$slotKey]['id_modulo'] . ', módulo nuevo ' . $moduleId;
+              }
+              $slots[$slotKey] = [
+                'dia_semana' => $dia,
+                'id_horario_tramo' => $tramoId,
+                'id_modulo' => $moduleId,
+              ];
+            }
           }
         }
 
