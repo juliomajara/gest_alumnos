@@ -2648,9 +2648,20 @@ a.edit-toggle:focus {
   min-height: 44px;
 }
 
-.horarios-view-table tbody td:hover,
-.horarios-view-table tbody tr:hover td {
-  background-color: inherit;
+.horarios-view-table tbody td,
+.horarios-view-table tbody tr:nth-child(odd) td,
+.horarios-view-table tbody tr:nth-child(even) td,
+.horarios-view-table tbody tr:hover td,
+.horarios-view-table tbody td:hover {
+  transition: none;
+}
+
+.horarios-view-table tbody td:not(.horarios-module-cell),
+.horarios-view-table tbody tr:nth-child(odd) td:not(.horarios-module-cell),
+.horarios-view-table tbody tr:nth-child(even) td:not(.horarios-module-cell),
+.horarios-view-table tbody tr:hover td:not(.horarios-module-cell),
+.horarios-view-table tbody td:hover:not(.horarios-module-cell) {
+  background-color: #fff;
 }
 
 .horarios-view-table td.horarios-module-cell.module-color-1,
