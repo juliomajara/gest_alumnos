@@ -2508,6 +2508,16 @@ a.edit-toggle:focus {
   margin-bottom: 12px;
 }
 
+.horarios-configuracion-fields,
+.horarios-configuracion-actions {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.horarios-configuracion-actions {
+  margin-left: auto;
+}
 .horarios-editor {
   display: flex;
   flex-direction: column;
