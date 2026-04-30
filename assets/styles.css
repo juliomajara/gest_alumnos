@@ -2661,7 +2661,7 @@ a.edit-toggle:focus {
 .horarios-view-table tbody tr:nth-child(even) td:not(.horarios-module-cell),
 .horarios-view-table tbody tr:hover td:not(.horarios-module-cell),
 .horarios-view-table tbody td:hover:not(.horarios-module-cell) {
-  background-color: #fff !important;
+  background-color: #fff;
 }
 
 .horarios-view-table td.horarios-module-cell.module-color-1,
