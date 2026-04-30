@@ -541,6 +541,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <h1>Importar horarios</h1>
           <p class="subheading">Selecciona curso escolar, grupo y carga el CSV del horario.</p>
         </div>
+        <div class="header-actions">
+          <a class="primary-button" href="horarios.php?id_curso_escolar=<?php echo (int) $selected['id_curso_escolar']; ?>&id_grupo=<?php echo (int) $selected['id_grupo']; ?>">Volver a horarios</a>
+        </div>
       </header>
 
       <section class="panel">
