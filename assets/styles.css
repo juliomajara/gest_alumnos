@@ -2816,3 +2816,101 @@ a.edit-toggle:focus {
     background-color: #9ca3af !important;
     color: #111827 !important;
 }
+
+/* =========================================================
+   PARCHE FINAL HORARIOS.PHP
+   Quita cebreado y hover SOLO en la tabla de horarios
+   ========================================================= */
+
+.panel-grid table.horarios-view-table tbody tr,
+.panel-grid table.horarios-view-table tbody tr:nth-child(odd),
+.panel-grid table.horarios-view-table tbody tr:nth-child(even),
+.panel-grid table.horarios-view-table tbody tr:hover {
+  background: transparent !important;
+}
+
+.panel-grid table.horarios-view-table tbody td,
+.panel-grid table.horarios-view-table tbody tr:nth-child(odd) td,
+.panel-grid table.horarios-view-table tbody tr:nth-child(even) td,
+.panel-grid table.horarios-view-table tbody tr:hover td,
+.panel-grid table.horarios-view-table tbody td:hover {
+  background-color: #ffffff !important;
+  transition: none !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-empty-cell,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-empty-cell,
+.panel-grid table.horarios-view-table tbody td.horarios-empty-cell:hover {
+  background-color: #ffffff !important;
+  color: var(--text) !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-1,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-1,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-1:hover {
+  background-color: #fff100 !important;
+  color: #111827 !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-2,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-2,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-2:hover {
+  background-color: #e81123 !important;
+  color: #ffffff !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-3,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-3,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-3:hover {
+  background-color: #68217a !important;
+  color: #ffffff !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-4,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-4,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-4:hover {
+  background-color: #00bcf2 !important;
+  color: #111827 !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-5,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-5,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-5:hover {
+  background-color: #009e49 !important;
+  color: #ffffff !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-6,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-6,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-6:hover {
+  background-color: #ff8c00 !important;
+  color: #111827 !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-7,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-7,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-7:hover {
+  background-color: #ec008c !important;
+  color: #ffffff !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-8,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-8,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-8:hover {
+  background-color: #00188f !important;
+  color: #ffffff !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-9,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-9,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-9:hover {
+  background-color: #00b294 !important;
+  color: #111827 !important;
+}
+
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-10,
+.panel-grid table.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-10,
+.panel-grid table.horarios-view-table tbody td.horarios-module-cell.module-color-10:hover {
+  background-color: #bad80a !important;
+  color: #111827 !important;
+}
