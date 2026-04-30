@@ -2729,3 +2729,90 @@ a.edit-toggle:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- PARCHE ESPECÍFICO PARA HORARIOS (No afecta al resto de la web) --- */
+
+.panel-grid .horarios-view-table tbody tr:nth-child(even) td,
+.panel-grid .horarios-view-table tbody tr:nth-child(odd) td {
+    background-color: #ffffff !important;
+}
+
+.panel-grid .horarios-view-table tbody tr:hover td {
+    background-color: #ffffff !important;
+}
+
+.horarios-view-table td.horarios-empty-cell,
+.horarios-view-table tbody tr:hover td.horarios-empty-cell {
+    background-color: #ffffff !important;
+}
+
+.horarios-view-table td.horarios-module-cell {
+    font-weight: 700;
+    text-align: center;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-1,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-1 {
+    background-color: #fff100 !important;
+    color: #111827 !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-2,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-2 {
+    background-color: #e81123 !important;
+    color: #fff !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-3,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-3 {
+    background-color: #68217a !important;
+    color: #fff !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-4,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-4 {
+    background-color: #00bcf2 !important;
+    color: #111827 !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-5,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-5 {
+    background-color: #009e49 !important;
+    color: #fff !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-6,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-6 {
+    background-color: #ff8c00 !important;
+    color: #111827 !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-7,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-7 {
+    background-color: #ec008c !important;
+    color: #fff !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-8,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-8 {
+    background-color: #00188f !important;
+    color: #fff !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-9,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-9 {
+    background-color: #00b294 !important;
+    color: #111827 !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-10,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-10 {
+    background-color: #bad80a !important;
+    color: #111827 !important;
+}
+
+.horarios-view-table td.horarios-module-cell.module-color-disabled,
+.horarios-view-table tbody tr:hover td.horarios-module-cell.module-color-disabled {
+    background-color: #9ca3af !important;
+    color: #111827 !important;
+}
