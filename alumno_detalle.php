@@ -82,6 +82,14 @@ $practicas = [];
 $horarios = [];
 $phones = [];
 $emails = [];
+$attendance_totals = [
+  'justificadas' => 0.0,
+  'injustificadas' => 0.0,
+  'retrasos' => 0.0,
+  'faltas' => 0.0,
+];
+$horas_semanales_matriculadas = 0.0;
+$porcentaje_faltas = null;
 
 if ($id_alumno > 0) {
   $student_stmt = $pdo->prepare(
@@ -240,6 +248,33 @@ if ($student) {
   );
   $attendance_stmt->execute(['id_alumno' => $id_alumno]);
   $attendance = $attendance_stmt->fetchAll();
+
+  $hours_stmt = $pdo->prepare(
+    'SELECT SUM(COALESCE(m.horas_semanales, 0)) AS horas_semanales_total
+     FROM alumno_modulo am
+     INNER JOIN modulos m ON m.id_modulo = am.id_modulo
+     WHERE am.id_alumno = :id_alumno
+       AND COALESCE(m.horas_semanales, 0) > 0'
+  );
+  $hours_stmt->execute(['id_alumno' => $id_alumno]);
+  $hours_row = $hours_stmt->fetch(PDO::FETCH_ASSOC);
+  $horas_semanales_matriculadas = (float) ($hours_row['horas_semanales_total'] ?? 0);
+
+  foreach ($attendance as $attendance_row) {
+    $justificadas = (float) ($attendance_row['faltas_justificadas'] ?? 0);
+    $injustificadas = (float) ($attendance_row['faltas_injustificadas'] ?? 0);
+    $retrasos = (float) ($attendance_row['retrasos'] ?? 0);
+
+    $attendance_totals['justificadas'] += $justificadas;
+    $attendance_totals['injustificadas'] += $injustificadas;
+    $attendance_totals['retrasos'] += $retrasos;
+  }
+
+  $attendance_totals['faltas'] = $attendance_totals['justificadas'] + $attendance_totals['injustificadas'];
+
+  if ($horas_semanales_matriculadas > 0) {
+    $porcentaje_faltas = ($attendance_totals['faltas'] / $horas_semanales_matriculadas) * 100;
+  }
 
   $practicas_stmt = $pdo->prepare(
     'SELECT pr.id_practica,
@@ -801,9 +836,18 @@ $dias_semana = [
                       <td><?php echo htmlspecialchars((string) $row['retrasos'], ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
+                  <tr>
+                    <td colspan="2"><strong>Total</strong></td>
+                    <td><strong><?php echo htmlspecialchars((string) (0 + $attendance_totals['justificadas']), ENT_QUOTES, 'UTF-8'); ?></strong></td>
+                    <td><strong><?php echo htmlspecialchars((string) (0 + $attendance_totals['injustificadas']), ENT_QUOTES, 'UTF-8'); ?></strong></td>
+                    <td><strong><?php echo htmlspecialchars((string) (0 + $attendance_totals['retrasos']), ENT_QUOTES, 'UTF-8'); ?></strong></td>
+                  </tr>
                 <?php endif; ?>
               </tbody>
             </table>
+            <p>Horas semanales matriculadas: <?php echo htmlspecialchars((string) (0 + $horas_semanales_matriculadas), ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Total faltas: <?php echo htmlspecialchars((string) (0 + $attendance_totals['faltas']), ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Porcentaje de faltas: <?php echo $porcentaje_faltas === null ? '—' : htmlspecialchars(rtrim(rtrim(number_format($porcentaje_faltas, 2, ',', ''), '0'), ',') . ' %', ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
         </section>
 
