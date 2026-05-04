@@ -27,6 +27,7 @@ $meses = $pdo->query('SELECT id_mes, mes, orden FROM meses ORDER BY orden, id_me
 
 $students = [];
 $attendance_rows = [];
+$hours_by_student = [];
 
 if ($selected['id_curso_escolar'] > 0 && $selected['id_grupo'] > 0) {
   $curso_valido_stmt = $pdo->prepare('SELECT 1 FROM cursos_escolares WHERE id_curso_escolar = :id_curso_escolar LIMIT 1');
@@ -53,7 +54,8 @@ if ($selected['id_curso_escolar'] > 0 && $selected['id_grupo'] > 0) {
 
   if ($errors === []) {
     $students_stmt = $pdo->prepare(
-      'SELECT a.id_alumno, a.apellido1, a.apellido2, a.nombre
+      'SELECT a.id_alumno, a.apellido1, a.apellido2, a.nombre,
+              a.faltas_10_dia, a.faltas_10_cantidad, a.faltas_15_dia, a.faltas_15_cantidad
        FROM alumno_curso ac
        INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
        WHERE ac.id_curso_escolar = :id_curso_escolar
@@ -69,6 +71,29 @@ if ($selected['id_curso_escolar'] > 0 && $selected['id_grupo'] > 0) {
       'id_grupo' => $selected['id_grupo'],
     ]);
     $students = $students_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($students !== []) {
+      $hours_stmt = $pdo->prepare(
+        'SELECT am.id_alumno,
+                SUM(COALESCE(m.horas_totales, 0)) AS horas_totales_matriculadas
+         FROM alumno_modulo am
+         INNER JOIN modulos m ON m.id_modulo = am.id_modulo
+         WHERE am.id_alumno = :id_alumno
+           AND (
+             COALESCE(m.horas_semanales, 0) > 0
+             OR LOWER(COALESCE(m.materia_general, \'\')) LIKE \'%proyecto intermodular%\'
+             OR LOWER(COALESCE(m.materia_propia, \'\')) LIKE \'%proyecto intermodular%\'
+           )'
+      );
+
+      foreach ($students as $student) {
+        $id_alumno_horas = (int) $student['id_alumno'];
+        $hours_stmt->execute([
+          'id_alumno' => $id_alumno_horas,
+        ]);
+        $hours_by_student[$id_alumno_horas] = (float) ($hours_stmt->fetchColumn() ?: 0);
+      }
+    }
 
     $attendance_stmt = $pdo->prepare(
       'SELECT am.id_alumno,
@@ -208,9 +233,6 @@ $total_columnas_asistencia = $mostrar_retrasos
               </select>
             </label>
 
-            <div class="panel-header-actions">
-              <button type="submit" class="button-primary">Mostrar asistencia</button>
-            </div>
           </div>
         </section>
       </form>
@@ -286,6 +308,34 @@ $total_columnas_asistencia = $mostrar_retrasos
                     $total_j = 0;
                     $total_i = 0;
                     $total_r = 0;
+                    $injustificadas_class = '';
+                    $injustificadas_title = '';
+                    $horas_totales_matriculadas = $hours_by_student[$id_alumno] ?? 0;
+                    if (!empty($student['faltas_15_dia'])) {
+                      $injustificadas_class = 'attendance-warning-15';
+                      $tooltip_lines = [];
+                      $tooltip_lines[] = 'Horas totales matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
+                      $fecha_15 = date_create((string) $student['faltas_15_dia']);
+                      if ($fecha_15 !== false) {
+                        $tooltip_lines[] = '15% alcanzado el: ' . $fecha_15->format('d/m/Y');
+                      }
+                      if ($student['faltas_15_cantidad'] !== null && $student['faltas_15_cantidad'] !== '') {
+                        $tooltip_lines[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_15_cantidad'];
+                      }
+                      $injustificadas_title = implode("\n", $tooltip_lines);
+                    } elseif (!empty($student['faltas_10_dia'])) {
+                      $injustificadas_class = 'attendance-warning-10';
+                      $tooltip_lines = [];
+                      $tooltip_lines[] = 'Horas totales matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
+                      $fecha_10 = date_create((string) $student['faltas_10_dia']);
+                      if ($fecha_10 !== false) {
+                        $tooltip_lines[] = '10% alcanzado el: ' . $fecha_10->format('d/m/Y');
+                      }
+                      if ($student['faltas_10_cantidad'] !== null && $student['faltas_10_cantidad'] !== '') {
+                        $tooltip_lines[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_10_cantidad'];
+                      }
+                      $injustificadas_title = implode("\n", $tooltip_lines);
+                    }
                   ?>
                   <tr>
                     <td><?php echo htmlspecialchars($student_name, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -305,7 +355,7 @@ $total_columnas_asistencia = $mostrar_retrasos
                         <td><?php echo (int) $totales['retrasos']; ?></td>
                       <?php else: ?>
                         <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
-                        <td><?php echo (int) $totales['faltas_injustificadas']; ?></td>
+                        <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>"><?php echo (int) $totales['faltas_injustificadas']; ?></td>
                       <?php endif; ?>
                     <?php endforeach; ?>
                     <?php if ($mostrar_retrasos): ?>
@@ -325,4 +375,19 @@ $total_columnas_asistencia = $mostrar_retrasos
     </main>
   </div>
 </body>
+<script>
+  (function () {
+    var form = document.querySelector('form.entity-form');
+    if (!form) {
+      return;
+    }
+    var groupSelect = form.querySelector('select[name="id_grupo"]');
+    if (!groupSelect) {
+      return;
+    }
+    groupSelect.addEventListener('change', function () {
+      form.submit();
+    });
+  }());
+</script>
 </html>
