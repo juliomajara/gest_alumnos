@@ -118,6 +118,27 @@ function parse_asistencia_cell(string $raw): array|false {
   return false;
 }
 
+
+function compute_threshold_reached_date(array $day_injustificadas, float $base_injustificadas, float $threshold): ?array {
+  if ($threshold <= 0) {
+    return null;
+  }
+
+  $acumuladas = $base_injustificadas;
+  ksort($day_injustificadas);
+  foreach ($day_injustificadas as $date => $horas_injustificadas) {
+    $acumuladas += (float) $horas_injustificadas;
+    if ($acumuladas >= $threshold) {
+      return [
+        'fecha' => $date,
+        'cantidad' => $acumuladas,
+      ];
+    }
+  }
+
+  return null;
+}
+
 function parse_day_of_month_from_header(string $header_label): ?int {
   if (preg_match('/\b([0-9]{1,2})\b/u', $header_label, $m)) {
     $day = (int) $m[1];
@@ -333,6 +354,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               (:id_alumno, :id_curso_escolar, :id_mes, :faltas_justificadas, :faltas_injustificadas, :retrasos)'
           );
 
+          $hours_total_student_stmt = $pdo->prepare(
+            'SELECT SUM(COALESCE(m.horas_totales, 0)) AS horas_totales_matriculadas
+             FROM alumno_modulo am
+             INNER JOIN modulos m ON m.id_modulo = am.id_modulo
+             WHERE am.id_alumno = :id_alumno
+               AND (
+                 COALESCE(m.horas_semanales, 0) > 0
+                 OR LOWER(COALESCE(m.materia_general, "")) LIKE "%proyecto intermodular%"
+                 OR LOWER(COALESCE(m.materia_propia, "")) LIKE "%proyecto intermodular%"
+               )'
+          );
+          $attendance_before_month_stmt = $pdo->prepare(
+            'SELECT COALESCE(SUM(faltas_injustificadas), 0)
+             FROM asistencia_mensual
+             WHERE id_alumno = :id_alumno
+               AND id_curso_escolar = :id_curso_escolar
+               AND id_mes < :id_mes'
+          );
+          $student_thresholds_stmt = $pdo->prepare(
+            'SELECT faltas_10_dia, faltas_10_cantidad, faltas_15_dia, faltas_15_cantidad
+             FROM alumnos
+             WHERE id_alumno = :id_alumno
+             LIMIT 1'
+          );
+
           $line = 1;
           $pdo->beginTransaction();
           try {
@@ -352,6 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               $totales_j = 0;
               $totales_i = 0;
               $totales_r = 0;
+              $injustificadas_por_fecha = [];
 
               foreach ($day_columns as $column_index) {
                 $raw_cell = normalize_csv_text((string) ($row[$column_index] ?? ''));
@@ -388,6 +435,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $totales_j += (int) $parsed['J'];
                 $totales_i += (int) $parsed['I'];
                 $totales_r += (int) $parsed['R'];
+
+                $day_of_month = parse_day_of_month_from_header(normalize_csv_text((string) ($header[$column_index] ?? '')));
+                if ($day_of_month !== null && checkdate($selected['id_mes'], $day_of_month, $year_for_month)) {
+                  $fecha_columna = sprintf('%04d-%02d-%02d', $year_for_month, $selected['id_mes'], $day_of_month);
+                  if (!isset($injustificadas_por_fecha[$fecha_columna])) {
+                    $injustificadas_por_fecha[$fecha_columna] = 0.0;
+                  }
+                  $injustificadas_por_fecha[$fecha_columna] += (float) $parsed['I'];
+                }
+              }
+
+              $id_alumno_actual = (int) $student_index[$student_key];
+
+              $hours_total_student_stmt->execute(['id_alumno' => $id_alumno_actual]);
+              $horas_totales_matriculadas = (float) ($hours_total_student_stmt->fetchColumn() ?: 0);
+
+              if ($horas_totales_matriculadas <= 0) {
+                $result['avisos'][] = 'No se han podido calcular umbrales para ' . $name_csv . ' por falta de horas matriculadas válidas.';
+              } else {
+                $attendance_before_month_stmt->execute([
+                  'id_alumno' => $id_alumno_actual,
+                  'id_curso_escolar' => $selected['id_curso_escolar'],
+                  'id_mes' => $selected['id_mes'],
+                ]);
+                $base_injustificadas = (float) ($attendance_before_month_stmt->fetchColumn() ?: 0);
+
+                $alcance_10 = compute_threshold_reached_date($injustificadas_por_fecha, $base_injustificadas, $horas_totales_matriculadas * 0.10);
+                $alcance_15 = compute_threshold_reached_date($injustificadas_por_fecha, $base_injustificadas, $horas_totales_matriculadas * 0.15);
+
+                $student_thresholds_stmt->execute(['id_alumno' => $id_alumno_actual]);
+                $thresholds_actuales = $student_thresholds_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+                $update_fields = [];
+                $update_params = ['id_alumno' => $id_alumno_actual];
+
+                if ($alcance_10 !== null) {
+                  $fecha_actual_10 = (string) ($thresholds_actuales['faltas_10_dia'] ?? '');
+                  if ($fecha_actual_10 === '' || $alcance_10['fecha'] < $fecha_actual_10) {
+                    $update_fields[] = 'faltas_10_dia = :faltas_10_dia';
+                    $update_fields[] = 'faltas_10_cantidad = :faltas_10_cantidad';
+                    $update_params['faltas_10_dia'] = $alcance_10['fecha'];
+                    $update_params['faltas_10_cantidad'] = $alcance_10['cantidad'];
+                  }
+                }
+
+                if ($alcance_15 !== null) {
+                  $fecha_actual_15 = (string) ($thresholds_actuales['faltas_15_dia'] ?? '');
+                  if ($fecha_actual_15 === '' || $alcance_15['fecha'] < $fecha_actual_15) {
+                    $update_fields[] = 'faltas_15_dia = :faltas_15_dia';
+                    $update_fields[] = 'faltas_15_cantidad = :faltas_15_cantidad';
+                    $update_params['faltas_15_dia'] = $alcance_15['fecha'];
+                    $update_params['faltas_15_cantidad'] = $alcance_15['cantidad'];
+                  }
+                }
+
+                if ($update_fields !== []) {
+                  $update_umbral_stmt = $pdo->prepare('UPDATE alumnos SET ' . implode(', ', $update_fields) . ' WHERE id_alumno = :id_alumno');
+                  $update_umbral_stmt->execute($update_params);
+                }
               }
 
               $select_existing_stmt->execute([

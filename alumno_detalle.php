@@ -852,6 +852,10 @@ $dias_semana = [
             <p>Horas totales matriculadas: <?php echo htmlspecialchars((string) (0 + $horas_totales_matriculadas), ENT_QUOTES, 'UTF-8'); ?></p>
             <p>Total faltas: <?php echo htmlspecialchars((string) (0 + $attendance_totals['faltas']), ENT_QUOTES, 'UTF-8'); ?></p>
             <p>Porcentaje de faltas: <?php echo $porcentaje_faltas === null ? '—' : htmlspecialchars(rtrim(rtrim(number_format($porcentaje_faltas, 2, ',', ''), '0'), ',') . ' %', ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Fecha en que alcanzó el 10%: <?php echo htmlspecialchars(format_date($student['faltas_10_dia'], 'No alcanzado'), ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Faltas injustificadas acumuladas al alcanzar el 10%: <?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '—'), ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Fecha en que alcanzó el 15%: <?php echo htmlspecialchars(format_date($student['faltas_15_dia'], 'No alcanzado'), ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Faltas injustificadas acumuladas al alcanzar el 15%: <?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '—'), ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
         </section>
 
