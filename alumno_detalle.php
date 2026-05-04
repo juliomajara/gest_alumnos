@@ -88,7 +88,7 @@ $attendance_totals = [
   'retrasos' => 0.0,
   'faltas' => 0.0,
 ];
-$horas_semanales_matriculadas = 0.0;
+$horas_totales_matriculadas = 0.0;
 $porcentaje_faltas = null;
 
 if ($id_alumno > 0) {
@@ -250,7 +250,7 @@ if ($student) {
   $attendance = $attendance_stmt->fetchAll();
 
   $hours_stmt = $pdo->prepare(
-    'SELECT SUM(COALESCE(m.horas_semanales, 0)) AS horas_semanales_total
+    'SELECT SUM(COALESCE(m.horas_totales, 0)) AS horas_totales_matriculadas
      FROM alumno_modulo am
      INNER JOIN modulos m ON m.id_modulo = am.id_modulo
      WHERE am.id_alumno = :id_alumno
@@ -258,7 +258,7 @@ if ($student) {
   );
   $hours_stmt->execute(['id_alumno' => $id_alumno]);
   $hours_row = $hours_stmt->fetch(PDO::FETCH_ASSOC);
-  $horas_semanales_matriculadas = (float) ($hours_row['horas_semanales_total'] ?? 0);
+  $horas_totales_matriculadas = (float) ($hours_row['horas_totales_matriculadas'] ?? 0);
 
   foreach ($attendance as $attendance_row) {
     $justificadas = (float) ($attendance_row['faltas_justificadas'] ?? 0);
@@ -272,8 +272,8 @@ if ($student) {
 
   $attendance_totals['faltas'] = $attendance_totals['justificadas'] + $attendance_totals['injustificadas'];
 
-  if ($horas_semanales_matriculadas > 0) {
-    $porcentaje_faltas = ($attendance_totals['faltas'] / $horas_semanales_matriculadas) * 100;
+  if ($horas_totales_matriculadas > 0) {
+    $porcentaje_faltas = ($attendance_totals['injustificadas'] / $horas_totales_matriculadas) * 100;
   }
 
   $practicas_stmt = $pdo->prepare(
@@ -845,7 +845,7 @@ $dias_semana = [
                 <?php endif; ?>
               </tbody>
             </table>
-            <p>Horas semanales matriculadas: <?php echo htmlspecialchars((string) (0 + $horas_semanales_matriculadas), ENT_QUOTES, 'UTF-8'); ?></p>
+            <p>Horas totales matriculadas: <?php echo htmlspecialchars((string) (0 + $horas_totales_matriculadas), ENT_QUOTES, 'UTF-8'); ?></p>
             <p>Total faltas: <?php echo htmlspecialchars((string) (0 + $attendance_totals['faltas']), ENT_QUOTES, 'UTF-8'); ?></p>
             <p>Porcentaje de faltas: <?php echo $porcentaje_faltas === null ? '—' : htmlspecialchars(rtrim(rtrim(number_format($porcentaje_faltas, 2, ',', ''), '0'), ',') . ' %', ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
