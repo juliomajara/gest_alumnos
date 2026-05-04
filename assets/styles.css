@@ -967,6 +967,22 @@ a.edit-toggle:focus {
     background: #eef3ff;
   }
 
+  .panel-grid tbody td.attendance-warning-10,
+  .panel-grid tbody tr:nth-child(even) td.attendance-warning-10,
+  .panel-grid tbody tr:hover td.attendance-warning-10 {
+    background-color: #ffe6bf !important;
+    color: #8a4a00;
+    font-weight: 600;
+  }
+
+  .panel-grid tbody td.attendance-warning-15,
+  .panel-grid tbody tr:nth-child(even) td.attendance-warning-15,
+  .panel-grid tbody tr:hover td.attendance-warning-15 {
+    background-color: #ffd2d2 !important;
+    color: #8b1111;
+    font-weight: 600;
+  }
+
   .panel-grid table.grade-highlight-active tbody td.generation-feedback-success,
   .panel-grid table.grade-highlight-active tbody tr:nth-child(even) td.generation-feedback-success,
   .panel-grid table.grade-highlight-active tbody tr:hover td.generation-feedback-success {
