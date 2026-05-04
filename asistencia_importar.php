@@ -16,6 +16,7 @@ $result = [
   'alumnos_no_encontrados' => [],
   'filas_error_formato' => [],
   'errores' => [],
+  'avisos' => [],
 ];
 
 $active_course_id = (int) ($pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 ORDER BY id_curso_escolar DESC LIMIT 1')->fetchColumn() ?: 0);
@@ -90,15 +91,17 @@ function parse_asistencia_cell(string $raw): array|false {
 
   if ($raw === 'CI') {
     return [
+      'TIPO' => 'CI',
       'J' => 0,
-      'I' => 6,
+      'I' => 0,
       'R' => 0,
     ];
   }
 
   if ($raw === 'CJ') {
     return [
-      'J' => 6,
+      'TIPO' => 'CJ',
+      'J' => 0,
       'I' => 0,
       'R' => 0,
     ];
@@ -113,6 +116,16 @@ function parse_asistencia_cell(string $raw): array|false {
   }
 
   return false;
+}
+
+function parse_day_of_month_from_header(string $header_label): ?int {
+  if (preg_match('/\b([0-9]{1,2})\b/u', $header_label, $m)) {
+    $day = (int) $m[1];
+    if ($day >= 1 && $day <= 31) {
+      return $day;
+    }
+  }
+  return null;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -238,6 +251,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
           }
 
+          $curso_escolar_texto_stmt = $pdo->prepare('SELECT curso_escolar FROM cursos_escolares WHERE id_curso_escolar = :id_curso_escolar LIMIT 1');
+          $curso_escolar_texto_stmt->execute([
+            'id_curso_escolar' => $selected['id_curso_escolar'],
+          ]);
+          $curso_escolar_texto = (string) ($curso_escolar_texto_stmt->fetchColumn() ?: '');
+          $anio_inicio = 0;
+          $anio_fin = 0;
+          if (preg_match('/([0-9]{4}).*?([0-9]{4})/u', $curso_escolar_texto, $m)) {
+            $anio_inicio = (int) $m[1];
+            $anio_fin = (int) $m[2];
+          }
+
+          $year_for_month = $selected['id_mes'] >= 9 ? $anio_inicio : $anio_fin;
+          if ($year_for_month <= 0) {
+            $year_for_month = (int) date('Y');
+          }
+
+          $horas_por_alumno_dia = [];
+          $horario_grupo_total_stmt = $pdo->prepare(
+            'SELECT COUNT(*)
+             FROM horarios_grupos
+             WHERE id_curso_escolar = :id_curso_escolar
+               AND id_grupo = :id_grupo'
+          );
+          $horario_grupo_total_stmt->execute([
+            'id_curso_escolar' => $selected['id_curso_escolar'],
+            'id_grupo' => $selected['id_grupo'],
+          ]);
+          $hay_horario_grupo = ((int) $horario_grupo_total_stmt->fetchColumn()) > 0;
+
+          $horas_stmt = $pdo->prepare(
+            'SELECT am.id_alumno, hg.dia_semana, COUNT(*) AS horas
+             FROM horarios_grupos hg
+             INNER JOIN alumno_modulo am ON am.id_modulo = hg.id_modulo
+             WHERE hg.id_curso_escolar = :id_curso_escolar
+               AND hg.id_grupo = :id_grupo
+             GROUP BY am.id_alumno, hg.dia_semana'
+          );
+          $horas_stmt->execute([
+            'id_curso_escolar' => $selected['id_curso_escolar'],
+            'id_grupo' => $selected['id_grupo'],
+          ]);
+          while ($h = $horas_stmt->fetch(PDO::FETCH_ASSOC)) {
+            $horas_por_alumno_dia[(int) $h['id_alumno']][(int) $h['dia_semana']] = (int) $h['horas'];
+          }
+
+          $column_day_week = [];
+          foreach ($day_columns as $column_index) {
+            $header_label = normalize_csv_text((string) ($header[$column_index] ?? ''));
+            $day_of_month = parse_day_of_month_from_header($header_label);
+            if ($day_of_month === null || !checkdate($selected['id_mes'], $day_of_month, $year_for_month)) {
+              $column_day_week[$column_index] = null;
+              continue;
+            }
+            $weekday = (int) date('N', strtotime(sprintf('%04d-%02d-%02d', $year_for_month, $selected['id_mes'], $day_of_month)));
+            $column_day_week[$column_index] = $weekday;
+          }
+
           $select_existing_stmt = $pdo->prepare(
             'SELECT id_asistencia
              FROM asistencia_mensual
@@ -293,6 +364,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   continue;
                 }
 
+                if (isset($parsed['TIPO']) && ($parsed['TIPO'] === 'CI' || $parsed['TIPO'] === 'CJ')) {
+                  $id_alumno_actual = (int) $student_index[$student_key];
+                  $weekday = $column_day_week[$column_index] ?? null;
+                  $horas = 0;
+                  $header_label = normalize_csv_text((string) ($header[$column_index] ?? ('Columna ' . ($column_index + 1))));
+                  if ($weekday === null) {
+                    $result['avisos'][] = 'No se pudo calcular el día de la semana para la columna "' . $header_label . '" (línea ' . $line . ', ' . $name_csv . ').';
+                  } elseif ($weekday >= 6) {
+                    $result['avisos'][] = 'CI/CJ en fin de semana para ' . $name_csv . ' (' . $header_label . '). Se usa 0.';
+                  } else {
+                    $horas = (int) ($horas_por_alumno_dia[$id_alumno_actual][$weekday] ?? 0);
+                    if (!$hay_horario_grupo) {
+                      $result['avisos'][] = 'No se pudo calcular CI/CJ para ' . $name_csv . ' en ' . $header_label . ' porque no hay horario guardado para el grupo.';
+                    } elseif ($horas === 0) {
+                      $result['avisos'][] = 'CI/CJ con 0 horas para ' . $name_csv . ' en ' . $header_label . ' según horario/matrícula.';
+                    }
+                  }
+                  $parsed['J'] = $parsed['TIPO'] === 'CJ' ? $horas : 0;
+                  $parsed['I'] = $parsed['TIPO'] === 'CI' ? $horas : 0;
+                }
+
                 $totales_j += (int) $parsed['J'];
                 $totales_i += (int) $parsed['I'];
                 $totales_r += (int) $parsed['R'];
@@ -335,6 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $result['alumnos_no_encontrados'] = array_values(array_unique($result['alumnos_no_encontrados']));
           $result['filas_error_formato'] = array_keys($result['filas_error_formato']);
           sort($result['filas_error_formato']);
+          $result['avisos'] = array_values(array_unique($result['avisos']));
           if ($errors === []) {
             $messages[] = 'Importación finalizada.';
           }
@@ -425,6 +518,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <ul class="form-errors">
               <?php foreach ($result['errores'] as $item): ?>
+                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+
+          <?php if ($result['avisos'] !== []): ?>
+            <div class="panel-header">
+              <h3>Avisos</h3>
+            </div>
+            <ul class="form-errors">
+              <?php foreach ($result['avisos'] as $item): ?>
                 <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
               <?php endforeach; ?>
             </ul>
