@@ -254,7 +254,11 @@ if ($student) {
      FROM alumno_modulo am
      INNER JOIN modulos m ON m.id_modulo = am.id_modulo
      WHERE am.id_alumno = :id_alumno
-       AND COALESCE(m.horas_semanales, 0) > 0'
+       AND (
+         COALESCE(m.horas_semanales, 0) > 0
+         OR LOWER(COALESCE(m.materia_general, "")) LIKE "%proyecto intermodular%"
+         OR LOWER(COALESCE(m.materia_propia, "")) LIKE "%proyecto intermodular%"
+       )'
   );
   $hours_stmt->execute(['id_alumno' => $id_alumno]);
   $hours_row = $hours_stmt->fetch(PDO::FETCH_ASSOC);
