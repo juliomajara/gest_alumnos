@@ -73,6 +73,10 @@ function pick_contact_value(array $items, string $value_key, array $preferred_la
 $student = null;
 $course_entries = [];
 $modules = [];
+$horario_alumno_tramos = [];
+$horario_alumno_map = [];
+$horario_alumno_colores = [];
+$horario_alumno_mensaje = null;
 $attendance = [];
 $practicas = [];
 $horarios = [];
@@ -94,6 +98,7 @@ if ($id_alumno > 0) {
 if ($student) {
   $course_stmt = $pdo->prepare(
     'SELECT ac.id_curso_escolar,
+            ac.id_grupo,
             ce.curso_escolar,
             ce.activo,
             n.nivel,
@@ -135,6 +140,88 @@ if ($student) {
   );
   $modules_stmt->execute(['id_alumno' => $id_alumno]);
   $modules = $modules_stmt->fetchAll();
+
+  $contexto_academico = null;
+  foreach ($course_entries as $course_entry) {
+    if ((int) ($course_entry['activo'] ?? 0) === 1) {
+      $contexto_academico = $course_entry;
+      break;
+    }
+  }
+  if ($contexto_academico === null && isset($course_entries[0])) {
+    $contexto_academico = $course_entries[0];
+  }
+
+  if ($contexto_academico !== null) {
+    $id_curso_escolar_horario = (int) ($contexto_academico['id_curso_escolar'] ?? 0);
+    $id_grupo_horario = (int) ($contexto_academico['id_grupo'] ?? 0);
+
+    if ($id_curso_escolar_horario > 0 && $id_grupo_horario > 0) {
+      $alumno_modulos_stmt = $pdo->prepare(
+        'SELECT id_modulo
+         FROM alumno_modulo
+         WHERE id_alumno = :id_alumno'
+      );
+      $alumno_modulos_stmt->execute(['id_alumno' => $id_alumno]);
+      $alumno_modulos_rows = $alumno_modulos_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      if (!$alumno_modulos_rows) {
+        $horario_alumno_mensaje = 'No hay módulos matriculados para construir el horario.';
+      } else {
+        $alumno_modulos_ids = [];
+        foreach ($alumno_modulos_rows as $alumno_modulo_row) {
+          $alumno_modulos_ids[(int) $alumno_modulo_row['id_modulo']] = true;
+        }
+
+        $tramos_stmt = $pdo->query(
+          'SELECT id_horario_tramo, numero_tramo, hora_inicio, hora_fin
+           FROM horarios_tramos
+           ORDER BY numero_tramo'
+        );
+        $horario_alumno_tramos = $tramos_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $horario_alumno_stmt = $pdo->prepare(
+          'SELECT
+            hg.dia_semana,
+            hg.id_horario_tramo,
+            hg.id_modulo,
+            m.codigo,
+            m.abreviatura,
+            COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), m.abreviatura, m.codigo, CONCAT("Módulo ", m.id_modulo)) AS nombre,
+            CONCAT_WS(" ", p.nombre, p.apellido1, p.apellido2) AS profesor
+          FROM horarios_grupos hg
+          INNER JOIN modulos m ON m.id_modulo = hg.id_modulo
+          LEFT JOIN modulos_profesores mp ON mp.id_modulo = hg.id_modulo
+          LEFT JOIN profesores p ON p.id_profesor = mp.id_profesor
+          WHERE hg.id_curso_escolar = :id_curso_escolar
+            AND hg.id_grupo = :id_grupo'
+        );
+        $horario_alumno_stmt->execute([
+          'id_curso_escolar' => $id_curso_escolar_horario,
+          'id_grupo' => $id_grupo_horario,
+        ]);
+        $horario_alumno_rows = $horario_alumno_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (!$horario_alumno_rows) {
+          $horario_alumno_mensaje = 'No hay horario guardado para el grupo del alumno.';
+        } else {
+          $palette_index = 0;
+          foreach ($horario_alumno_rows as $horario_row) {
+            $id_modulo_horario = (int) $horario_row['id_modulo'];
+            if (!isset($alumno_modulos_ids[$id_modulo_horario])) {
+              continue;
+            }
+            if (!isset($horario_alumno_colores[$id_modulo_horario])) {
+              $horario_alumno_colores[$id_modulo_horario] = 'module-color-' . (($palette_index % 10) + 1);
+              $palette_index++;
+            }
+            $clave_horario = (int) $horario_row['dia_semana'] . '-' . (int) $horario_row['id_horario_tramo'];
+            $horario_alumno_map[$clave_horario] = $horario_row;
+          }
+        }
+      }
+    }
+  }
 
   $attendance_stmt = $pdo->prepare(
     'SELECT am.id_mes,
@@ -614,6 +701,73 @@ $dias_semana = [
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Horario</h3>
+            <p>Horario del alumno según su grupo y módulos matriculados.</p>
+          </div>
+          <?php if ($horario_alumno_mensaje !== null): ?>
+            <p class="subheading"><?php echo htmlspecialchars($horario_alumno_mensaje, ENT_QUOTES, 'UTF-8'); ?></p>
+          <?php elseif (!$horario_alumno_map): ?>
+            <p class="subheading">No hay horario guardado para el grupo del alumno.</p>
+          <?php else: ?>
+            <div class="panel-grid horarios-grid-wrap">
+              <table class="horarios-grid horarios-view-table">
+                <thead>
+                  <tr>
+                    <th>Tramo</th>
+                    <th>Lunes</th>
+                    <th>Martes</th>
+                    <th>Miércoles</th>
+                    <th>Jueves</th>
+                    <th>Viernes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($horario_alumno_tramos as $tramo): ?>
+                    <tr>
+                      <td>
+                        <?php echo (int) $tramo['numero_tramo']; ?>ª
+                        <?php if (!empty($tramo['hora_inicio']) && !empty($tramo['hora_fin'])): ?>
+                          (<?php echo htmlspecialchars(substr((string) $tramo['hora_inicio'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>-<?php echo htmlspecialchars(substr((string) $tramo['hora_fin'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>)
+                        <?php endif; ?>
+                      </td>
+                      <?php for ($day = 1; $day <= 5; $day++): ?>
+                        <?php
+                          $key = $day . '-' . (int) $tramo['id_horario_tramo'];
+                          $cell = $horario_alumno_map[$key] ?? null;
+                        ?>
+                        <?php if ($cell !== null): ?>
+                          <?php
+                            $module_id = (int) $cell['id_modulo'];
+                            $color_class = $horario_alumno_colores[$module_id] ?? 'module-color-disabled';
+                            $module_name = trim((string) ($cell['nombre'] ?? ''));
+                            $module_code = trim((string) ($cell['codigo'] ?? ''));
+                            $module_teacher = trim((string) ($cell['profesor'] ?? ''));
+                            $title_parts = [$module_name];
+                            if ($module_code !== '') {
+                              $title_parts[] = 'Código: ' . $module_code;
+                            }
+                            if ($module_teacher !== '') {
+                              $title_parts[] = 'Profesor: ' . $module_teacher;
+                            }
+                            $module_title = implode(' | ', $title_parts);
+                          ?>
+                          <td class="horarios-module-cell <?php echo htmlspecialchars($color_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($module_title, ENT_QUOTES, 'UTF-8'); ?>">
+                            <?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?>
+                          </td>
+                        <?php else: ?>
+                          <td class="horarios-empty-cell"></td>
+                        <?php endif; ?>
+                      <?php endfor; ?>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
         </section>
 
         <section class="panel">
