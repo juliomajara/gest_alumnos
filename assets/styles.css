@@ -967,6 +967,12 @@ a.edit-toggle:focus {
     background: #eef3ff;
   }
 
+    .panel-grid tbody td.attendance-gradient-cell,
+  .panel-grid tbody tr:nth-child(even) td.attendance-gradient-cell,
+  .panel-grid tbody tr:hover td.attendance-gradient-cell {
+    background-color: rgba(59, 130, 246, calc(var(--attendance-intensity, 0) * 0.65)) !important;
+  }
+
   .panel-grid tbody td.attendance-warning-10,
   .panel-grid tbody tr:nth-child(even) td.attendance-warning-10,
   .panel-grid tbody tr:hover td.attendance-warning-10 {

@@ -194,6 +194,12 @@ foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
 }
 
 $total_columnas_asistencia = 1 + count($meses_curso) + 3;
+$vista_titulo = 'Faltas Injustificadas';
+if ($vista === 'justificadas') {
+  $vista_titulo = 'Faltas Justificadas';
+} elseif ($vista === 'retrasos') {
+  $vista_titulo = 'Retrasos';
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -268,7 +274,7 @@ $total_columnas_asistencia = 1 + count($meses_curso) + 3;
       <section class="panel">
         <div class="panel-header panel-header-with-actions">
           <div>
-            <h3>Listado de asistencia</h3>
+            <h3>Listado de asistencia - <?php echo htmlspecialchars($vista_titulo, ENT_QUOTES, "UTF-8"); ?></h3>
             <p>Totales mensuales por alumno.</p>
           </div>
           <div class="panel-header-actions">
@@ -383,9 +389,27 @@ $total_columnas_asistencia = 1 + count($meses_curso) + 3;
                         $total_r += (int) $totales['retrasos'];
                       ?>
                       <?php if ($mostrar_retrasos): ?>
-                        <td><?php echo (int) $totales['retrasos']; ?></td>
+                                                <?php
+                          $valor_mes = (int) $totales['retrasos'];
+                          $celda_class = '';
+                          $celda_style = '';
+                          if ($valor_mes > 0) {
+                            $celda_class = 'attendance-gradient-cell';
+                            $celda_style = '--attendance-intensity: ' . min($valor_mes, 100) / 100 . ';';
+                          }
+                        ?>
+                        <td class="<?php echo htmlspecialchars($celda_class, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
                       <?php elseif ($mostrar_justificadas): ?>
-                        <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
+                                                <?php
+                          $valor_mes = (int) $totales['faltas_justificadas'];
+                          $celda_class = '';
+                          $celda_style = '';
+                          if ($valor_mes > 0) {
+                            $celda_class = 'attendance-gradient-cell';
+                            $celda_style = '--attendance-intensity: ' . min($valor_mes, 100) / 100 . ';';
+                          }
+                        ?>
+                        <td class="<?php echo htmlspecialchars($celda_class, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
                       <?php else: ?>
                         <?php
                           $injustificadas_class = '';
@@ -398,8 +422,14 @@ $total_columnas_asistencia = 1 + count($meses_curso) + 3;
                             $injustificadas_class = 'attendance-warning-10';
                             $injustificadas_title = $injustificadas_title_10;
                           }
+                          $valor_mes = (int) $totales['faltas_injustificadas'];
+                          $celda_style = '';
+                          if ($valor_mes > 0 && $injustificadas_class === '') {
+                            $injustificadas_class = 'attendance-gradient-cell';
+                            $celda_style = '--attendance-intensity: ' . min($valor_mes, 100) / 100 . ';';
+                          }
                         ?>
-                        <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>"><?php echo (int) $totales['faltas_injustificadas']; ?></td>
+                        <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
                       <?php endif; ?>
                     <?php endforeach; ?>
                     <td><strong><?php echo $total_i; ?></strong></td>
