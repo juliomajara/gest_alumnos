@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 29-04-2026 a las 19:23:53
+-- Tiempo de generación: 04-05-2026 a las 23:38:38
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -82,12 +82,12 @@ INSERT INTO `alumnos` (`id_alumno`, `nia`, `dni`, `seg_soc`, `apellido1`, `apell
 (21, '13694494', '49704977E', '281356573228', 'Ikubor', 'Aimienoho', 'Wisdom Osamwenuyi', '2008-11-06', NULL, NULL, NULL, NULL, 0, NULL, NULL, 'linda.aimienoho@yahoo.com', NULL, NULL, 'kevinvincent10@yahoo.com', NULL, 0, NULL, 0, NULL),
 (22, '7626425', '55138304J', '281547259868', 'Jiménez', 'Ramiro', 'Roberto', '2006-10-23', NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 'narcisarg@gmail.com', NULL, 0, NULL, 0, NULL),
 (23, '12748235', '06625477M', '281631745252', 'López', 'López', 'José Ignacio', '2007-10-01', NULL, 28, NULL, NULL, 0, NULL, NULL, 'belencalzada8@gmail.com', NULL, NULL, 'ignaciolopez-999@outlook.es', NULL, 0, NULL, 0, NULL),
-(24, '9859524', '54299675X', '281543120901', 'Mangas', 'Martínez', 'Daniel', '2006-07-08', 0, 28, NULL, NULL, 0, NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, 0, NULL, 0, NULL),
+(24, '9859524', '54299675X', '281543120901', 'Mangas', 'Martínez', 'Daniel', '2006-07-08', 0, 28, NULL, NULL, 0, NULL, NULL, 'rakelmartinezcuesta@gmail.com', NULL, NULL, 'rakelmartinezcuesta@gmail.com', '2026-04-30', 104, NULL, 0, NULL),
 (25, '12329830', '49589590A', '281079016519', 'Martín', 'León', 'Mario', '2008-03-13', 0, 28, NULL, NULL, 0, NULL, NULL, 'gmartin_sanchez@hotmail.com', NULL, NULL, 'mudita-rl@hotmail.com', NULL, 0, NULL, 0, NULL),
 (26, '13796525', 'Y1652928R', '281684451719', 'Mielnik', NULL, 'Bartosz', '2008-08-17', 0, 28, NULL, NULL, 0, NULL, NULL, 'krisloro@interia.pl', NULL, NULL, 'dorciam9@interia.pl', NULL, 0, NULL, 0, NULL),
 (27, '11831358', '02745808E', '281501532957', 'Moncada', 'Bueno', 'Sebastián', '2007-11-09', 0, 28, NULL, NULL, 0, NULL, NULL, 'moncadaosoriodidier@gmail.com', NULL, NULL, 'osoriojuly@hotmail.com', NULL, 0, NULL, 0, NULL),
 (28, '14675492', '51818089D', '281375971006', 'Nieto', 'Gómez', 'Daniel', '2006-05-07', 0, 28, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
-(29, '9854833', '55139532E', '281576636219', 'Orovio', 'Fernández', 'Adrián', '2006-04-21', 0, 28, NULL, NULL, 0, NULL, NULL, 'oroviosan@hotmail.com', NULL, NULL, 'anabascuana@gmail.com', NULL, 0, NULL, 0, NULL),
+(29, '9854833', '55139532E', '281576636219', 'Orovio', 'Fernández', 'Adrián', '2006-04-21', 0, 28, NULL, NULL, 0, NULL, NULL, 'oroviosan@hotmail.com', NULL, NULL, 'anabascuana@gmail.com', '2026-04-29', 83, NULL, 0, NULL),
 (30, '4545521', '49702188Q', '281444582641', 'Pascual', 'González', 'Alejandro', '1998-02-08', NULL, 28, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
 (31, '9631236', '03489468T', '281462321618', 'Pérez', 'Alonso', 'Rubén', '2005-12-14', 130, 28, NULL, NULL, 0, NULL, NULL, 'hectorperezaparicio333@gmail.com', NULL, NULL, 'pilaralonso555@gmail.com', NULL, 0, NULL, 0, NULL),
 (32, '12277735', '01867649A', '201055952475', 'Pérez', 'Marín', 'Rubén', '2008-07-12', NULL, 28, NULL, NULL, 0, NULL, NULL, 'luisamartincamara@gmail.com', NULL, NULL, NULL, NULL, 0, NULL, 0, NULL),
@@ -805,7 +805,10 @@ INSERT INTO `asistencia_mensual` (`id_asistencia`, `id_alumno`, `id_curso_escola
 (108, 46, 1, 2, 0, 2, 1, '2026-03-25 07:42:40'),
 (109, 47, 1, 2, 0, 2, 0, '2026-03-25 07:42:40'),
 (110, 48, 1, 2, 0, 9, 0, '2026-03-25 07:42:40'),
-(111, 34, 1, 3, 9, 2, 0, '2026-03-25 07:42:48');
+(111, 34, 1, 3, 9, 2, 0, '2026-03-25 07:42:48'),
+(112, 24, 1, 4, 0, 102, 0, '2026-05-04 12:10:11'),
+(113, 29, 1, 4, 0, 80, 0, '2026-05-04 12:10:11'),
+(114, 34, 1, 4, 1, 0, 0, '2026-05-04 11:45:53');
 
 -- --------------------------------------------------------
 
@@ -17254,8 +17257,7 @@ INSERT INTO `horarios_tramos` (`id_horario_tramo`, `numero_tramo`, `nombre`, `ho
 (3, 3, '3ª hora', '10:05:00', '11:00:00'),
 (4, 4, '4ª hora', '11:25:00', '12:20:00'),
 (5, 5, '5ª hora', '12:20:00', '13:15:00'),
-(6, 6, '6ª hora', '13:15:00', '14:10:00'),
-(7, 7, '7ª hora', '14:25:00', '15:20:00');
+(6, 6, '6ª hora', '13:15:00', '14:10:00');
 
 -- --------------------------------------------------------
 
@@ -19013,7 +19015,7 @@ ALTER TABLE `alumnos`
 -- AUTO_INCREMENT de la tabla `asistencia_mensual`
 --
 ALTER TABLE `asistencia_mensual`
-  MODIFY `id_asistencia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=112;
+  MODIFY `id_asistencia` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=115;
 
 --
 -- AUTO_INCREMENT de la tabla `asistencia_modulo_acumulada`
@@ -19109,7 +19111,7 @@ ALTER TABLE `grupos_tutores`
 -- AUTO_INCREMENT de la tabla `horarios_grupos`
 --
 ALTER TABLE `horarios_grupos`
-  MODIFY `id_horario_grupo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=177;
+  MODIFY `id_horario_grupo` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=178;
 
 --
 -- AUTO_INCREMENT de la tabla `horarios_tramos`
