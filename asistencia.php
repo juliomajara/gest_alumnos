@@ -18,8 +18,15 @@ $selected = [
   'id_curso' => 0,
   'id_grupo' => (int) ($_GET['id_grupo'] ?? 0),
 ];
-$vista = (string) ($_GET['vista'] ?? 'faltas');
+$vista = (string) ($_GET['vista'] ?? ($_GET['tipo'] ?? 'injustificadas'));
+if ($vista === 'faltas') {
+  $vista = 'injustificadas';
+}
+if (!in_array($vista, ['injustificadas', 'justificadas', 'retrasos'], true)) {
+  $vista = 'injustificadas';
+}
 $mostrar_retrasos = $vista === 'retrasos';
+$mostrar_justificadas = $vista === 'justificadas';
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
@@ -186,9 +193,7 @@ foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
   ];
 }
 
-$total_columnas_asistencia = $mostrar_retrasos
-  ? 1 + count($meses_curso) + 1
-  : 1 + (count($meses_curso) * 2) + 3;
+$total_columnas_asistencia = 1 + count($meses_curso) + 3;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -267,12 +272,19 @@ $total_columnas_asistencia = $mostrar_retrasos
             <p>Totales mensuales por alumno.</p>
           </div>
           <div class="panel-header-actions">
-            <a
-              class="ghost-button"
-              href="?id_curso_escolar=<?php echo $selected['id_curso_escolar']; ?>&id_grupo=<?php echo $selected['id_grupo']; ?>&vista=<?php echo $mostrar_retrasos ? 'faltas' : 'retrasos'; ?>"
-            >
-              <?php echo $mostrar_retrasos ? 'Faltas' : 'Retrasos'; ?>
-            </a>
+            <?php $query_base = $_GET; ?>
+            <?php if ($vista !== 'injustificadas'): ?>
+              <?php $query_injustificadas = $query_base; $query_injustificadas['vista'] = 'injustificadas'; $query_injustificadas['tipo'] = 'injustificadas'; ?>
+              <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_injustificadas), ENT_QUOTES, 'UTF-8'); ?>">Injustificadas</a>
+            <?php endif; ?>
+            <?php if ($vista !== 'justificadas'): ?>
+              <?php $query_justificadas = $query_base; $query_justificadas['vista'] = 'justificadas'; $query_justificadas['tipo'] = 'justificadas'; ?>
+              <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_justificadas), ENT_QUOTES, 'UTF-8'); ?>">Justificadas</a>
+            <?php endif; ?>
+            <?php if ($vista !== 'retrasos'): ?>
+              <?php $query_retrasos = $query_base; $query_retrasos['vista'] = 'retrasos'; $query_retrasos['tipo'] = 'retrasos'; ?>
+              <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_retrasos), ENT_QUOTES, 'UTF-8'); ?>">Retrasos</a>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -282,26 +294,23 @@ $total_columnas_asistencia = $mostrar_retrasos
               <tr>
                 <th rowspan="2">Alumno</th>
                 <?php foreach ($meses_curso as $mes): ?>
-                  <th colspan="<?php echo $mostrar_retrasos ? 1 : 2; ?>"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
+                  <th colspan="1"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
-                <th colspan="<?php echo $mostrar_retrasos ? 1 : 3; ?>">Totales</th>
+                <th colspan="3">Totales</th>
               </tr>
               <tr>
                 <?php foreach ($meses_curso as $mes): ?>
                   <?php if ($mostrar_retrasos): ?>
                     <th>R</th>
-                  <?php else: ?>
+                  <?php elseif ($mostrar_justificadas): ?>
                     <th>J</th>
+                  <?php else: ?>
                     <th>I</th>
                   <?php endif; ?>
                 <?php endforeach; ?>
-                <?php if ($mostrar_retrasos): ?>
-                  <th>Total R</th>
-                <?php else: ?>
-                  <th>Total J</th>
-                  <th>Total I</th>
-                  <th>Total Faltas</th>
-                <?php endif; ?>
+                <th>Total I</th>
+                <th>Total J</th>
+                <th>Total R</th>
               </tr>
             </thead>
             <tbody>
@@ -375,6 +384,8 @@ $total_columnas_asistencia = $mostrar_retrasos
                       ?>
                       <?php if ($mostrar_retrasos): ?>
                         <td><?php echo (int) $totales['retrasos']; ?></td>
+                      <?php elseif ($mostrar_justificadas): ?>
+                        <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
                       <?php else: ?>
                         <?php
                           $injustificadas_class = '';
@@ -388,17 +399,12 @@ $total_columnas_asistencia = $mostrar_retrasos
                             $injustificadas_title = $injustificadas_title_10;
                           }
                         ?>
-                        <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
                         <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>"><?php echo (int) $totales['faltas_injustificadas']; ?></td>
                       <?php endif; ?>
                     <?php endforeach; ?>
-                    <?php if ($mostrar_retrasos): ?>
-                      <td><?php echo $total_r; ?></td>
-                    <?php else: ?>
-                      <td><?php echo $total_j; ?></td>
-                      <td><?php echo $total_i; ?></td>
-                      <td><?php echo $total_j + $total_i; ?></td>
-                    <?php endif; ?>
+                    <td><strong><?php echo $total_i; ?></strong></td>
+                    <td><strong><?php echo $total_j; ?></strong></td>
+                    <td><strong><?php echo $total_r; ?></strong></td>
                   </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
