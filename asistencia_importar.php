@@ -366,11 +366,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                )'
           );
           $attendance_before_month_stmt = $pdo->prepare(
-            'SELECT COALESCE(SUM(faltas_injustificadas), 0)
-             FROM asistencia_mensual
-             WHERE id_alumno = :id_alumno
-               AND id_curso_escolar = :id_curso_escolar
-               AND id_mes < :id_mes'
+            'SELECT COALESCE(SUM(am.faltas_injustificadas), 0)
+             FROM asistencia_mensual am
+             INNER JOIN meses me ON me.id_mes = am.id_mes
+             WHERE am.id_alumno = :id_alumno
+               AND am.id_curso_escolar = :id_curso_escolar
+               AND me.orden < (
+                 SELECT me2.orden
+                 FROM meses me2
+                 WHERE me2.id_mes = :id_mes
+                 LIMIT 1
+               )'
           );
           $student_thresholds_stmt = $pdo->prepare(
             'SELECT faltas_10_dia, faltas_10_cantidad, faltas_15_dia, faltas_15_cantidad
@@ -472,7 +478,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($alcance_10 !== null) {
                   $fecha_actual_10 = (string) ($thresholds_actuales['faltas_10_dia'] ?? '');
-                  if ($fecha_actual_10 === '' || $alcance_10['fecha'] < $fecha_actual_10) {
+                  if ($fecha_actual_10 === '' || $alcance_10['fecha'] < $fecha_actual_10 || ($alcance_10['fecha'] === $fecha_actual_10 && (string) ($thresholds_actuales['faltas_10_cantidad'] ?? '') !== (string) $alcance_10['cantidad'])) {
                     $update_fields[] = 'faltas_10_dia = :faltas_10_dia';
                     $update_fields[] = 'faltas_10_cantidad = :faltas_10_cantidad';
                     $update_params['faltas_10_dia'] = $alcance_10['fecha'];
@@ -482,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($alcance_15 !== null) {
                   $fecha_actual_15 = (string) ($thresholds_actuales['faltas_15_dia'] ?? '');
-                  if ($fecha_actual_15 === '' || $alcance_15['fecha'] < $fecha_actual_15) {
+                  if ($fecha_actual_15 === '' || $alcance_15['fecha'] < $fecha_actual_15 || ($alcance_15['fecha'] === $fecha_actual_15 && (string) ($thresholds_actuales['faltas_15_cantidad'] ?? '') !== (string) $alcance_15['cantidad'])) {
                     $update_fields[] = 'faltas_15_dia = :faltas_15_dia';
                     $update_fields[] = 'faltas_15_cantidad = :faltas_15_cantidad';
                     $update_params['faltas_15_dia'] = $alcance_15['fecha'];
