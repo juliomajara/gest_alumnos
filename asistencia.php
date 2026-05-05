@@ -157,9 +157,32 @@ foreach ($meses as $mes) {
 
 $meses_curso = [];
 foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
+  $numero_mes = 0;
+  if ($mes_nombre === 'septiembre') {
+    $numero_mes = 9;
+  } elseif ($mes_nombre === 'octubre') {
+    $numero_mes = 10;
+  } elseif ($mes_nombre === 'noviembre') {
+    $numero_mes = 11;
+  } elseif ($mes_nombre === 'diciembre') {
+    $numero_mes = 12;
+  } elseif ($mes_nombre === 'enero') {
+    $numero_mes = 1;
+  } elseif ($mes_nombre === 'febrero') {
+    $numero_mes = 2;
+  } elseif ($mes_nombre === 'marzo') {
+    $numero_mes = 3;
+  } elseif ($mes_nombre === 'abril') {
+    $numero_mes = 4;
+  } elseif ($mes_nombre === 'mayo') {
+    $numero_mes = 5;
+  } elseif ($mes_nombre === 'junio') {
+    $numero_mes = 6;
+  }
   $meses_curso[] = [
     'mes' => $mes_abreviado,
     'id_mes' => $meses_index_nombre[$mes_nombre] ?? 0,
+    'numero_mes' => $numero_mes,
   ];
 }
 
@@ -308,33 +331,32 @@ $total_columnas_asistencia = $mostrar_retrasos
                     $total_j = 0;
                     $total_i = 0;
                     $total_r = 0;
-                    $injustificadas_class = '';
-                    $injustificadas_title = '';
                     $horas_totales_matriculadas = $hours_by_student[$id_alumno] ?? 0;
-                    if (!empty($student['faltas_15_dia'])) {
-                      $injustificadas_class = 'attendance-warning-15';
-                      $tooltip_lines = [];
-                      $tooltip_lines[] = 'Horas totales matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
-                      $fecha_15 = date_create((string) $student['faltas_15_dia']);
-                      if ($fecha_15 !== false) {
-                        $tooltip_lines[] = '15% alcanzado el: ' . $fecha_15->format('d/m/Y');
-                      }
-                      if ($student['faltas_15_cantidad'] !== null && $student['faltas_15_cantidad'] !== '') {
-                        $tooltip_lines[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_15_cantidad'];
-                      }
-                      $injustificadas_title = implode("\n", $tooltip_lines);
-                    } elseif (!empty($student['faltas_10_dia'])) {
-                      $injustificadas_class = 'attendance-warning-10';
-                      $tooltip_lines = [];
-                      $tooltip_lines[] = 'Horas totales matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
-                      $fecha_10 = date_create((string) $student['faltas_10_dia']);
-                      if ($fecha_10 !== false) {
-                        $tooltip_lines[] = '10% alcanzado el: ' . $fecha_10->format('d/m/Y');
-                      }
+                    $faltas_10_mes = 0;
+                    $faltas_15_mes = 0;
+                    $injustificadas_title_10 = '';
+                    $injustificadas_title_15 = '';
+                    $fecha_10 = !empty($student['faltas_10_dia']) ? date_create((string) $student['faltas_10_dia']) : false;
+                    $fecha_15 = !empty($student['faltas_15_dia']) ? date_create((string) $student['faltas_15_dia']) : false;
+                    if ($fecha_10 !== false) {
+                      $faltas_10_mes = (int) $fecha_10->format('n');
+                      $tooltip_lines_10 = [];
+                      $tooltip_lines_10[] = 'Horas totales matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
+                      $tooltip_lines_10[] = '10% alcanzado el: ' . $fecha_10->format('d/m/Y');
                       if ($student['faltas_10_cantidad'] !== null && $student['faltas_10_cantidad'] !== '') {
-                        $tooltip_lines[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_10_cantidad'];
+                        $tooltip_lines_10[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_10_cantidad'];
                       }
-                      $injustificadas_title = implode("\n", $tooltip_lines);
+                      $injustificadas_title_10 = implode("\n", $tooltip_lines_10);
+                    }
+                    if ($fecha_15 !== false) {
+                      $faltas_15_mes = (int) $fecha_15->format('n');
+                      $tooltip_lines_15 = [];
+                      $tooltip_lines_15[] = 'Horas totales matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
+                      $tooltip_lines_15[] = '15% alcanzado el: ' . $fecha_15->format('d/m/Y');
+                      if ($student['faltas_15_cantidad'] !== null && $student['faltas_15_cantidad'] !== '') {
+                        $tooltip_lines_15[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_15_cantidad'];
+                      }
+                      $injustificadas_title_15 = implode("\n", $tooltip_lines_15);
                     }
                   ?>
                   <tr>
@@ -354,6 +376,18 @@ $total_columnas_asistencia = $mostrar_retrasos
                       <?php if ($mostrar_retrasos): ?>
                         <td><?php echo (int) $totales['retrasos']; ?></td>
                       <?php else: ?>
+                        <?php
+                          $injustificadas_class = '';
+                          $injustificadas_title = '';
+                          $numero_mes = (int) ($mes['numero_mes'] ?? 0);
+                          if ($faltas_15_mes > 0 && $numero_mes === $faltas_15_mes) {
+                            $injustificadas_class = 'attendance-warning-15';
+                            $injustificadas_title = $injustificadas_title_15;
+                          } elseif ($faltas_10_mes > 0 && $numero_mes === $faltas_10_mes) {
+                            $injustificadas_class = 'attendance-warning-10';
+                            $injustificadas_title = $injustificadas_title_10;
+                          }
+                        ?>
                         <td><?php echo (int) $totales['faltas_justificadas']; ?></td>
                         <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>"><?php echo (int) $totales['faltas_injustificadas']; ?></td>
                       <?php endif; ?>
