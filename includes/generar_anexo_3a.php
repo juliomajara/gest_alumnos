@@ -5,55 +5,68 @@ use Mpdf\Mpdf;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-function path_to_file_uri(string $path): string
+function image_file_to_data_uri(string $path): string
 {
-    $real = realpath($path);
-    if ($real === false || !is_file($real)) {
-        return '';
+    if (!is_file($path) || !is_readable($path)) {
+        throw new RuntimeException('No se puede leer la imagen: ' . $path);
     }
 
-    $normalized = str_replace('\\', '/', $real);
-    $parts = explode('/', $normalized);
-    $encodedParts = [];
-    foreach ($parts as $index => $part) {
-        if ($index === 0 && $part === '') {
-            $encodedParts[] = '';
-            continue;
-        }
-        if (preg_match('/^[A-Za-z]:$/', $part) === 1) {
-            $encodedParts[] = $part;
-            continue;
-        }
-        $encodedParts[] = rawurlencode($part);
-    }
-    $encodedPath = implode('/', $encodedParts);
-
-    if (preg_match('/^[A-Za-z]:\//', $normalized) === 1) {
-        return 'file:///' . $encodedPath;
+    $mime = '';
+    if (function_exists('mime_content_type')) {
+        $mime = (string) mime_content_type($path);
     }
 
-    return 'file://' . $encodedPath;
+    if ($mime === '' || strpos($mime, 'image/') !== 0) {
+        $ext = strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
+        $mimeMap = [
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'bmp' => 'image/bmp',
+            'svg' => 'image/svg+xml',
+        ];
+        $mime = $mimeMap[$ext] ?? '';
+    }
+
+    if ($mime === '' || strpos($mime, 'image/') !== 0) {
+        throw new RuntimeException('No se pudo determinar un MIME de imagen válido para: ' . $path);
+    }
+
+    $data = file_get_contents($path);
+    if ($data === false) {
+        throw new RuntimeException('No se pudo leer el contenido de la imagen: ' . $path);
+    }
+
+    return 'data:' . $mime . ';base64,' . base64_encode($data);
 }
 
-function preparar_src_imagenes_para_mpdf(string $html, string $docsDir): string
+function embed_local_images_as_base64(string $html, string $docsDir): string
 {
     return preg_replace_callback('~(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'][^>]*>)~iu', static function (array $matches) use ($docsDir): string {
+        $prefix = $matches[1];
         $src = trim(html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        if ($src === '' || preg_match('#^(https?:|data:|file:)#i', $src) === 1 || preg_match('#^//#', $src) === 1) {
+        $suffix = $matches[3];
+
+        if ($src === '' || preg_match('#^(data:|https?:|file:)#i', $src) === 1 || preg_match('#^//#', $src) === 1) {
             return $matches[0];
         }
 
-        $candidate = $docsDir . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR);
-        if (!is_file($candidate)) {
+        $relative = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR);
+        $path = $docsDir . DIRECTORY_SEPARATOR . $relative;
+
+        if (!is_file($path) || !is_readable($path)) {
             return $matches[0];
         }
 
-        $uri = path_to_file_uri($candidate);
-        if ($uri === '') {
+        try {
+            $dataUri = image_file_to_data_uri($path);
+        } catch (RuntimeException $e) {
             return $matches[0];
         }
 
-        return $matches[1] . $uri . $matches[3];
+        return $prefix . $dataUri . $suffix;
     }, $html) ?? $html;
 }
 
@@ -148,7 +161,7 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
 
     $projectRoot = realpath(__DIR__ . '/..');
     if ($projectRoot === false) {
-        throw new RuntimeException('No se pudo resolver la carpeta raíz del proyecto.');
+        throw new RuntimeException('No se pudo resolver la raíz del proyecto.');
     }
     $docsDir = $projectRoot . DIRECTORY_SEPARATOR . 'docs';
     $templatePath = $docsDir . DIRECTORY_SEPARATOR . 'modelo_3A.html';
@@ -168,8 +181,12 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     if (!is_file($cabeceraPath)) {
         throw new RuntimeException('No se encontró cabecera.png en: ' . $cabeceraPath);
     }
+    if (!extension_loaded('gd')) {
+        throw new RuntimeException('La extensión GD de PHP no está activa. mPDF puede necesitar GD para procesar imágenes PNG/JPG. Activa extension=gd en php.ini y reinicia Apache.');
+    }
+
     $html = (string) file_get_contents($templatePath);
-    $html = preparar_src_imagenes_para_mpdf($html, $docsDir);
+    $html = embed_local_images_as_base64($html, $docsDir);
 
     $nombreCompleto = trim($alumno['apellido1'] . ' ' . $alumno['apellido2'] . ', ' . $alumno['nombre']);
     $ciclo = trim((string) ($alumno['ciclo'] ?? ''));
@@ -222,17 +239,22 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
 
     if ($tipo === 'firma') {
         $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
-        $selloUri = path_to_file_uri($selloPath);
-        $selloHtml = '';
-        if ($selloUri !== '') {
-            $selloHtml = '<div style="margin:0 0 5mm 0;"><img src="' . htmlspecialchars($selloUri, ENT_QUOTES, 'UTF-8') . '" alt="Sello recibido" style="max-height:30mm;"></div>';
-        }
+        $selloDataUri = image_file_to_data_uri($selloPath);
+        $selloHtml = '<div style="margin:0 0 5mm 0;"><img src="' . htmlspecialchars($selloDataUri, ENT_QUOTES, 'UTF-8') . '" alt="Sello recibido" style="max-height:30mm;"></div>';
         $html .= '<div style="margin-top:14mm; border:1px solid #000; padding:10mm 8mm; text-align:center; font-size:10pt;">'
             . '<strong>RECIBÍ (FIRMA DEL ALUMNO/A O REPRESENTANTE LEGAL)</strong><br><br><br><br>'
             . $selloHtml
             . 'Fecha: ____ / ____ / ________'
             . '</div>';
     }
+
+    if (strpos($html, 'cabecera.png') !== false) {
+        throw new RuntimeException('La cabecera no se ha incrustado en base64. El HTML aún contiene cabecera.png.');
+    }
+    if (strpos($html, 'data:image/') === false) {
+        throw new RuntimeException('El HTML no contiene ninguna imagen embebida en base64.');
+    }
+
     $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'format' => 'A4', 'default_font' => 'dejavusans', 'allow_output_buffering' => true]);
     $pdfUnico->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
     $pdfUnico->WriteHTML($html);
