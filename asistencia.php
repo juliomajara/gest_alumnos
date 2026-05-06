@@ -81,16 +81,18 @@ if ($selected['id_curso_escolar'] > 0 && $selected['id_grupo'] > 0) {
 
     if ($students !== []) {
       $hours_stmt = $pdo->prepare(
-        'SELECT am.id_alumno,
-                SUM(COALESCE(m.horas_totales, 0)) AS horas_totales_matriculadas
-         FROM alumno_modulo am
+        'SELECT SUM(COALESCE(m.horas_totales, 0)) AS horas_totales_matriculadas
+         FROM (
+           SELECT DISTINCT id_modulo
+           FROM alumno_modulo
+           WHERE id_alumno = :id_alumno
+         ) am
          INNER JOIN modulos m ON m.id_modulo = am.id_modulo
-         WHERE am.id_alumno = :id_alumno
-           AND (
-             COALESCE(m.horas_semanales, 0) > 0
-             OR LOWER(COALESCE(m.materia_general, \'\')) LIKE \'%proyecto intermodular%\'
-             OR LOWER(COALESCE(m.materia_propia, \'\')) LIKE \'%proyecto intermodular%\'
-           )'
+         WHERE (
+           COALESCE(m.horas_semanales, 0) > 0
+           OR LOWER(COALESCE(m.materia_general, \'\')) LIKE \'%proyecto intermodular%\'
+           OR LOWER(COALESCE(m.materia_propia, \'\')) LIKE \'%proyecto intermodular%\'
+         )'
       );
 
       foreach ($students as $student) {
