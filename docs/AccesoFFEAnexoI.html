@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ANEXO I - Valoración PRL</title>
+
+  <style>
+/* ===== Impresión A4 ===== */
+@page { size: A4; margin: 14mm; }
+body { margin:0; font-family: Arial, Helvetica, sans-serif; color:#000; }
+.page { width: 210mm; margin: 0 auto; font-size: 8.5pt; line-height: 1; }
+
+/* ===== Helpers ===== */
+.small { font-size: 10px; }
+.xs { font-size: 9px; }
+.center { text-align: center; }
+.right { text-align: right; }
+.bold { font-weight: 700; }
+.upper { text-transform: uppercase; }
+
+/* ===== Tablas base ===== */
+table { border-collapse: collapse; width: 100%; }
+.tbl, .tbl th, .tbl td { border: 1px solid #000; }
+.tbl td, .tbl th { padding: 1mm 1mm; vertical-align: top; }
+.tbl th { font-weight: 700; }
+
+/* =========================================================
+   HEADER PDF (UNA TABLA, SIN ANIDAR) + alineación inferior
+   ========================================================= */
+
+/* Ajusta SOLO esto si hiciera falta */
+:root { --cm-left-h: 25mm; }  /* altura de referencia logo+texto */
+
+.header-table{
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 6mm;
+}
+
+.header-table td{ vertical-align: top; }
+
+.h-left{ width: 80mm; }
+
+/* En la fila 1: hacemos que la celda izquierda tenga una altura
+   y dentro alineamos abajo. */
+.h-left-wrap{
+  height: var(--cm-left-h);
+  display: flex;
+  gap: 5mm;
+  align-items: flex-end;    /* ✅ CLAVE: alinea por abajo */
+}
+
+/* Logo: misma altura de referencia para que tenga “base” */
+.h-logo{
+  width: 22mm;
+  height: var(--cm-left-h); /* ✅ CLAVE */
+  object-fit: contain;
+  display: block;
+}
+
+/* Texto: lo convertimos en flex para empujarlo abajo */
+.h-text{
+  height: var(--cm-left-h); /* ✅ CLAVE */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* ✅ CLAVE */
+  font-size: 9pt;
+  line-height: 1.15;
+}
+
+.h-cons{
+  margin-top: 3mm;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+}
+
+/* Columna derecha vacía (fila 1) */
+.h-right-empty{
+  height: 18mm;
+}
+
+/* ANEXO I */
+.h-anexo{
+  text-align: center;
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0 0 6mm 0;
+}
+
+/* Título principal */
+.h-title{
+  text-align: center;
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.35;
+  letter-spacing: 0.4px;
+  padding-bottom: 6mm;
+}
+
+/* Subtítulo */
+.h-sub{
+  text-align: center;
+  font-size: 10pt;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* =========================================================
+   TABLA DATOS (topForm) – altura fija
+   ========================================================= */
+:root { --topform-row-h: 4mm; }
+
+.topForm tr { height: var(--topform-row-h); }
+
+.topForm td{
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.topForm td.label,
+.topForm td.groupLabel,
+.topForm td.value{
+  height: var(--topform-row-h);
+  vertical-align: middle;
+  font-size: 8.5pt;
+  line-height: 1;
+}
+
+.topForm td.label{
+  width: 30mm;
+  font-weight: 700;
+  background: #f2f2f2;
+}
+
+.topForm td.groupLabel{
+  width: 14mm;
+  font-weight: 700;
+  background: #f2f2f2;
+  text-align: center;
+}
+
+/* =========================================================
+   TABLA ÍTEMS (items)
+   ========================================================= */
+.items th { text-align: center; }
+.items td.num { width: 8mm; text-align: right; font-weight: 700; }
+.items td.text { width: auto; }
+.items th.choice, .items td.choice { width: 14mm; text-align: center; vertical-align: middle; }
+
+.items thead th{
+  background: #f2f2f2;
+  font-size: 10px;
+  line-height: 1.1;
+  padding-top: 0.8mm;
+  padding-bottom: 0.8mm;
+}
+
+.items td{
+  font-size: 9.5px;
+  line-height: 1.05;
+  padding-top: 0.6mm;
+  padding-bottom: 0.6mm;
+}
+
+.items td.choice{ vertical-align: middle; }
+
+.note { margin: 2mm 0 4mm 0; font-size: 9px; }
+
+/* =========================================================
+   Registro conductas inseguras
+   ========================================================= */
+.regTitle { font-size: 10px; font-weight: 700; text-align: center; margin: 2mm 0 2mm 0; }
+.registro th { background: #f2f2f2; font-size: 9px; }
+.registro td { height: 3mm; font-size: 9px; }
+
+/* =========================================================
+   Bloque valoración final
+   ========================================================= */
+.box{ border: 1px solid #000; padding: 0; margin-top: 6mm; }
+.boxHeader{
+  border-bottom: 1px solid #000;
+  padding: 2mm 2mm;
+  background: #f2f2f2;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.boxBody{ padding: 3mm 3mm; font-size: 10px; }
+.row{
+  display: grid;
+  grid-template-columns: 25mm 1fr;
+  gap: 2mm;
+  align-items: center;
+  margin: 2mm 0;
+}
+.checkbox{
+  width: 4mm; height: 4mm;
+  border: 1px solid #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+  margin-left: 2mm;
+}
+.textarea{
+  margin-top: 3mm;
+  border: 1px solid #000;
+  height: 30mm;
+  padding: 2mm;
+  font-size: 10px;
+}
+
+/* =========================================================
+   Firma
+   ========================================================= */
+.signature{
+  margin-top: 8mm;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2mm;
+  justify-items: center;
+  font-size: 10px;
+}
+.sigLine{ width: 70%; display: flex; justify-content: center; gap: 6mm; }
+.prof{ margin-top: 2mm; font-weight: 700; }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- CABECERA (tabla, sin anidar) -->
+    <table class="header-table">
+      <tr>
+        <td class="h-left">
+          <div class="h-left-wrap">
+            <img class="h-logo" src="logo_CM.png" alt="Comunidad de Madrid">
+            <div class="h-text">
+              <div>Dirección General</div>
+              <div>de Educación Secundaria,</div>
+              <div>Formación Profesional</div>
+              <div>y Régimen Especial</div>
+
+              <div class="h-cons">
+                CONSEJERÍA DE EDUCACIÓN,<br>
+                CIENCIA Y UNIVERSIDADES
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="h-right-empty"></td>
+      </tr>
+
+      <tr>
+        <td colspan="2" class="h-anexo">ANEXO I</td>
+      </tr>
+
+      <tr>
+        <td colspan="2" class="h-title">
+          VALORACIÓN DE LA ADQUISICIÓN DE COMPETENCIAS RELATIVAS A LA PREVENCIÓN DE RIESGOS LABORALES
+          PARA EL ACCESO A LA FASE DE FORMACIÓN EN EMPRESA U ORGANISMO EQUIPARADO.
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="2" class="h-sub">
+          Informe del profesor del módulo profesional
+        </td>
+      </tr>
+    </table>
+
+    <!-- TABLA DATOS -->
+    <table class="tbl topForm">
+      <tr>
+        <td class="label">Alumno/a:</td>
+        <td class="value" colspan="3">Julio Sánchez</td>
+      </tr>
+      <tr>
+        <td class="label">Ciclo formativo:</td>
+        <td class="value" colspan="3">Sistemas Microoinformático y Redes</td>
+      </tr>
+      <tr>
+        <td class="label">Curso académico:</td>
+        <td class="value"></td>
+        <td class="groupLabel">Grupo</td>
+        <td class="value" style="width:30mm;"></td>
+      </tr>
+      <tr>
+        <td class="label">Año escolar:</td>
+        <td class="value" colspan="3"></td>
+      </tr>
+      <tr>
+        <td class="label">Módulo profesional:</td>
+        <td class="value" colspan="3"></td>
+      </tr>
+    </table>
+
+    <!-- TABLA ÍTEMS -->
+    <table class="tbl items" style="margin-top:0;">
+      <thead>
+        <tr>
+          <th colspan="2"></th>
+          <th class="choice">SÍ</th>
+          <th class="choice">NO<span class="xs">(1)</span></th>
+          <th class="choice">NO<br>PROCEDE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="num">1.</td>
+          <td class="text">
+            Identifica los factores de riesgo en su actividad (riesgos derivados del lugar y equipos de trabajo; riesgos
+            físicos, químicos o biológicos; riesgos derivados de las condiciones ergonómicas del puesto de trabajo;
+            riesgos psicosociales derivados de la organización del trabajo).
+          </td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">2.</td>
+          <td class="text">Identifica y sabe aplicar las medidas de prevención de riesgos laborales.</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">3.</td>
+          <td class="text">
+            Conoce cuáles son los principales daños derivados de los factores de riesgo laboral (accidente de trabajo y
+            enfermedad profesional, entre otros).
+          </td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">4.</td>
+          <td class="text">Realiza un seguimiento correcto de los protocolos de trabajo.</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">5.</td>
+          <td class="text">Utiliza correctamente los útiles y herramientas.</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">6.</td>
+          <td class="text">Usa de manera segura los equipamientos e instalaciones fijas específicas asociadas a la tarea.</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">7.</td>
+          <td class="text">Identifica y hace un uso adecuado de los equipos de protección individual (EPIs).</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">8.</td>
+          <td class="text">
+            Identifica y respeta las medidas de señalización de seguridad (señales de advertencia, obligación, socorro,
+            prohibición, evacuación, información).
+          </td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">9.</td>
+          <td class="text">Identifica y respeta las medidas de protección colectiva.</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">10.</td>
+          <td class="text">Mantiene el orden y la limpieza en el entorno de trabajo.</td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+        <tr>
+          <td class="num">11.</td>
+          <td class="text">
+            En el desarrollo de la tarea su conducta resulta segura para la integridad física y psicológica de sus
+            compañeros.
+          </td>
+          <td class="choice"></td><td class="choice"></td><td class="choice"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      (1) En caso de que el alumno haya obtenido valoración negativa en uno o más ítems debe registrarse esta circunstancia
+      cumplimentando la tabla “Registro de conductas inseguras”.
+    </div>
+
+    <!-- REGISTRO DE CONDUCTAS INSEGURAS -->
+    <div class="regTitle upper">REGISTRO DE CONDUCTAS INSEGURAS</div>
+    <table class="tbl registro">
+      <thead>
+        <tr>
+          <th style="width:18mm;">Indicar nº<br>de ítem</th>
+          <th>Breve descripción de la conducta insegura llevada a cabo por alumno/a.</th>
+          <th style="width:35mm;">Calificación de la conducta insegura<br>(leve/grave/muy grave)</th>
+          <th style="width:40mm;">Consecuencias de la conducta insegura<br>(leve/ grave/ muy grave)</th>
+          <th style="width:30mm;">Lugar y fecha en la que se produjo la incidencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <!-- BLOQUE VALORACIÓN FINAL -->
+    <div class="box">
+      <div class="boxHeader">
+        VALORACIÓN DE LA ADQUISICIÓN DE COMPETENCIAS RELATIVAS A LA PREVENCIÓN DE RIESGOS LABORALES PARA EL ACCESO A LA
+        FASE DE FORMACIÓN EN EMPRESA U ORGANISMO EQUIPARADO:
+      </div>
+      <div class="boxBody">
+        <div class="row">
+          <div class="bold upper">POSITIVA:</div>
+          <div><span class="checkbox" aria-hidden="true"></span></div>
+        </div>
+        <div class="row">
+          <div class="bold upper">NEGATIVA:</div>
+          <div><span class="checkbox" aria-hidden="true"></span></div>
+        </div>
+        <div style="margin-top:3mm;">
+          Incluir, si se considera oportuno, qué resultados de aprendizaje deben ser reforzados por parte del alumno.
+        </div>
+        <div class="textarea"></div>
+      </div>
+    </div>
+
+    <!-- Firma final -->
+    <div class="signature">
+      <div class="sigLine">
+        En Getafe, a 31 de enero de 2026
+      </div>
+      <div class="prof upper">EL PROFESOR DEL MÓDULO PROFESIONAL</div>
+      <br><br><br><br><br>
+      <div class="prof">Firmado: Julio Sánchez Fernández</div>
+    </div>
+
+  </div>
+</body>
+</html>
