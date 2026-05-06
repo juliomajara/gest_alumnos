@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>IMPRESO 3A - Comunicación de faltas de asistencia</title>
+  <style>
+    html, body { margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; }
+
+    .page { width: 100%; margin: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    td { vertical-align: top; }
+
+    .header-img { width: 100%; height: auto; display: block; }
+
+    /* Línea bajo cabecera (IES + dirección) */
+    .iesline { font-size: 9pt; line-height: 1.15; padding-top: 2mm; padding-bottom: 2mm; }
+    .iesline .right { text-align: right; }
+    .iesline .bold { font-weight: bold; }
+
+    /* Recuadro IMPRESO 3A */
+    .badge { display: inline-block; border: 1px solid #000; padding: 1mm 3mm; font-weight: bold; font-size: 12pt; }
+    .badge-wrap { padding: 3mm 0 2mm 0; }
+
+    .subtitle { text-align: center; font-weight: bold; font-size: 12pt; margin: 0 0 5mm 0; }
+
+    .p { text-align: justify; line-height: 1.35; margin: 0 0 3.2mm 0; }
+    .bold { font-weight: bold; }
+    sup { font-size: 8pt; }
+
+    /* Caja negra bloque ALUMNO/A... */
+    .boxed {
+      border: 1px solid #000;
+      padding: 4mm 4mm;
+      margin: 6mm 0 5mm 0;
+      font-size: 10pt;
+      line-height: 1.35;
+    }
+    .boxed .line { margin: 0 0 2.5mm 0; }
+    .boxed .line:last-child { margin-bottom: 0; }
+
+    /* Firma */
+    .firma { margin-top: 2mm; text-align: center; font-size: 10pt; }
+    .firma .tutor { font-weight: bold; margin-bottom: 2mm; } /* deja hueco para la firma */
+    .firma .fdo { margin-top: 0; margin-bottom: 30mm;}
+
+    /* Nota pie */
+    .footnote { font-size: 9pt; margin-top: 10mm; }
+
+    /* Texto inferior Fondo Social Europeo */
+    .fse-wrap { margin-top: 2mm; text-align: center; }
+    .fse-box {
+      display: inline-block;
+      padding: 2.5mm 6mm;
+      color: #1a4fa3; /* azul tipo enlace */
+      font-size: 9pt;
+      line-height: 1.2;
+    }
+    .fse-box .top { font-weight: bold; }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- CABECERA IMAGEN -->
+    <div>
+      <img class="header-img" src="cabecera.png" alt="Cabecera">
+    </div>
+
+    <!-- TEXTO BAJO CABECERA (derecha) -->
+    <div class="iesline">
+      <div class="right">
+        <span class="bold">I.E.S. BILINGÜE LAGUNA DE JOATZEL</span><br>
+        Avda. de las Vascongadas, s/n 28903 - GETAFE (Madrid) Tfno.: 91 883 20 26 - 91 883 71 97<br>
+        ies.lagunadejoatzel.getafe@educa.madrid.org &nbsp;&nbsp; www.lagunadejoatzel.org
+      </div>
+    </div>
+
+    <!-- IMPRESO 3A con recuadro -->
+    <div class="badge-wrap">
+      <span class="badge">IMPRESO 3A</span>
+    </div>
+
+    <!-- TÍTULO -->
+    <div class="subtitle">COMUNICACIÓN DE FALTAS DE ASISTENCIA</div>
+
+    <!-- TEXTO INICIAL -->
+    <p class="p">
+      La Orden 2694/2009 de 9 de junio en su artículo 18 contempla la anulación de la matrícula a aquellos alumnos que
+      acumulen un total de faltas no justificadas equivalentes al 15% del total de las horas de formación en el centro
+      docente o por la falta injustificada a todos los módulos durante un periodo de 15 días lectivos consecutivos.
+    </p>
+
+    <p class="p">
+      El punto 4 de dicho artículo establece el mecanismo de comunicación de dichas faltas al alumno o a sus
+      representantes legales.
+    </p>
+
+    <p class="p">
+      El total de horas del Ciclo Formativo de Grado Medio Sistemas Microinformáticos y Redes en el presente curso es de
+      1000 horas<sup>1</sup> distribuidas de la siguiente forma: Aplicaciones Web (135 h), Seguridad Informática (85 h),
+      Servicios en red (230 h), Sistemas Operativos en Red (230 h), Inglés Profesional (50 h), Itinerario personal para la
+      empleabilidad II (70 h), Digitalización aplicada a los sectores productivos (30 h), Sostenibilidad aplicada al sistema
+      productivo (30 h), Módulo profesional optativo (90), Proyecto intermodular (50 h).
+    </p>
+
+    <!-- CAJA NEGRA ALUMNO/A... -->
+    <div class="boxed">
+      <div class="line"><span class="bold">ALUMNO/A:</span> ANDERSON JOEL TUL TABANGO</div>
+      <div class="line"><span class="bold">CICLO FORMATIVO:</span> SISTEMAS MICROINFORMÁTICOS Y REDES</div>
+
+      <div class="line" style="margin-top:3mm;">
+        Mediante la presente, pongo en su conocimiento que ha faltado de manera injustificada a <span class="bold">100 horas</span> de
+        clase, lo cual representa el <span class="bold">10%</span> del total de las horas de formación en el centro.
+      </div>
+
+      <div class="line">
+        En función de lo dispuesto en la Orden y artículo que figura en la cabecera de esta comunicación le recuerdo que el
+        número máximo de faltas injustificadas para la anulación de su matrícula es de <span class="bold">150 horas</span> y que, en consecuencia,
+        sólo le quedan <span class="bold">50</span> para alcanzar el límite establecido.
+      </div>
+
+      <div class="line">
+        Por otra parte, deseo poner en su conocimiento que puede Ud. aportar ante su tutor o tutora la documentación
+        justificativa que considere adecuada.
+      </div>
+    </div>
+
+    <!-- FECHA -->
+    <p class="p"  style="text-align: center;">En Getafe, a 28 de noviembre de 2025</p>
+
+    <!-- FIRMA -->
+    <div class="firma">
+      <div class="tutor">EL TUTOR</div>
+      <div class="fdo">FDO: Julio Sánchez Fernández</div>
+    </div>
+
+    <!-- NOTA AL PIE -->
+    <div class="footnote">
+      <sup>1</sup> IFCM01, IFCS01, IFCS02, IFCS03 y AFD301 (Primer y segundo curso) = 1000 horas.
+    </div>
+
+    <!-- FONDO SOCIAL EUROPEO -->
+    <div class="fse-wrap">
+      <div class="fse-box">
+        <div class="top">FONDO SOCIAL EUROPEO PLUS</div>
+        <div>El FSE+ invierte en su futuro</div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
