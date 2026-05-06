@@ -5,8 +5,12 @@ use Mpdf\Mpdf;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escolar, int $id_grupo): void
+function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escolar, int $id_grupo, string $tipo = 'normal'): void
 {
+    if (!in_array($tipo, ['normal', 'firma'], true)) {
+        throw new RuntimeException('El tipo de Anexo 3A no es válido.');
+    }
+
     if ($id_alumno <= 0) {
         throw new RuntimeException('El identificador del alumno no es válido.');
     }
@@ -82,12 +86,21 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     }
     $html = (string) file_get_contents($plantilla);
 
-    $headerPath = __DIR__ . '/../docs/cabecera.png';
-    if (is_file($headerPath)) {
-        $html = str_replace('src="cabecera.png"', 'src="file://' . $headerPath . '"', $html);
-    } else {
-        $html = preg_replace('/<img class="header-img"[^>]+>/i', '', $html) ?? $html;
+    $templateDir = realpath(__DIR__ . '/../docs');
+    if ($templateDir === false) {
+        throw new RuntimeException('No se encontró la carpeta docs para resolver recursos del Anexo 3A.');
     }
+    $html = preg_replace_callback('/(<img\b[^>]*\bsrc=")([^"]+)(")/i', static function (array $matches) use ($templateDir): string {
+        $src = trim($matches[2]);
+        if ($src === '' || preg_match('#^(https?:)?//#i', $src) === 1 || str_starts_with($src, 'file://') || str_starts_with($src, 'data:')) {
+            return $matches[0];
+        }
+        $path = realpath($templateDir . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR));
+        if ($path !== false && is_file($path)) {
+            return $matches[1] . 'file://' . str_replace(DIRECTORY_SEPARATOR, '/', $path) . $matches[3];
+        }
+        return preg_replace('/<img\b[^>]*>/i', '', $matches[0]) ?? '';
+    }, $html) ?? $html;
 
     $nombreCompleto = trim($alumno['apellido1'] . ' ' . $alumno['apellido2'] . ', ' . $alumno['nombre']);
     $ciclo = trim((string) ($alumno['ciclo'] ?? ''));
@@ -111,8 +124,8 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $fechaLarga = (int)$fecha10->format('j') . ' de ' . $meses[(int)$fecha10->format('n')] . ' de ' . $fecha10->format('Y');
 
     $html = preg_replace('/El total de horas del Ciclo Formativo[\s\S]*?<\/p>/', $parrafoCiclo . '</p>', $html, 1) ?? $html;
-    $html = preg_replace('/<span class="bold">ALUMNO\/A:<\/span>[^<]+/i', '<span class="bold">ALUMNO/A:</span> ' . htmlspecialchars(strtoupper($nombreCompleto), ENT_QUOTES, 'UTF-8'), $html, 1) ?? $html;
-    $html = preg_replace('/<span class="bold">CICLO FORMATIVO:<\/span>[^<]+/i', '<span class="bold">CICLO FORMATIVO:</span> ' . htmlspecialchars(strtoupper($ciclo), ENT_QUOTES, 'UTF-8'), $html, 1) ?? $html;
+    $html = preg_replace('/<span class="bold">ALUMNO\/A:<\/span>[^<]+/i', '<span class="bold">ALUMNO/A:</span> ' . htmlspecialchars(mb_strtoupper($nombreCompleto, 'UTF-8'), ENT_QUOTES, 'UTF-8'), $html, 1) ?? $html;
+    $html = preg_replace('/<span class="bold">CICLO FORMATIVO:<\/span>[^<]+/i', '<span class="bold">CICLO FORMATIVO:</span> ' . htmlspecialchars(mb_strtoupper($ciclo, 'UTF-8'), ENT_QUOTES, 'UTF-8'), $html, 1) ?? $html;
     $html = preg_replace('/ha faltado de manera injustificada a <span class="bold">[^<]+<\/span>/', 'ha faltado de manera injustificada a <span class="bold">' . rtrim(rtrim(number_format($faltas10, 2, '.', ''), '0'), '.') . ' horas</span>', $html, 1) ?? $html;
     $html = preg_replace('/anulación de su matrícula es de <span class="bold">[^<]+<\/span> y que, en consecuencia,\s*sólo le quedan <span class="bold">[^<]+<\/span>/', 'anulación de su matrícula es de <span class="bold">' . rtrim(rtrim(number_format($maximo15, 2, '.', ''), '0'), '.') . ' horas</span> y que, en consecuencia, sólo le quedan <span class="bold">' . rtrim(rtrim(number_format($restantes, 2, '.', ''), '0'), '.') . '</span>', $html, 1) ?? $html;
     $html = preg_replace('/En Getafe, a [^<]+/i', 'En Getafe, a ' . $fechaLarga, $html, 1) ?? $html;
@@ -138,62 +151,27 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $base = trim((string)$base, '_');
     if ($base === '') { $base = 'alumno_' . $id_alumno; }
 
-    $pdf1 = $tmpDir . '/Anexo_3A_' . $base . '.pdf';
-    $pdf2 = $tmpDir . '/Anexo_3A_' . $base . '_recibido.pdf';
-    $zipPath = $tmpDir . '/anexos_3A_' . $base . '_' . bin2hex(random_bytes(4)) . '.zip';
+    $pdfPath = $tmpDir . '/Anexo_3A_' . $base . '_' . $tipo . '_' . bin2hex(random_bytes(4)) . '.pdf';
 
-    $mpdf = new Mpdf(['tempDir' => $mpdfTmp]);
-    $mpdf->WriteHTML($html);
-    $mpdf->Output($pdf1, \Mpdf\Output\Destination::FILE);
-
-    $htmlRecibido = $html;
-    $selloPath = null;
-    foreach ([__DIR__ . '/../docs/sello_recibido.png', __DIR__ . '/../docs/sello.png', __DIR__ . '/../assets/sello_recibido.png'] as $cand) {
-        if (is_file($cand)) { $selloPath = $cand; break; }
+    if ($tipo === 'firma') {
+        $html .= '<div style="margin-top:14mm; border:1px solid #000; padding:10mm 8mm; text-align:center; font-size:10pt;">'
+            . '<strong>RECIBÍ (FIRMA DEL ALUMNO/A O REPRESENTANTE LEGAL)</strong><br><br><br><br>'
+            . 'Fecha: ____ / ____ / ________'
+            . '</div>';
     }
-    if ($selloPath !== null) {
-        $htmlRecibido .= '<img src="file://' . $selloPath . '" style="position: fixed; right: 20mm; bottom: 25mm; width: 40mm; opacity: 0.75;">';
-    } else {
-        $htmlRecibido .= '<div style="position: fixed; right: 15mm; bottom: 20mm; border:2px solid #b40000; color:#b40000; font-size:20pt; font-weight:bold; transform:rotate(-18deg); padding:4mm 8mm;">RECIBIDO</div>';
-    }
-    $mpdf2 = new Mpdf(['tempDir' => $mpdfTmp]);
-    $mpdf2->WriteHTML($htmlRecibido);
-    $mpdf2->Output($pdf2, \Mpdf\Output\Destination::FILE);
+    $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'default_font' => 'dejavusans']);
+    $pdfUnico->WriteHTML($html);
+    $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
 
-    if (class_exists('ZipArchive')) {
-        $zip = new ZipArchive();
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-            throw new RuntimeException('No se pudo crear el ZIP de anexos.');
-        }
-        $zip->addFile($pdf1, 'Anexo_3A_' . $base . '.pdf');
-        $zip->addFile($pdf2, 'Anexo_3A_' . $base . '_recibido.pdf');
-        $zip->close();
-
-        register_shutdown_function(static function () use ($pdf1, $pdf2, $zipPath): void {
-            foreach ([$pdf1, $pdf2, $zipPath] as $f) {
-                if (is_file($f)) { @unlink($f); }
-            }
-        });
-
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="anexos_3A_' . $base . '.zip"');
-        header('Content-Length: ' . (string) filesize($zipPath));
-        readfile($zipPath);
-        exit;
-    }
-
-    register_shutdown_function(static function () use ($pdf1, $pdf2): void {
-        foreach ([$pdf1, $pdf2] as $f) {
-            if (is_file($f)) { @unlink($f); }
+    register_shutdown_function(static function () use ($pdfPath): void {
+        if (is_file($pdfPath)) {
+            @unlink($pdfPath);
         }
     });
 
-    $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp]);
-    $pdfUnico->WriteHTML($html);
-    $pdfUnico->AddPage();
-    $pdfUnico->WriteHTML($htmlRecibido);
     header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="Anexo_3A_' . $base . '_doble.pdf"');
-    $pdfUnico->Output('', \Mpdf\Output\Destination::INLINE);
+    header('Content-Disposition: attachment; filename="Anexo_3A_' . $base . ($tipo === 'firma' ? '_firma' : '') . '.pdf"');
+    header('Content-Length: ' . (string) filesize($pdfPath));
+    readfile($pdfPath);
     exit;
 }

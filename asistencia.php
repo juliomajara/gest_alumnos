@@ -33,9 +33,13 @@ if ((string) ($_GET['accion'] ?? '') === 'descargar_anexo_3a') {
   $id_alumno_descarga = filter_input(INPUT_GET, 'id_alumno', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
   $id_curso_descarga = filter_input(INPUT_GET, 'id_curso_escolar', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
   $id_grupo_descarga = filter_input(INPUT_GET, 'id_grupo', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+  $tipo_anexo_descarga = (string) ($_GET['tipo'] ?? 'normal');
+  if (!in_array($tipo_anexo_descarga, ['normal', 'firma'], true)) {
+    $tipo_anexo_descarga = 'normal';
+  }
 
   try {
-    generar_anexo_3a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga);
+    generar_anexo_3a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga, $tipo_anexo_descarga);
   } catch (Throwable $e) {
     $errors[] = $e->getMessage();
   }
@@ -208,7 +212,7 @@ foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
   ];
 }
 
-$total_columnas_asistencia = 3 + count($meses_curso) + 3;
+$total_columnas_asistencia = 4 + count($meses_curso) + 3;
 $vista_titulo = 'Faltas Injustificadas';
 if ($vista === 'justificadas') {
   $vista_titulo = 'Faltas Justificadas';
@@ -315,7 +319,8 @@ if ($vista === 'justificadas') {
               <tr>
                 <th rowspan="2">Alumno</th>
                 <th rowspan="2">Horas matriculadas</th>
-                <th rowspan="2">Anexo 3A</th>
+                <th rowspan="2">Descargar Anexo 3A</th>
+                <th rowspan="2">Anexo 4A</th>
                 <?php foreach ($meses_curso as $mes): ?>
                   <th colspan="1"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
@@ -385,12 +390,18 @@ if ($vista === 'justificadas') {
                       && $id_alumno > 0
                       && $selected['id_curso_escolar'] > 0
                       && $selected['id_grupo'] > 0;
+                    $query_anexo_normal = [];
+                    $query_anexo_firma = [];
                     if ($mostrar_boton_anexo_3a) {
-                      $query_anexo = $_GET;
-                      $query_anexo['accion'] = 'descargar_anexo_3a';
-                      $query_anexo['id_alumno'] = $id_alumno;
-                      $query_anexo['id_curso_escolar'] = $selected['id_curso_escolar'];
-                      $query_anexo['id_grupo'] = $selected['id_grupo'];
+                      $query_anexo_normal = $_GET;
+                      $query_anexo_normal['accion'] = 'descargar_anexo_3a';
+                      $query_anexo_normal['id_alumno'] = $id_alumno;
+                      $query_anexo_normal['id_curso_escolar'] = $selected['id_curso_escolar'];
+                      $query_anexo_normal['id_grupo'] = $selected['id_grupo'];
+                      $query_anexo_normal['tipo'] = 'normal';
+
+                      $query_anexo_firma = $query_anexo_normal;
+                      $query_anexo_firma['tipo'] = 'firma';
                     }
                     if ($fecha_15 !== false) {
                       $faltas_15_mes = (int) $fecha_15->format('n');
@@ -407,11 +418,15 @@ if ($vista === 'justificadas') {
                     <td><?php echo htmlspecialchars(rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.'), ENT_QUOTES, 'UTF-8'); ?></td>
                     <td>
                       <?php if ($mostrar_boton_anexo_3a): ?>
-                        <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_anexo), ENT_QUOTES, 'UTF-8'); ?>">Descargar Anexo 3A</a>
+                        <div class="anexo-actions">
+                          <a class="ghost-button btn-anexo-mini" href="?<?php echo htmlspecialchars(http_build_query($query_anexo_normal), ENT_QUOTES, 'UTF-8'); ?>">3A</a>
+                          <a class="ghost-button btn-anexo-mini" href="?<?php echo htmlspecialchars(http_build_query($query_anexo_firma), ENT_QUOTES, 'UTF-8'); ?>">3AF</a>
+                        </div>
                       <?php else: ?>
                         -
                       <?php endif; ?>
                     </td>
+                    <td>-</td>
                     <?php foreach ($meses_curso as $mes): ?>
                       <?php
                         $id_mes = (int) $mes['id_mes'];
