@@ -32,7 +32,7 @@ $selected = [
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
-$meses = $pdo->query('SELECT id_mes, mes FROM meses ORDER BY id_mes')->fetchAll(PDO::FETCH_ASSOC);
+$meses = $pdo->query('SELECT id_mes, mes, orden FROM meses ORDER BY orden, id_mes')->fetchAll(PDO::FETCH_ASSOC);
 
 $mes_valido_actual = false;
 foreach ($meses as $mes_item) {
@@ -368,15 +368,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           $attendance_before_month_stmt = $pdo->prepare(
             'SELECT COALESCE(SUM(am.faltas_injustificadas), 0)
              FROM asistencia_mensual am
-             INNER JOIN meses me ON me.id_mes = am.id_mes
+             INNER JOIN meses m_anterior ON m_anterior.id_mes = am.id_mes
+             INNER JOIN meses m_actual ON m_actual.id_mes = :id_mes
              WHERE am.id_alumno = :id_alumno
                AND am.id_curso_escolar = :id_curso_escolar
-               AND me.orden < (
-                 SELECT me2.orden
-                 FROM meses me2
-                 WHERE me2.id_mes = :id_mes
-                 LIMIT 1
-               )'
+               AND m_anterior.orden < m_actual.orden'
           );
           $student_thresholds_stmt = $pdo->prepare(
             'SELECT faltas_10_dia, faltas_10_cantidad, faltas_15_dia, faltas_15_cantidad
