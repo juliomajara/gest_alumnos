@@ -357,7 +357,6 @@ if ($vista === 'justificadas') {
                     if ($fecha_10 !== false) {
                       $faltas_10_mes = (int) $fecha_10->format('n');
                       $tooltip_lines_10 = [];
-                      $tooltip_lines_10[] = 'Horas matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
                       $tooltip_lines_10[] = '10% alcanzado el: ' . $fecha_10->format('d/m/Y');
                       if ($student['faltas_10_cantidad'] !== null && $student['faltas_10_cantidad'] !== '') {
                         $tooltip_lines_10[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_10_cantidad'];
@@ -367,7 +366,6 @@ if ($vista === 'justificadas') {
                     if ($fecha_15 !== false) {
                       $faltas_15_mes = (int) $fecha_15->format('n');
                       $tooltip_lines_15 = [];
-                      $tooltip_lines_15[] = 'Horas matriculadas: ' . rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.');
                       $tooltip_lines_15[] = '15% alcanzado el: ' . $fecha_15->format('d/m/Y');
                       if ($student['faltas_15_cantidad'] !== null && $student['faltas_15_cantidad'] !== '') {
                         $tooltip_lines_15[] = 'Faltas injustificadas acumuladas: ' . (string) $student['faltas_15_cantidad'];
