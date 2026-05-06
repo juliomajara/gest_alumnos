@@ -5,6 +5,50 @@ use Mpdf\Mpdf;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+function path_to_file_uri(string $path): string
+{
+    $real = realpath($path);
+    if ($real === false || !is_file($real)) {
+        return '';
+    }
+
+    $normalized = str_replace('\\', '/', $real);
+    $parts = explode('/', $normalized);
+    $encodedParts = [];
+    foreach ($parts as $index => $part) {
+        if ($index === 0 && $part === '') {
+            $encodedParts[] = '';
+            continue;
+        }
+        if (preg_match('/^[A-Za-z]:$/', $part) === 1) {
+            $encodedParts[] = $part;
+            continue;
+        }
+        $encodedParts[] = rawurlencode($part);
+    }
+    $encodedPath = implode('/', $encodedParts);
+
+    if (preg_match('/^[A-Za-z]:\//', $normalized) === 1) {
+        return 'file:///' . $encodedPath;
+    }
+
+    return 'file://' . $encodedPath;
+}
+
+function sanitize_utf8_filename_base(string $text, int $idAlumno): string
+{
+    $base = trim($text);
+    $base = preg_replace('/\s+/u', '_', $base) ?? '';
+    $base = preg_replace('/[\/\\:*?"<>|\x00-\x1F]/u', '', $base) ?? '';
+    $base = trim($base, "._- \t\n\r\0\x0B");
+
+    if ($base === '') {
+        $base = 'alumno_' . $idAlumno;
+    }
+
+    return $base;
+}
+
 function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escolar, int $id_grupo, string $tipo = 'normal'): void
 {
     if (!in_array($tipo, ['normal', 'firma'], true)) {
@@ -86,20 +130,79 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     }
     $html = (string) file_get_contents($plantilla);
 
-    $templateDir = realpath(__DIR__ . '/../docs');
-    if ($templateDir === false) {
-        throw new RuntimeException('No se encontró la carpeta docs para resolver recursos del Anexo 3A.');
+    $templatePath = realpath($plantilla);
+    if ($templatePath === false) {
+        throw new RuntimeException('No se pudo resolver la ruta real de docs/modelo_3A.html.');
     }
-    $html = preg_replace_callback('/(<img\b[^>]*\bsrc=")([^"]+)(")/i', static function (array $matches) use ($templateDir): string {
-        $src = trim($matches[2]);
+
+    $templateDir = dirname($templatePath);
+    $projectRoot = realpath(__DIR__ . '/..');
+    $candidateDirs = [
+        $templateDir,
+        $templateDir . DIRECTORY_SEPARATOR . 'img',
+        $templateDir . DIRECTORY_SEPARATOR . 'images',
+    ];
+    if ($projectRoot !== false) {
+        $candidateDirs[] = $projectRoot . DIRECTORY_SEPARATOR . 'docs';
+        $candidateDirs[] = $projectRoot . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'img';
+        $candidateDirs[] = $projectRoot . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'images';
+        $candidateDirs[] = $projectRoot . DIRECTORY_SEPARATOR . 'assets';
+        $candidateDirs[] = $projectRoot . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'logo';
+    }
+    $candidateDirs = array_values(array_filter(array_unique($candidateDirs), static fn(string $dir): bool => is_dir($dir)));
+
+    $fallbackByKeyword = [
+        'cabecera' => ['cabecera.png', 'logo_IES.png', 'logo.svg', 'logo-full.svg'],
+        'logo_ies' => ['logo_IES.png', 'logo.svg', 'logo-full.svg'],
+        'bandera_cm' => ['bandera_CM.png'],
+        'fondos_europeos' => ['logo_fondos_europeos.png', 'logo_cofinanciado_union_europea.png'],
+    ];
+
+    $html = preg_replace_callback('~(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'][^>]*>)~iu', static function (array $matches) use ($candidateDirs, $fallbackByKeyword): string {
+        $src = trim(html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         if ($src === '' || preg_match('#^(https?:)?//#i', $src) === 1 || str_starts_with($src, 'file://') || str_starts_with($src, 'data:')) {
             return $matches[0];
         }
-        $path = realpath($templateDir . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR));
-        if ($path !== false && is_file($path)) {
-            return $matches[1] . 'file://' . str_replace(DIRECTORY_SEPARATOR, '/', $path) . $matches[3];
+
+        $sanitizedSrc = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR);
+
+        $resolvedPath = '';
+        foreach ($candidateDirs as $dir) {
+            $candidate = $dir . DIRECTORY_SEPARATOR . $sanitizedSrc;
+            if (is_file($candidate)) {
+                $resolvedPath = $candidate;
+                break;
+            }
         }
-        return preg_replace('/<img\b[^>]*>/i', '', $matches[0]) ?? '';
+
+        if ($resolvedPath === '') {
+            $srcLower = mb_strtolower($src, 'UTF-8');
+            foreach ($fallbackByKeyword as $keyword => $alternatives) {
+                if (!str_contains($srcLower, $keyword)) {
+                    continue;
+                }
+                foreach ($alternatives as $alt) {
+                    foreach ($candidateDirs as $dir) {
+                        $candidate = $dir . DIRECTORY_SEPARATOR . $alt;
+                        if (is_file($candidate)) {
+                            $resolvedPath = $candidate;
+                            break 3;
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($resolvedPath === '') {
+            return '<!-- imagen no encontrada: ' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . ' -->';
+        }
+
+        $uri = path_to_file_uri($resolvedPath);
+        if ($uri === '') {
+            return '<!-- imagen no accesible: ' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . ' -->';
+        }
+
+        return $matches[1] . $uri . $matches[3];
     }, $html) ?? $html;
 
     $nombreCompleto = trim($alumno['apellido1'] . ' ' . $alumno['apellido2'] . ', ' . $alumno['nombre']);
@@ -147,9 +250,7 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
         throw new RuntimeException('La carpeta temporal de mPDF no tiene permisos de escritura: ' . $mpdfTmp);
     }
 
-    $base = preg_replace('/[^A-Za-z0-9_\-]/', '_', trim(($alumno['apellido1'] ?? '') . '_' . ($alumno['apellido2'] ?? '') . '_' . ($alumno['nombre'] ?? 'alumno')));
-    $base = trim((string)$base, '_');
-    if ($base === '') { $base = 'alumno_' . $id_alumno; }
+    $base = sanitize_utf8_filename_base(trim((($alumno['apellido1'] ?? '') . '_' . ($alumno['apellido2'] ?? '') . '_' . ($alumno['nombre'] ?? ''))), $id_alumno);
 
     $pdfPath = $tmpDir . '/Anexo_3A_' . $base . '_' . $tipo . '_' . bin2hex(random_bytes(4)) . '.pdf';
 
@@ -159,7 +260,7 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
             . 'Fecha: ____ / ____ / ________'
             . '</div>';
     }
-    $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'default_font' => 'dejavusans']);
+    $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'default_font' => 'dejavusans', 'allow_output_buffering' => true]);
     $pdfUnico->WriteHTML($html);
     $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
 
@@ -169,8 +270,11 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
         }
     });
 
+    $downloadName = 'Anexo_3A_' . $base . ($tipo === 'firma' ? '_firma' : '') . '.pdf';
+    $asciiFallback = preg_replace('/[^A-Za-z0-9_.-]/', '_', $downloadName) ?? 'Anexo_3A_alumno_' . $id_alumno . '.pdf';
+
     header('Content-Type: application/pdf');
-    header('Content-Disposition: attachment; filename="Anexo_3A_' . $base . ($tipo === 'firma' ? '_firma' : '') . '.pdf"');
+    header("Content-Disposition: attachment; filename=\"" . $asciiFallback . "\"; filename*=UTF-8''" . rawurlencode($downloadName));
     header('Content-Length: ' . (string) filesize($pdfPath));
     readfile($pdfPath);
     exit;
