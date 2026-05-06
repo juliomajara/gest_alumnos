@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/generar_anexo_3a.php';
 
 $pdo = db();
 
@@ -27,6 +28,18 @@ if (!in_array($vista, ['injustificadas', 'justificadas', 'retrasos'], true)) {
 }
 $mostrar_retrasos = $vista === 'retrasos';
 $mostrar_justificadas = $vista === 'justificadas';
+
+if ((string) ($_GET['accion'] ?? '') === 'descargar_anexo_3a') {
+  $id_alumno_descarga = filter_input(INPUT_GET, 'id_alumno', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+  $id_curso_descarga = filter_input(INPUT_GET, 'id_curso_escolar', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+  $id_grupo_descarga = filter_input(INPUT_GET, 'id_grupo', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+
+  try {
+    generar_anexo_3a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga);
+  } catch (Throwable $e) {
+    $errors[] = $e->getMessage();
+  }
+}
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
 $grupos = $pdo->query('SELECT id_grupo, id_ciclo, id_curso, grupo FROM grupos ORDER BY grupo')->fetchAll(PDO::FETCH_ASSOC);
@@ -365,6 +378,21 @@ if ($vista === 'justificadas') {
                       }
                       $injustificadas_title_10 = implode("\n", $tooltip_lines_10);
                     }
+                    $mostrar_boton_anexo_3a = !$mostrar_retrasos
+                      && !$mostrar_justificadas
+                      && $fecha_10 !== false
+                      && $student['faltas_10_cantidad'] !== null
+                      && $student['faltas_10_cantidad'] !== ''
+                      && $id_alumno > 0
+                      && $selected['id_curso_escolar'] > 0
+                      && $selected['id_grupo'] > 0;
+                    if ($mostrar_boton_anexo_3a) {
+                      $query_anexo = $_GET;
+                      $query_anexo['accion'] = 'descargar_anexo_3a';
+                      $query_anexo['id_alumno'] = $id_alumno;
+                      $query_anexo['id_curso_escolar'] = $selected['id_curso_escolar'];
+                      $query_anexo['id_grupo'] = $selected['id_grupo'];
+                    }
                     if ($fecha_15 !== false) {
                       $faltas_15_mes = (int) $fecha_15->format('n');
                       $tooltip_lines_15 = [];
@@ -431,7 +459,20 @@ if ($vista === 'justificadas') {
                             $celda_style = '--attendance-intensity: ' . min($valor_mes, 100) / 100 . ';';
                           }
                         ?>
-                        <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
+                        <?php if ($injustificadas_class === 'attendance-warning-10' && $mostrar_boton_anexo_3a): ?>
+                          <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>">
+                            <span class="attendance-popover-wrap">
+                              <?php echo $valor_mes; ?>
+                              <span class="attendance-popover">
+                                <span>10% alcanzado el: <?php echo htmlspecialchars($fecha_10->format('d/m/Y'), ENT_QUOTES, 'UTF-8'); ?></span>
+                                <span>Faltas injustificadas acumuladas: <?php echo htmlspecialchars((string) $student['faltas_10_cantidad'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_anexo), ENT_QUOTES, 'UTF-8'); ?>">Descargar anexos 3A</a>
+                              </span>
+                            </span>
+                          </td>
+                        <?php else: ?>
+                          <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
+                        <?php endif; ?>
                       <?php endif; ?>
                     <?php endforeach; ?>
                     <td><strong><?php echo $total_i; ?></strong></td>

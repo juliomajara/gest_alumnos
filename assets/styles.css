@@ -2946,3 +2946,31 @@ a.edit-toggle:focus {
   background-color: #bad80a !important;
   color: #111827 !important;
 }
+
+.attendance-popover-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.attendance-popover {
+  display: none;
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  min-width: 260px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  padding: 10px;
+  text-align: left;
+}
+
+.attendance-popover-wrap:hover .attendance-popover,
+.attendance-popover-wrap:focus-within .attendance-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
