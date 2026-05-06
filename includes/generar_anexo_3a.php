@@ -35,6 +35,28 @@ function path_to_file_uri(string $path): string
     return 'file://' . $encodedPath;
 }
 
+function preparar_src_imagenes_para_mpdf(string $html, string $docsDir): string
+{
+    return preg_replace_callback('~(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'][^>]*>)~iu', static function (array $matches) use ($docsDir): string {
+        $src = trim(html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        if ($src === '' || preg_match('#^(https?:|data:|file:)#i', $src) === 1 || preg_match('#^//#', $src) === 1) {
+            return $matches[0];
+        }
+
+        $candidate = $docsDir . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR);
+        if (!is_file($candidate)) {
+            return $matches[0];
+        }
+
+        $uri = path_to_file_uri($candidate);
+        if ($uri === '') {
+            return $matches[0];
+        }
+
+        return $matches[1] . $uri . $matches[3];
+    }, $html) ?? $html;
+}
+
 function sanitize_utf8_filename_base(string $text, int $idAlumno): string
 {
     $base = trim($text);
@@ -133,32 +155,21 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $mpdfTempDir = $docsDir . DIRECTORY_SEPARATOR . 'tmp_mpdf';
     $tmpAnexosDir = $docsDir . DIRECTORY_SEPARATOR . 'tmp_anexos_3a';
 
-    if (!file_exists($templatePath)) {
+    if (!is_dir($docsDir)) {
+        throw new RuntimeException('No se encontró la carpeta docs: ' . $docsDir);
+    }
+    if (!is_file($templatePath)) {
         throw new RuntimeException('No se encontró la plantilla: ' . $templatePath);
     }
     if (!is_readable($templatePath)) {
         throw new RuntimeException('La plantilla no tiene permisos de lectura: ' . $templatePath);
     }
+    $cabeceraPath = $docsDir . DIRECTORY_SEPARATOR . 'cabecera.png';
+    if (!is_file($cabeceraPath)) {
+        throw new RuntimeException('No se encontró cabecera.png en: ' . $cabeceraPath);
+    }
     $html = (string) file_get_contents($templatePath);
-
-    $html = preg_replace_callback('~(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'][^>]*>)~iu', static function (array $matches) use ($docsDir): string {
-        $src = trim(html_entity_decode($matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        if ($src === '' || preg_match('#^(https?:|data:|file:)#i', $src) === 1 || preg_match('#^//#', $src) === 1) {
-            return $matches[0];
-        }
-
-        $candidate = $docsDir . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $src), DIRECTORY_SEPARATOR);
-        if (!is_file($candidate)) {
-            return $matches[0];
-        }
-
-        $uri = path_to_file_uri($candidate);
-        if ($uri === '') {
-            return $matches[0];
-        }
-
-        return $matches[1] . $uri . $matches[3];
-    }, $html) ?? $html;
+    $html = preparar_src_imagenes_para_mpdf($html, $docsDir);
 
     $nombreCompleto = trim($alumno['apellido1'] . ' ' . $alumno['apellido2'] . ', ' . $alumno['nombre']);
     $ciclo = trim((string) ($alumno['ciclo'] ?? ''));
@@ -210,7 +221,8 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $pdfPath = $tmpDir . '/Anexo_3A_' . $base . '_' . $tipo . '_' . bin2hex(random_bytes(4)) . '.pdf';
 
     if ($tipo === 'firma') {
-        $selloUri = path_to_file_uri($docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png');
+        $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
+        $selloUri = path_to_file_uri($selloPath);
         $selloHtml = '';
         if ($selloUri !== '') {
             $selloHtml = '<div style="margin:0 0 5mm 0;"><img src="' . htmlspecialchars($selloUri, ENT_QUOTES, 'UTF-8') . '" alt="Sello recibido" style="max-height:30mm;"></div>';
@@ -222,6 +234,7 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
             . '</div>';
     }
     $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'format' => 'A4', 'default_font' => 'dejavusans', 'allow_output_buffering' => true]);
+    $pdfUnico->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
     $pdfUnico->WriteHTML($html);
     $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
 
