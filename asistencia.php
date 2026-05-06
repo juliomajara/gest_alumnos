@@ -319,7 +319,7 @@ if ($vista === 'justificadas') {
               <tr>
                 <th rowspan="2">Alumno</th>
                 <th rowspan="2">Horas matriculadas</th>
-                <th rowspan="2">Descargar Anexo 3A</th>
+                <th rowspan="2">Anexo 3A</th>
                 <th rowspan="2">Anexo 4A</th>
                 <?php foreach ($meses_curso as $mes): ?>
                   <th colspan="1"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
