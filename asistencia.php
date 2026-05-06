@@ -208,7 +208,7 @@ foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
   ];
 }
 
-$total_columnas_asistencia = 2 + count($meses_curso) + 3;
+$total_columnas_asistencia = 3 + count($meses_curso) + 3;
 $vista_titulo = 'Faltas Injustificadas';
 if ($vista === 'justificadas') {
   $vista_titulo = 'Faltas Justificadas';
@@ -315,6 +315,7 @@ if ($vista === 'justificadas') {
               <tr>
                 <th rowspan="2">Alumno</th>
                 <th rowspan="2">Horas matriculadas</th>
+                <th rowspan="2">Anexo 3A</th>
                 <?php foreach ($meses_curso as $mes): ?>
                   <th colspan="1"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
@@ -378,9 +379,7 @@ if ($vista === 'justificadas') {
                       }
                       $injustificadas_title_10 = implode("\n", $tooltip_lines_10);
                     }
-                    $mostrar_boton_anexo_3a = !$mostrar_retrasos
-                      && !$mostrar_justificadas
-                      && $fecha_10 !== false
+                    $mostrar_boton_anexo_3a = $fecha_10 !== false
                       && $student['faltas_10_cantidad'] !== null
                       && $student['faltas_10_cantidad'] !== ''
                       && $id_alumno > 0
@@ -406,6 +405,13 @@ if ($vista === 'justificadas') {
                   <tr>
                     <td><?php echo htmlspecialchars($student_name, ENT_QUOTES, 'UTF-8'); ?></td>
                     <td><?php echo htmlspecialchars(rtrim(rtrim(number_format((float) $horas_totales_matriculadas, 2, '.', ''), '0'), '.'), ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td>
+                      <?php if ($mostrar_boton_anexo_3a): ?>
+                        <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_anexo), ENT_QUOTES, 'UTF-8'); ?>">Descargar Anexo 3A</a>
+                      <?php else: ?>
+                        -
+                      <?php endif; ?>
+                    </td>
                     <?php foreach ($meses_curso as $mes): ?>
                       <?php
                         $id_mes = (int) $mes['id_mes'];
@@ -459,20 +465,7 @@ if ($vista === 'justificadas') {
                             $celda_style = '--attendance-intensity: ' . min($valor_mes, 100) / 100 . ';';
                           }
                         ?>
-                        <?php if ($injustificadas_class === 'attendance-warning-10' && $mostrar_boton_anexo_3a): ?>
-                          <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>">
-                            <span class="attendance-popover-wrap">
-                              <?php echo $valor_mes; ?>
-                              <span class="attendance-popover">
-                                <span>10% alcanzado el: <?php echo htmlspecialchars($fecha_10->format('d/m/Y'), ENT_QUOTES, 'UTF-8'); ?></span>
-                                <span>Faltas injustificadas acumuladas: <?php echo htmlspecialchars((string) $student['faltas_10_cantidad'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                <a class="ghost-button" href="?<?php echo htmlspecialchars(http_build_query($query_anexo), ENT_QUOTES, 'UTF-8'); ?>">Descargar anexos 3A</a>
-                              </span>
-                            </span>
-                          </td>
-                        <?php else: ?>
-                          <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
-                        <?php endif; ?>
+                        <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
                       <?php endif; ?>
                     <?php endforeach; ?>
                     <td><strong><?php echo $total_i; ?></strong></td>

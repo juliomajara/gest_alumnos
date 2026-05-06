@@ -118,9 +118,21 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $html = preg_replace('/En Getafe, a [^<]+/i', 'En Getafe, a ' . $fechaLarga, $html, 1) ?? $html;
 
     $tmpDir = __DIR__ . '/../docs/tmp_anexos_3a';
-    $mpdfTmp = __DIR__ . '/../docs/.mpdf_tmp';
-    if (!is_dir($tmpDir)) { mkdir($tmpDir, 0775, true); }
-    if (!is_dir($mpdfTmp)) { mkdir($mpdfTmp, 0775, true); }
+    $mpdfTmp = __DIR__ . '/../docs/tmp_mpdf';
+
+    if (!is_dir($tmpDir) && !mkdir($tmpDir, 0775, true) && !is_dir($tmpDir)) {
+        throw new RuntimeException('No se pudo crear la carpeta temporal de anexos: ' . $tmpDir);
+    }
+    if (!is_writable($tmpDir)) {
+        throw new RuntimeException('La carpeta temporal de anexos no tiene permisos de escritura: ' . $tmpDir);
+    }
+
+    if (!is_dir($mpdfTmp) && !mkdir($mpdfTmp, 0775, true) && !is_dir($mpdfTmp)) {
+        throw new RuntimeException('No se pudo crear la carpeta temporal de mPDF: ' . $mpdfTmp);
+    }
+    if (!is_writable($mpdfTmp)) {
+        throw new RuntimeException('La carpeta temporal de mPDF no tiene permisos de escritura: ' . $mpdfTmp);
+    }
 
     $base = preg_replace('/[^A-Za-z0-9_\-]/', '_', trim(($alumno['apellido1'] ?? '') . '_' . ($alumno['apellido2'] ?? '') . '_' . ($alumno['nombre'] ?? 'alumno')));
     $base = trim((string)$base, '_');
