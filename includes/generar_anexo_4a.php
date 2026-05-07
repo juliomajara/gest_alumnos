@@ -255,6 +255,10 @@ function generar_anexo_4a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $pdfUnico->WriteHTML($html);
     $pdfUnico->Output($tmpBasePdf, \Mpdf\Output\Destination::FILE);
 
+    if (!is_file($tmpBasePdf) || filesize($tmpBasePdf) <= 0) {
+        throw new RuntimeException('El PDF base del Anexo 4A no se ha generado correctamente o está vacío: ' . $tmpBasePdf);
+    }
+
     if ($tipo === 'normal') {
         $cleanPdf = new Mpdf([
             'mode' => 'utf-8',
@@ -284,6 +288,11 @@ function generar_anexo_4a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
         }
 
         $cleanPdf->Output($tmpFinalPdf, \Mpdf\Output\Destination::FILE);
+
+        if (!is_file($tmpFinalPdf) || filesize($tmpFinalPdf) <= 0) {
+            throw new RuntimeException('El PDF final del Anexo 4A (normal) no se ha generado correctamente o está vacío: ' . $tmpFinalPdf);
+        }
+
         $pdfPath = $tmpFinalPdf;
     }
 
@@ -334,6 +343,11 @@ function generar_anexo_4a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
         }
 
         $stamper->Output($tmpFinalPdf, \Mpdf\Output\Destination::FILE);
+
+        if (!is_file($tmpFinalPdf) || filesize($tmpFinalPdf) <= 0) {
+            throw new RuntimeException('El PDF final del Anexo 4A (firma) no se ha generado correctamente o está vacío: ' . $tmpFinalPdf);
+        }
+
         $pdfPath = $tmpFinalPdf;
     }
 
@@ -345,6 +359,10 @@ function generar_anexo_4a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
             @unlink($tmpFinalPdf);
         }
     });
+
+    if (!is_file($pdfPath) || filesize($pdfPath) <= 0) {
+        throw new RuntimeException('El PDF del Anexo 4A no se ha generado correctamente o está vacío: ' . $pdfPath);
+    }
 
     $downloadName = 'Anexo_4A_' . $base . ($tipo === 'firma' ? '_firma' : '') . '.pdf';
     $asciiFallback = preg_replace('/[^A-Za-z0-9_.-]/', '_', $downloadName) ?? 'Anexo_4A_alumno_' . $id_alumno . '.pdf';
