@@ -243,8 +243,8 @@ function generar_anexo_4a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $tmpFinalPdf = $tmpDir . DIRECTORY_SEPARATOR . 'final_' . uniqid('', true) . '.pdf';
     $pdfPath = $tmpBasePdf;
 
-    if (strpos($html, 'cabecera.png') !== false) {
-        throw new RuntimeException('La cabecera no se ha incrustado en base64. El HTML aún contiene cabecera.png.');
+    if (preg_match('/<img\b[^>]*\bsrc=["\'](?:\./)?cabecera\.png["\']/i', $html) === 1) {
+        throw new RuntimeException('La cabecera no se ha incrustado en base64. El HTML aún contiene src="cabecera.png".');
     }
     if (strpos($html, 'data:image/') === false) {
         throw new RuntimeException('El HTML no contiene ninguna imagen embebida en base64.');
