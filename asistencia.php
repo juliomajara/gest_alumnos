@@ -55,11 +55,8 @@ if ((string) ($_GET['accion'] ?? '') === 'descargar_anexo_4a') {
     $tipo_anexo_descarga = 'normal';
   }
 
-  try {
-    generar_anexo_4a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga, $tipo_anexo_descarga);
-  } catch (Throwable $e) {
-    $errors[] = $e->getMessage();
-  }
+  generar_anexo_4a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga, $tipo_anexo_descarga);
+  exit;
 }
 
 $cursos_escolares = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll(PDO::FETCH_ASSOC);
