@@ -253,17 +253,22 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
             throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . $selloPath);
         }
 
+        $pdfUnico->page = 1;
+        if (method_exists($pdfUnico, 'SetPage')) {
+            $pdfUnico->SetPage(1);
+        }
+
         if (method_exists($pdfUnico, 'StartTransform') && method_exists($pdfUnico, 'Rotate') && method_exists($pdfUnico, 'StopTransform')) {
             $pdfUnico->StartTransform();
-            $pdfUnico->Rotate(-5, 150, 220);
-            $pdfUnico->Image($selloPath, 122, 194, 70, 0, 'png');
+            $pdfUnico->Rotate(-5, 155, 222);
+            $pdfUnico->Image($selloPath, 120, 190, 72, 0, 'png');
             $pdfUnico->StopTransform();
         } elseif (method_exists($pdfUnico, 'Rotate')) {
-            $pdfUnico->Rotate(-5, 150, 220);
-            $pdfUnico->Image($selloPath, 122, 194, 70, 0, 'png');
+            $pdfUnico->Rotate(-5, 155, 222);
+            $pdfUnico->Image($selloPath, 120, 190, 72, 0, 'png');
             $pdfUnico->Rotate(0);
         } else {
-            $pdfUnico->Image($selloPath, 122, 194, 70, 0, 'png');
+            $pdfUnico->Image($selloPath, 120, 190, 72, 0, 'png');
         }
     }
     $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
