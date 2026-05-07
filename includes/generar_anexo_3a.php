@@ -275,26 +275,26 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
             throw new RuntimeException('El PDF base del Anexo 3A no contiene páginas para estampar.');
         }
 
-        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-            $templateId = $stamper->ImportPage($pageNo);
-            $size = $stamper->GetTemplateSize($templateId);
-            $stamper->AddPage($size['orientation']);
-            $stamper->UseTemplate($templateId, 0, 0, $size['width'], $size['height']);
+        $templateId = $stamper->ImportPage(1);
+        $size = $stamper->GetTemplateSize($templateId);
+        $stamper->AddPage($size['orientation']);
+        $stamper->UseTemplate($templateId, 0, 0, $size['width'], $size['height']);
 
-            if ($pageNo === 1) {
-                if (method_exists($stamper, 'StartTransform') && method_exists($stamper, 'Rotate') && method_exists($stamper, 'StopTransform')) {
-                    $stamper->StartTransform();
-                    $stamper->Rotate(-5, 155, 222);
-                    $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
-                    $stamper->StopTransform();
-                } elseif (method_exists($stamper, 'Rotate')) {
-                    $stamper->Rotate(-5, 155, 222);
-                    $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
-                    $stamper->Rotate(0);
-                } else {
-                    $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
-                }
-            }
+        if (method_exists($stamper, 'StartTransform') && method_exists($stamper, 'Rotate') && method_exists($stamper, 'StopTransform')) {
+            $stamper->StartTransform();
+            $stamper->Rotate(-5, 155, 222);
+            $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
+            $stamper->StopTransform();
+        } elseif (method_exists($stamper, 'Rotate')) {
+            $stamper->Rotate(-5, 155, 222);
+            $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
+            $stamper->Rotate(0);
+        } else {
+            $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
+        }
+
+        if (is_file($tmpFinalPdf)) {
+            unlink($tmpFinalPdf);
         }
 
         $stamper->Output($tmpFinalPdf, \Mpdf\Output\Destination::FILE);
