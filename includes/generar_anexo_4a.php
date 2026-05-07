@@ -363,9 +363,26 @@ function generar_anexo_4a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     if (!is_file($pdfPath) || filesize($pdfPath) <= 0) {
         throw new RuntimeException('El PDF del Anexo 4A no se ha generado correctamente o está vacío: ' . $pdfPath);
     }
+    if (filesize($pdfPath) < 1024) {
+        throw new RuntimeException('El PDF del Anexo 4A parece incompleto. Tamaño: ' . filesize($pdfPath) . ' bytes.');
+    }
+
+    $fh = fopen($pdfPath, 'rb');
+    $signature = $fh ? fread($fh, 5) : false;
+    if ($fh) {
+        fclose($fh);
+    }
+
+    if ($signature !== '%PDF-') {
+        throw new RuntimeException('El archivo generado para el Anexo 4A no parece un PDF válido. Firma encontrada: ' . var_export($signature, true));
+    }
 
     $downloadName = 'Anexo_4A_' . $base . ($tipo === 'firma' ? '_firma' : '') . '.pdf';
     $asciiFallback = preg_replace('/[^A-Za-z0-9_.-]/', '_', $downloadName) ?? 'Anexo_4A_alumno_' . $id_alumno . '.pdf';
+
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
 
     header('Content-Type: application/pdf');
     header("Content-Disposition: attachment; filename=\"" . $asciiFallback . "\"; filename*=UTF-8''" . rawurlencode($downloadName));
