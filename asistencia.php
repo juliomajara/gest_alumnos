@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/includes/generar_anexo_3a.php';
+require_once __DIR__ . '/includes/generar_anexo_4a.php';
 
 $pdo = db();
 
@@ -40,6 +41,22 @@ if ((string) ($_GET['accion'] ?? '') === 'descargar_anexo_3a') {
 
   try {
     generar_anexo_3a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga, $tipo_anexo_descarga);
+  } catch (Throwable $e) {
+    $errors[] = $e->getMessage();
+  }
+}
+
+if ((string) ($_GET['accion'] ?? '') === 'descargar_anexo_4a') {
+  $id_alumno_descarga = filter_input(INPUT_GET, 'id_alumno', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+  $id_curso_descarga = filter_input(INPUT_GET, 'id_curso_escolar', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+  $id_grupo_descarga = filter_input(INPUT_GET, 'id_grupo', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
+  $tipo_anexo_descarga = (string) ($_GET['tipo'] ?? 'normal');
+  if (!in_array($tipo_anexo_descarga, ['normal', 'firma'], true)) {
+    $tipo_anexo_descarga = 'normal';
+  }
+
+  try {
+    generar_anexo_4a_descarga($pdo, (int) $id_alumno_descarga, (int) $id_curso_descarga, (int) $id_grupo_descarga, $tipo_anexo_descarga);
   } catch (Throwable $e) {
     $errors[] = $e->getMessage();
   }
@@ -426,7 +443,37 @@ if ($vista === 'justificadas') {
                         -
                       <?php endif; ?>
                     </td>
-                    <td>-</td>
+                    <td>
+                      <?php
+                        $mostrar_boton_anexo_4a = $fecha_15 !== false
+                          && $student['faltas_15_cantidad'] !== null
+                          && $student['faltas_15_cantidad'] !== ''
+                          && $id_alumno > 0
+                          && $selected['id_curso_escolar'] > 0
+                          && $selected['id_grupo'] > 0;
+                        $query_anexo_4a_normal = [];
+                        $query_anexo_4a_firma = [];
+                        if ($mostrar_boton_anexo_4a) {
+                          $query_anexo_4a_normal = $_GET;
+                          $query_anexo_4a_normal['accion'] = 'descargar_anexo_4a';
+                          $query_anexo_4a_normal['id_alumno'] = $id_alumno;
+                          $query_anexo_4a_normal['id_curso_escolar'] = $selected['id_curso_escolar'];
+                          $query_anexo_4a_normal['id_grupo'] = $selected['id_grupo'];
+                          $query_anexo_4a_normal['tipo'] = 'normal';
+
+                          $query_anexo_4a_firma = $query_anexo_4a_normal;
+                          $query_anexo_4a_firma['tipo'] = 'firma';
+                        }
+                      ?>
+                      <?php if ($mostrar_boton_anexo_4a): ?>
+                        <div class="anexo-actions">
+                          <a class="ghost-button btn-anexo-mini" href="?<?php echo htmlspecialchars(http_build_query($query_anexo_4a_normal), ENT_QUOTES, 'UTF-8'); ?>">4A</a>
+                          <a class="ghost-button btn-anexo-mini" href="?<?php echo htmlspecialchars(http_build_query($query_anexo_4a_firma), ENT_QUOTES, 'UTF-8'); ?>">4AF</a>
+                        </div>
+                      <?php else: ?>
+                        -
+                      <?php endif; ?>
+                    </td>
                     <?php foreach ($meses_curso as $mes): ?>
                       <?php
                         $id_mes = (int) $mes['id_mes'];
