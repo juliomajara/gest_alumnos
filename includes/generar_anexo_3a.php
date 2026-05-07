@@ -237,41 +237,35 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
 
     $pdfPath = $tmpDir . '/Anexo_3A_' . $base . '_' . $tipo . '_' . bin2hex(random_bytes(4)) . '.pdf';
 
-    $selloInsertado = false;
-    if ($tipo === 'firma') {
-        $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
-        if (!is_file($selloPath) || !is_readable($selloPath)) {
-            throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . $selloPath);
-        }
-        $selloDataUri = image_file_to_data_uri($selloPath);
-        $selloHtml = '<div style="position:absolute; left:120mm; top:190mm; width:72mm; z-index:10;">'
-            . '<img src="' . htmlspecialchars($selloDataUri, ENT_QUOTES, 'UTF-8') . '" alt="Sello recibido" style="width:72mm;height:auto;">'
-            . '</div>';
-
-        $htmlConSello = preg_replace('/<\/body>/i', $selloHtml . "\n</body>", $html, 1, $reemplazosBody);
-        if ($reemplazosBody !== 0 && $htmlConSello !== null) {
-            $html = $htmlConSello;
-            $selloInsertado = true;
-        }
-
-        if (!$selloInsertado) {
-            throw new RuntimeException('No se pudo insertar el sello de recibido en la plantilla del Anexo 3AF.');
-        }
-    }
-
     if (strpos($html, 'cabecera.png') !== false) {
         throw new RuntimeException('La cabecera no se ha incrustado en base64. El HTML aún contiene cabecera.png.');
     }
     if (strpos($html, 'data:image/') === false) {
         throw new RuntimeException('El HTML no contiene ninguna imagen embebida en base64.');
     }
-    if ($tipo === 'firma' && (!$selloInsertado || strpos($html, 'Sello recibido') === false || strpos($html, 'data:image/') === false)) {
-        throw new RuntimeException('La variante 3AF no contiene el sello de recibido.');
-    }
 
     $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'format' => 'A4', 'default_font' => 'dejavusans', 'allow_output_buffering' => true]);
     $pdfUnico->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
     $pdfUnico->WriteHTML($html);
+    if ($tipo === 'firma') {
+        $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
+        if (!is_file($selloPath) || !is_readable($selloPath)) {
+            throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . $selloPath);
+        }
+
+        if (method_exists($pdfUnico, 'StartTransform') && method_exists($pdfUnico, 'Rotate') && method_exists($pdfUnico, 'StopTransform')) {
+            $pdfUnico->StartTransform();
+            $pdfUnico->Rotate(-5, 150, 220);
+            $pdfUnico->Image($selloPath, 122, 194, 70, 0, 'png');
+            $pdfUnico->StopTransform();
+        } elseif (method_exists($pdfUnico, 'Rotate')) {
+            $pdfUnico->Rotate(-5, 150, 220);
+            $pdfUnico->Image($selloPath, 122, 194, 70, 0, 'png');
+            $pdfUnico->Rotate(0);
+        } else {
+            $pdfUnico->Image($selloPath, 122, 194, 70, 0, 'png');
+        }
+    }
     $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
 
     register_shutdown_function(static function () use ($pdfPath): void {
