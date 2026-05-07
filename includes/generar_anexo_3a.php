@@ -237,39 +237,25 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
 
     $pdfPath = $tmpDir . '/Anexo_3A_' . $base . '_' . $tipo . '_' . bin2hex(random_bytes(4)) . '.pdf';
 
-    $bloqueFirmaInsertado = false;
+    $selloInsertado = false;
     if ($tipo === 'firma') {
         $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
         if (!is_file($selloPath) || !is_readable($selloPath)) {
             throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . $selloPath);
         }
         $selloDataUri = image_file_to_data_uri($selloPath);
-        $bloqueFirmaRecibi = '<div class="firma-recibi-anexo3a" style="margin:2mm auto; width:70mm; border:1px solid #000; padding:2mm 3mm; text-align:center; font-size:8pt; line-height:1.15;">'
-            . '<strong>RECIBÍ</strong><br>'
-            . 'Firma del alumno/a o representante legal<br>'
-            . '<img src="' . htmlspecialchars($selloDataUri, ENT_QUOTES, 'UTF-8') . '" alt="Sello recibido" style="max-width:35mm; max-height:18mm; margin:1mm auto; display:block;">'
-            . 'Fecha: ____ / ____ / ________'
+        $selloHtml = '<div style="position:absolute; left:120mm; top:190mm; width:72mm; z-index:10;">'
+            . '<img src="' . htmlspecialchars($selloDataUri, ENT_QUOTES, 'UTF-8') . '" alt="Sello recibido" style="width:72mm;height:auto;">'
             . '</div>';
 
-        $htmlConBloque = str_replace(
-            '<div class="footnote">',
-            $bloqueFirmaRecibi . "\n" . '<div class="footnote">',
-            $html,
-            $reemplazos
-        );
-        if ($reemplazos > 0) {
-            $html = $htmlConBloque;
-            $bloqueFirmaInsertado = true;
-        } else {
-            $htmlConBloque = preg_replace('/<\/body>/i', $bloqueFirmaRecibi . "\n</body>", $html, 1, $reemplazosBody);
-            if ($reemplazosBody !== 0 && $htmlConBloque !== null) {
-                $html = $htmlConBloque;
-                $bloqueFirmaInsertado = true;
-            }
+        $htmlConSello = preg_replace('/<\/body>/i', $selloHtml . "\n</body>", $html, 1, $reemplazosBody);
+        if ($reemplazosBody !== 0 && $htmlConSello !== null) {
+            $html = $htmlConSello;
+            $selloInsertado = true;
         }
 
-        if (!$bloqueFirmaInsertado) {
-            throw new RuntimeException('No se pudo insertar el bloque de firma de recibido en la plantilla del Anexo 3AF.');
+        if (!$selloInsertado) {
+            throw new RuntimeException('No se pudo insertar el sello de recibido en la plantilla del Anexo 3AF.');
         }
     }
 
@@ -279,8 +265,8 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     if (strpos($html, 'data:image/') === false) {
         throw new RuntimeException('El HTML no contiene ninguna imagen embebida en base64.');
     }
-    if ($tipo === 'firma' && (!$bloqueFirmaInsertado || strpos($html, 'Sello recibido') === false || strpos($html, 'data:image/') === false)) {
-        throw new RuntimeException('La variante 3AF no contiene el sello o el bloque de firma de recibido.');
+    if ($tipo === 'firma' && (!$selloInsertado || strpos($html, 'Sello recibido') === false || strpos($html, 'data:image/') === false)) {
+        throw new RuntimeException('La variante 3AF no contiene el sello de recibido.');
     }
 
     $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'format' => 'A4', 'default_font' => 'dejavusans', 'allow_output_buffering' => true]);
