@@ -265,6 +265,11 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
             'allow_output_buffering' => true,
         ]);
 
+        if (isset($stamper->pages) && is_array($stamper->pages)) {
+            $stamper->pages = [];
+            $stamper->page = 0;
+        }
+
         $pageCount = $stamper->SetSourceFile($tmpBasePdf);
         if ($pageCount < 1) {
             throw new RuntimeException('El PDF base del Anexo 3A no contiene páginas para estampar.');
