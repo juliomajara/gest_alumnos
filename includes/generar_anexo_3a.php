@@ -248,28 +248,25 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $pdfUnico->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
     $pdfUnico->WriteHTML($html);
     if ($tipo === 'firma') {
-        $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
-        if (!is_file($selloPath) || !is_readable($selloPath)) {
-            throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . $selloPath);
+        $selloFile = realpath($docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png');
+
+        if ($selloFile === false || !is_file($selloFile) || !is_readable($selloFile)) {
+            throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . ($docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png'));
         }
 
-        $pdfUnico->page = 1;
-        if (method_exists($pdfUnico, 'SetPage')) {
-            $pdfUnico->SetPage(1);
-        }
+        $selloFile = str_replace('\\', '/', $selloFile);
 
-        if (method_exists($pdfUnico, 'StartTransform') && method_exists($pdfUnico, 'Rotate') && method_exists($pdfUnico, 'StopTransform')) {
-            $pdfUnico->StartTransform();
-            $pdfUnico->Rotate(-5, 155, 222);
-            $pdfUnico->Image($selloPath, 120, 190, 72, 0, 'png');
-            $pdfUnico->StopTransform();
-        } elseif (method_exists($pdfUnico, 'Rotate')) {
-            $pdfUnico->Rotate(-5, 155, 222);
-            $pdfUnico->Image($selloPath, 120, 190, 72, 0, 'png');
-            $pdfUnico->Rotate(0);
-        } else {
-            $pdfUnico->Image($selloPath, 120, 190, 72, 0, 'png');
-        }
+        $ancho = 70;
+        $x = 130;
+        $y = 193;
+        $grados = -5;
+
+        $htmlSello = "
+    <div style='position: absolute; left: {$x}mm; top: {$y}mm; width: {$ancho}mm; z-index: 1000;'>
+        <img src='{$selloFile}' style='width: {$ancho}mm; transform: rotate({$grados}deg);' />
+    </div>";
+
+        $pdfUnico->WriteHTML($htmlSello);
     }
     $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
 
