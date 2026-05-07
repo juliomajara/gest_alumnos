@@ -251,6 +251,38 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $pdfUnico->WriteHTML($html);
     $pdfUnico->Output($tmpBasePdf, \Mpdf\Output\Destination::FILE);
 
+    if ($tipo === 'normal') {
+        $cleanPdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'tempDir' => $mpdfTmp,
+            'allow_output_buffering' => true,
+        ]);
+
+        if (isset($cleanPdf->pages) && is_array($cleanPdf->pages)) {
+            $cleanPdf->pages = [];
+            $cleanPdf->page = 0;
+        }
+
+        $pageCount = $cleanPdf->SetSourceFile($tmpBasePdf);
+        if ($pageCount < 1) {
+            throw new RuntimeException('El PDF base del Anexo 3A no contiene páginas para generar la versión normal.');
+        }
+
+        $templateId = $cleanPdf->ImportPage(1);
+        $size = $cleanPdf->GetTemplateSize($templateId);
+        $cleanPdf->AddPage($size['orientation']);
+        $cleanPdf->UseTemplate($templateId, 0, 0, $size['width'], $size['height']);
+
+        if (is_file($tmpFinalPdf)) {
+            unlink($tmpFinalPdf);
+        }
+
+        $cleanPdf->Output($tmpFinalPdf, \Mpdf\Output\Destination::FILE);
+        $pdfPath = $tmpFinalPdf;
+    }
+
     if ($tipo === 'firma') {
         $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
         if (!is_file($selloPath) || !is_readable($selloPath)) {
