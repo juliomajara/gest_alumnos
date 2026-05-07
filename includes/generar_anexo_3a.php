@@ -235,7 +235,9 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
 
     $base = sanitize_utf8_filename_base(trim((($alumno['apellido1'] ?? '') . '_' . ($alumno['apellido2'] ?? '') . '_' . ($alumno['nombre'] ?? ''))), $id_alumno);
 
-    $pdfPath = $tmpDir . '/Anexo_3A_' . $base . '_' . $tipo . '_' . bin2hex(random_bytes(4)) . '.pdf';
+    $tmpBasePdf = $tmpDir . DIRECTORY_SEPARATOR . 'base_' . uniqid('', true) . '.pdf';
+    $tmpFinalPdf = $tmpDir . DIRECTORY_SEPARATOR . 'final_' . uniqid('', true) . '.pdf';
+    $pdfPath = $tmpBasePdf;
 
     if (strpos($html, 'cabecera.png') !== false) {
         throw new RuntimeException('La cabecera no se ha incrustado en base64. El HTML aún contiene cabecera.png.');
@@ -247,32 +249,59 @@ function generar_anexo_3a_descarga(PDO $pdo, int $id_alumno, int $id_curso_escol
     $pdfUnico = new Mpdf(['tempDir' => $mpdfTmp, 'mode' => 'utf-8', 'format' => 'A4', 'default_font' => 'dejavusans', 'allow_output_buffering' => true]);
     $pdfUnico->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
     $pdfUnico->WriteHTML($html);
-    if ($tipo === 'firma') {
-        $selloFile = realpath($docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png');
+    $pdfUnico->Output($tmpBasePdf, \Mpdf\Output\Destination::FILE);
 
-        if ($selloFile === false || !is_file($selloFile) || !is_readable($selloFile)) {
-            throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . ($docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png'));
+    if ($tipo === 'firma') {
+        $selloPath = $docsDir . DIRECTORY_SEPARATOR . 'sello_recibido.png';
+        if (!is_file($selloPath) || !is_readable($selloPath)) {
+            throw new RuntimeException('No se encontró o no se puede leer sello_recibido.png en: ' . $selloPath);
         }
 
-        $selloFile = str_replace('\\', '/', $selloFile);
+        $stamper = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'dejavusans',
+            'tempDir' => $mpdfTmp,
+            'allow_output_buffering' => true,
+        ]);
 
-        $ancho = 70;
-        $x = 130;
-        $y = 193;
-        $grados = -5;
+        $pageCount = $stamper->SetSourceFile($tmpBasePdf);
+        if ($pageCount < 1) {
+            throw new RuntimeException('El PDF base del Anexo 3A no contiene páginas para estampar.');
+        }
 
-        $htmlSello = "
-    <div style='position: absolute; left: {$x}mm; top: {$y}mm; width: {$ancho}mm; z-index: 1000;'>
-        <img src='{$selloFile}' style='width: {$ancho}mm; transform: rotate({$grados}deg);' />
-    </div>";
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            $templateId = $stamper->ImportPage($pageNo);
+            $size = $stamper->GetTemplateSize($templateId);
+            $stamper->AddPage($size['orientation']);
+            $stamper->UseTemplate($templateId, 0, 0, $size['width'], $size['height']);
 
-        $pdfUnico->WriteHTML($htmlSello);
+            if ($pageNo === 1) {
+                if (method_exists($stamper, 'StartTransform') && method_exists($stamper, 'Rotate') && method_exists($stamper, 'StopTransform')) {
+                    $stamper->StartTransform();
+                    $stamper->Rotate(-5, 155, 222);
+                    $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
+                    $stamper->StopTransform();
+                } elseif (method_exists($stamper, 'Rotate')) {
+                    $stamper->Rotate(-5, 155, 222);
+                    $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
+                    $stamper->Rotate(0);
+                } else {
+                    $stamper->Image($selloPath, 120, 190, 72, 0, 'png');
+                }
+            }
+        }
+
+        $stamper->Output($tmpFinalPdf, \Mpdf\Output\Destination::FILE);
+        $pdfPath = $tmpFinalPdf;
     }
-    $pdfUnico->Output($pdfPath, \Mpdf\Output\Destination::FILE);
 
-    register_shutdown_function(static function () use ($pdfPath): void {
-        if (is_file($pdfPath)) {
-            @unlink($pdfPath);
+    register_shutdown_function(static function () use ($tmpBasePdf, $tmpFinalPdf): void {
+        if (is_file($tmpBasePdf)) {
+            @unlink($tmpBasePdf);
+        }
+        if (is_file($tmpFinalPdf)) {
+            @unlink($tmpFinalPdf);
         }
     });
 
