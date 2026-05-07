@@ -267,6 +267,11 @@ body {
   -webkit-mask-image: url("icons/modulos.svg");
 }
 
+.nav-icon-image[data-icon="horarios"] {
+  mask-image: url("icons/horarios.svg");
+  -webkit-mask-image: url("icons/horarios.svg");
+}
+
 .nav-icon-image[data-icon="empresas"] {
   mask-image: url("icons/empresas.svg");
   -webkit-mask-image: url("icons/empresas.svg");
