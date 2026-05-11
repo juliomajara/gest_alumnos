@@ -291,11 +291,10 @@ if ($student) {
             e.nombre AS empresa,
             CASE
               WHEN pr.cancelada = 1 THEN "Cancelada"
-              WHEN pr.fecha_inicio IS NULL OR pr.fecha_inicio = "" THEN ""
-              WHEN COALESCE(NULLIF(pr.fecha_fin_extra, ""), pr.fecha_fin) IS NULL
-                OR COALESCE(NULLIF(pr.fecha_fin_extra, ""), pr.fecha_fin) = "" THEN ""
+              WHEN pr.fecha_inicio IS NULL THEN ""
+              WHEN COALESCE(pr.fecha_fin_extra, pr.fecha_fin) IS NULL THEN ""
               WHEN CURDATE() < pr.fecha_inicio THEN "En espera"
-              WHEN CURDATE() <= COALESCE(NULLIF(pr.fecha_fin_extra, ""), pr.fecha_fin) THEN "En curso"
+              WHEN CURDATE() <= COALESCE(pr.fecha_fin_extra, pr.fecha_fin) THEN "En curso"
               ELSE "Finalizada"
             END AS practicas_estado,
             et.nombre AS tutor_nombre,
