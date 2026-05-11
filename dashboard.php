@@ -71,6 +71,9 @@ $has_modulos = table_exists($pdo, 'modulos');
 $has_alumno_modulo = table_exists($pdo, 'alumno_modulo');
 $has_profesores = table_exists($pdo, 'profesores');
 $has_grupos_tutores = table_exists($pdo, 'grupos_tutores');
+$has_calificaciones = table_exists($pdo, 'calificaciones');
+$has_asistencia_mensual = table_exists($pdo, 'asistencia_mensual');
+$has_practicas_anexos = table_exists($pdo, 'practicas_anexos');
 
 $total_alumnos = $has_alumnos
   ? fetch_scalar($pdo, 'SELECT COUNT(*) FROM alumnos')
@@ -181,6 +184,50 @@ $alumnos_por_curso_activo = ($has_alumno_curso && $has_cursos_escolares)
   )
   : null;
 
+
+$total_calificaciones = $has_calificaciones
+  ? fetch_scalar($pdo, 'SELECT COUNT(*) FROM calificaciones')
+  : null;
+
+$asistencias_mes_actual = $has_asistencia_mensual
+  ? fetch_scalar(
+    $pdo,
+    'SELECT COUNT(*)
+     FROM asistencia_mensual
+     WHERE anio = YEAR(CURDATE())
+       AND mes = MONTH(CURDATE())'
+  )
+  : null;
+
+$anexos_generados = $has_practicas_anexos
+  ? fetch_scalar($pdo, 'SELECT COUNT(*) FROM practicas_anexos')
+  : null;
+
+$practicas_sin_fecha_inicio = $has_practicas
+  ? fetch_scalar(
+    $pdo,
+    'SELECT COUNT(*)
+     FROM practicas
+     WHERE COALESCE(cancelada, 0) = 0
+       AND (fecha_inicio IS NULL OR fecha_inicio = "")'
+  )
+  : null;
+
+$curso_activo_info = $has_cursos_escolares
+  ? fetch_rows(
+    $pdo,
+    'SELECT id_curso_escolar, curso_escolar
+     FROM cursos_escolares
+     WHERE activo = 1
+     ORDER BY id_curso_escolar DESC
+     LIMIT 1'
+  )
+  : null;
+
+$curso_activo_nombre = (!empty($curso_activo_info) && isset($curso_activo_info[0]['curso_escolar']))
+  ? (string) $curso_activo_info[0]['curso_escolar']
+  : null;
+
 $page_title = 'Dashboard | Gestor de Alumnos';
 $active_page = 'dashboard';
 ?>
@@ -203,7 +250,7 @@ $active_page = 'dashboard';
       <header class="header">
         <div>
           <h1>Dashboard</h1>
-          <p class="subheading">Métricas reales del sistema para alumnos, prácticas, empresas, módulos y profesorado.</p>
+          <p class="subheading">Métricas reales del sistema para alumnos, prácticas, empresas, módulos, profesorado y seguimiento académico.</p>
         </div>
       </header>
 
@@ -260,6 +307,24 @@ $active_page = 'dashboard';
             <p class="card-note"><?php echo $total_profesores !== null ? 'Docentes dados de alta en el sistema.' : 'Sin datos disponibles'; ?></p>
           </div>
           <span class="card-badge">Profesorado</span>
+        </article>
+
+        <article class="card">
+          <div>
+            <p class="card-label">Calificaciones registradas</p>
+            <h2><?php echo $total_calificaciones !== null ? number_format($total_calificaciones, 0, ',', '.') : '—'; ?></h2>
+            <p class="card-note"><?php echo $total_calificaciones !== null ? 'Registros de evaluación almacenados.' : 'Sin datos disponibles'; ?></p>
+          </div>
+          <span class="card-badge">Evaluación</span>
+        </article>
+
+        <article class="card">
+          <div>
+            <p class="card-label">Asistencia del mes actual</p>
+            <h2><?php echo $asistencias_mes_actual !== null ? number_format($asistencias_mes_actual, 0, ',', '.') : '—'; ?></h2>
+            <p class="card-note"><?php echo $asistencias_mes_actual !== null ? 'Partes de asistencia de ' . date('m/Y') . '.' : 'Sin datos disponibles'; ?></p>
+          </div>
+          <span class="card-badge">Asistencia</span>
         </article>
       </section>
 
@@ -375,6 +440,35 @@ $active_page = 'dashboard';
             </a>
           </div>
         </article>
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Seguimiento operativo</h3>
+            <p>Indicadores útiles para la gestión diaria sin salir de portada.</p>
+          </div>
+          <div class="panel-grid">
+            <a class="panel-link" href="calificaciones.php">
+              <span>Calificaciones totales: <?php echo $total_calificaciones !== null ? number_format($total_calificaciones, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
+              <small>Visión global de la carga evaluativa registrada.</small>
+            </a>
+            <a class="panel-link" href="asistencia.php">
+              <span>Registros de asistencia (mes actual): <?php echo $asistencias_mes_actual !== null ? number_format($asistencias_mes_actual, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
+              <small>Control del avance de asistencia en <?php echo date('m/Y'); ?>.</small>
+            </a>
+            <a class="panel-link" href="practicas_anexos.php">
+              <span>Anexos generados: <?php echo $anexos_generados !== null ? number_format($anexos_generados, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
+              <small>Documentación de prácticas emitida desde la plataforma.</small>
+            </a>
+            <a class="panel-link" href="practicas.php">
+              <span>Prácticas pendientes de fecha de inicio: <?php echo $practicas_sin_fecha_inicio !== null ? number_format($practicas_sin_fecha_inicio, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
+              <small>Ayuda a detectar prácticas abiertas que requieren planificación.</small>
+            </a>
+            <a class="panel-link" href="alumnos.php">
+              <span>Curso escolar activo: <?php echo htmlspecialchars($curso_activo_nombre ?? 'No definido', ENT_QUOTES, 'UTF-8'); ?></span>
+              <small><?php echo $curso_activo_nombre !== null ? 'Métricas académicas priorizadas para el curso en vigor.' : 'No hay curso activo marcado; se muestra información global sin romper el dashboard.'; ?></small>
+            </a>
+          </div>
+        </article>
+
       </section>
     </main>
   </div>
