@@ -172,47 +172,48 @@ $active_page = 'alumnos';
         </div>
       </header>
 
-      <form class="topbar" method="get">
-        <div class="topbar-actions">
-          <label class="calendar-select">
-            <select name="id_curso_escolar">
-              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso</option>
-              <?php foreach ($courses as $course): ?>
-                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-          </label>
-        </div>
-        <div class="topbar-actions">
-          <label class="calendar-select">
-            <select name="grupo_id">
-              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
-              <?php foreach ($groups as $group): ?>
-                <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-              <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
-            </select>
-          </label>
-        </div>
-        <div class="topbar-search">
-          <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle>
-              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
-            </svg>
-          </span>
-          <input
-            type="search"
-            name="q"
-            placeholder="Buscar por nombre o apellidos"
-            aria-label="Buscar por nombre o apellidos"
-            value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
-          >
-        </div>
+      <form method="get" class="panel entity-form">
+        <section class="entity-section">
+          <div class="panel-header">
+            <h3>Filtros</h3>
+            <p>Selecciona curso escolar, grupo y/o busca por nombre o apellidos.</p>
+          </div>
+
+          <div class="entity-grid entity-grid--4">
+            <label>
+              <select name="id_curso_escolar">
+                <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
+                <?php foreach ($courses as $course): ?>
+                  <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+
+            <label>
+              <select name="grupo_id">
+                <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
+                <?php foreach ($groups as $group): ?>
+                  <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+                <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
+              </select>
+            </label>
+
+            <label>
+              <input
+                type="search"
+                name="q"
+                placeholder="Buscar por nombre o apellidos"
+                aria-label="Buscar por nombre o apellidos"
+                value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+              >
+            </label>
+          </div>
+        </section>
       </form>
 
       <section class="panel">
@@ -242,7 +243,7 @@ $active_page = 'alumnos';
     </main>
   </div>
   <script>
-    const form = document.querySelector('.topbar');
+    const form = document.querySelector('form.entity-form');
     const searchInput = document.querySelector('input[name="q"]');
     const groupSelect = document.querySelector('select[name="grupo_id"]');
     const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
