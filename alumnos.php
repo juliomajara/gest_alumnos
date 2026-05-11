@@ -5,87 +5,108 @@ require_once __DIR__ . '/db.php';
 
 $pdo = db();
 
-$active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
+$active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 ORDER BY id_curso_escolar DESC LIMIT 1')->fetchColumn();
 $active_course_id = $active_course_id ? (int) $active_course_id : 0;
 
+$courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll();
+
+$selected_course_id = (int) ($_GET['id_curso_escolar'] ?? $active_course_id);
 $search_term = trim((string) ($_GET['q'] ?? ''));
 $selected_group = (string) ($_GET['grupo_id'] ?? '');
 $selected_group = $selected_group === '' ? '' : $selected_group;
 
-$groups_stmt = $pdo->prepare(
-  'SELECT DISTINCT g.id_grupo, g.grupo
-   FROM grupos g
-   INNER JOIN alumno_curso ac
-    ON ac.id_grupo = g.id_grupo
-    AND ac.id_curso_escolar = :active_course_id
-   ORDER BY g.grupo'
-);
-$groups_stmt->execute(['active_course_id' => $active_course_id]);
-$groups = $groups_stmt->fetchAll();
-
-$filters = [];
-$params = ['active_course_id' => $active_course_id];
-
-if ($search_term !== '') {
-  $filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term1 OR a.apellido2 LIKE :search_term2)';
-  $params['search_term'] = '%' . $search_term . '%';
-  $params['search_term1'] = '%' . $search_term . '%';
-  $params['search_term2'] = '%' . $search_term . '%';
+$groups = [];
+if ($selected_course_id > 0) {
+  $groups_stmt = $pdo->prepare(
+    'SELECT DISTINCT g.id_grupo, g.grupo
+     FROM grupos g
+     INNER JOIN alumno_curso ac
+      ON ac.id_grupo = g.id_grupo
+      AND ac.id_curso_escolar = :id_curso_escolar
+     ORDER BY g.grupo'
+  );
+  $groups_stmt->execute(['id_curso_escolar' => $selected_course_id]);
+  $groups = $groups_stmt->fetchAll();
 }
 
-if ($selected_group !== '') {
+$students = [];
+$empty_message = '';
+
+if ($selected_course_id <= 0) {
+  $empty_message = 'Selecciona un curso y un grupo para ver los alumnos.';
+} elseif ($selected_group === '') {
+  $empty_message = 'Selecciona un grupo para ver los alumnos.';
+} else {
+  $filters = [];
+  $params = ['id_curso_escolar' => $selected_course_id];
+
+  if ($search_term !== '') {
+    $filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term1 OR a.apellido2 LIKE :search_term2)';
+    $params['search_term'] = '%' . $search_term . '%';
+    $params['search_term1'] = '%' . $search_term . '%';
+    $params['search_term2'] = '%' . $search_term . '%';
+  }
+
   if ($selected_group === 'sin') {
     $filters[] = 'g.id_grupo IS NULL';
   } elseif (ctype_digit($selected_group)) {
     $filters[] = 'g.id_grupo = :group_id';
     $params['group_id'] = (int) $selected_group;
+  } else {
+    $filters[] = '1 = 0';
+  }
+
+  $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
+
+  $students_stmt = $pdo->prepare(
+    'SELECT
+      a.id_alumno,
+      a.apellido1,
+      a.apellido2,
+      a.nombre,
+      t.telefono,
+      c.direccion_correo AS correo_personal,
+      a.nia,
+      a.dni,
+      g.grupo
+    FROM alumnos a
+    LEFT JOIN alumno_curso ac
+      ON ac.id_alumno = a.id_alumno
+      AND ac.id_curso_escolar = :id_curso_escolar
+    LEFT JOIN grupos g
+      ON g.id_grupo = ac.id_grupo
+    LEFT JOIN (
+      SELECT id_entidad, MIN(telefono) AS telefono
+      FROM telefonos
+      WHERE entidad_tipo = \'alumno\'
+      GROUP BY id_entidad
+    ) t ON t.id_entidad = a.id_alumno
+    LEFT JOIN (
+      SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+      FROM correos
+      WHERE entidad_tipo = \'alumno\'
+      GROUP BY id_entidad
+    ) c ON c.id_entidad = a.id_alumno
+    ' . $where_clause . '
+    ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre'
+  );
+
+  $students_stmt->execute($params);
+  $students = $students_stmt->fetchAll();
+
+  if ($students === []) {
+    $empty_message = $search_term !== ''
+      ? 'No hay resultados para la búsqueda en el curso/grupo seleccionado.'
+      : 'No hay alumnos para los filtros seleccionados.';
   }
 }
 
-$where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
-
-$students_stmt = $pdo->prepare(
-  'SELECT
-    a.id_alumno,
-    a.apellido1,
-    a.apellido2,
-    a.nombre,
-    t.telefono,
-    c.direccion_correo AS correo_personal,
-    a.nia,
-    a.dni,
-    g.grupo
-  FROM alumnos a
-  LEFT JOIN alumno_curso ac
-    ON ac.id_alumno = a.id_alumno
-    AND ac.id_curso_escolar = :active_course_id
-  LEFT JOIN grupos g
-    ON g.id_grupo = ac.id_grupo
-  LEFT JOIN (
-    SELECT id_entidad, MIN(telefono) AS telefono
-    FROM telefonos
-    WHERE entidad_tipo = \'alumno\'
-    GROUP BY id_entidad
-  ) t ON t.id_entidad = a.id_alumno
-  LEFT JOIN (
-    SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
-    FROM correos
-    WHERE entidad_tipo = \'alumno\'
-    GROUP BY id_entidad
-  ) c ON c.id_entidad = a.id_alumno
-  ' . $where_clause . '
-  ORDER BY g.grupo, a.apellido1, a.apellido2, a.nombre'
-);
-
-$students_stmt->execute($params);
-$students = $students_stmt->fetchAll();
-
-function render_student_rows(array $students): string
+function render_student_rows(array $students, string $empty_message): string
 {
   ob_start();
   if (!$students): ?>
     <tr>
-      <td colspan="6">No hay alumnos para los filtros seleccionados.</td>
+      <td colspan="6"><?php echo htmlspecialchars($empty_message, ENT_QUOTES, 'UTF-8'); ?></td>
     </tr>
   <?php else: ?>
     <?php foreach ($students as $student): ?>
@@ -117,7 +138,7 @@ function render_student_rows(array $students): string
   return ob_get_clean();
 }
 
-$rows_html = render_student_rows($students);
+$rows_html = render_student_rows($students, $empty_message);
 
 if (($_GET['ajax'] ?? '') === '1') {
   header('Content-Type: text/html; charset=UTF-8');
@@ -152,6 +173,31 @@ $active_page = 'alumnos';
       </header>
 
       <form class="topbar" method="get">
+        <div class="topbar-actions">
+          <label class="calendar-select">
+            <select name="id_curso_escolar">
+              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso</option>
+              <?php foreach ($courses as $course): ?>
+                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+        </div>
+        <div class="topbar-actions">
+          <label class="calendar-select">
+            <select name="grupo_id">
+              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
+              <?php foreach ($groups as $group): ?>
+                <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+              <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
+            </select>
+          </label>
+        </div>
         <div class="topbar-search">
           <span class="search-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -166,19 +212,6 @@ $active_page = 'alumnos';
             aria-label="Buscar por nombre o apellidos"
             value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
           >
-        </div>
-        <div class="topbar-actions">
-          <label class="calendar-select">
-            <select name="grupo_id">
-              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Todos los grupos</option>
-              <?php foreach ($groups as $group): ?>
-                <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
-                </option>
-              <?php endforeach; ?>
-              <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
-            </select>
-          </label>
         </div>
       </form>
 
@@ -212,6 +245,7 @@ $active_page = 'alumnos';
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
     const groupSelect = document.querySelector('select[name="grupo_id"]');
+    const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
     const tableBody = document.querySelector('tbody');
     let debounceTimer = null;
 
@@ -257,6 +291,11 @@ $active_page = 'alumnos';
     });
 
     groupSelect.addEventListener('change', () => {
+      updateResults();
+    });
+
+    courseSelect.addEventListener('change', () => {
+      groupSelect.value = '';
       updateResults();
     });
   </script>
