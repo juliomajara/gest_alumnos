@@ -74,7 +74,7 @@ function active_school_year(PDO $pdo): string {
     $st = $pdo->query('SELECT * FROM cursos_escolares WHERE activo = 1 LIMIT 1');
     $row = $st ? ($st->fetch(PDO::FETCH_ASSOC) ?: []) : [];
     if (!$row) return '';
-    foreach (['nombre','descripcion','curso','curso_academico'] as $c) {
+    foreach (['nombre','curso','descripcion','anyo','curso_escolar','curso_academico'] as $c) {
       if (isset($row[$c]) && trim((string)$row[$c]) !== '') return trim((string)$row[$c]);
     }
     return '';
@@ -125,14 +125,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
     $rows=[];
     foreach ($activityMap as $key=>$meta) {
       $actividad = trim((string)($fields[$key] ?? ''));
-      if ($actividad === '') continue;
       $codigo='';
       try { $st=$pdo->prepare('SELECT codigo FROM modulos WHERE LOWER(materia_general)=LOWER(:m) OR LOWER(materia_propia)=LOWER(:m) LIMIT 1'); $st->execute(['m'=>$meta['modulo']]); $codigo=(string)($st->fetchColumn() ?: ''); } catch(Throwable $e) {}
       $rows[]=['actividad'=>$actividad,'codigo_modulo'=>$codigo,'ra'=>$meta['ra'],'estado'=>'en_proceso','observaciones'=>''];
     }
-    if (count($rows) === 0) throw new RuntimeException('No hay actividades extraídas del PDF.');
-    if (count($rows) > 8) { $warnings[]='Se han detectado más de 8 actividades; solo se usarán las 8 primeras.'; $rows=array_slice($rows,0,8); }
-    while(count($rows)<8){$rows[]=['actividad'=>'','codigo_modulo'=>'','ra'=>'','estado'=>'en_proceso','observaciones'=>''];}
     $cursoActivo = active_school_year($pdo);
     $tutorEmail = isset($practica['id_empresas_tutor']) ? tutor_email($pdo, (int)$practica['id_empresas_tutor']) : '';
     $formData = [
@@ -155,10 +151,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <section class="panel"><form method="post" enctype="multipart/form-data" class="entity-form"><input type="hidden" name="accion" value="analizar_pdf"><label>PDF del alumno (máx. 10MB)<input type="file" name="pdf_alumno" accept="application/pdf,.pdf" required></label><button class="primary-button" type="submit">Analizar PDF</button></form></section>
 <?php else: ?>
 <section class="panel"><form method="post" action="includes/generar_ficha_seguimiento_periodico.php" class="entity-form">
-<div class="entity-grid entity-grid--3">
+<div class="entity-grid entity-grid--6">
 <label>Curso académico<input type="text" name="curso_academico" value="<?php echo h((string)$formData['curso_academico']); ?>"></label>
 <label>Número de convenio<input type="text" name="num_convenio" value="<?php echo h((string)$formData['num_convenio']); ?>"></label>
 <label>Número de anexo de relación de alumnos<input type="text" name="num_anexo_relacion" value="<?php echo h((string)$formData['num_anexo_relacion']); ?>"></label>
+<label>Fecha inicio<input type="text" name="fecha_inicio" value="<?php echo h((string)$formData['fecha_inicio']); ?>"></label>
+<label>Fecha fin<input type="text" name="fecha_fin" value="<?php echo h((string)$formData['fecha_fin']); ?>"></label>
+<label>Fecha firma<input type="text" name="fecha_firma" value="<?php echo h((string)$formData['fecha_firma']); ?>"></label>
 </div>
 <div class="entity-grid entity-grid--3">
 <label>Alumno apellidos<input type="text" name="alumno_apellidos" value="<?php echo h((string)$formData['alumno_apellidos']); ?>"></label>
@@ -171,13 +170,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <label>Tutor empresa nombre<input type="text" name="tutor_empresa_nombre" value="<?php echo h((string)$formData['tutor_empresa_nombre']); ?>"></label>
 <label>Tutor empresa email<input type="text" name="tutor_empresa_email" value="<?php echo h((string)$formData['tutor_empresa_email']); ?>"></label>
 </div>
-<div class="entity-grid entity-grid--3">
-<label>Fecha inicio<input type="text" name="fecha_inicio" value="<?php echo h((string)$formData['fecha_inicio']); ?>"></label>
-<label>Fecha fin<input type="text" name="fecha_fin" value="<?php echo h((string)$formData['fecha_fin']); ?>"></label>
-<label>Fecha firma<input type="text" name="fecha_firma" value="<?php echo h((string)$formData['fecha_firma']); ?>"></label>
-</div>
-<h3>Actividades (máx. 8)</h3>
-<div class="panel-grid"><table><thead><tr><th>Actividad</th><th>Código módulo</th><th>RA</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>
+<h3>Actividades</h3>
+<div class="panel-grid"><table class="ficha-seguimiento-table"><thead><tr><th class="col-actividad">Actividad</th><th class="col-codigo">Código módulo</th><th class="col-ra">RA</th><th class="col-estado">Estado</th><th class="col-observaciones">Observaciones</th></tr></thead><tbody>
 <?php foreach($formData['filas'] as $i=>$fila): ?>
 <tr><td><input type="text" name="filas[<?php echo $i; ?>][actividad]" value="<?php echo h($fila['actividad']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][codigo_modulo]" value="<?php echo h($fila['codigo_modulo']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][ra]" value="<?php echo h($fila['ra']); ?>"></td><td><select name="filas[<?php echo $i; ?>][estado]"><option value="no_superado" <?php echo $fila['estado']==='no_superado'?'selected':''; ?>>No superada</option><option value="en_proceso" <?php echo $fila['estado']==='en_proceso'?'selected':''; ?>>En proceso</option><option value="superado" <?php echo $fila['estado']==='superado'?'selected':''; ?>>Superado</option></select></td><td><input type="text" name="filas[<?php echo $i; ?>][observaciones]" value="<?php echo h($fila['observaciones']); ?>"></td></tr>
 <?php endforeach; ?>

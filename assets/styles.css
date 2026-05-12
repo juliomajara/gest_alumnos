@@ -2994,3 +2994,19 @@ a.edit-toggle:focus {
   flex-direction: column;
   gap: 6px;
 }
+
+.entity-grid--6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+@media (max-width: 980px) {
+  .entity-grid--6 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ficha-seguimiento-table .col-actividad { width: 48%; }
+.ficha-seguimiento-table .col-codigo { width: 12%; }
+.ficha-seguimiento-table .col-ra { width: 7%; }
+.ficha-seguimiento-table .col-estado { width: 13%; }
+.ficha-seguimiento-table .col-observaciones { width: 20%; }
