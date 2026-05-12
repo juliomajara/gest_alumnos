@@ -67,32 +67,35 @@
             font-weight: normal;
         }
 
-        .official-header {
+        .official-header-table {
             width: 100%;
+            border-collapse: collapse;
             margin: 0 0 2mm 0;
-            display: table;
         }
 
-        .official-logo {
-            display: table-cell;
-            width: 33.33%;
+        .official-header-table td {
+            border: 0 !important;
             vertical-align: top;
+            padding: 0;
         }
 
-        .official-logo-left {
+        .header-logo-left {
+            width: 33.33%;
             text-align: left;
         }
 
-        .official-logo-center {
+        .header-logo-center {
+            width: 33.33%;
             text-align: center;
         }
 
-        .official-logo-right {
+        .header-logo-right {
+            width: 33.33%;
             text-align: right;
         }
 
-        .official-logo img {
-            max-height: 11.5mm;
+        .official-header-table img {
+            max-height: 13mm;
             width: auto;
         }
 
@@ -119,13 +122,19 @@
         .meta-table,
         .student-table,
         .workplace-table,
-        .activities-table,
-        .signature-table {
+        .activities-table {
             margin-bottom: 3mm;
         }
 
         .period-table {
             margin-bottom: 2.5mm;
+        }
+
+        .compact-meta-table {
+            width: 72%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 3.5mm;
         }
 
         .recipient-table {
@@ -205,6 +214,18 @@
             width: 20%;
         }
 
+        .signature-free-block {
+            border: 0;
+            text-align: center;
+            margin: 3.5mm 0 2.5mm 0;
+            font-size: 8pt;
+            line-height: 1.3;
+        }
+
+        .signature-free-block div {
+            border: 0;
+        }
+
         .row-fill {
             height: auto;
             min-height: 17px;
@@ -223,17 +244,19 @@
 <div class="page">
 
 <!-- CABECERA -->
-<div class="official-header">
-    <div class="official-logo official-logo-left">
-        <img style="max-width: 62px; max-height: 36px;" src="bandera_CM.png" alt="Comunidad de Madrid">
-    </div>
-    <div class="official-logo official-logo-center">
-        <img style="max-width: 160px; max-height: 36px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
-    </div>
-    <div class="official-logo official-logo-right">
-        <img style="max-width: 160px; max-height: 36px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
-    </div>
-</div>
+<table class="official-header-table">
+    <tr>
+        <td class="header-logo-left">
+            <img style="max-width: 62px;" src="bandera_CM.png" alt="Comunidad de Madrid">
+        </td>
+        <td class="header-logo-center">
+            <img style="max-width: 160px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
+        </td>
+        <td class="header-logo-right">
+            <img style="max-width: 160px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
+        </td>
+    </tr>
+</table>
 
 <div class="official-title">
     <div class="doc-pretitle">Anexo</div>
@@ -241,7 +264,7 @@
 </div>
 
 <!-- DATOS SUPERIORES -->
-<table class="outer meta-table">
+<table class="outer meta-table compact-meta-table">
     <tr class="meta-header">
         <td style="width: 34%;">Curso académico</td>
         <td style="width: 33%;">Nº del Convenio o Acuerdo de aprendizaje</td>
@@ -289,13 +312,10 @@
 <!-- PERIODO -->
 <table class="outer period-table">
     <tr>
-        <td colspan="4" class="section-title">Periodo de seguimiento de las actividades formativas</td>
+        <td class="section-title">Periodo de seguimiento de las actividades formativas</td>
     </tr>
     <tr>
-        <td style="width: 7%;" class="center"><span class="label-inline">De</span></td>
-        <td style="width: 18%;"><span class="value-text">{{FECHA_INICIO}}</span></td>
-        <td style="width: 7%;" class="center"><span class="label-inline">a</span></td>
-        <td style="width: 68%;"><span class="value-text">{{FECHA_FIN}}</span> <span class="muted small">(dd/mm/aa)</span></td>
+        <td><span class="label-inline">De</span> <span class="value-text">{{FECHA_INICIO}}</span> <span class="label-inline">a</span> <span class="value-text">{{FECHA_FIN}}</span></td>
     </tr>
 </table>
 
@@ -311,7 +331,7 @@
         <td class="status-col">No superado</td>
         <td class="status-col">En proceso</td>
         <td class="status-col">Superado</td>
-        <td class="obs-col">Observaciones</td>
+        <td class="obs-col center">Observaciones</td>
     </tr>
 
     <tr class="row-fill">
@@ -389,16 +409,10 @@
 </table>
 
 <!-- FIRMA -->
-<table class="outer signature-table">
-    <tr>
-        <td class="signature-box">
-            El/la tutor/a de la empresa u organismo equiparado <span class="muted">(Firma digital preferentemente)</span>
-        </td>
-    </tr>
-    <tr>
-        <td class="date-box"><span class="label-inline">Fecha:</span> <span class="value-text">{{FECHA_FIRMA}}</span></td>
-    </tr>
-</table>
+<div class="signature-free-block">
+    <div>El/la tutor/a de la empresa u organismo equiparado <span class="muted">(Firma digital preferentemente)</span></div>
+    <div><span class="label-inline">Fecha:</span> <span class="value-text">{{FECHA_FIRMA}}</span></div>
+</div>
 
 <!-- DESTINATARIO -->
 <table class="outer recipient-table">
