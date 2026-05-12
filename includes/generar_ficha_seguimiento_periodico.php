@@ -74,7 +74,20 @@ $html = preg_replace('/\{\{[^}]+\}\}/', '', $html) ?? $html;
 
 $tmpPdf = $docsDir . DIRECTORY_SEPARATOR . 'tmp_ficha_' . uniqid('', true) . '.pdf';
 try {
-  $mpdf = new Mpdf(['tempDir'=>$mpdfTempDir,'mode'=>'utf-8','format'=>'A4-L','default_font'=>'dejavusans','allow_output_buffering'=>true]);
+  $mpdf = new Mpdf([
+    'tempDir' => $mpdfTempDir,
+    'mode' => 'utf-8',
+    'format' => 'A4-L',
+    'default_font' => 'dejavusans',
+    'allow_output_buffering' => true,
+    'margin_left' => 5,
+    'margin_right' => 5,
+    'margin_top' => 4,
+    'margin_bottom' => 4,
+    'margin_header' => 0,
+    'margin_footer' => 0,
+  ]);
+  $mpdf->shrink_tables_to_fit = 1;
   $mpdf->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
   $mpdf->WriteHTML($html);
   $mpdf->Output($tmpPdf, \Mpdf\Output\Destination::FILE);
