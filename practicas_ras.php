@@ -341,6 +341,68 @@ $criteria_by_ra = [];
 $saved_percentages = [];
 $saved_percentages_rows = [];
 
+if (isset($_GET['exportar_json']) && (string) $_GET['exportar_json'] === '1') {
+  $export_data = [];
+
+  if ($filters_ready) {
+    $export_conditions = [];
+    $export_params = [];
+
+    if ($practicas_has_course_id_column) {
+      $export_conditions[] = 'pr.id_curso_escolar = :curso_id';
+      $export_params['curso_id'] = (int) $selected_course_id;
+    }
+    if ($practicas_has_course_text_column) {
+      $export_conditions[] = 'pr.curso_escolar = :curso';
+      $export_params['curso'] = $selected_course_label;
+    }
+    if (!$practicas_has_course_id_column && !$practicas_has_course_text_column && $practicas_course_column !== null) {
+      $export_conditions[] = 'pr.' . $practicas_course_column . ' = :curso';
+      $export_params['curso'] = $selected_course_label;
+    }
+    if ($practicas_cycle_column !== null) {
+      $export_conditions[] = 'pr.' . $practicas_cycle_column . ' = :ciclo';
+      if ($practicas_cycle_column === 'id_ciclo') {
+        $export_params['ciclo'] = (int) $selected_cycle_id;
+      } else {
+        $export_params['ciclo'] = $selected_cycle_label;
+      }
+    }
+
+    $where_sql = $export_conditions ? 'WHERE ' . build_course_filter_sql($export_conditions) : '';
+    $export_stmt = $pdo->prepare(
+      'SELECT
+        COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), "Módulo sin nombre") AS modulo,
+        ra.id_ra,
+        ra.numero,
+        ra.descripcion
+       FROM practicas_ras pr
+       INNER JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
+       INNER JOIN modulos m ON m.id_modulo = ra.id_modulo
+       ' . $where_sql . '
+       ORDER BY m.abreviatura, m.materia_propia, m.materia_general, m.id_modulo, ra.numero, ra.id_ra'
+    );
+    $export_stmt->execute($export_params);
+
+    foreach ($export_stmt->fetchAll() as $row) {
+      $ra_id = (int) ($row['id_ra'] ?? 0);
+      $export_data[] = [
+        'modulo' => trim((string) ($row['modulo'] ?? 'Módulo sin nombre')),
+        'ra' => format_ra_label($row['numero'] ?? '', $ra_id),
+        'descripcion' => (string) ($row['descripcion'] ?? ''),
+      ];
+    }
+  }
+
+  while (ob_get_level() > 0) {
+    ob_end_clean();
+  }
+  header('Content-Type: application/json; charset=utf-8');
+  header('Content-Disposition: attachment; filename="ras.json"');
+  echo json_encode($export_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'guardar') {
   if (!$practicas_table_ready) {
     if (!$practicas_table_exists) {
@@ -737,6 +799,10 @@ if ($filters_ready) {
 
             <div class="practicas-ras-filter-actions">
               <button type="submit" class="primary-button">Cargar</button>
+              <a
+                class="ghost-button"
+                href="?exportar_json=1<?php echo $can_filter_by_select_course && $selected_course_id !== '' ? '&amp;curso=' . urlencode($selected_course_id) : ($selected_course_text !== '' ? '&amp;curso_texto=' . urlencode($selected_course_text) : ''); ?><?php echo $selected_cycle_id !== '' ? '&amp;ciclo=' . urlencode($selected_cycle_id) : ''; ?>"
+              >Exportar a JSON</a>
             </div>
           </div>
         </form>
