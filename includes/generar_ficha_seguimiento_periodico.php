@@ -31,12 +31,6 @@ if (!is_dir($mpdfTempDir) && !mkdir($mpdfTempDir, 0775, true) && !is_dir($mpdfTe
 
 $filas = $_POST['filas'] ?? [];
 if (!is_array($filas)) { http_response_code(400); exit('Formato de filas no válido.'); }
-$hasActivity = false;
-for ($i=0; $i<8; $i++) {
-  $actividad = trim((string)($filas[$i]['actividad'] ?? ''));
-  if ($actividad !== '') $hasActivity = true;
-}
-if (!$hasActivity) { http_response_code(400); exit('No se puede generar la ficha: no hay actividades.'); }
 
 $html = (string) file_get_contents($templatePath);
 $html = embed_local_images($html, $docsDir);
@@ -56,16 +50,25 @@ $repl = [
   '{{FECHA_FIN}}'=>e((string)($_POST['fecha_fin'] ?? '')),
   '{{FECHA_FIRMA}}'=>e((string)($_POST['fecha_firma'] ?? '')),
 ];
-for($i=1;$i<=8;$i++){
-  $row=$filas[$i-1] ?? []; $estado=(string)($row['estado'] ?? 'en_proceso');
-  $repl['{{FILA_'.$i.'_ACTIVIDAD}}']=e((string)($row['actividad'] ?? ''));
-  $repl['{{FILA_'.$i.'_CODIGO_MODULO}}']=e((string)($row['codigo_modulo'] ?? ''));
-  $repl['{{FILA_'.$i.'_RA}}']=e((string)($row['ra'] ?? ''));
-  $repl['{{FILA_'.$i.'_NO_SUPERADO}}']=$estado==='no_superado'?'<span class="checkbox checked"></span>':'<span class="checkbox"></span>';
-  $repl['{{FILA_'.$i.'_EN_PROCESO}}']=$estado==='en_proceso'?'<span class="checkbox checked"></span>':'<span class="checkbox"></span>';
-  $repl['{{FILA_'.$i.'_SUPERADO}}']=$estado==='superado'?'<span class="checkbox checked"></span>':'<span class="checkbox"></span>';
-  $repl['{{FILA_'.$i.'_OBSERVACIONES}}']=e((string)($row['observaciones'] ?? ''));
+$dynamicRowsHtml = '';
+foreach ($filas as $row) {
+  if (!is_array($row)) continue;
+  $estado = (string)($row['estado'] ?? 'en_proceso');
+  if (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) $estado = 'en_proceso';
+  $dynamicRowsHtml .= '<tr class="row-fill">'
+    . '<td><span class="value-text">' . e((string)($row['actividad'] ?? '')) . '</span></td>'
+    . '<td class="center"><span class="value-text">' . e((string)($row['codigo_modulo'] ?? '')) . '</span></td>'
+    . '<td class="center"><span class="value-text">' . e((string)($row['ra'] ?? '')) . '</span></td>'
+    . '<td class="center">' . ($estado==='no_superado' ? '<span class="checkbox checked"></span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td class="center">' . ($estado==='en_proceso' ? '<span class="checkbox checked"></span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td class="center">' . ($estado==='superado' ? '<span class="checkbox checked"></span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td><span class="value-text">' . e((string)($row['observaciones'] ?? '')) . '</span></td>'
+    . '</tr>';
 }
+if ($dynamicRowsHtml === '') {
+  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center"><span class="checkbox"></span></td><td class="center"><span class="checkbox checked"></span></td><td class="center"><span class="checkbox"></span></td><td></td></tr>';
+}
+$html = preg_replace('/<tr class="row-fill">.*?\{\{FILA_8_OBSERVACIONES\}\}<\/span><\/td>\s*<\/tr>/su', $dynamicRowsHtml, $html, 1) ?? $html;
 $html = strtr($html, $repl);
 $html = preg_replace('/\{\{[^}]+\}\}/', '', $html) ?? $html;
 
