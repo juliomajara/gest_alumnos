@@ -398,6 +398,7 @@ try {
         <div>
           <h1>Documentación de prácticas</h1>
           <p class="subheading">Genera el Plan Formación y/o el Calendario para las prácticas del curso actual.</p>
+          <p><a class="practice-link" href="practicas_ficha_seguimiento.php">Generar ficha de seguimiento periódico</a></p>
         </div>
       </header>
 
