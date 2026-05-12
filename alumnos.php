@@ -138,7 +138,86 @@ function render_student_rows(array $students, string $empty_message): string
   return ob_get_clean();
 }
 
+
+if (($_GET['exportar_claves_json'] ?? '') === '1') {
+  $claves = [];
+  foreach ($students as $student) {
+    $dniLimpio = preg_replace('/\D+/', '', (string) ($student['dni'] ?? ''));
+    $niaLimpio = preg_replace('/\D+/', '', (string) ($student['nia'] ?? ''));
+
+    if ($dniLimpio === null || $niaLimpio === null) {
+      continue;
+    }
+
+    if (strlen($dniLimpio) < 8 || $niaLimpio === '') {
+      continue;
+    }
+
+    $d = substr($dniLimpio, 0, 8);
+    if (!ctype_digit($d) || !ctype_digit($niaLimpio)) {
+      continue;
+    }
+
+    $claves[] = calcularClaveValidacion($d, $niaLimpio);
+  }
+
+  $claves = array_values(array_unique($claves));
+
+  if (ob_get_level() > 0) {
+    ob_clean();
+  }
+
+  header('Content-Type: application/json; charset=utf-8');
+  header('Content-Disposition: attachment; filename="claves.json"');
+  echo json_encode($claves, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+  exit;
+}
+
 $rows_html = render_student_rows($students, $empty_message);
+
+
+function calcularClaveValidacion(string $dni, string $nia): string
+{
+  $dni = strtoupper(str_replace([' ', '-'], '', trim($dni)));
+  $nia = trim($nia);
+
+  $d = substr($dni, 0, 8);
+  $n = $nia;
+
+  $sumaDni = array_sum(array_map('intval', str_split($d)));
+  $sumaNia = array_sum(array_map('intval', str_split($n)));
+
+  $a = $sumaDni + $sumaNia;
+  $b = abs($sumaDni - $sumaNia);
+
+  $ponderadoDni = 0;
+  foreach (str_split($d) as $i => $digito) {
+    $factor = $i + 2;
+    $ponderadoDni += intval($digito) * ($factor ** 3);
+  }
+
+  $ponderadoNia = 0;
+  foreach (str_split($n) as $i => $digito) {
+    $factor = $i + 3;
+    $ponderadoNia += intval($digito) * ($factor ** 3);
+  }
+
+  $c = abs($ponderadoDni - $ponderadoNia);
+
+  $dInvertido = intval(strrev($d));
+  $nInvertido = intval(strrev($n));
+
+  $mezcla =
+    intval($d) * 97 +
+    intval($n) * 31 +
+    $dInvertido * 17 +
+    $nInvertido * 13 +
+    $c * 7 +
+    $a * 1009 +
+    $b * 917;
+
+  return (string) (10000000000000 + ($mezcla % 90000000000000));
+}
 
 if (($_GET['ajax'] ?? '') === '1') {
   header('Content-Type: text/html; charset=UTF-8');
@@ -177,6 +256,9 @@ $active_page = 'alumnos';
           <div class="panel-header">
             <h3>Filtros</h3>
             <p>Selecciona curso escolar, grupo y/o busca por nombre o apellidos.</p>
+            <p>
+              <a class="button-secondary" href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>">Exportar claves a JSON</a>
+            </p>
           </div>
 
           <div class="entity-grid entity-grid--4">
