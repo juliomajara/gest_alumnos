@@ -16,7 +16,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0 0 1px 0;
+            margin: 0;
         }
 
         .page {
@@ -67,37 +67,69 @@
             font-weight: normal;
         }
 
-        .header-wrap td {
-            vertical-align: middle;
+        .official-header {
+            width: 100%;
+            margin: 0 0 2mm 0;
+            display: table;
         }
 
-        .logo-cell {
-            width: 18%;
+        .official-logo {
+            display: table-cell;
+            width: 33.33%;
+            vertical-align: top;
+        }
+
+        .official-logo-left {
+            text-align: left;
+        }
+
+        .official-logo-center {
             text-align: center;
         }
 
-        .header-text {
-            text-align: center;
+        .official-logo-right {
+            text-align: right;
         }
 
-        .logo {
-            max-width: 95px;
-            max-height: 36px;
-            height: auto;
+        .official-logo img {
+            max-height: 11.5mm;
+            width: auto;
+        }
+
+        .official-title {
+            text-align: center;
+            margin: 0 0 3mm 0;
+            line-height: 1.1;
         }
 
         .doc-pretitle {
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: bold;
             margin: 0;
             line-height: 1.12;
         }
 
         .doc-title {
-            font-size: 11.5pt;
+            font-size: 10pt;
             font-weight: bold;
             margin: 0;
             line-height: 1.12;
+        }
+
+        .meta-table,
+        .student-table,
+        .workplace-table,
+        .activities-table,
+        .signature-table {
+            margin-bottom: 3mm;
+        }
+
+        .period-table {
+            margin-bottom: 2.5mm;
+        }
+
+        .recipient-table {
+            margin-bottom: 0;
         }
 
         .meta-table td,
@@ -138,10 +170,10 @@
         }
 
         .signature-box {
-            height: 34px;
+            height: 39px;
             vertical-align: bottom;
             text-align: center;
-            padding-top: 8px;
+            padding-top: 10px;
             line-height: 1.12;
         }
 
@@ -175,7 +207,7 @@
 
         .row-fill {
             height: auto;
-            min-height: 16px;
+            min-height: 17px;
         }
 
         .footer-note {
@@ -191,26 +223,22 @@
 <div class="page">
 
 <!-- CABECERA -->
-<table class="outer header-wrap">
-    <tr>
-        <td class="logo-cell no-border" style="border-right: 0 !important; width: 22%;">
-            <img style="max-width: 62px; max-height: 36px;" src="bandera_CM.png" alt="Comunidad de Madrid">
-        </td>
-        <td class="logo-cell no-border" style="border-left: 0 !important; width: 22%;">
-            <img style="max-width: 160px; max-height: 36px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
-        </td>
-        <td class="logo-cell no-border" style="border-left: 0 !important; width: 22%;">
-            <img style="max-width: 160px; max-height: 36px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
-        </td>
-    </tr>
-    <tr>
-        <td colspan="3" class="no-border" style="border-top: 0 !important; text-align: center;">
-            <div class="doc-pretitle">Anexo</div>
-            <div class="doc-title">Ficha de seguimiento periódico</div>
-        </td>
-    </tr>
+<div class="official-header">
+    <div class="official-logo official-logo-left">
+        <img style="max-width: 62px; max-height: 36px;" src="bandera_CM.png" alt="Comunidad de Madrid">
+    </div>
+    <div class="official-logo official-logo-center">
+        <img style="max-width: 160px; max-height: 36px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
+    </div>
+    <div class="official-logo official-logo-right">
+        <img style="max-width: 160px; max-height: 36px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
+    </div>
+</div>
 
-</table>
+<div class="official-title">
+    <div class="doc-pretitle">Anexo</div>
+    <div class="doc-title">Ficha de seguimiento periódico</div>
+</div>
 
 <!-- DATOS SUPERIORES -->
 <table class="outer meta-table">
@@ -227,7 +255,7 @@
 </table>
 
 <!-- DATOS DEL ALUMNO -->
-<table class="outer">
+<table class="outer student-table">
     <tr>
         <td colspan="2" class="section-title">Datos del alumno</td>
     </tr>
@@ -241,7 +269,7 @@
 </table>
 
 <!-- DATOS DEL CENTRO DE TRABAJO -->
-<table class="outer">
+<table class="outer workplace-table">
     <tr>
         <td colspan="3" class="section-title">Datos del centro de trabajo</td>
     </tr>
@@ -259,7 +287,7 @@
 </table>
 
 <!-- PERIODO -->
-<table class="outer">
+<table class="outer period-table">
     <tr>
         <td colspan="4" class="section-title">Periodo de seguimiento de las actividades formativas</td>
     </tr>
@@ -272,7 +300,7 @@
 </table>
 
 <!-- TABLA PRINCIPAL -->
-<table class="outer">
+<table class="outer activities-table">
     <tr>
         <td colspan="7" class="section-title section-title-center">Resultados de aprendizaje contenidos en el plan de formación, asociados a las actividades desarrolladas</td>
     </tr>
@@ -360,10 +388,8 @@
     </tr>
 </table>
 
-<div style="height: 2px;"></div>
-
 <!-- FIRMA -->
-<table class="outer">
+<table class="outer signature-table">
     <tr>
         <td class="signature-box">
             El/la tutor/a de la empresa u organismo equiparado <span class="muted">(Firma digital preferentemente)</span>
@@ -375,7 +401,7 @@
 </table>
 
 <!-- DESTINATARIO -->
-<table class="outer">
+<table class="outer recipient-table">
     <tr>
         <td class="footer-note">Destinatario: profesor/a tutor/a del centro docente</td>
     </tr>
