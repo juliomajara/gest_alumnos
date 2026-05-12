@@ -21,15 +21,44 @@ function ensure_dir(string $path): void {
   if (!is_writable($path)) throw new RuntimeException('La carpeta temporal no tiene permisos de escritura.');
 }
 function extract_pdf_fields_pdftk(string $pdf): array {
-  $which = trim((string) shell_exec('command -v pdftk 2>/dev/null'));
-  if ($which === '') throw new RuntimeException('No se puede analizar el PDF: pdftk no está disponible en el servidor.');
-  $cmd = escapeshellcmd($which) . ' ' . escapeshellarg($pdf) . ' dump_data_fields_utf8 2>&1';
+  if (!function_exists('exec')) throw new RuntimeException('No se puede analizar el PDF: exec está desactivado en PHP.');
+
+  $pdftkCandidates = [
+    'C:\Program Files (x86)\PDFtk Server\bin\pdftk.exe',
+    'C:\Program Files\PDFtk Server\bin\pdftk.exe',
+    'pdftk',
+  ];
+
+  $pdftk = '';
+  foreach ($pdftkCandidates as $candidate) {
+    if ($candidate !== 'pdftk' && (!is_file($candidate) || !is_readable($candidate))) continue;
+    $versionCmd = escapeshellarg($candidate) . ' --version 2>&1';
+    $versionOutput = []; $versionCode = 1; exec($versionCmd, $versionOutput, $versionCode);
+    if ($versionCode === 0 && stripos(implode("
+", $versionOutput), 'pdftk') !== false) { $pdftk = $candidate; break; }
+  }
+
+  if ($pdftk === '') {
+    throw new RuntimeException(
+      "No se puede analizar el PDF: no se ha encontrado pdftk. Rutas probadas:
+- " . implode("
+- ", $pdftkCandidates)
+    );
+  }
+
+  $cmd = escapeshellarg($pdftk) . ' ' . escapeshellarg($pdf) . ' dump_data_fields_utf8 2>&1';
   $output = []; $code = 1; exec($cmd, $output, $code);
-  if ($code !== 0) throw new RuntimeException('No se pudieron leer campos del PDF con pdftk.');
-  $fields = []; $name = ''; $value = '';
+  if ($code !== 0) {
+    throw new RuntimeException(
+      'No se pudieron leer campos del PDF con pdftk. Comando ejecutado: ' . $cmd . '. Salida: ' . implode("
+", $output)
+    );
+  }
+
+  $fields = []; $name = '';
   foreach ($output as $line) {
-    if (str_starts_with($line, 'FieldName:')) { $name = trim(substr($line, 10)); $value = ''; }
-    if (str_starts_with($line, 'FieldValue:')) { $value = trim(substr($line, 11)); if ($name !== '') $fields[$name] = $value; }
+    if (str_starts_with($line, 'FieldName:')) { $name = trim(substr($line, 10)); continue; }
+    if (str_starts_with($line, 'FieldValue:') && $name !== '') { $fields[$name] = trim(substr($line, 11)); }
   }
   return $fields;
 }
