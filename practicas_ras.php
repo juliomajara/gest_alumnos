@@ -372,6 +372,7 @@ if (isset($_GET['exportar_json']) && (string) $_GET['exportar_json'] === '1') {
     $where_sql = $export_conditions ? 'WHERE ' . build_course_filter_sql($export_conditions) : '';
     $export_stmt = $pdo->prepare(
       'SELECT
+        COALESCE(m.codigo, "") AS codigoModulo,
         COALESCE(NULLIF(m.materia_propia, ""), NULLIF(m.materia_general, ""), "Módulo sin nombre") AS modulo,
         ra.id_ra,
         ra.numero,
@@ -387,6 +388,7 @@ if (isset($_GET['exportar_json']) && (string) $_GET['exportar_json'] === '1') {
     foreach ($export_stmt->fetchAll() as $row) {
       $ra_id = (int) ($row['id_ra'] ?? 0);
       $export_data[] = [
+        'codigoModulo' => trim((string) ($row['codigoModulo'] ?? '')),
         'modulo' => trim((string) ($row['modulo'] ?? 'Módulo sin nombre')),
         'ra' => format_ra_label($row['numero'] ?? '', $ra_id),
         'descripcion' => (string) ($row['descripcion'] ?? ''),
