@@ -58,10 +58,10 @@ function calculate_practice_status(array $practice): string
     return 'Cancelada';
   }
 
-  $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
-  $fecha_fin_extra = (string) ($practice['fecha_fin_extra'] ?? '');
+  $fecha_inicio = $practice['fecha_inicio'] ?? null;
+  $fecha_fin_efectiva = $practice['fecha_fin_extra'] ?? $practice['fecha_fin'] ?? null;
 
-  if ($fecha_inicio === '' || $fecha_fin_extra === '') {
+  if ($fecha_inicio === null || $fecha_fin_efectiva === null) {
     return 'No disponible';
   }
 
@@ -71,7 +71,7 @@ function calculate_practice_status(array $practice): string
     return 'En espera';
   }
 
-  if ($today <= $fecha_fin_extra) {
+  if ($today <= $fecha_fin_efectiva) {
     return 'En curso';
   }
 
@@ -125,9 +125,9 @@ $order_clause = match ($current_order) {
   'anexo' => 'ORDER BY CAST(p.anexo AS UNSIGNED) ASC, p.id_practica DESC',
   'estado' => "ORDER BY CASE
     WHEN p.cancelada = 1 THEN 1
-    WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = '' OR p.fecha_fin_extra IS NULL OR p.fecha_fin_extra = '' THEN 2
+    WHEN p.fecha_inicio IS NULL OR COALESCE(p.fecha_fin_extra, p.fecha_fin) IS NULL THEN 2
     WHEN CURDATE() < p.fecha_inicio THEN 3
-    WHEN CURDATE() <= p.fecha_fin_extra THEN 4
+    WHEN CURDATE() <= COALESCE(p.fecha_fin_extra, p.fecha_fin) THEN 4
     ELSE 5
   END ASC, p.id_practica DESC",
   default => 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica DESC',
