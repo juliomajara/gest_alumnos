@@ -69,12 +69,29 @@ function find_alumno(PDO $pdo, string $nia, string $dni): array {
   if ($byNia && $byDni && (int)$byNia['id_alumno'] !== (int)$byDni['id_alumno']) throw new RuntimeException('Conflicto: NIA y DNI apuntan a alumnos distintos.');
   return $byNia ?: ($byDni ?: []);
 }
+function active_school_year(PDO $pdo): string {
+  try {
+    $st = $pdo->query('SELECT * FROM cursos_escolares WHERE activo = 1 LIMIT 1');
+    $row = $st ? ($st->fetch(PDO::FETCH_ASSOC) ?: []) : [];
+    if (!$row) return '';
+    foreach (['nombre','descripcion','curso','curso_academico'] as $c) {
+      if (isset($row[$c]) && trim((string)$row[$c]) !== '') return trim((string)$row[$c]);
+    }
+    return '';
+  } catch (Throwable $e) {
+    return '';
+  }
+}
 function alumno_email(PDO $pdo, int $id): string {
-  $st = $pdo->prepare('SELECT direccion_correo FROM correos WHERE entidad_tipo = "alumno" AND id_entidad=:id ORDER BY CASE WHEN TRIM(COALESCE(etiqueta, "")) = "EducaMadrid" THEN 1 WHEN TRIM(COALESCE(etiqueta, "")) = "Personal" THEN 2 ELSE 3 END, id_correo DESC LIMIT 1');
+  $st = $pdo->prepare('SELECT direccion_correo FROM correos WHERE entidad_tipo = "alumno" AND id_entidad=:id ORDER BY CASE WHEN LOWER(TRIM(COALESCE(direccion_correo, ""))) LIKE "%@educa.madrid.org" THEN 0 WHEN TRIM(COALESCE(etiqueta, "")) = "EducaMadrid" THEN 1 WHEN TRIM(COALESCE(etiqueta, "")) = "Personal" THEN 2 ELSE 3 END, id_correo DESC LIMIT 1');
+  try { $st->execute(['id'=>$id]); $v=$st->fetchColumn(); return is_string($v)?$v:''; } catch (Throwable $e) { return ''; }
+}
+function tutor_email(PDO $pdo, int $id): string {
+  $st = $pdo->prepare('SELECT direccion_correo FROM correos WHERE entidad_tipo = "empresa_tutor" AND id_entidad=:id ORDER BY CASE WHEN LOWER(TRIM(COALESCE(direccion_correo, ""))) LIKE "%@educa.madrid.org" THEN 0 ELSE 1 END, id_correo DESC LIMIT 1');
   try { $st->execute(['id'=>$id]); $v=$st->fetchColumn(); return is_string($v)?$v:''; } catch (Throwable $e) { return ''; }
 }
 function find_practica(PDO $pdo, int $idAlumno): array {
-  $st = $pdo->prepare('SELECT p.*, e.nombre_comercial, e.nombre, e.convenio AS num_convenio, p.anexo AS num_anexo_relacion, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2
+  $st = $pdo->prepare('SELECT p.*, e.nombre_comercial, e.nombre, e.convenio AS num_convenio, p.anexo AS num_anexo_relacion, et.id_empresas_tutor, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2
   FROM practicas p LEFT JOIN empresas e ON e.id_empresa=p.id_empresa LEFT JOIN empresas_tutores et ON et.id_empresas_tutor=p.id_empresa_tutor WHERE p.id_alumno=:id ORDER BY p.cancelada ASC, (p.fecha_fin_extra IS NULL) ASC, p.fecha_fin_extra DESC, (p.fecha_fin IS NULL) ASC, p.fecha_fin DESC LIMIT 1');
   $st->execute(['id'=>$idAlumno]); return $st->fetch(PDO::FETCH_ASSOC) ?: [];
 }
@@ -116,12 +133,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
     if (count($rows) === 0) throw new RuntimeException('No hay actividades extraídas del PDF.');
     if (count($rows) > 8) { $warnings[]='Se han detectado más de 8 actividades; solo se usarán las 8 primeras.'; $rows=array_slice($rows,0,8); }
     while(count($rows)<8){$rows[]=['actividad'=>'','codigo_modulo'=>'','ra'=>'','estado'=>'en_proceso','observaciones'=>''];}
+    $cursoActivo = active_school_year($pdo);
+    $tutorEmail = isset($practica['id_empresas_tutor']) ? tutor_email($pdo, (int)$practica['id_empresas_tutor']) : '';
     $formData = [
-      'curso_academico'=>'', 'num_convenio'=>(string)($practica['num_convenio'] ?? ''), 'num_anexo_relacion'=>(string)($practica['num_anexo_relacion'] ?? ''),
+      'curso_academico'=>$cursoActivo, 'num_convenio'=>(string)($practica['num_convenio'] ?? ''), 'num_anexo_relacion'=>(string)($practica['num_anexo_relacion'] ?? ''),
       'alumno_apellidos'=>trim((string)($alumno['apellido1']??'').' '.(string)($alumno['apellido2']??'')) ?: trim((string)($fields['apellidos']??'')),
       'alumno_nombre'=>(string)($alumno['nombre'] ?? $fields['nombre'] ?? ''), 'alumno_email'=>$alumno ? alumno_email($pdo,(int)$alumno['id_alumno']) : '',
       'centro_trabajo_denominacion'=>(string)($practica['nombre_comercial'] ?: $practica['nombre'] ?? ''),
-      'tutor_empresa_apellidos'=>trim((string)($practica['tutor_apellido1']??'').' '.(string)($practica['tutor_apellido2']??'')), 'tutor_empresa_nombre'=>(string)($practica['tutor_nombre'] ?? ''), 'tutor_empresa_email'=>'',
+      'tutor_empresa_apellidos'=>trim((string)($practica['tutor_apellido1']??'').' '.(string)($practica['tutor_apellido2']??'')), 'tutor_empresa_nombre'=>(string)($practica['tutor_nombre'] ?? ''), 'tutor_empresa_email'=>$tutorEmail,
       'fecha_inicio'=>normalize_date((string)($fields['fecha_inicio'] ?? $practica['fecha_inicio'] ?? '')),
       'fecha_fin'=>normalize_date((string)($fields['fecha_fin'] ?? $practica['fecha_fin_extra'] ?? $practica['fecha_fin'] ?? '')),
       'fecha_firma'=>(new DateTimeImmutable('today'))->format('d/m/Y'), 'filas'=>$rows,
@@ -136,12 +155,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <section class="panel"><form method="post" enctype="multipart/form-data" class="entity-form"><input type="hidden" name="accion" value="analizar_pdf"><label>PDF del alumno (máx. 10MB)<input type="file" name="pdf_alumno" accept="application/pdf,.pdf" required></label><button class="primary-button" type="submit">Analizar PDF</button></form></section>
 <?php else: ?>
 <section class="panel"><form method="post" action="includes/generar_ficha_seguimiento_periodico.php" class="entity-form">
-<?php foreach ($formData as $k=>$v): if($k==='filas') continue; ?><label><?php echo h(str_replace('_',' ',ucfirst($k))); ?><input type="text" name="<?php echo h($k); ?>" value="<?php echo h((string)$v); ?>"></label><?php endforeach; ?>
+<div class="entity-grid entity-grid--3">
+<label>Curso académico<input type="text" name="curso_academico" value="<?php echo h((string)$formData['curso_academico']); ?>"></label>
+<label>Número de convenio<input type="text" name="num_convenio" value="<?php echo h((string)$formData['num_convenio']); ?>"></label>
+<label>Número de anexo de relación de alumnos<input type="text" name="num_anexo_relacion" value="<?php echo h((string)$formData['num_anexo_relacion']); ?>"></label>
+</div>
+<div class="entity-grid entity-grid--3">
+<label>Alumno apellidos<input type="text" name="alumno_apellidos" value="<?php echo h((string)$formData['alumno_apellidos']); ?>"></label>
+<label>Alumno nombre<input type="text" name="alumno_nombre" value="<?php echo h((string)$formData['alumno_nombre']); ?>"></label>
+<label>Alumno e-mail<input type="text" name="alumno_email" value="<?php echo h((string)$formData['alumno_email']); ?>"></label>
+</div>
+<div class="entity-grid entity-grid--4">
+<label>Centro trabajo denominación<input type="text" name="centro_trabajo_denominacion" value="<?php echo h((string)$formData['centro_trabajo_denominacion']); ?>"></label>
+<label>Tutor empresa apellidos<input type="text" name="tutor_empresa_apellidos" value="<?php echo h((string)$formData['tutor_empresa_apellidos']); ?>"></label>
+<label>Tutor empresa nombre<input type="text" name="tutor_empresa_nombre" value="<?php echo h((string)$formData['tutor_empresa_nombre']); ?>"></label>
+<label>Tutor empresa email<input type="text" name="tutor_empresa_email" value="<?php echo h((string)$formData['tutor_empresa_email']); ?>"></label>
+</div>
+<div class="entity-grid entity-grid--3">
+<label>Fecha inicio<input type="text" name="fecha_inicio" value="<?php echo h((string)$formData['fecha_inicio']); ?>"></label>
+<label>Fecha fin<input type="text" name="fecha_fin" value="<?php echo h((string)$formData['fecha_fin']); ?>"></label>
+<label>Fecha firma<input type="text" name="fecha_firma" value="<?php echo h((string)$formData['fecha_firma']); ?>"></label>
+</div>
 <h3>Actividades (máx. 8)</h3>
-<?php foreach($formData['filas'] as $i=>$fila): $n=$i+1; ?>
-<div class="panel" style="margin:8px 0;"><label>Actividad<input type="text" name="filas[<?php echo $i; ?>][actividad]" value="<?php echo h($fila['actividad']); ?>"></label><label>Código módulo<input type="text" name="filas[<?php echo $i; ?>][codigo_modulo]" value="<?php echo h($fila['codigo_modulo']); ?>"></label><label>RA<input type="text" name="filas[<?php echo $i; ?>][ra]" value="<?php echo h($fila['ra']); ?>"></label><label>Estado
-<select name="filas[<?php echo $i; ?>][estado]"><option value="no_superado" <?php echo $fila['estado']==='no_superado'?'selected':''; ?>>No superado</option><option value="en_proceso" <?php echo $fila['estado']==='en_proceso'?'selected':''; ?>>En proceso</option><option value="superado" <?php echo $fila['estado']==='superado'?'selected':''; ?>>Superado</option></select></label><label>Observaciones<input type="text" name="filas[<?php echo $i; ?>][observaciones]" value="<?php echo h($fila['observaciones']); ?>"></label></div>
+<div class="panel-grid"><table><thead><tr><th>Actividad</th><th>Código módulo</th><th>RA</th><th>Estado</th><th>Observaciones</th></tr></thead><tbody>
+<?php foreach($formData['filas'] as $i=>$fila): ?>
+<tr><td><input type="text" name="filas[<?php echo $i; ?>][actividad]" value="<?php echo h($fila['actividad']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][codigo_modulo]" value="<?php echo h($fila['codigo_modulo']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][ra]" value="<?php echo h($fila['ra']); ?>"></td><td><select name="filas[<?php echo $i; ?>][estado]"><option value="no_superado" <?php echo $fila['estado']==='no_superado'?'selected':''; ?>>No superada</option><option value="en_proceso" <?php echo $fila['estado']==='en_proceso'?'selected':''; ?>>En proceso</option><option value="superado" <?php echo $fila['estado']==='superado'?'selected':''; ?>>Superado</option></select></td><td><input type="text" name="filas[<?php echo $i; ?>][observaciones]" value="<?php echo h($fila['observaciones']); ?>"></td></tr>
 <?php endforeach; ?>
+</tbody></table></div>
 <button class="primary-button" type="submit">Generar ficha de seguimiento</button></form></section>
 <?php endif; ?>
 </main></div></body></html>
