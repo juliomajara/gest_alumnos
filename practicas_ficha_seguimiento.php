@@ -70,12 +70,12 @@ function find_alumno(PDO $pdo, string $nia, string $dni): array {
   return $byNia ?: ($byDni ?: []);
 }
 function alumno_email(PDO $pdo, int $id): string {
-  $st = $pdo->prepare('SELECT correo FROM correos WHERE tabla = "alumnos" AND id_tabla=:id ORDER BY predeterminado DESC, id_correo DESC LIMIT 1');
+  $st = $pdo->prepare('SELECT direccion_correo FROM correos WHERE entidad_tipo = "alumno" AND id_entidad=:id ORDER BY CASE WHEN TRIM(COALESCE(etiqueta, "")) = "EducaMadrid" THEN 1 WHEN TRIM(COALESCE(etiqueta, "")) = "Personal" THEN 2 ELSE 3 END, id_correo DESC LIMIT 1');
   try { $st->execute(['id'=>$id]); $v=$st->fetchColumn(); return is_string($v)?$v:''; } catch (Throwable $e) { return ''; }
 }
 function find_practica(PDO $pdo, int $idAlumno): array {
-  $st = $pdo->prepare('SELECT p.*, e.nombre_comercial, e.nombre, e.convenio, e.anexo, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2
-  FROM practicas p LEFT JOIN empresas e ON e.id_empresa=p.id_empresa LEFT JOIN empresas_tutores et ON et.id_tutor=p.id_tutor_empresa WHERE p.id_alumno=:id ORDER BY p.cancelada ASC, p.fecha_fin_extra DESC, p.fecha_fin DESC LIMIT 1');
+  $st = $pdo->prepare('SELECT p.*, e.nombre_comercial, e.nombre, e.convenio AS num_convenio, p.anexo AS num_anexo_relacion, et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2
+  FROM practicas p LEFT JOIN empresas e ON e.id_empresa=p.id_empresa LEFT JOIN empresas_tutores et ON et.id_empresas_tutor=p.id_empresa_tutor WHERE p.id_alumno=:id ORDER BY p.cancelada ASC, (p.fecha_fin_extra IS NULL) ASC, p.fecha_fin_extra DESC, (p.fecha_fin IS NULL) ASC, p.fecha_fin DESC LIMIT 1');
   $st->execute(['id'=>$idAlumno]); return $st->fetch(PDO::FETCH_ASSOC) ?: [];
 }
 $activityMap = [
@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
     if (count($rows) > 8) { $warnings[]='Se han detectado más de 8 actividades; solo se usarán las 8 primeras.'; $rows=array_slice($rows,0,8); }
     while(count($rows)<8){$rows[]=['actividad'=>'','codigo_modulo'=>'','ra'=>'','estado'=>'en_proceso','observaciones'=>''];}
     $formData = [
-      'curso_academico'=>'', 'num_convenio'=>(string)($practica['convenio'] ?? ''), 'num_anexo_relacion'=>(string)($practica['anexo'] ?? ''),
+      'curso_academico'=>'', 'num_convenio'=>(string)($practica['num_convenio'] ?? ''), 'num_anexo_relacion'=>(string)($practica['num_anexo_relacion'] ?? ''),
       'alumno_apellidos'=>trim((string)($alumno['apellido1']??'').' '.(string)($alumno['apellido2']??'')) ?: trim((string)($fields['apellidos']??'')),
       'alumno_nombre'=>(string)($alumno['nombre'] ?? $fields['nombre'] ?? ''), 'alumno_email'=>$alumno ? alumno_email($pdo,(int)$alumno['id_alumno']) : '',
       'centro_trabajo_denominacion'=>(string)($practica['nombre_comercial'] ?: $practica['nombre'] ?? ''),
