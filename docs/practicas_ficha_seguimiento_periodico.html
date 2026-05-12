@@ -8,20 +8,21 @@
         /* Plantilla pensada para mPDF: maquetación con tablas, sin flex/grid */
         body {
             font-family: Arial, sans-serif;
-            font-size: 10pt;
-            margin: 18px;
+            font-size: 7.2pt;
+            margin: 0;
             color: #000;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0 0 10px 0;
+            margin: 0 0 2px 0;
         }
 
         td, th {
             border: 1px solid #000;
-            padding: 4px 6px;
+            padding: 1px 3px;
+            line-height: 1.05;
             vertical-align: middle;
         }
 
@@ -74,18 +75,23 @@
         }
 
         .logo {
-            max-width: 110px;
+            max-width: 95px;
+            max-height: 28px;
             height: auto;
         }
 
         .doc-pretitle {
-            font-size: 11pt;
+            font-size: 8pt;
             font-weight: bold;
+            margin: 0;
+            line-height: 1.05;
         }
 
         .doc-title {
-            font-size: 14pt;
+            font-size: 10pt;
             font-weight: bold;
+            margin: 0;
+            line-height: 1.05;
         }
 
         .meta-table td,
@@ -105,15 +111,15 @@
 
         .checkbox {
             display: inline-block;
-            width: 13px;
-            min-width: 13px;
-            height: 13px;
-            line-height: 13px;
+            width: 9px;
+            min-width: 9px;
+            height: 9px;
+            line-height: 9px;
             border: 1px solid #000;
             text-align: center;
             vertical-align: middle;
             font-weight: bold;
-            font-size: 10px;
+            font-size: 7px;
             box-sizing: border-box;
         }
 
@@ -122,37 +128,38 @@
         }
 
         .small {
-            font-size: 9pt;
+            font-size: 7pt;
         }
 
         .signature-box {
-            height: 60px;
+            height: 26px;
             vertical-align: bottom;
             text-align: center;
-            padding-top: 35px;
+            padding-top: 10px;
+            line-height: 1.05;
         }
 
         .date-box {
             text-align: center;
-            height: 34px;
+            height: 14px;
         }
 
         .status-col {
-            width: 8%;
+            width: 6%;
             text-align: center;
         }
 
         .activity-col {
-            width: 32%;
+            width: 45%;
         }
 
         .module-col {
-            width: 10%;
+            width: 9%;
             text-align: center;
         }
 
         .ra-col {
-            width: 8%;
+            width: 5%;
             text-align: center;
         }
 
@@ -161,15 +168,16 @@
         }
 
         .row-fill {
-            height: 24px;
+            height: auto;
+            min-height: 12px;
         }
 
         .footer-note {
             font-weight: bold;
         }
 
-        table, tr, td, th {
-            page-break-inside: avoid;
+        .outer {
+            page-break-inside: auto;
         }
     </style>
 </head>
@@ -179,13 +187,13 @@
 <table class="outer header-wrap">
     <tr>
         <td class="logo-cell no-border" style="border-right: 0 !important; width: 22%;">
-            <img style="max-width: 70px;" src="bandera_CM.png" alt="Comunidad de Madrid">
+            <img style="max-width: 62px; max-height: 28px;" src="bandera_CM.png" alt="Comunidad de Madrid">
         </td>
         <td class="logo-cell no-border" style="border-left: 0 !important; width: 22%;">
-            <img style="max-width: 180px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
+            <img style="max-width: 160px; max-height: 28px;" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado Unión Europea">
         </td>
         <td class="logo-cell no-border" style="border-left: 0 !important; width: 22%;">
-            <img style="max-width: 180px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
+            <img style="max-width: 160px; max-height: 28px;" src="logo_fondos_europeos.png" alt="Fondos Europeos">
         </td>
     </tr>
     <tr>
