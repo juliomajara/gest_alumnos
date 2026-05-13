@@ -22,10 +22,7 @@ function embed_local_images(string $html, string $docsDir): string {
 }
 
 function render_estado_checkbox(bool $checked): string {
-  $style = 'display:inline-block;width:12px;height:12px;border:1px solid #000;box-sizing:border-box;vertical-align:middle;';
-  if ($checked) {
-    $style .= 'background:#000;';
-  }
+  $style = 'display:inline-block;width:12px;height:12px;border:1px solid #000;box-sizing:border-box;vertical-align:middle;background:' . ($checked ? '#000' : '#fff') . ';';
   return '<span style="' . $style . '"></span>';
 }
 function normalize_estado_seguimiento(string $estado): string {
