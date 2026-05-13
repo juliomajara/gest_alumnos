@@ -153,8 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <section class="panel"><form method="post" action="includes/generar_ficha_seguimiento_periodico.php" class="entity-form">
 <div class="entity-grid entity-grid--6">
 <label>Curso académico<input type="text" name="curso_academico" value="<?php echo h((string)$formData['curso_academico']); ?>"></label>
-<label>Número de convenio<input type="text" name="num_convenio" value="<?php echo h((string)$formData['num_convenio']); ?>"></label>
-<label>Número de anexo de relación de alumnos<input type="text" name="num_anexo_relacion" value="<?php echo h((string)$formData['num_anexo_relacion']); ?>"></label>
+<label>Nº de convenio<input type="text" name="num_convenio" value="<?php echo h((string)$formData['num_convenio']); ?>"></label>
+<label>Nº relación de alumnos<input type="text" name="num_anexo_relacion" value="<?php echo h((string)$formData['num_anexo_relacion']); ?>"></label>
 <label>Fecha inicio<input type="text" name="fecha_inicio" value="<?php echo h((string)$formData['fecha_inicio']); ?>"></label>
 <label>Fecha fin<input type="text" name="fecha_fin" value="<?php echo h((string)$formData['fecha_fin']); ?>"></label>
 <label>Fecha firma<input type="text" name="fecha_firma" value="<?php echo h((string)$formData['fecha_firma']); ?>"></label>
