@@ -140,41 +140,9 @@ function render_student_rows(array $students, string $empty_message): string
 
 
 if (($_GET['exportar_claves_json'] ?? '') === '1') {
-  $export_filters = [];
-  $export_params = [];
-
-  if ($selected_course_id > 0) {
-    $export_filters[] = 'ac.id_curso_escolar = :id_curso_escolar';
-    $export_params['id_curso_escolar'] = $selected_course_id;
-  }
-
-  if ($search_term !== '') {
-    $export_filters[] = '(a.nombre LIKE :search_term OR a.apellido1 LIKE :search_term1 OR a.apellido2 LIKE :search_term2)';
-    $export_params['search_term'] = '%' . $search_term . '%';
-    $export_params['search_term1'] = '%' . $search_term . '%';
-    $export_params['search_term2'] = '%' . $search_term . '%';
-  }
-
-  if ($selected_group === 'sin') {
-    $export_filters[] = 'ac.id_grupo IS NULL';
-  } elseif ($selected_group !== '' && ctype_digit($selected_group)) {
-    $export_filters[] = 'ac.id_grupo = :group_id';
-    $export_params['group_id'] = (int) $selected_group;
-  }
-
-  $export_where = $export_filters ? 'WHERE ' . implode(' AND ', $export_filters) : '';
-
-  $export_stmt = $pdo->prepare(
-    'SELECT a.dni, a.nia
-    FROM alumnos a
-    LEFT JOIN alumno_curso ac
-      ON ac.id_alumno = a.id_alumno
-    ' . $export_where
-  );
-  $export_stmt->execute($export_params);
-
   $claves = [];
-  foreach ($export_stmt->fetchAll() as $student) {
+
+  foreach ($students as $student) {
     $clave = calcularClaveValidacion((string) ($student['dni'] ?? ''), (string) ($student['nia'] ?? ''));
     if ($clave !== null) {
       $claves[] = $clave;
