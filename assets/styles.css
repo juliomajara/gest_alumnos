@@ -2517,9 +2517,30 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-steps input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
-  accent-color: var(--primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.practicas-anexos-steps input[type='checkbox']::after {
+  content: '';
+}
+
+.practicas-anexos-steps input[type='checkbox']:checked::after {
+  content: '✕';
+  color: var(--primary);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
 }
 
 .practicas-anexos-add-tracking {
