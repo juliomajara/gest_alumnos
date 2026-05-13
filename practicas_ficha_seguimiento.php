@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
   } catch (Throwable $e) { $errors[]=$e->getMessage(); }
 }
 ?>
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo h($page_title); ?></title><link rel="stylesheet" href="assets/styles.css"></head><body><div class="page"><?php require __DIR__ . '/includes/sidebar.php'; ?><main class="content"><header class="header"><div><h1>Ficha de seguimiento periódico</h1><p class="subheading">Sube el PDF rellenado por el alumno, revisa los datos y genera la ficha final.</p></div></header>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo h($page_title); ?></title><link rel="stylesheet" href="assets/styles.css"><style>.bloque-alumno-apellidos,.bloque-centro-trabajo,.seccion-actividades{margin-top:1rem;}</style></head><body><div class="page"><?php require __DIR__ . '/includes/sidebar.php'; ?><main class="content"><header class="header"><div><h1>Ficha de seguimiento periódico</h1><p class="subheading">Sube el PDF rellenado por el alumno, revisa los datos y genera la ficha final.</p></div></header>
 <?php if($errors): ?><section class="panel"><ul class="form-errors"><?php foreach($errors as $er): ?><li><?php echo h($er); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($warnings): ?><section class="panel"><ul class="form-errors"><?php foreach($warnings as $wr): ?><li><?php echo h($wr); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($formData===null): ?>
@@ -159,18 +159,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <label>Fecha fin<input type="text" name="fecha_fin" value="<?php echo h((string)$formData['fecha_fin']); ?>"></label>
 <label>Fecha firma<input type="text" name="fecha_firma" value="<?php echo h((string)$formData['fecha_firma']); ?>"></label>
 </div>
-<div class="entity-grid entity-grid--3">
+<div class="entity-grid entity-grid--3 bloque-alumno-apellidos">
 <label>Alumno apellidos<input type="text" name="alumno_apellidos" value="<?php echo h((string)$formData['alumno_apellidos']); ?>"></label>
 <label>Alumno nombre<input type="text" name="alumno_nombre" value="<?php echo h((string)$formData['alumno_nombre']); ?>"></label>
 <label>Alumno e-mail<input type="text" name="alumno_email" value="<?php echo h((string)$formData['alumno_email']); ?>"></label>
 </div>
-<div class="entity-grid entity-grid--4">
+<div class="entity-grid entity-grid--4 bloque-centro-trabajo">
 <label>Centro trabajo denominación<input type="text" name="centro_trabajo_denominacion" value="<?php echo h((string)$formData['centro_trabajo_denominacion']); ?>"></label>
 <label>Tutor empresa apellidos<input type="text" name="tutor_empresa_apellidos" value="<?php echo h((string)$formData['tutor_empresa_apellidos']); ?>"></label>
 <label>Tutor empresa nombre<input type="text" name="tutor_empresa_nombre" value="<?php echo h((string)$formData['tutor_empresa_nombre']); ?>"></label>
 <label>Tutor empresa email<input type="text" name="tutor_empresa_email" value="<?php echo h((string)$formData['tutor_empresa_email']); ?>"></label>
 </div>
-<h3>Actividades</h3>
+<h3 class="seccion-actividades">Actividades</h3>
 <div class="panel-grid"><table class="ficha-seguimiento-table"><thead><tr><th class="col-actividad">Actividad</th><th class="col-codigo">Código módulo</th><th class="col-ra">RA</th><th class="col-estado">Estado</th><th class="col-observaciones">Observaciones</th></tr></thead><tbody>
 <?php foreach($formData['filas'] as $i=>$fila): ?>
 <tr><td><input type="text" name="filas[<?php echo $i; ?>][actividad]" value="<?php echo h($fila['actividad']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][codigo_modulo]" value="<?php echo h($fila['codigo_modulo']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][ra]" value="<?php echo h($fila['ra']); ?>"></td><td><select name="filas[<?php echo $i; ?>][estado]"><option value="no_superado" <?php echo $fila['estado']==='no_superado'?'selected':''; ?>>No superada</option><option value="en_proceso" <?php echo $fila['estado']==='en_proceso'?'selected':''; ?>>En proceso</option><option value="superado" <?php echo $fila['estado']==='superado'?'selected':''; ?>>Superado</option></select></td><td><input type="text" name="filas[<?php echo $i; ?>][observaciones]" value="<?php echo h($fila['observaciones']); ?>"></td></tr>
