@@ -61,13 +61,18 @@ $repl = [
   '{{TUTOR_EMPRESA_EMAIL}}'=>e((string)($_POST['tutor_empresa_email'] ?? '')),
   '{{FECHA_INICIO}}'=>e((string)($_POST['fecha_inicio'] ?? '')),
   '{{FECHA_FIN}}'=>e((string)($_POST['fecha_fin'] ?? '')),
-  '{{FECHA_FIRMA}}'=>e((string)($_POST['fecha_firma'] ?? '')),
+  '{{FECHA_FIRMA}}'=>e((string)($_POST['fecha_fin'] ?? '')),
 ];
 $dynamicRowsHtml = '';
 foreach ($filas as $row) {
   if (!is_array($row)) continue;
+  $actividadTexto = trim((string)($row['actividad'] ?? ''));
   $estado = normalize_estado_seguimiento((string)($row['estado'] ?? ''));
-  if (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) $estado = '';
+  if ($actividadTexto !== '') {
+    $estado = 'superado';
+  } elseif (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) {
+    $estado = '';
+  }
   $dynamicRowsHtml .= '<tr class="row-fill">'
     . '<td><span class="value-text">' . e((string)($row['actividad'] ?? '')) . '</span></td>'
     . '<td class="center"><span class="value-text">' . e((string)($row['codigo_modulo'] ?? '')) . '</span></td>'
