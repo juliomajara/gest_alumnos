@@ -255,7 +255,11 @@ $active_page = 'alumnos';
             <h3>Filtros</h3>
             <p>Selecciona curso escolar, grupo y/o busca por nombre o apellidos.</p>
             <p>
-              <a class="button-secondary" href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>">Exportar claves a JSON</a>
+              <a
+                id="exportar-claves-json"
+                class="button-secondary"
+                href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>"
+              >Exportar claves a JSON</a>
             </p>
           </div>
 
@@ -328,7 +332,19 @@ $active_page = 'alumnos';
     const groupSelect = document.querySelector('select[name="grupo_id"]');
     const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
     const tableBody = document.querySelector('tbody');
+    const exportJsonLink = document.querySelector('#exportar-claves-json');
     let debounceTimer = null;
+
+    const updateExportLink = (params) => {
+      if (!exportJsonLink) {
+        return;
+      }
+
+      const exportParams = new URLSearchParams(params);
+      exportParams.delete('ajax');
+      exportParams.set('exportar_claves_json', '1');
+      exportJsonLink.href = `alumnos.php?${exportParams.toString()}`;
+    };
 
     const updateResults = (withDebounce = false) => {
       if (debounceTimer) {
@@ -340,6 +356,7 @@ $active_page = 'alumnos';
         const urlParams = new URLSearchParams(params);
 
         params.set('ajax', '1');
+        updateExportLink(urlParams);
 
         fetch(`alumnos.php?${params.toString()}`, {
           headers: {
@@ -379,6 +396,8 @@ $active_page = 'alumnos';
       groupSelect.value = '';
       updateResults();
     });
+
+    updateExportLink(new URLSearchParams(new FormData(form)));
   </script>
 </body>
 </html>
