@@ -20,6 +20,13 @@ function embed_local_images(string $html, string $docsDir): string {
     return $m[1] . image_file_to_data_uri_fsp($path) . $m[3];
   }, $html) ?? $html;
 }
+
+function render_estado_checkbox(bool $checked): string {
+  $mark = $checked ? 'X' : '';
+  return '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;border-collapse:collapse;">'
+    . '<tr><td style="width:10px;height:10px;border:1px solid #000;text-align:center;vertical-align:middle;font-size:8px;line-height:8px;font-weight:bold;">' . $mark . '</td></tr>'
+    . '</table>';
+}
 function normalize_estado_seguimiento(string $estado): string {
   $estado = trim($estado);
   $estado = mb_strtolower($estado, 'UTF-8');
@@ -67,14 +74,14 @@ foreach ($filas as $row) {
     . '<td><span class="value-text">' . e((string)($row['actividad'] ?? '')) . '</span></td>'
     . '<td class="center"><span class="value-text">' . e((string)($row['codigo_modulo'] ?? '')) . '</span></td>'
     . '<td class="center"><span class="value-text">' . e((string)($row['ra'] ?? '')) . '</span></td>'
-    . '<td class="center">' . ($estado==='no_superado' ? '<span class="checkbox checked">X</span>' : '<span class="checkbox"></span>') . '</td>'
-    . '<td class="center">' . ($estado==='en_proceso' ? '<span class="checkbox checked">X</span>' : '<span class="checkbox"></span>') . '</td>'
-    . '<td class="center">' . ($estado==='superado' ? '<span class="checkbox checked">X</span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td class="center">' . render_estado_checkbox($estado==='no_superado') . '</td>'
+    . '<td class="center">' . render_estado_checkbox($estado==='en_proceso') . '</td>'
+    . '<td class="center">' . render_estado_checkbox($estado==='superado') . '</td>'
     . '<td><span class="value-text">' . e((string)($row['observaciones'] ?? '')) . '</span></td>'
     . '</tr>';
 }
 if ($dynamicRowsHtml === '') {
-  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center"><span class="checkbox"></span></td><td class="center"><span class="checkbox checked">X</span></td><td class="center"><span class="checkbox"></span></td><td></td></tr>';
+  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center">' . render_estado_checkbox(false) . '</td><td class="center">' . render_estado_checkbox(true) . '</td><td class="center">' . render_estado_checkbox(false) . '</td><td></td></tr>';
 }
 $html = preg_replace('/<tr class="row-fill">.*?\{\{FILA_8_OBSERVACIONES\}\}<\/span><\/td>\s*<\/tr>/su', $dynamicRowsHtml, $html, 1) ?? $html;
 $html = strtr($html, $repl);
