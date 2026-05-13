@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
   } catch (Throwable $e) { $errors[]=$e->getMessage(); }
 }
 ?>
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo h($page_title); ?></title><link rel="stylesheet" href="assets/styles.css"><style>.bloque-alumno-apellidos,.bloque-centro-trabajo,.seccion-actividades{margin-top:1rem;}</style></head><body><div class="page"><?php require __DIR__ . '/includes/sidebar.php'; ?><main class="content"><header class="header"><div><h1>Ficha de seguimiento periódico</h1><p class="subheading">Sube el PDF rellenado por el alumno, revisa los datos y genera la ficha final.</p></div></header>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo h($page_title); ?></title><link rel="stylesheet" href="assets/styles.css"><style>.bloque-alumno-apellidos,.bloque-centro-trabajo,.seccion-actividades{margin-top:1rem;}.ficha-seguimiento-table tbody tr,.ficha-seguimiento-table tbody tr:nth-child(even),.ficha-seguimiento-table tbody tr:nth-child(odd){background-color:#ffffff;}.acciones-ficha{margin-top:1.5rem;}</style></head><body><div class="page"><?php require __DIR__ . '/includes/sidebar.php'; ?><main class="content"><header class="header"><div><h1>Ficha de seguimiento periódico</h1><p class="subheading">Sube el PDF rellenado por el alumno, revisa los datos y genera la ficha final.</p></div></header>
 <?php if($errors): ?><section class="panel"><ul class="form-errors"><?php foreach($errors as $er): ?><li><?php echo h($er); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($warnings): ?><section class="panel"><ul class="form-errors"><?php foreach($warnings as $wr): ?><li><?php echo h($wr); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($formData===null): ?>
@@ -176,6 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <tr><td><input type="text" name="filas[<?php echo $i; ?>][actividad]" value="<?php echo h($fila['actividad']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][codigo_modulo]" value="<?php echo h($fila['codigo_modulo']); ?>"></td><td><input type="text" name="filas[<?php echo $i; ?>][ra]" value="<?php echo h($fila['ra']); ?>"></td><td><select name="filas[<?php echo $i; ?>][estado]"><option value="no_superado" <?php echo $fila['estado']==='no_superado'?'selected':''; ?>>No superada</option><option value="en_proceso" <?php echo $fila['estado']==='en_proceso'?'selected':''; ?>>En proceso</option><option value="superado" <?php echo $fila['estado']==='superado'?'selected':''; ?>>Superado</option></select></td><td><input type="text" name="filas[<?php echo $i; ?>][observaciones]" value="<?php echo h($fila['observaciones']); ?>"></td></tr>
 <?php endforeach; ?>
 </tbody></table></div>
-<button class="primary-button" type="submit">Generar ficha de seguimiento</button></form></section>
+<div class="acciones-ficha"><button class="primary-button" type="submit">Generar ficha de seguimiento</button></div></form></section>
 <?php endif; ?>
 </main></div></body></html>
