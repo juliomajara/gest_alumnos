@@ -203,9 +203,9 @@ table { border-collapse: collapse; width: 100%; }
 .checkbox{
   width: 4mm; height: 4mm;
   border: 1px solid #000;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  text-align: center;
+  box-sizing: border-box;
   font-weight: 700;
   line-height: 1;
   vertical-align: middle;
@@ -420,11 +420,11 @@ table { border-collapse: collapse; width: 100%; }
       <div class="boxBody">
         <div class="row">
           <div class="bold upper">POSITIVA:</div>
-          <div><span class="checkbox" aria-hidden="true"></span></div>
+          <div><span class="checkbox" aria-hidden="true">&nbsp;</span></div>
         </div>
         <div class="row">
           <div class="bold upper">NEGATIVA:</div>
-          <div><span class="checkbox" aria-hidden="true"></span></div>
+          <div><span class="checkbox" aria-hidden="true">&nbsp;</span></div>
         </div>
         <div style="margin-top:3mm;">
           Incluir, si se considera oportuno, qué resultados de aprendizaje deben ser reforzados por parte del alumno.
