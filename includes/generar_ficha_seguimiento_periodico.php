@@ -46,7 +46,7 @@ if (!is_array($filas)) { http_response_code(400); exit('Formato de filas no vál
 
 $html = (string) file_get_contents($templatePath);
 $html = embed_local_images($html, $docsDir);
-$html .= '<style>.activity-col{width:46%;}.module-col{width:8%;}.ra-col{width:4%;}</style>';
+$html .= '<style>.activity-col{width:50.5%;}.module-col{width:8%;}.ra-col{width:4%;}.status-col{width:5.5%;}</style>';
 
 $repl = [
   '{{CURSO_ACADEMICO}}'=>e((string)($_POST['curso_academico'] ?? '')),
