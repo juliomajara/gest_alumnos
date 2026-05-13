@@ -20,6 +20,13 @@ function embed_local_images(string $html, string $docsDir): string {
     return $m[1] . image_file_to_data_uri_fsp($path) . $m[3];
   }, $html) ?? $html;
 }
+function normalize_estado_seguimiento(string $estado): string {
+  $estado = trim($estado);
+  $estado = mb_strtolower($estado, 'UTF-8');
+  $estado = str_replace(['-', ' '], '_', $estado);
+  $estado = preg_replace('/_+/', '_', $estado) ?? $estado;
+  return $estado;
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit('Método no permitido.'); }
 
 $projectRoot = realpath(__DIR__ . '/..');
@@ -34,6 +41,7 @@ if (!is_array($filas)) { http_response_code(400); exit('Formato de filas no vál
 
 $html = (string) file_get_contents($templatePath);
 $html = embed_local_images($html, $docsDir);
+$html .= '<style>.activity-col{width:46%;}.module-col{width:8%;}.ra-col{width:4%;}</style>';
 
 $repl = [
   '{{CURSO_ACADEMICO}}'=>e((string)($_POST['curso_academico'] ?? '')),
@@ -53,20 +61,20 @@ $repl = [
 $dynamicRowsHtml = '';
 foreach ($filas as $row) {
   if (!is_array($row)) continue;
-  $estado = (string)($row['estado'] ?? 'en_proceso');
+  $estado = normalize_estado_seguimiento((string)($row['estado'] ?? 'en_proceso'));
   if (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) $estado = 'en_proceso';
   $dynamicRowsHtml .= '<tr class="row-fill">'
     . '<td><span class="value-text">' . e((string)($row['actividad'] ?? '')) . '</span></td>'
     . '<td class="center"><span class="value-text">' . e((string)($row['codigo_modulo'] ?? '')) . '</span></td>'
     . '<td class="center"><span class="value-text">' . e((string)($row['ra'] ?? '')) . '</span></td>'
-    . '<td class="center">' . ($estado==='no_superado' ? '<span class="checkbox checked"></span>' : '<span class="checkbox"></span>') . '</td>'
-    . '<td class="center">' . ($estado==='en_proceso' ? '<span class="checkbox checked"></span>' : '<span class="checkbox"></span>') . '</td>'
-    . '<td class="center">' . ($estado==='superado' ? '<span class="checkbox checked"></span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td class="center">' . ($estado==='no_superado' ? '<span class="checkbox checked">X</span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td class="center">' . ($estado==='en_proceso' ? '<span class="checkbox checked">X</span>' : '<span class="checkbox"></span>') . '</td>'
+    . '<td class="center">' . ($estado==='superado' ? '<span class="checkbox checked">X</span>' : '<span class="checkbox"></span>') . '</td>'
     . '<td><span class="value-text">' . e((string)($row['observaciones'] ?? '')) . '</span></td>'
     . '</tr>';
 }
 if ($dynamicRowsHtml === '') {
-  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center"><span class="checkbox"></span></td><td class="center"><span class="checkbox checked"></span></td><td class="center"><span class="checkbox"></span></td><td></td></tr>';
+  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center"><span class="checkbox"></span></td><td class="center"><span class="checkbox checked">X</span></td><td class="center"><span class="checkbox"></span></td><td></td></tr>';
 }
 $html = preg_replace('/<tr class="row-fill">.*?\{\{FILA_8_OBSERVACIONES\}\}<\/span><\/td>\s*<\/tr>/su', $dynamicRowsHtml, $html, 1) ?? $html;
 $html = strtr($html, $repl);
