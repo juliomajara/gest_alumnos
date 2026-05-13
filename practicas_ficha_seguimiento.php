@@ -9,6 +9,13 @@ $active_page = 'utilidades';
 const MAX_UPLOAD_BYTES = 10485760;
 
 function h(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
+function normalize_dni(string $dni): string { return strtoupper(str_replace([' ', '-'], '', trim($dni))); }
+function normalize_nia(string $nia): string { return str_replace(' ', '', trim($nia)); }
+function normalize_ra(string $ra): string {
+  $ra = strtoupper(trim($ra));
+  if (preg_match('/^RA\s*([0-9]+)$/', $ra, $m)) return $m[1];
+  return preg_replace('/\s+/', '', $ra);
+}
 function normalize_date(?string $v): string {
   $v = trim((string)$v);
   if ($v === '') return '';
@@ -104,31 +111,50 @@ $activityMap = [
 $errors = []; $warnings=[]; $formData = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'analizar_pdf') {
   try {
-    if (!isset($_FILES['pdf_alumno']) || (int)$_FILES['pdf_alumno']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('Debes subir un PDF válido.');
+    if (!isset($_FILES['pdf_alumno']) || (int)$_FILES['pdf_alumno']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('Debes subir un archivo PDF o JSON válido.');
     $f = $_FILES['pdf_alumno'];
-    if ((int)$f['size'] <= 0 || (int)$f['size'] > MAX_UPLOAD_BYTES) throw new RuntimeException('El PDF excede 10MB o está vacío.');
-    $name = (string)$f['name']; if (strtolower((string)pathinfo($name, PATHINFO_EXTENSION)) !== 'pdf') throw new RuntimeException('La extensión debe ser .pdf');
+    if ((int)$f['size'] <= 0 || (int)$f['size'] > MAX_UPLOAD_BYTES) throw new RuntimeException('El archivo excede 10MB o está vacío.');
+    $name = (string)$f['name'];
+    $ext = strtolower((string)pathinfo($name, PATHINFO_EXTENSION));
     $mime = function_exists('mime_content_type') ? (string) mime_content_type((string)$f['tmp_name']) : '';
-    if ($mime !== '' && !in_array($mime, ['application/pdf','application/x-pdf'], true)) throw new RuntimeException('El archivo no parece un PDF válido.');
-    $tmpDir = __DIR__ . '/docs/tmp_fichas_seguimiento'; ensure_dir($tmpDir);
-    $tmpPdf = $tmpDir . '/subido_' . bin2hex(random_bytes(8)) . '.pdf';
-    if (!move_uploaded_file((string)$f['tmp_name'], $tmpPdf)) throw new RuntimeException('No se pudo guardar temporalmente el PDF.');
-    $fields = extract_pdf_fields_pdftk($tmpPdf);
-    @unlink($tmpPdf);
-    $dni = trim((string)($fields['dni'] ?? '')); $nia = trim((string)($fields['nia'] ?? ''));
-    if ($dni === '' && $nia === '') throw new RuntimeException('No se han podido extraer DNI/NIA del PDF.');
     $pdo = db();
-    $alumno = find_alumno($pdo, $nia, $dni);
-    $practica = [];
-    if ($alumno) $practica = find_practica($pdo, (int)$alumno['id_alumno']);
-    if (!$alumno) $warnings[] = 'No se ha vinculado automáticamente el alumno.';
-    $rows=[];
-    foreach ($activityMap as $key=>$meta) {
-      $actividad = trim((string)($fields[$key] ?? ''));
-      $codigo='';
-      try { $st=$pdo->prepare('SELECT codigo FROM modulos WHERE LOWER(materia_general)=LOWER(:m) OR LOWER(materia_propia)=LOWER(:m) LIMIT 1'); $st->execute(['m'=>$meta['modulo']]); $codigo=(string)($st->fetchColumn() ?: ''); } catch(Throwable $e) {}
-      $rows[]=['actividad'=>$actividad,'codigo_modulo'=>$codigo,'ra'=>$meta['ra'],'estado'=>'en_proceso','observaciones'=>''];
+    $isPdf = $ext === 'pdf' || in_array($mime, ['application/pdf','application/x-pdf'], true);
+    $isJson = $ext === 'json' || in_array($mime, ['application/json','text/json','text/plain'], true);
+    if (!$isPdf && !$isJson) throw new RuntimeException('El archivo debe ser PDF o JSON.');
+    $fields = []; $rows=[]; $dni=''; $nia='';
+    if ($isPdf) {
+      $tmpDir = __DIR__ . '/docs/tmp_fichas_seguimiento'; ensure_dir($tmpDir);
+      $tmpPdf = $tmpDir . '/subido_' . bin2hex(random_bytes(8)) . '.pdf';
+      if (!move_uploaded_file((string)$f['tmp_name'], $tmpPdf)) throw new RuntimeException('No se pudo guardar temporalmente el PDF.');
+      $fields = extract_pdf_fields_pdftk($tmpPdf);
+      @unlink($tmpPdf);
+      $dni = trim((string)($fields['dni'] ?? '')); $nia = trim((string)($fields['nia'] ?? ''));
+      if ($dni === '' && $nia === '') throw new RuntimeException('No se han podido extraer DNI/NIA del PDF.');
+      foreach ($activityMap as $key=>$meta) {
+        $actividad = trim((string)($fields[$key] ?? ''));
+        $codigo='';
+        try { $st=$pdo->prepare('SELECT codigo FROM modulos WHERE LOWER(materia_general)=LOWER(:m) OR LOWER(materia_propia)=LOWER(:m) LIMIT 1'); $st->execute(['m'=>$meta['modulo']]); $codigo=(string)($st->fetchColumn() ?: ''); } catch(Throwable $e) {}
+        $rows[]=['actividad'=>$actividad,'codigo_modulo'=>$codigo,'ra'=>$meta['ra'],'estado'=>'en_proceso','observaciones'=>''];
+      }
+    } else {
+      $contenido = (string)file_get_contents((string)$f['tmp_name']);
+      $json = json_decode($contenido, true);
+      if (json_last_error() !== JSON_ERROR_NONE || !is_array($json)) throw new RuntimeException('El JSON no es válido.');
+      if (!isset($json['dni'], $json['nia'], $json['fechaInicio'], $json['fechaFin']) || !array_key_exists('actividades', $json)) throw new RuntimeException('Faltan campos esenciales en el JSON.');
+      if (!is_array($json['actividades'])) throw new RuntimeException('El campo actividades debe ser un array.');
+      $dni = normalize_dni((string)$json['dni']);
+      $nia = normalize_nia((string)$json['nia']);
+      if ($dni === '' && $nia === '') throw new RuntimeException('El JSON debe incluir dni o nia.');
+      $fields['fecha_inicio'] = (string)$json['fechaInicio'];
+      $fields['fecha_fin'] = (string)$json['fechaFin'];
+      foreach ($json['actividades'] as $actividad) {
+        if (!is_array($actividad)) continue;
+        $rows[]=['actividad'=>trim((string)($actividad['actividadEmpresa'] ?? '')),'codigo_modulo'=>trim((string)($actividad['codigoModulo'] ?? '')),'ra'=>normalize_ra((string)($actividad['ra'] ?? '')),'estado'=>'en_proceso','observaciones'=>''];
+      }
     }
+    $alumno = find_alumno($pdo, $nia, $dni);
+    if (!$alumno) throw new RuntimeException('No se ha encontrado al alumno indicado.');
+    $practica = find_practica($pdo, (int)$alumno['id_alumno']);
     $cursoActivo = active_school_year($pdo);
     $tutorEmail = isset($practica['id_empresas_tutor']) ? tutor_email($pdo, (int)$practica['id_empresas_tutor']) : '';
     $formData = [
@@ -148,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <?php if($errors): ?><section class="panel"><ul class="form-errors"><?php foreach($errors as $er): ?><li><?php echo h($er); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($warnings): ?><section class="panel"><ul class="form-errors"><?php foreach($warnings as $wr): ?><li><?php echo h($wr); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($formData===null): ?>
-<section class="panel"><form method="post" enctype="multipart/form-data" class="entity-form"><input type="hidden" name="accion" value="analizar_pdf"><label>PDF del alumno (máx. 10MB)<input type="file" name="pdf_alumno" accept="application/pdf,.pdf" required></label><div class="acciones-analizar-pdf"><button class="primary-button" type="submit">Analizar PDF</button></div></form></section>
+<section class="panel"><form method="post" enctype="multipart/form-data" class="entity-form"><input type="hidden" name="accion" value="analizar_pdf"><label>PDF o JSON del alumno (máx. 10MB)<input type="file" name="pdf_alumno" accept="application/pdf,.pdf,application/json,.json" required></label><div class="acciones-analizar-pdf"><button class="primary-button" type="submit">Analizar archivo</button></div></form></section>
 <?php else: ?>
 <section class="panel"><form method="post" action="includes/generar_ficha_seguimiento_periodico.php" class="entity-form">
 <div class="entity-grid entity-grid--6">
