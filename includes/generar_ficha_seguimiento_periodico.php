@@ -22,14 +22,13 @@ function embed_local_images(string $html, string $docsDir): string {
 }
 
 function render_estado_checkbox(bool $checked): string {
-  $mark = $checked ? 'X' : '';
-  return '<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto;border-collapse:collapse;">'
-    . '<tr><td style="width:10px;height:10px;border:1px solid #000;text-align:center;vertical-align:middle;font-size:8px;line-height:8px;font-weight:bold;">' . $mark . '</td></tr>'
-    . '</table>';
+  $style = 'display:inline-block;width:10px;height:10px;border:1px solid #000;box-sizing:border-box;vertical-align:middle;background-color:' . ($checked ? '#000' : '#fff') . ';';
+  return '<span style="' . $style . '"></span>';
 }
 function normalize_estado_seguimiento(string $estado): string {
   $estado = trim($estado);
   $estado = mb_strtolower($estado, 'UTF-8');
+  $estado = str_replace(['á','é','í','ó','ú','Á','É','Í','Ó','Ú'], ['a','e','i','o','u','a','e','i','o','u'], $estado);
   $estado = str_replace(['-', ' '], '_', $estado);
   $estado = preg_replace('/_+/', '_', $estado) ?? $estado;
   return $estado;
