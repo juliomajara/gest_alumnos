@@ -22,8 +22,7 @@ function embed_local_images(string $html, string $docsDir): string {
 }
 
 function render_estado_checkbox(bool $checked): string {
-  $style = 'display:inline-block;width:12px;height:12px;border:1px solid #000;box-sizing:border-box;vertical-align:middle;background:' . ($checked ? '#000' : '#fff') . ';';
-  return '<span style="' . $style . '"></span>';
+  return $checked ? '<span style="font-weight:700;">X</span>' : '';
 }
 function normalize_estado_seguimiento(string $estado): string {
   $estado = trim($estado);
@@ -67,8 +66,8 @@ $repl = [
 $dynamicRowsHtml = '';
 foreach ($filas as $row) {
   if (!is_array($row)) continue;
-  $estado = normalize_estado_seguimiento((string)($row['estado'] ?? 'en_proceso'));
-  if (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) $estado = 'en_proceso';
+  $estado = normalize_estado_seguimiento((string)($row['estado'] ?? ''));
+  if (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) $estado = '';
   $dynamicRowsHtml .= '<tr class="row-fill">'
     . '<td><span class="value-text">' . e((string)($row['actividad'] ?? '')) . '</span></td>'
     . '<td class="center"><span class="value-text">' . e((string)($row['codigo_modulo'] ?? '')) . '</span></td>'
@@ -80,7 +79,7 @@ foreach ($filas as $row) {
     . '</tr>';
 }
 if ($dynamicRowsHtml === '') {
-  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center">' . render_estado_checkbox(false) . '</td><td class="center">' . render_estado_checkbox(true) . '</td><td class="center">' . render_estado_checkbox(false) . '</td><td></td></tr>';
+  $dynamicRowsHtml = '<tr class="row-fill"><td></td><td class="center"></td><td class="center"></td><td class="center">' . render_estado_checkbox(false) . '</td><td class="center">' . render_estado_checkbox(false) . '</td><td class="center">' . render_estado_checkbox(false) . '</td><td></td></tr>';
 }
 $html = preg_replace('/<tr class="row-fill">.*?\{\{FILA_8_OBSERVACIONES\}\}<\/span><\/td>\s*<\/tr>/su', $dynamicRowsHtml, $html, 1) ?? $html;
 $html = strtr($html, $repl);
