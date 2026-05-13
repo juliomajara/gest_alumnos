@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
         $actividad = trim((string)($fields[$key] ?? ''));
         $codigo='';
         try { $st=$pdo->prepare('SELECT codigo FROM modulos WHERE LOWER(materia_general)=LOWER(:m) OR LOWER(materia_propia)=LOWER(:m) LIMIT 1'); $st->execute(['m'=>$meta['modulo']]); $codigo=(string)($st->fetchColumn() ?: ''); } catch(Throwable $e) {}
-        $rows[]=['actividad'=>$actividad,'codigo_modulo'=>$codigo,'ra'=>$meta['ra'],'estado'=>'en_proceso','observaciones'=>''];
+        $rows[]=['actividad'=>$actividad,'codigo_modulo'=>$codigo,'ra'=>$meta['ra'],'estado'=>$actividad !== '' ? 'superado' : 'en_proceso','observaciones'=>''];
       }
     } else {
       $contenido = (string)file_get_contents((string)$f['tmp_name']);
@@ -149,7 +149,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
       $fields['fecha_fin'] = (string)$json['fechaFin'];
       foreach ($json['actividades'] as $actividad) {
         if (!is_array($actividad)) continue;
-        $rows[]=['actividad'=>trim((string)($actividad['actividadEmpresa'] ?? '')),'codigo_modulo'=>trim((string)($actividad['codigoModulo'] ?? '')),'ra'=>normalize_ra((string)($actividad['ra'] ?? '')),'estado'=>'en_proceso','observaciones'=>''];
+        $actividadTexto = trim((string)($actividad['actividadEmpresa'] ?? ''));
+        $rows[]=['actividad'=>$actividadTexto,'codigo_modulo'=>trim((string)($actividad['codigoModulo'] ?? '')),'ra'=>normalize_ra((string)($actividad['ra'] ?? '')),'estado'=>$actividadTexto !== '' ? 'superado' : 'en_proceso','observaciones'=>''];
       }
     }
     $alumno = find_alumno($pdo, $nia, $dni);
@@ -165,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
       'tutor_empresa_apellidos'=>trim((string)($practica['tutor_apellido1']??'').' '.(string)($practica['tutor_apellido2']??'')), 'tutor_empresa_nombre'=>(string)($practica['tutor_nombre'] ?? ''), 'tutor_empresa_email'=>$tutorEmail,
       'fecha_inicio'=>normalize_date((string)($fields['fecha_inicio'] ?? $practica['fecha_inicio'] ?? '')),
       'fecha_fin'=>normalize_date((string)($fields['fecha_fin'] ?? $practica['fecha_fin_extra'] ?? $practica['fecha_fin'] ?? '')),
-      'fecha_firma'=>(new DateTimeImmutable('today'))->format('d/m/Y'), 'filas'=>$rows,
+      'fecha_firma'=>normalize_date((string)($fields['fecha_fin'] ?? $practica['fecha_fin_extra'] ?? $practica['fecha_fin'] ?? '')), 'filas'=>$rows,
     ];
   } catch (Throwable $e) { $errors[]=$e->getMessage(); }
 }
@@ -204,4 +205,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 </tbody></table></div>
 <div class="acciones-ficha"><button class="primary-button" type="submit">Generar ficha de seguimiento</button></div></form></section>
 <?php endif; ?>
-</main></div></body></html>
+</main></div><script>
+(function () {
+  const form = document.querySelector('form[action="includes/generar_ficha_seguimiento_periodico.php"]');
+  if (!form) return;
+  const fechaFin = form.querySelector('input[name="fecha_fin"]');
+  const fechaFirma = form.querySelector('input[name="fecha_firma"]');
+  if (!fechaFin || !fechaFirma) return;
+  const syncFechaFirma = function () { fechaFirma.value = fechaFin.value; };
+  syncFechaFirma();
+  fechaFin.addEventListener('input', syncFechaFirma);
+  fechaFin.addEventListener('change', syncFechaFirma);
+  form.addEventListener('submit', syncFechaFirma);
+})();
+</script></body></html>
