@@ -22,8 +22,8 @@ function embed_local_images(string $html, string $docsDir): string {
 }
 
 function render_estado_checkbox(bool $checked): string {
-  $style = 'display:inline-block;width:10px;height:10px;border:1px solid #000;box-sizing:border-box;vertical-align:middle;background-color:' . ($checked ? '#000' : '#fff') . ';';
-  return '<span style="' . $style . '"></span>';
+  $style = 'display:inline-block;width:12px;height:12px;border:1px solid #000;box-sizing:border-box;vertical-align:middle;line-height:12px;text-align:center;font-size:10px;font-weight:bold;font-family:dejavusans;';
+  return '<span style="' . $style . '">' . ($checked ? '&#10003;' : '&nbsp;') . '</span>';
 }
 function normalize_estado_seguimiento(string $estado): string {
   $estado = trim($estado);
