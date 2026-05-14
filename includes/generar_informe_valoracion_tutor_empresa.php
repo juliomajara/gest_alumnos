@@ -29,6 +29,8 @@ $id_practica = null;
 try {
   $isLocal = in_array($_SERVER['SERVER_NAME'] ?? '', ['localhost', '127.0.0.1'], true)
     || in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
+  $debugHtml = $isLocal && (($_GET['debug_html'] ?? '0') === '1');
+  $debugPdf = $isLocal && (($_GET['debug_pdf'] ?? '0') === '1');
 
   $fase = 'validando parámetro id_practica';
   $id_practica = filter_var($_GET['id_practica'] ?? ($_GET['id'] ?? null), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
@@ -195,21 +197,40 @@ try {
     'format' => 'A4',
     'orientation' => 'P',
     'mode' => 'utf-8',
-    'margin_left' => 12,
-    'margin_right' => 12,
-    'margin_top' => 12,
-    'margin_bottom' => 12,
+    'margin_left' => 10,
+    'margin_right' => 10,
+    'margin_top' => 10,
+    'margin_bottom' => 10,
+    'default_font' => 'dejavusans',
   ]);
+  $mpdf->shrink_tables_to_fit = 1;
+  $mpdf->keep_table_proportions = false;
+  $mpdf->simpleTables = true;
+
+  if ($debugHtml) {
+    if (ob_get_length()) {
+      ob_end_clean();
+    }
+    header('Content-Type: text/html; charset=UTF-8');
+    echo $html;
+    exit;
+  }
 
   $fase = 'escribiendo HTML en mPDF';
   $mpdf->SetBasePath(__DIR__ . '/../docs/');
   $mpdf->WriteHTML($html);
+  if ($mpdf->page > 3) {
+    throw new RuntimeException(
+      'El informe se ha generado con ' . $mpdf->page . ' páginas. La maquetación HTML está rota. Revisa la plantilla del informe.'
+    );
+  }
 
   $fase = 'enviando PDF al navegador';
   if (ob_get_length()) {
     ob_end_clean();
   }
-  $mpdf->Output('informe_valoracion_tutor_empresa_' . (int) $id_practica . '.pdf', Destination::DOWNLOAD);
+  $pdfDestination = $debugPdf ? Destination::INLINE : Destination::DOWNLOAD;
+  $mpdf->Output('informe_valoracion_tutor_empresa_' . (int) $id_practica . '.pdf', $pdfDestination);
   exit;
 } catch (Throwable $e) {
   $errorId = '[generar_informe_valoracion_tutor_empresa]';
