@@ -49,81 +49,122 @@ try {
   $id_practica = filter_var($_GET['id_practica'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: 0;
   if ($id_practica <= 0) throw new RuntimeException('No se recibió un id_practica válido.');
 
-  if (!is_file($templatePath) || !is_readable($templatePath)) throw new RuntimeException('No se encontró la plantilla HTML.');
   if (!is_dir($mpdfTempDir) && !mkdir($mpdfTempDir, 0775, true) && !is_dir($mpdfTempDir)) throw new RuntimeException('No se pudo crear tmp_mpdf.');
 
   $debugPlain = $isLocal && (($_GET['debug_plain'] ?? '0') === '1');
+  $debugPlainWithMargins = $isLocal && (($_GET['debug_plain_with_margins'] ?? '0') === '1');
   $debugFakeData = $isLocal && (($_GET['debug_fake_data'] ?? '0') === '1');
   $debugHtml = $isLocal && (($_GET['debug_html'] ?? '0') === '1');
 
-  $htmlTemplate = (string) file_get_contents($templatePath);
-  if ($htmlTemplate === '') throw new RuntimeException('Plantilla vacía.');
-  $htmlTemplate = embed_local_images($htmlTemplate, $docsDir);
+  $html = '';
+  $mpdfConfig = [
+    'tempDir' => $mpdfTempDir,
+    'mode' => 'utf-8',
+    'format' => 'A4',
+    'default_font' => 'dejavusans',
+    'allow_output_buffering' => true,
+  ];
 
-  $fase = 'consulta principal';
-  $pdo = db();
-  $stmt = $pdo->prepare('SELECT p.*, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
-      e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
-      et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
-      ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, c.curso AS curso_ordinal,
-      (SELECT direccion_correo FROM correos c1 WHERE c1.entidad_tipo = "alumno" AND c1.id_entidad = a.id_alumno ORDER BY c1.id_correo ASC LIMIT 1) AS alumno_email,
-      (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email
-    FROM practicas p
-    LEFT JOIN alumnos a ON a.id_alumno = p.id_alumno
-    LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
-    LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
-    LEFT JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno AND ac.id_curso_escolar = (SELECT MAX(ac2.id_curso_escolar) FROM alumno_curso ac2 WHERE ac2.id_alumno = p.id_alumno)
-    LEFT JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
-    LEFT JOIN grupos gr ON gr.id_grupo = ac.id_grupo
-    LEFT JOIN ciclos ci ON ci.id_ciclo = gr.id_ciclo
-    LEFT JOIN cursos c ON c.id_curso = ac.id_curso
-    WHERE p.id_practica = :id_practica LIMIT 1');
-  $stmt->execute(['id_practica' => $id_practica]);
-  $practice = $stmt->fetch(PDO::FETCH_ASSOC);
-  if (!$practice) throw new RuntimeException('No existe la práctica con id ' . $id_practica . '.');
-
-  if ($debugPlain) {
-    $html = '<html><body><h1>Prueba informe tutor</h1><p>ID práctica: ' . (int)$id_practica . '</p></body></html>';
-  } else {
-    $repl = [
-      '{{CURSO_ACADEMICO}}'=>e(value($practice,'curso_escolar')),
-      '{{NUM_CONVENIO}}'=>e(value($practice,'empresa_convenio')),
-      '{{NUM_ANEXO_RELACION}}'=>e(value($practice,'anexo')),
-      '{{ALUMNO_APELLIDOS}}'=>e(trim(value($practice,'alumno_apellido1') . ' ' . value($practice,'alumno_apellido2'))),
-      '{{ALUMNO_NOMBRE}}'=>e(value($practice,'alumno_nombre')),
-      '{{ALUMNO_EMAIL}}'=>e(value($practice,'alumno_email')),
-      '{{CENTRO_TRABAJO_DENOMINACION}}'=>e(value($practice,'empresa_nombre_comercial') !== '' ? value($practice,'empresa_nombre_comercial') : value($practice,'empresa_nombre')),
-      '{{TUTOR_EMPRESA_APELLIDOS}}'=>e(trim(value($practice,'tutor_apellido1') . ' ' . value($practice,'tutor_apellido2'))),
-      '{{TUTOR_EMPRESA_NOMBRE}}'=>e(value($practice,'tutor_nombre')),
-      '{{TUTOR_EMPRESA_EMAIL}}'=>e(value($practice,'tutor_empresa_email')),
-      '{{CICLO_DENOMINACION}}'=>e(value($practice,'ciclo_nombre')),
-      '{{GRADO}}'=>e(value($practice,'curso_ordinal')),
-      '{{CODIGO_CICLO}}'=>e(value($practice,'ciclo_codigo')),
-      '{{HORAS_REALIZADAS}}'=>e(value($practice,'horas')),
-      '{{AREAS_PUESTOS_VALORACION}}'=>e(value($practice,'areas_puestos_trabajo')),
-      '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>e(value($practice,'valoracion_competencias_transversales')),
-      '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>e(value($practice,'observaciones_tutor_empresa')),
-      '{{MOTIVOS_NO_SUPERACION}}'=>e(value($practice,'motivos_no_superacion')),
-      '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma')),
-    ];
-    $today = new DateTimeImmutable('today');
-    $repl['{{DIA_FIRMA}}'] = e($today->format('d'));
-    $repl['{{MES_FIRMA}}'] = e(month_name_es((int)$today->format('n')));
-    $repl['{{ANIO_FIRMA}}'] = e($today->format('Y'));
-    for ($i = 1; $i <= 3; $i++) $repl['{{PERIODO_' . $i . '}}'] = ((int)($practice['periodo'] ?? 0) === $i) ? 'X' : '';
-    for ($i = 1; $i <= 6; $i++) {
-      $repl['{{RA_' . $i . '_MODULO}}'] = '';
-      $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = '';
-      $repl['{{RA_' . $i . '_SUPERADO}}'] = '';
-      $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
+  if ($debugPlain || $debugPlainWithMargins) {
+    $html = '<h1>Prueba informe tutor</h1><p>Esto debe salir en una sola página.</p>';
+    if ($debugPlainWithMargins) {
+      $mpdfConfig['margin_left'] = 10;
+      $mpdfConfig['margin_right'] = 10;
+      $mpdfConfig['margin_top'] = 10;
+      $mpdfConfig['margin_bottom'] = 10;
+      $mpdfConfig['margin_header'] = 0;
+      $mpdfConfig['margin_footer'] = 0;
     }
+  } else {
+    if (!is_file($templatePath) || !is_readable($templatePath)) throw new RuntimeException('No se encontró la plantilla HTML.');
+    $htmlTemplate = (string) file_get_contents($templatePath);
+    if ($htmlTemplate === '') throw new RuntimeException('Plantilla vacía.');
+    $htmlTemplate = embed_local_images($htmlTemplate, $docsDir);
 
     if ($debugFakeData) {
-      foreach ($repl as $k => $v) if (!str_contains($k, 'PERIODO_')) $repl[$k] = 'Demo';
+      $repl = [
+        '{{CURSO_ACADEMICO}}' => '2025/2026', '{{NUM_CONVENIO}}' => 'CONV-1', '{{NUM_ANEXO_RELACION}}' => 'ANEXO-1',
+        '{{ALUMNO_APELLIDOS}}' => 'Pérez García', '{{ALUMNO_NOMBRE}}' => 'Ana', '{{ALUMNO_EMAIL}}' => 'ana@example.com',
+        '{{CENTRO_TRABAJO_DENOMINACION}}' => 'Empresa de prueba', '{{TUTOR_EMPRESA_APELLIDOS}}' => 'López Martín',
+        '{{TUTOR_EMPRESA_NOMBRE}}' => 'Carlos', '{{TUTOR_EMPRESA_EMAIL}}' => 'carlos@example.com',
+        '{{CICLO_DENOMINACION}}' => 'Desarrollo de Aplicaciones Web', '{{GRADO}}' => 'Superior', '{{CODIGO_CICLO}}' => 'IFCS03',
+        '{{HORAS_REALIZADAS}}' => '370', '{{PERIODO_1}}' => 'X', '{{PERIODO_2}}' => '', '{{PERIODO_3}}' => '',
+        '{{AREAS_PUESTOS_VALORACION}}' => 'Texto breve de prueba.', '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}' => 'Texto breve de prueba.',
+        '{{OBSERVACIONES_TUTOR_EMPRESA}}' => 'Texto breve de prueba.', '{{MOTIVOS_NO_SUPERACION}}' => '',
+        '{{LOCALIDAD_FIRMA}}' => 'Getafe', '{{DIA_FIRMA}}' => '14', '{{MES_FIRMA}}' => 'mayo', '{{ANIO_FIRMA}}' => '2026',
+      ];
+      for ($i = 1; $i <= 6; $i++) {
+        $repl['{{RA_' . $i . '_MODULO}}'] = 'M' . $i;
+        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = 'RA ' . $i;
+        $repl['{{RA_' . $i . '_SUPERADO}}'] = 'X';
+        $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
+      }
+      $html = strtr($htmlTemplate, $repl);
+    } else {
+      $fase = 'consulta principal';
+      $pdo = db();
+      $stmt = $pdo->prepare('SELECT p.*, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
+          e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
+          et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
+          ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, c.curso AS curso_ordinal,
+          (SELECT direccion_correo FROM correos c1 WHERE c1.entidad_tipo = "alumno" AND c1.id_entidad = a.id_alumno ORDER BY c1.id_correo ASC LIMIT 1) AS alumno_email,
+          (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email
+        FROM practicas p
+        LEFT JOIN alumnos a ON a.id_alumno = p.id_alumno
+        LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
+        LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
+        LEFT JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno AND ac.id_curso_escolar = (SELECT MAX(ac2.id_curso_escolar) FROM alumno_curso ac2 WHERE ac2.id_alumno = p.id_alumno)
+        LEFT JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+        LEFT JOIN grupos gr ON gr.id_grupo = ac.id_grupo
+        LEFT JOIN ciclos ci ON ci.id_ciclo = gr.id_ciclo
+        LEFT JOIN cursos c ON c.id_curso = ac.id_curso
+        WHERE p.id_practica = :id_practica LIMIT 1');
+      $stmt->execute(['id_practica' => $id_practica]);
+      $practice = $stmt->fetch(PDO::FETCH_ASSOC);
+      if (!$practice) throw new RuntimeException('No existe la práctica con id ' . $id_practica . '.');
+
+      $repl = [
+        '{{CURSO_ACADEMICO}}'=>e(value($practice,'curso_escolar')),
+        '{{NUM_CONVENIO}}'=>e(value($practice,'empresa_convenio')),
+        '{{NUM_ANEXO_RELACION}}'=>e(value($practice,'anexo')),
+        '{{ALUMNO_APELLIDOS}}'=>e(trim(value($practice,'alumno_apellido1') . ' ' . value($practice,'alumno_apellido2'))),
+        '{{ALUMNO_NOMBRE}}'=>e(value($practice,'alumno_nombre')),
+        '{{ALUMNO_EMAIL}}'=>e(value($practice,'alumno_email')),
+        '{{CENTRO_TRABAJO_DENOMINACION}}'=>e(value($practice,'empresa_nombre_comercial') !== '' ? value($practice,'empresa_nombre_comercial') : value($practice,'empresa_nombre')),
+        '{{TUTOR_EMPRESA_APELLIDOS}}'=>e(trim(value($practice,'tutor_apellido1') . ' ' . value($practice,'tutor_apellido2'))),
+        '{{TUTOR_EMPRESA_NOMBRE}}'=>e(value($practice,'tutor_nombre')),
+        '{{TUTOR_EMPRESA_EMAIL}}'=>e(value($practice,'tutor_empresa_email')),
+        '{{CICLO_DENOMINACION}}'=>e(value($practice,'ciclo_nombre')),
+        '{{GRADO}}'=>e(value($practice,'curso_ordinal')),
+        '{{CODIGO_CICLO}}'=>e(value($practice,'ciclo_codigo')),
+        '{{HORAS_REALIZADAS}}'=>e(value($practice,'horas')),
+        '{{AREAS_PUESTOS_VALORACION}}'=>e(value($practice,'areas_puestos_trabajo')),
+        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>e(value($practice,'valoracion_competencias_transversales')),
+        '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>e(value($practice,'observaciones_tutor_empresa')),
+        '{{MOTIVOS_NO_SUPERACION}}'=>e(value($practice,'motivos_no_superacion')),
+        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma')),
+      ];
+      $today = new DateTimeImmutable('today');
+      $repl['{{DIA_FIRMA}}'] = e($today->format('d'));
+      $repl['{{MES_FIRMA}}'] = e(month_name_es((int)$today->format('n')));
+      $repl['{{ANIO_FIRMA}}'] = e($today->format('Y'));
+      for ($i = 1; $i <= 3; $i++) $repl['{{PERIODO_' . $i . '}}'] = ((int)($practice['periodo'] ?? 0) === $i) ? 'X' : '';
+      for ($i = 1; $i <= 6; $i++) {
+        $repl['{{RA_' . $i . '_MODULO}}'] = '';
+        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = '';
+        $repl['{{RA_' . $i . '_SUPERADO}}'] = '';
+        $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
+      }
+      $html = strtr($htmlTemplate, $repl);
     }
 
-    $html = strtr($htmlTemplate, $repl);
     $html = preg_replace('/\{\{[^}]+\}\}/', '', $html) ?? $html;
+    $mpdfConfig['margin_left'] = 10;
+    $mpdfConfig['margin_right'] = 10;
+    $mpdfConfig['margin_top'] = 10;
+    $mpdfConfig['margin_bottom'] = 10;
+    $mpdfConfig['margin_header'] = 0;
+    $mpdfConfig['margin_footer'] = 0;
   }
 
   if ($debugHtml) {
@@ -137,21 +178,8 @@ try {
 
   $tmpPdf = $docsDir . DIRECTORY_SEPARATOR . 'tmp_informe_tutor_' . uniqid('', true) . '.pdf';
   $fase = 'generando PDF con mPDF';
-  $mpdf = new Mpdf([
-    'tempDir' => $mpdfTempDir,
-    'mode' => 'utf-8',
-    'format' => 'A4',
-    'default_font' => 'dejavusans',
-    'allow_output_buffering' => true,
-    'margin_left' => 15,
-    'margin_right' => 15,
-    'margin_top' => 8,
-    'margin_bottom' => 6,
-    'margin_header' => 0,
-    'margin_footer' => 0,
-  ]);
+  $mpdf = new Mpdf($mpdfConfig);
   $mpdf->shrink_tables_to_fit = 1;
-  $mpdf->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
 
   $fase = 'escribiendo HTML en mPDF';
   $mpdf->WriteHTML($html);
@@ -159,7 +187,7 @@ try {
   $fase = 'guardando PDF temporal';
   $mpdf->Output($tmpPdf, \Mpdf\Output\Destination::FILE);
 
-  if (!is_file($tmpPdf) || filesize($tmpPdf) < 1024) throw new RuntimeException('PDF generado vacío o demasiado pequeño.');
+  if (!is_file($tmpPdf) || filesize($tmpPdf) < 512) throw new RuntimeException('PDF generado vacío o demasiado pequeño.');
   $head = file_get_contents($tmpPdf, false, null, 0, 5);
   if ($head !== '%PDF-') throw new RuntimeException('PDF corrupto: cabecera inválida.');
 
@@ -176,8 +204,10 @@ try {
     || in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
   http_response_code(500);
   if ($isLocal) {
-    echo '<h1>No se pudo generar el informe.</h1><p><strong>Fase:</strong> ' . e($fase) . '</p><p><strong>ID práctica:</strong> ' . $id_practica . '</p><p><strong>Error real:</strong> ' . e($e->getMessage()) . '</p><p><strong>Archivo:</strong> ' . e(__FILE__) . '</p><p><strong>Plantilla:</strong> ' . e($templatePath) . '</p>';
-    if (str_contains($e->getMessage(), 'WriteHTML')) echo '<p>debug_plain falla: problema de configuración mPDF/salida.</p>';
+    echo '<h1>No se pudo generar el informe.</h1><p><strong>Fase:</strong> ' . e($fase) . '</p><p><strong>ID práctica:</strong> ' . $id_practica . '</p><p><strong>Error real:</strong> ' . e($e->getMessage()) . '</p>';
+    if ((($_GET['debug_plain'] ?? '0') === '1')) echo '<p>debug_plain falla: mPDF/configuración.</p>';
+    if ((($_GET['debug_plain_with_margins'] ?? '0') === '1')) echo '<p>debug_plain_with_margins falla: márgenes.</p>';
+    if ((($_GET['debug_fake_data'] ?? '0') === '1')) echo '<p>debug_fake_data falla: plantilla.</p>';
     exit;
   }
   echo 'No se pudo generar el informe. Revisa el log de errores del servidor.';
