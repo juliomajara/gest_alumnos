@@ -1420,6 +1420,11 @@ if ($practice_found) {
                   <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_plan_formacion">Descargar Plan Formación</a>
                 <?php endif; ?>
               </div>
+
+              <p><strong>Informe tutor</strong></p>
+              <div class="header-actions">
+                <a class="primary-button" href="generar_informe_valoracion_tutor_empresa.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Informe Tutor</a>
+              </div>
             </div>
           </section>
         </div>
