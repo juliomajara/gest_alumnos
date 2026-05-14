@@ -46,7 +46,7 @@ try {
       e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
       et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
       ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, ci.id_ciclo,
-      ac.id_curso_escolar, c.id_grado, g.grado,
+      ac.id_curso_escolar, c.curso AS curso_ordinal,
       (SELECT direccion_correo FROM correos c1 WHERE c1.entidad_tipo = "alumno" AND c1.id_entidad = a.id_alumno ORDER BY c1.id_correo ASC LIMIT 1) AS alumno_email,
       (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email
     FROM practicas p
@@ -58,7 +58,6 @@ try {
     LEFT JOIN grupos gr ON gr.id_grupo = ac.id_grupo
     LEFT JOIN ciclos ci ON ci.id_ciclo = gr.id_ciclo
     LEFT JOIN cursos c ON c.id_curso = ac.id_curso
-    LEFT JOIN grados g ON g.id_grado = c.id_grado
     WHERE p.id_practica = :id_practica
     LIMIT 1'
   );
@@ -123,7 +122,7 @@ try {
     '{{TUTOR_EMPRESA_NOMBRE}}' => esc(value($practice, 'tutor_nombre')),
     '{{TUTOR_EMPRESA_EMAIL}}' => esc(value($practice, 'tutor_empresa_email')),
     '{{CICLO_DENOMINACION}}' => esc(value($practice, 'ciclo_nombre')),
-    '{{GRADO}}' => esc(value($practice, 'grado')),
+    '{{GRADO}}' => esc(value($practice, 'curso_ordinal')),
     '{{CODIGO_CICLO}}' => esc(value($practice, 'ciclo_codigo')),
     '{{HORAS_REALIZADAS}}' => esc(value($practice, 'horas')),
     '{{PERIODO_1}}' => '',
@@ -158,8 +157,13 @@ try {
   $html = strtr($html, $repl);
   $html = preg_replace('/\{\{[^}]+\}\}/', '', $html) ?? $html;
 
+  $pdfTempDir = sys_get_temp_dir() . '/mpdf_tmp';
+  if (!is_dir($pdfTempDir) && !mkdir($pdfTempDir, 0755, true) && !is_dir($pdfTempDir)) {
+    throw new RuntimeException('No se pudo preparar el directorio temporal para mPDF.');
+  }
+
   $mpdf = new Mpdf([
-    'tempDir' => sys_get_temp_dir(),
+    'tempDir' => $pdfTempDir,
     'format' => 'A4',
     'orientation' => 'P',
     'mode' => 'utf-8',
@@ -172,6 +176,7 @@ try {
   $mpdf->WriteHTML($html);
   $mpdf->Output('informe_valoracion_tutor_empresa_' . (int) $id_practica . '.pdf', Destination::DOWNLOAD);
 } catch (Throwable $e) {
+  error_log('[generar_informe_valoracion_tutor_empresa] id_practica=' . (string) ($id_practica ?? 'null') . ' :: ' . $e->getMessage());
   http_response_code(500);
   exit('No se pudo generar el informe.');
 }
