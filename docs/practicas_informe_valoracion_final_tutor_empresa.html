@@ -21,7 +21,6 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
             margin: 0 0 2.2mm 0;
         }
 
@@ -30,7 +29,8 @@
             border: 0.2mm solid #000;
             padding: 1.2mm;
             vertical-align: top;
-            word-wrap: break-word;
+            overflow-wrap: normal;
+            word-break: normal;
         }
 
         .sin-borde,
@@ -61,21 +61,6 @@
         .seccion { font-weight: bold; background: #f0f0f0; }
         .campo { color: #222; }
 
-        .checkbox {
-            display: inline-block;
-            width: 3mm;
-            height: 3mm;
-            border: 0.2mm solid #000;
-            text-align: center;
-            line-height: 3mm;
-            font-size: 7.5pt;
-            vertical-align: middle;
-        }
-
-        .checkbox.checked::after {
-            content: "X";
-        }
-
         .bloque-texto {
             min-height: 11mm;
         }
@@ -95,7 +80,7 @@
             line-height: 1.2;
         }
 
-        .no-break {
+        .no-break-small {
             page-break-inside: avoid;
         }
 
@@ -171,7 +156,7 @@
         </tr>
     </table>
 
-    <table class="no-break">
+    <table>
         <tr><td class="seccion">Áreas y/o puestos de trabajo en los que se han realizado las actividades formativas. Valoración del desempeño de las actividades realizadas por el/la alumno/a.</td></tr>
         <tr><td class="bloque-texto campo">{{AREAS_PUESTOS_VALORACION}}</td></tr>
         <tr><td class="seccion">Valoración de las competencias transversales</td></tr>
@@ -180,17 +165,19 @@
         <tr><td class="bloque-texto-grande campo">{{OBSERVACIONES_TUTOR_EMPRESA}}</td></tr>
     </table>
 
-    <table class="no-break">
-        <tr>
-            <td class="seccion" colspan="2">Resultados de aprendizaje contenidos en el plan de formación, asociados a las actividades desarrolladas por el/la alumno/a</td>
-            <td class="seccion centrado" style="width:13%;">Superado*</td>
-            <td class="seccion centrado" style="width:13%;">No superado*</td>
-        </tr>
+    <table>
+        <colgroup>
+            <col style="width:34%;">
+            <col style="width:40%;">
+            <col style="width:13%;">
+            <col style="width:13%;">
+        </colgroup>
+        <tr><td class="seccion" colspan="4">Resultados de aprendizaje contenidos en el plan de formación, asociados a las actividades desarrolladas por el/la alumno/a</td></tr>
         <tr class="negrita centrado">
-            <td style="width:37%;">Módulo</td>
-            <td style="width:37%;">Resultado de aprendizaje</td>
-            <td></td>
-            <td></td>
+            <td>Módulo</td>
+            <td>Resultado de aprendizaje</td>
+            <td>Superado*</td>
+            <td>No superado*</td>
         </tr>
         <tr><td class="campo">{{RA_1_MODULO}}</td><td class="campo">{{RA_1_RESULTADO_APRENDIZAJE}}</td><td class="centrado">{{RA_1_SUPERADO}}</td><td class="centrado">{{RA_1_NO_SUPERADO}}</td></tr>
         <tr><td class="campo">{{RA_2_MODULO}}</td><td class="campo">{{RA_2_RESULTADO_APRENDIZAJE}}</td><td class="centrado">{{RA_2_SUPERADO}}</td><td class="centrado">{{RA_2_NO_SUPERADO}}</td></tr>
@@ -200,7 +187,7 @@
         <tr><td class="campo">{{RA_6_MODULO}}</td><td class="campo">{{RA_6_RESULTADO_APRENDIZAJE}}</td><td class="centrado">{{RA_6_SUPERADO}}</td><td class="centrado">{{RA_6_NO_SUPERADO}}</td></tr>
     </table>
 
-    <table class="no-break">
+    <table>
         <tr><td class="seccion">En caso de no superar resultados de aprendizaje, exposición de motivos:</td></tr>
         <tr><td class="bloque-texto-grande campo">{{MOTIVOS_NO_SUPERACION}}</td></tr>
     </table>
