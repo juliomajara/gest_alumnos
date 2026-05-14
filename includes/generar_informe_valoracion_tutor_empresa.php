@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
@@ -41,12 +41,15 @@ if ($id_practica === false || $id_practica === null) {
 
 try {
   $pdo = db();
+  if (!class_exists(Mpdf::class)) {
+    throw new RuntimeException('La librería mPDF no está disponible.');
+  }
   $stmt = $pdo->prepare(
     'SELECT p.*, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
       e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
       et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
       ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, ci.id_ciclo,
-      ac.id_curso_escolar, c.curso AS curso_ordinal,
+      ac.id_curso_escolar AS ac_id_curso_escolar, ac.id_ciclo AS ac_id_ciclo, c.curso AS curso_ordinal,
       (SELECT direccion_correo FROM correos c1 WHERE c1.entidad_tipo = "alumno" AND c1.id_entidad = a.id_alumno ORDER BY c1.id_correo ASC LIMIT 1) AS alumno_email,
       (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email
     FROM practicas p
@@ -69,14 +72,14 @@ try {
     exit('No se encontró la práctica solicitada.');
   }
 
-  $templatePath = __DIR__ . '/docs/practicas_informe_valoracion_final_tutor_empresa.html';
+  $templatePath = __DIR__ . '/../docs/practicas_informe_valoracion_final_tutor_empresa.html';
   if (!is_file($templatePath) || !is_readable($templatePath)) {
     throw new RuntimeException('No se encontró la plantilla del informe.');
   }
 
   $html = (string) file_get_contents($templatePath);
 
-  $docsDir = __DIR__ . '/docs';
+  $docsDir = __DIR__ . '/../docs';
   $html = preg_replace_callback('~(<img\b[^>]*\bsrc=["\'])([^"\']+)(["\'][^>]*>)~iu', static function (array $m) use ($docsDir): string {
     $src = trim($m[2]);
     if ($src === '' || str_starts_with($src, 'data:')) {
@@ -97,6 +100,13 @@ try {
   $courseId = (int) ($practice['id_curso_escolar'] ?? 0);
   $cycleId = (int) ($practice['id_ciclo'] ?? 0);
   $raRows = [];
+  if ($courseId <= 0) {
+    $courseId = (int) ($practice['ac_id_curso_escolar'] ?? 0);
+  }
+  if ($cycleId <= 0) {
+    $cycleId = (int) ($practice['ac_id_ciclo'] ?? 0);
+  }
+
   if ($courseId > 0 && $cycleId > 0) {
     $raStmt = $pdo->prepare(
       'SELECT m.materia_general, m.materia_propia, ra.numero AS ra_numero
@@ -172,11 +182,21 @@ try {
     'margin_top' => 12,
     'margin_bottom' => 12,
   ]);
-  $mpdf->SetBasePath(__DIR__ . '/docs/');
+  $mpdf->SetBasePath(__DIR__ . '/../docs/');
   $mpdf->WriteHTML($html);
+  if (ob_get_length()) {
+    ob_end_clean();
+  }
   $mpdf->Output('informe_valoracion_tutor_empresa_' . (int) $id_practica . '.pdf', Destination::DOWNLOAD);
 } catch (Throwable $e) {
-  error_log('[generar_informe_valoracion_tutor_empresa] id_practica=' . (string) ($id_practica ?? 'null') . ' :: ' . $e->getMessage());
+  error_log(sprintf(
+    '[generar_informe_valoracion_tutor_empresa] id_practica=%s file=%s line=%d message=%s trace=%s',
+    (string) ($id_practica ?? 'null'),
+    $e->getFile(),
+    (int) $e->getLine(),
+    $e->getMessage(),
+    substr(str_replace(["\n", "\r"], ' | ', $e->getTraceAsString()), 0, 1200)
+  ));
   http_response_code(500);
   exit('No se pudo generar el informe.');
 }

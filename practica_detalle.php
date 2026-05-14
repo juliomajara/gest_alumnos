@@ -1423,7 +1423,7 @@ if ($practice_found) {
 
               <p><strong>Informe tutor</strong></p>
               <div class="header-actions">
-                <a class="primary-button" href="generar_informe_valoracion_tutor_empresa.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Informe Tutor</a>
+                <a class="primary-button" href="includes/generar_informe_valoracion_tutor_empresa.php?id_practica=<?php echo (int) $id_practica; ?>">Generar Informe Tutor</a>
               </div>
             </div>
           </section>
