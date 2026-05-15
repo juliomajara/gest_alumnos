@@ -97,13 +97,14 @@
       page-break-before: always;
     }
 
-    .page2-top-space {
-      height: 18mm;
-      line-height: 18mm;
-    }
 
     .ra-table td {
       height: 6.7mm;
+      vertical-align: middle;
+    }
+
+    .modulo-cell {
+      text-align: center;
       vertical-align: middle;
     }
 
@@ -127,27 +128,23 @@
       vertical-align: middle;
     }
 
-    .motivos { margin-top: 5mm; }
-    .motivos td { height: 42mm; }
+    .motivos { margin-top: 3mm; }
+    .motivos td { height: 36mm; }
 
     .signature {
-      margin-top: 5mm;
+      margin-top: 3mm;
       text-align: center;
-      line-height: 1.55;
+      line-height: 1.45;
       font-size: 8pt;
     }
 
-    .footnotes {
-      margin-top: 62mm;
-      font-size: 5.6pt;
-      line-height: 1.05;
-    }
-
-    .footnote-line {
-      width: 34mm;
+    .notas-finales {
+      margin-top: 3mm;
+      font-size: 6pt;
+      line-height: 1.1;
       border-top: 0.25mm solid #000;
-      height: 1.5mm;
-      margin-bottom: 1.5mm;
+      padding-top: 1.2mm;
+      page-break-inside: avoid;
     }
   </style>
 </head>
@@ -234,7 +231,6 @@
   </table>
 
   <div class="page-break"></div>
-  <div class="page2-top-space">&nbsp;</div>
 
   <table class="ra-table">
     <tr class="ra-heading section center">
@@ -261,11 +257,11 @@
     El/La tutor/a de empresa u organismo equiparado
   </div>
 
-  <div class="footnotes">
-    <div class="footnote-line"></div>
+  <div class="notas-finales">
     <div>(1) Indíquese básico, medio o superior, según proceda.</div>
     <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
     <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
+    <div>{{LEYENDA_MODULOS}}</div>
   </div>
 </body>
 </html>
