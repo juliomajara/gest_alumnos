@@ -107,8 +107,19 @@ try {
       $stmt = $pdo->prepare('SELECT p.*, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
           e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
           et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
-          ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, c.curso AS curso_ordinal,
-          (SELECT direccion_correo FROM correos c1 WHERE c1.entidad_tipo = "alumno" AND c1.id_entidad = a.id_alumno ORDER BY c1.id_correo ASC LIMIT 1) AS alumno_email,
+          ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, ci.grado AS ciclo_grado, c.curso AS curso_ordinal,
+          (SELECT c1.direccion_correo
+             FROM correos c1
+            WHERE c1.entidad_tipo = "alumno"
+              AND c1.id_entidad = a.id_alumno
+              AND (LOWER(TRIM(COALESCE(c1.direccion_correo, ""))) LIKE "%@educa.madrid.org"
+                OR TRIM(COALESCE(c1.etiqueta, "")) = "EducaMadrid")
+            ORDER BY CASE
+              WHEN LOWER(TRIM(COALESCE(c1.direccion_correo, ""))) LIKE "%@educa.madrid.org" THEN 0
+              WHEN TRIM(COALESCE(c1.etiqueta, "")) = "EducaMadrid" THEN 1
+              ELSE 2
+            END, c1.id_correo DESC
+            LIMIT 1) AS alumno_email,
           (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email
         FROM practicas p
         LEFT JOIN alumnos a ON a.id_alumno = p.id_alumno
@@ -136,7 +147,7 @@ try {
         '{{TUTOR_EMPRESA_NOMBRE}}'=>e(value($practice,'tutor_nombre')),
         '{{TUTOR_EMPRESA_EMAIL}}'=>e(value($practice,'tutor_empresa_email')),
         '{{CICLO_DENOMINACION}}'=>e(value($practice,'ciclo_nombre')),
-        '{{GRADO}}'=>e(value($practice,'curso_ordinal')),
+        '{{GRADO}}'=>e(value($practice,'ciclo_grado')),
         '{{CODIGO_CICLO}}'=>e(value($practice,'ciclo_codigo')),
         '{{HORAS_REALIZADAS}}'=>e(value($practice,'horas')),
         '{{AREAS_PUESTOS_VALORACION}}'=>e(value($practice,'areas_puestos_trabajo')),
@@ -149,12 +160,55 @@ try {
       $repl['{{DIA_FIRMA}}'] = e($today->format('d'));
       $repl['{{MES_FIRMA}}'] = e(month_name_es((int)$today->format('n')));
       $repl['{{ANIO_FIRMA}}'] = e($today->format('Y'));
-      for ($i = 1; $i <= 3; $i++) $repl['{{PERIODO_' . $i . '}}'] = ((int)($practice['periodo'] ?? 0) === $i) ? 'X' : '';
+      $repl['{{PERIODO_1}}'] = 'X';
+      $repl['{{PERIODO_2}}'] = '';
+      $repl['{{PERIODO_3}}'] = '';
       for ($i = 1; $i <= 6; $i++) {
         $repl['{{RA_' . $i . '_MODULO}}'] = '';
         $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = '';
         $repl['{{RA_' . $i . '_SUPERADO}}'] = '';
         $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
+      }
+
+      $rasStmt = $pdo->prepare(
+        'SELECT
+          pr.id_practica_ra,
+          m.materia_general,
+          m.materia_propia,
+          ra.numero AS ra_numero
+         FROM practicas_ras pr
+         LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
+         LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
+         WHERE pr.id_curso_escolar = :id_curso_escolar
+           AND pr.id_ciclo = :id_ciclo
+         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC'
+      );
+
+      $ras = [];
+      $idCursoEscolar = (int)($practice['id_curso_escolar'] ?? 0);
+      $idCiclo = (int)($practice['id_ciclo'] ?? 0);
+      if ($idCursoEscolar > 0 && $idCiclo > 0) {
+        $rasStmt->execute([
+          'id_curso_escolar' => $idCursoEscolar,
+          'id_ciclo' => $idCiclo,
+        ]);
+        $ras = $rasStmt->fetchAll(PDO::FETCH_ASSOC);
+      }
+
+      for ($i = 1; $i <= 6; $i++) {
+        $raRow = $ras[$i - 1] ?? null;
+        if (!is_array($raRow)) {
+          continue;
+        }
+
+        $moduleName = trim((string)($raRow['materia_general'] ?? ''));
+        if ($moduleName === '') {
+          $moduleName = trim((string)($raRow['materia_propia'] ?? ''));
+        }
+        $raNumero = trim((string)($raRow['ra_numero'] ?? ''));
+
+        $repl['{{RA_' . $i . '_MODULO}}'] = e($moduleName);
+        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = e($raNumero !== '' ? 'RA ' . $raNumero : '');
       }
       $html = strtr($htmlTemplate, $repl);
     }
