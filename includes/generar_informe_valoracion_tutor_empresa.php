@@ -187,9 +187,9 @@ try {
       $rasSqlIds = 'SELECT
           pr.id_practica_ra,
           m.codigo AS codigo_modulo,
-          COALESCE(m.materia_general, m.materia_propia, m.modulo, m.nombre) AS nombre_modulo,
+          COALESCE(m.materia_general, m.materia_propia) AS nombre_modulo,
           ra.numero AS ra_numero,
-          COALESCE(ra.ra, ra.resultado_aprendizaje, ra.descripcion, ra.texto) AS ra_texto
+          ra.descripcion AS ra_texto
          FROM practicas_ras pr
          LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
          LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
@@ -201,9 +201,9 @@ try {
       $rasSqlFallback = 'SELECT
           pr.id_practica_ra,
           m.codigo AS codigo_modulo,
-          COALESCE(m.materia_general, m.materia_propia, m.modulo, m.nombre) AS nombre_modulo,
+          COALESCE(m.materia_general, m.materia_propia) AS nombre_modulo,
           ra.numero AS ra_numero,
-          COALESCE(ra.ra, ra.resultado_aprendizaje, ra.descripcion, ra.texto) AS ra_texto
+          ra.descripcion AS ra_texto
          FROM practicas_ras pr
          LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
          LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
