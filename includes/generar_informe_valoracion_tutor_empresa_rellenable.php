@@ -139,7 +139,6 @@ try {
       $stmt = $pdo->prepare('SELECT p.*, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
           e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
           et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
-          ld.nombre AS direccion_localidad,
           ac.id_curso_escolar AS id_curso_escolar, gr.id_ciclo AS id_ciclo,
           ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, ci.grado AS ciclo_grado, c.curso AS curso_ordinal,
           (SELECT c1.direccion_correo
@@ -159,8 +158,6 @@ try {
         LEFT JOIN alumnos a ON a.id_alumno = p.id_alumno
         LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
         LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
-        LEFT JOIN direcciones d ON d.id_direccion = p.id_direccion
-        LEFT JOIN localidades ld ON ld.id_localidad = d.id_localidad
         LEFT JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno AND ac.id_curso_escolar = (SELECT MAX(ac2.id_curso_escolar) FROM alumno_curso ac2 WHERE ac2.id_alumno = p.id_alumno)
         LEFT JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
         LEFT JOIN grupos gr ON gr.id_grupo = ac.id_grupo
@@ -186,11 +183,11 @@ try {
         '{{GRADO}}'=>e(value($practice,'ciclo_grado')),
         '{{CODIGO_CICLO}}'=>e(value($practice,'ciclo_codigo')),
         '{{HORAS_REALIZADAS}}'=>e(value($practice,'horas')),
-        '{{AREAS_PUESTOS_VALORACION}}'=>e(value($practice,'areas_puestos_trabajo')),
-        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>e(value($practice,'valoracion_competencias_transversales')),
-        '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>e(value($practice,'observaciones_tutor_empresa')),
-        '{{MOTIVOS_NO_SUPERACION}}'=>e(value($practice,'motivos_no_superacion')),
-        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'direccion_localidad') !== '' ? value($practice,'direccion_localidad') : value($practice,'localidad_firma')),
+        '{{AREAS_PUESTOS_VALORACION}}'=>(value($practice,'areas_puestos_trabajo') !== '' ? e(value($practice,'areas_puestos_trabajo')) : 'Describa aquí las áreas y/o puestos de trabajo y la valoración del desempeño de las actividades realizadas.'),
+        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>(value($practice,'valoracion_competencias_transversales') !== '' ? e(value($practice,'valoracion_competencias_transversales')) : 'Valore aquí las competencias transversales del alumno/a.'),
+        '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>(value($practice,'observaciones_tutor_empresa') !== '' ? e(value($practice,'observaciones_tutor_empresa')) : 'Escriba aquí sus observaciones.'),
+        '{{MOTIVOS_NO_SUPERACION}}'=>(value($practice,'motivos_no_superacion') !== '' ? e(value($practice,'motivos_no_superacion')) : 'Indique aquí los motivos de no superación de los resultados de aprendizaje.'),
+        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma') !== '' ? value($practice,'localidad_firma') : 'Getafe'),
       ];
       $fechaFirma = parse_iso_date((string)($practice['fecha_fin_extra'] ?? ''));
       if (!$fechaFirma instanceof DateTimeImmutable) {
