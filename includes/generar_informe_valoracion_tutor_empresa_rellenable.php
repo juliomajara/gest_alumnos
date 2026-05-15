@@ -342,13 +342,13 @@ try {
         $rasRowsHtml .= '<tr>';
         $rasRowsHtml .= '<td class="modulo-cell">' . e($raModuloFinal) . '</td>';
         $rasRowsHtml .= '<td>' . e($raTextoFinal) . '</td>';
-        $rasRowsHtml .= '<td class="check-cell"><input type="checkbox" name="ra_' . $raIndex . '_superado" value="ON" style="font-size:20pt;"></td>';
-        $rasRowsHtml .= '<td class="check-cell"><input type="checkbox" name="ra_' . $raIndex . '_no_superado" value="ON" style="font-size:20pt;"></td>';
+        $rasRowsHtml .= '<td class="check-cell"><input type="checkbox" id="ra_' . $raIndex . '_superado" name="ra_' . $raIndex . '_superado" value="ON" style="font-size:20pt;" onchange="marcarExclusivo(this, \'ra_' . $raIndex . '_no_superado\');"></td>';
+        $rasRowsHtml .= '<td class="check-cell"><input type="checkbox" id="ra_' . $raIndex . '_no_superado" name="ra_' . $raIndex . '_no_superado" value="ON" style="font-size:20pt;" onchange="marcarExclusivo(this, \'ra_' . $raIndex . '_superado\');"></td>';
         $rasRowsHtml .= '</tr>';
       }
 
       if ($rasRowsHtml === '') {
-        $rasRowsHtml = '<tr><td></td><td></td><td class="check-cell"><input type="checkbox" name="ra_1_superado" value="ON" style="font-size:20pt;"></td><td class="check-cell"><input type="checkbox" name="ra_1_no_superado" value="ON" style="font-size:20pt;"></td></tr>';
+        $rasRowsHtml = '<tr><td></td><td></td><td class="check-cell"><input type="checkbox" id="ra_1_superado" name="ra_1_superado" value="ON" style="font-size:20pt;" onchange="marcarExclusivo(this, \'ra_1_no_superado\');"></td><td class="check-cell"><input type="checkbox" id="ra_1_no_superado" name="ra_1_no_superado" value="ON" style="font-size:20pt;" onchange="marcarExclusivo(this, \'ra_1_superado\');"></td></tr>';
       }
       $repl['{{RAS_ROWS}}'] = $rasRowsHtml;
       $leyendaModulos = '';

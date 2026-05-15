@@ -177,6 +177,16 @@
   </style>
 </head>
 <body>
+  <script>
+    function marcarExclusivo(actual, otroId) {
+      if (actual.checked) {
+        var otro = document.getElementById(otroId);
+        if (otro) {
+          otro.checked = false;
+        }
+      }
+    }
+  </script>
   <form action="" method="post">
   <table class="no-border logo-table">
     <tr>
