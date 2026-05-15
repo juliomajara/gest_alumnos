@@ -131,27 +131,15 @@
     .motivos { margin-top: 3mm; }
     .motivos td { height: 36mm; }
 
-    .cierre-pagina-2 {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2.8mm;
-      height: 67mm;
-    }
-
-    .cierre-pagina-2 td {
-      border: none;
-      padding: 0;
-    }
-
-    .signature {
+    .firma-final {
       text-align: center;
       line-height: 1.45;
       font-size: 8pt;
-      padding-top: 0.8mm;
+      margin-top: 2.8mm;
     }
 
-    .espacio-final {
-      height: 100%;
+    .espacio-antes-notas {
+      height: 28mm;
     }
 
     .notas-finales {
@@ -267,26 +255,18 @@
     <tr><td>{{MOTIVOS_NO_SUPERACION}}</td></tr>
   </table>
 
-  <table class="cierre-pagina-2">
-    <tr>
-      <td>
-        <div class="signature">
-          En <span>Getafe</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
-          El/La tutor/a de empresa u organismo equiparado
-        </div>
-      </td>
-    </tr>
-    <tr><td class="espacio-final"></td></tr>
-    <tr>
-      <td>
-        <div class="notas-finales">
-          <div>(1) Indíquese básico, medio o superior, según proceda.</div>
-          <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
-          <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
-          <div>{{LEYENDA_MODULOS}}</div>
-        </div>
-      </td>
-    </tr>
-  </table>
+  <div class="firma-final">
+    En <span>Getafe</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
+    El/La tutor/a de empresa u organismo equiparado
+  </div>
+
+  <div class="espacio-antes-notas"></div>
+
+  <div class="notas-finales">
+    <div>(1) Indíquese básico, medio o superior, según proceda.</div>
+    <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
+    <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
+    <div>{{LEYENDA_MODULOS}}</div>
+  </div>
 </body>
 </html>
