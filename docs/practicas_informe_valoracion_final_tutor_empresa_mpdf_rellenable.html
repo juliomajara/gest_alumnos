@@ -50,7 +50,7 @@
 
     .title-block {
       text-align: center;
-      margin-top: 4mm;
+      margin-top: 10mm;
       margin-bottom: 6mm;
     }
 
@@ -148,7 +148,7 @@
     }
 
     .espacio-empuje {
-      height: 28mm;
+      height: 50mm;
     }
 
     .notas-finales {
@@ -159,15 +159,28 @@
       page-break-inside: avoid;
     }
 
+
     .linea-notas {
       border-top: 0.2mm solid #000;
       height: 1mm;
       margin-bottom: 1mm;
     }
 
-    .fill-textarea { width: 100%; border: 0; font-family: dejavusanscondensed, dejavusans, Arial, sans-serif; font-size: 8pt; line-height: 1.12; }
-    .fill-input { width: 100%; border: 0; font-family: dejavusanscondensed, dejavusans, Arial, sans-serif; font-size: 8pt; }
-    .checkbox-field { transform: scale(1.1); }
+    .campo-rellenable {
+      width: 100%;
+      font-family: dejavusans, Arial, sans-serif;
+      font-size: 8pt;
+      border: 0.2mm solid #777;
+      background-color: #fff;
+      padding: 0.8mm;
+      line-height: 1.12;
+    }
+
+    .textarea-valoracion { height: 22mm; }
+    .textarea-observaciones { height: 22mm; }
+    .textarea-motivos { height: 16mm; }
+    .checkbox-field { }
+
   </style>
 </head>
 <body>
@@ -235,21 +248,24 @@
 
   <table class="tight-block period-table">
     <tr>
-      <td style="width:44%;"><span class="label">Nº de horas realizadas:</span> <span class="value">{{HORAS_REALIZADAS}}</span></td>
-      <td style="width:24%;"><span class="label">Periodo de formación:</span></td>
-      <td style="width:10%;" class="center"><span class="label">1º</span><br>{{PERIODO_1}}</td>
-      <td style="width:10%;" class="center"><span class="label">2º</span><br>{{PERIODO_2}}</td>
-      <td style="width:12%;" class="center"><span class="label">3º</span><br>{{PERIODO_3}}</td>
+      <td style="width:44%;" class="center"><span class="label">Nº de horas realizadas:</span> <span class="value">{{HORAS_REALIZADAS}}</span></td>
+      <td style="width:26%;" class="center"><span class="label">Periodo de formación:</span></td>
+      <td style="width:7%;" class="center"><span class="label">1º</span></td>
+      <td style="width:3%;" class="center">{{PERIODO_1}}</td>
+      <td style="width:7%;" class="center"><span class="label">2º</span></td>
+      <td style="width:3%;" class="center">{{PERIODO_2}}</td>
+      <td style="width:7%;" class="center"><span class="label">3º</span></td>
+      <td style="width:3%;" class="center">{{PERIODO_3}}</td>
     </tr>
   </table>
 
   <table>
     <tr><td class="section">Áreas y/o puestos de trabajo en los que se han realizado las actividades formativas. Valoración del desempeño de las actividades realizadas por el/la alumno/a.</td></tr>
-    <tr class="box-medium"><td><textarea class="fill-textarea" name="areas_puestos_valoracion" rows="6">{{AREAS_PUESTOS_VALORACION}}</textarea></td></tr>
+    <tr class="box-medium"><td><textarea class="campo-rellenable textarea-valoracion" name="areas_puestos_valoracion">{{AREAS_PUESTOS_VALORACION}}</textarea></td></tr>
     <tr><td class="section">Valoración de las competencias transversales</td></tr>
-    <tr class="box-medium"><td><textarea class="fill-textarea" name="valoracion_competencias_transversales" rows="6">{{VALORACION_COMPETENCIAS_TRANSVERSALES}}</textarea></td></tr>
+    <tr class="box-medium"><td><textarea class="campo-rellenable textarea-valoracion" name="valoracion_competencias_transversales">{{VALORACION_COMPETENCIAS_TRANSVERSALES}}</textarea></td></tr>
     <tr><td class="section">Observaciones del tutor de empresa u organismo equiparado</td></tr>
-    <tr class="box-large"><td><textarea class="fill-textarea" name="observaciones_tutor_empresa" rows="8">{{OBSERVACIONES_TUTOR_EMPRESA}}</textarea></td></tr>
+    <tr class="box-large"><td><textarea class="campo-rellenable textarea-observaciones" name="observaciones_tutor_empresa">{{OBSERVACIONES_TUTOR_EMPRESA}}</textarea></td></tr>
   </table>
 
   <div class="page-break"></div>
@@ -271,7 +287,7 @@
 
   <table class="motivos">
     <tr><td class="section" style="height:5mm;">En caso de no superar resultados de aprendizaje, exposición de motivos:</td></tr>
-    <tr><td><textarea class="fill-textarea" name="motivos_no_superacion" rows="10">{{MOTIVOS_NO_SUPERACION}}</textarea></td></tr>
+    <tr><td><textarea class="campo-rellenable textarea-motivos" name="motivos_no_superacion">{{MOTIVOS_NO_SUPERACION}}</textarea></td></tr>
   </table>
 
   <table class="cierre-pagina-2">
