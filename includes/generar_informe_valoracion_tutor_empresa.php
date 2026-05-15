@@ -26,6 +26,17 @@ function month_name_es(int $month): string {
   $m = [1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre'];
   return $m[$month] ?? '';
 }
+function parse_iso_date(?string $value): ?DateTimeImmutable {
+  $value = trim((string)$value);
+  if ($value === '') return null;
+  $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+  if ($date instanceof DateTimeImmutable) return $date;
+  try {
+    return new DateTimeImmutable($value);
+  } catch (Throwable $e) {
+    return null;
+  }
+}
 function normalize_ra_for_display(string $raNumero): string {
   $raNumero = trim($raNumero);
   if ($raNumero === '') return '';
@@ -176,10 +187,13 @@ try {
         '{{MOTIVOS_NO_SUPERACION}}'=>e(value($practice,'motivos_no_superacion')),
         '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma') !== '' ? value($practice,'localidad_firma') : 'Getafe'),
       ];
-      $today = new DateTimeImmutable('today');
-      $repl['{{DIA_FIRMA}}'] = e($today->format('d'));
-      $repl['{{MES_FIRMA}}'] = e(month_name_es((int)$today->format('n')));
-      $repl['{{ANIO_FIRMA}}'] = e($today->format('Y'));
+      $fechaFirma = parse_iso_date((string)($practice['fecha_fin_extra'] ?? ''));
+      if (!$fechaFirma instanceof DateTimeImmutable) {
+        $fechaFirma = parse_iso_date((string)($practice['fecha_fin'] ?? ''));
+      }
+      $repl['{{DIA_FIRMA}}'] = $fechaFirma instanceof DateTimeImmutable ? e($fechaFirma->format('d')) : '';
+      $repl['{{MES_FIRMA}}'] = $fechaFirma instanceof DateTimeImmutable ? e(month_name_es((int)$fechaFirma->format('n'))) : '';
+      $repl['{{ANIO_FIRMA}}'] = $fechaFirma instanceof DateTimeImmutable ? e($fechaFirma->format('Y')) : '';
       $repl['{{PERIODO_1}}'] = 'X';
       $repl['{{PERIODO_2}}'] = '';
       $repl['{{PERIODO_3}}'] = '';
