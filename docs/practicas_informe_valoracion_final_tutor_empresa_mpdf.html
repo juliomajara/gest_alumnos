@@ -131,17 +131,32 @@
     .motivos { margin-top: 3mm; }
     .motivos td { height: 36mm; }
 
+    .cierre-pagina-2 {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2.8mm;
+      height: 67mm;
+    }
+
+    .cierre-pagina-2 td {
+      border: none;
+      padding: 0;
+    }
+
     .signature {
-      margin-top: 3mm;
       text-align: center;
       line-height: 1.45;
       font-size: 8pt;
+      padding-top: 0.8mm;
+    }
+
+    .espacio-final {
+      height: 100%;
     }
 
     .notas-finales {
-      margin-top: 3mm;
-      font-size: 6pt;
-      line-height: 1.1;
+      font-size: 5.5pt;
+      line-height: 1.05;
       border-top: 0.25mm solid #000;
       padding-top: 1.2mm;
       page-break-inside: avoid;
@@ -252,16 +267,26 @@
     <tr><td>{{MOTIVOS_NO_SUPERACION}}</td></tr>
   </table>
 
-  <div class="signature">
-    En <span>Getafe</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
-    El/La tutor/a de empresa u organismo equiparado
-  </div>
-
-  <div class="notas-finales">
-    <div>(1) Indíquese básico, medio o superior, según proceda.</div>
-    <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
-    <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
-    <div>{{LEYENDA_MODULOS}}</div>
-  </div>
+  <table class="cierre-pagina-2">
+    <tr>
+      <td>
+        <div class="signature">
+          En <span>Getafe</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
+          El/La tutor/a de empresa u organismo equiparado
+        </div>
+      </td>
+    </tr>
+    <tr><td class="espacio-final"></td></tr>
+    <tr>
+      <td>
+        <div class="notas-finales">
+          <div>(1) Indíquese básico, medio o superior, según proceda.</div>
+          <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
+          <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
+          <div>{{LEYENDA_MODULOS}}</div>
+        </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
