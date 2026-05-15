@@ -151,11 +151,14 @@ try {
               ELSE 2
             END, c1.id_correo DESC
             LIMIT 1) AS alumno_email,
-          (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email
+          (SELECT direccion_correo FROM correos c2 WHERE c2.entidad_tipo = "empresa_tutor" AND c2.id_entidad = et.id_empresas_tutor ORDER BY c2.id_correo ASC LIMIT 1) AS tutor_empresa_email,
+          ld.nombre AS direccion_localidad
         FROM practicas p
         LEFT JOIN alumnos a ON a.id_alumno = p.id_alumno
         LEFT JOIN empresas e ON e.id_empresa = p.id_empresa
         LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = p.id_empresa_tutor
+        LEFT JOIN direcciones d ON d.id_direccion = p.id_direccion
+        LEFT JOIN localidades ld ON ld.id_localidad = d.id_localidad
         LEFT JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno AND ac.id_curso_escolar = (SELECT MAX(ac2.id_curso_escolar) FROM alumno_curso ac2 WHERE ac2.id_alumno = p.id_alumno)
         LEFT JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
         LEFT JOIN grupos gr ON gr.id_grupo = ac.id_grupo
@@ -185,7 +188,7 @@ try {
         '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>e(value($practice,'valoracion_competencias_transversales')),
         '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>e(value($practice,'observaciones_tutor_empresa')),
         '{{MOTIVOS_NO_SUPERACION}}'=>e(value($practice,'motivos_no_superacion')),
-        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma') !== '' ? value($practice,'localidad_firma') : 'Getafe'),
+        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'direccion_localidad')),
       ];
       $fechaFirma = parse_iso_date((string)($practice['fecha_fin_extra'] ?? ''));
       if (!$fechaFirma instanceof DateTimeImmutable) {
