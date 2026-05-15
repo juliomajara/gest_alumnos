@@ -114,6 +114,7 @@ try {
       $stmt = $pdo->prepare('SELECT p.*, a.nombre AS alumno_nombre, a.apellido1 AS alumno_apellido1, a.apellido2 AS alumno_apellido2,
           e.nombre AS empresa_nombre, e.nombre_comercial AS empresa_nombre_comercial, e.convenio AS empresa_convenio,
           et.nombre AS tutor_nombre, et.apellido1 AS tutor_apellido1, et.apellido2 AS tutor_apellido2,
+          ac.id_curso_escolar AS id_curso_escolar, gr.id_ciclo AS id_ciclo,
           ce.curso_escolar, ci.ciclo AS ciclo_nombre, ci.codigo AS ciclo_codigo, ci.grado AS ciclo_grado, c.curso AS curso_ordinal,
           (SELECT c1.direccion_correo
              FROM correos c1
@@ -177,45 +178,62 @@ try {
         $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
       }
 
-      $rasSql = 'SELECT
-          pr.id_practica_ra,
-          pr.id_curso_escolar,
-          pr.id_ciclo,
-          pr.curso_escolar,
-          pr.ciclo,
-          m.codigo AS codigo_modulo,
-          m.materia_general,
-          m.materia_propia,
-          ra.numero AS ra_numero
-         FROM practicas_ras pr
-         LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
-         LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
-         WHERE ((pr.id_curso_escolar = :id_curso_escolar AND pr.id_ciclo = :id_ciclo)
-            OR (TRIM(COALESCE(pr.curso_escolar, "")) = :curso_escolar_texto AND TRIM(COALESCE(pr.ciclo, "")) = :ciclo_texto))
-         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC';
-
-      $ras = [];
       $idCursoEscolar = (int)($practice['id_curso_escolar'] ?? 0);
       $idCiclo = (int)($practice['id_ciclo'] ?? 0);
       $cursoEscolarTexto = trim((string)($practice['curso_escolar'] ?? ''));
       $cicloTexto = trim((string)($practice['ciclo_nombre'] ?? ''));
-      $rasParams = [
-        'id_curso_escolar' => $idCursoEscolar,
-        'id_ciclo' => $idCiclo,
-        'curso_escolar_texto' => $cursoEscolarTexto,
-        'ciclo_texto' => $cicloTexto,
-      ];
-      if (($idCursoEscolar > 0 && $idCiclo > 0) || ($cursoEscolarTexto !== '' && $cicloTexto !== '')) {
-        $rasStmt = $pdo->prepare($rasSql);
-        $rasStmt->execute([
-          'id_curso_escolar' => $idCursoEscolar,
-          'id_ciclo' => $idCiclo,
-          'curso_escolar_texto' => $cursoEscolarTexto,
-          'ciclo_texto' => $cicloTexto,
-        ]);
+      error_log('[informe_tutor_empresa] filtros RAs: id_practica=' . $id_practica . ', id_curso_escolar=' . ($practice['id_curso_escolar'] ?? 'null') . ', id_ciclo=' . ($practice['id_ciclo'] ?? 'null'));
+
+      $rasSqlIds = 'SELECT
+          pr.id_practica_ra,
+          m.codigo AS codigo_modulo,
+          COALESCE(m.materia_general, m.materia_propia, m.modulo, m.nombre) AS nombre_modulo,
+          ra.numero AS ra_numero,
+          COALESCE(ra.ra, ra.resultado_aprendizaje, ra.descripcion, ra.texto) AS ra_texto
+         FROM practicas_ras pr
+         LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
+         LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
+         WHERE pr.id_curso_escolar = :id_curso_escolar
+           AND pr.id_ciclo = :id_ciclo
+         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC
+         LIMIT 6';
+
+      $rasSqlFallback = 'SELECT
+          pr.id_practica_ra,
+          m.codigo AS codigo_modulo,
+          COALESCE(m.materia_general, m.materia_propia, m.modulo, m.nombre) AS nombre_modulo,
+          ra.numero AS ra_numero,
+          COALESCE(ra.ra, ra.resultado_aprendizaje, ra.descripcion, ra.texto) AS ra_texto
+         FROM practicas_ras pr
+         LEFT JOIN resultados_aprendizaje ra ON ra.id_ra = pr.id_ra
+         LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
+         WHERE TRIM(COALESCE(pr.curso_escolar, "")) = :curso_escolar_texto
+           AND TRIM(COALESCE(pr.ciclo, "")) = :ciclo_texto
+         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC
+         LIMIT 6';
+
+      $ras = [];
+      $rasSqlUsed = '';
+      $rasParams = [];
+      $usedFallback = false;
+
+      if ($idCursoEscolar > 0 && $idCiclo > 0) {
+        $rasSqlUsed = $rasSqlIds;
+        $rasParams = ['id_curso_escolar' => $idCursoEscolar, 'id_ciclo' => $idCiclo];
+        $rasStmt = $pdo->prepare($rasSqlIds);
+        $rasStmt->execute($rasParams);
         $ras = $rasStmt->fetchAll(PDO::FETCH_ASSOC);
       } else {
-        error_log('[informe_tutor_empresa] No se pudo consultar practicas_ras por falta de filtros válidos. id_practica=' . $id_practica . ', id_ciclo=' . $idCiclo . ', id_curso_escolar=' . $idCursoEscolar . ', ciclo=' . $cicloTexto . ', curso_escolar=' . $cursoEscolarTexto);
+        error_log('[informe_tutor_empresa] No se pueden buscar RAs porque id_curso_escolar o id_ciclo son 0. id_practica=' . $id_practica . ', id_curso_escolar=' . $idCursoEscolar . ', id_ciclo=' . $idCiclo);
+      }
+
+      if (count($ras) === 0 && $cursoEscolarTexto !== '' && $cicloTexto !== '') {
+        $usedFallback = true;
+        $rasSqlUsed = $rasSqlFallback;
+        $rasParams = ['curso_escolar_texto' => $cursoEscolarTexto, 'ciclo_texto' => $cicloTexto];
+        $rasStmt = $pdo->prepare($rasSqlFallback);
+        $rasStmt->execute($rasParams);
+        $ras = $rasStmt->fetchAll(PDO::FETCH_ASSOC);
       }
 
       if ($debugRas) {
@@ -229,17 +247,42 @@ try {
         echo '<li><strong>id_curso_escolar usado para buscar RAs</strong>: ' . e((string)$idCursoEscolar) . '</li>';
         echo '<li><strong>id_ciclo obtenido</strong>: ' . e((string)($practice['id_ciclo'] ?? '')) . '</li>';
         echo '<li><strong>id_ciclo usado para buscar RAs</strong>: ' . e((string)$idCiclo) . '</li>';
-        echo '</ul><h2>Consulta SQL usada para RAs</h2><pre>' . e($rasSql) . '</pre>';
+        echo '</ul><h2>Consulta SQL exacta usada para RAs</h2><pre>' . e($rasSqlUsed) . '</pre>';
+        if ($usedFallback) echo '<p><strong>Se usó fallback por texto curso_escolar/ciclo.</strong></p>';
+        if ($idCursoEscolar <= 0 || $idCiclo <= 0) echo '<p><strong>No se pueden buscar RAs porque id_curso_escolar o id_ciclo son 0.</strong></p>';
         echo '<h2>Parámetros usados</h2><pre>' . e((string)json_encode($rasParams, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
         echo '<h2>Número de filas devueltas</h2><p><strong>' . count($ras) . '</strong></p>';
         if (count($ras) === 0) echo '<p><strong>La consulta de RAs devuelve 0 filas.</strong></p>';
-        echo '<table><thead><tr><th>#</th><th>id_practica_ra</th><th>codigo_modulo</th><th>nombre_modulo</th><th>ra_numero</th><th>ra_texto</th></tr></thead><tbody>';
+        echo '<table><thead><tr><th>#</th><th>id_practica_ra</th><th>codigo_modulo</th><th>nombre_modulo</th><th>ra_numero</th><th>ra_texto</th><th>RA_N_MODULO</th><th>RA_N_RESULTADO_APRENDIZAJE</th></tr></thead><tbody>';
         foreach ($ras as $idx => $raRow) {
-          $moduleName = trim((string)($raRow['materia_general'] ?? ''));
-          if ($moduleName === '') $moduleName = trim((string)($raRow['materia_propia'] ?? ''));
-          echo '<tr><td>' . ($idx + 1) . '</td><td>' . e((string)($raRow['id_practica_ra'] ?? '')) . '</td><td>' . e((string)($raRow['codigo_modulo'] ?? '')) . '</td><td>' . e($moduleName) . '</td><td>' . e((string)($raRow['ra_numero'] ?? '')) . '</td><td>' . e(normalize_ra_for_display((string)($raRow['ra_numero'] ?? ''))) . '</td></tr>';
+          $moduleName = trim((string)($raRow['nombre_modulo'] ?? ''));
+          $raNumero = trim((string)($raRow['ra_numero'] ?? ''));
+          $raTextoBase = trim((string)($raRow['ra_texto'] ?? ''));
+          $raTextoFinal = $raTextoBase !== '' ? $raTextoBase : normalize_ra_for_display($raNumero);
+          $raModuloFinal = trim((string)($raRow['codigo_modulo'] ?? ''));
+          if ($raModuloFinal === '') $raModuloFinal = $moduleName;
+          echo '<tr><td>' . ($idx + 1) . '</td><td>' . e((string)($raRow['id_practica_ra'] ?? '')) . '</td><td>' . e((string)($raRow['codigo_modulo'] ?? '')) . '</td><td>' . e($moduleName) . '</td><td>' . e($raNumero) . '</td><td>' . e($raTextoBase) . '</td><td>' . e($raModuloFinal) . '</td><td>' . e($raTextoFinal) . '</td></tr>';
         }
-        echo '</tbody></table></body></html>';
+        echo '</tbody></table>';
+        if (count($ras) === 0) echo '<p>Revisa si existen registros en practicas_ras para id_curso_escolar=' . e((string)$idCursoEscolar) . ' e id_ciclo=' . e((string)$idCiclo) . '.</p>';
+        $diagSql = 'SELECT DISTINCT
+            pr.id_curso_escolar,
+            pr.id_ciclo,
+            pr.curso_escolar,
+            pr.ciclo,
+            COUNT(*) AS total
+           FROM practicas_ras pr
+           GROUP BY pr.id_curso_escolar, pr.id_ciclo, pr.curso_escolar, pr.ciclo
+           ORDER BY pr.id_curso_escolar, pr.id_ciclo';
+        $diagRows = $pdo->query($diagSql)->fetchAll(PDO::FETCH_ASSOC);
+        echo '<h2>Diagnóstico de datos en practicas_ras</h2><pre>' . e($diagSql) . '</pre>';
+        echo '<table><thead><tr><th>id_curso_escolar</th><th>id_ciclo</th><th>curso_escolar</th><th>ciclo</th><th>total</th></tr></thead><tbody>';
+        foreach ($diagRows as $diagRow) {
+          echo '<tr><td>' . e((string)($diagRow['id_curso_escolar'] ?? '')) . '</td><td>' . e((string)($diagRow['id_ciclo'] ?? '')) . '</td><td>' . e((string)($diagRow['curso_escolar'] ?? '')) . '</td><td>' . e((string)($diagRow['ciclo'] ?? '')) . '</td><td>' . e((string)($diagRow['total'] ?? '')) . '</td></tr>';
+        }
+        echo '</tbody></table>';
+
+        echo '</body></html>';
         exit;
       }
 
@@ -249,14 +292,13 @@ try {
           continue;
         }
 
-        $moduleName = trim((string)($raRow['materia_general'] ?? ''));
-        if ($moduleName === '') {
-          $moduleName = trim((string)($raRow['materia_propia'] ?? ''));
-        }
-        $raNumero = trim((string)($raRow['ra_numero'] ?? ''));
+        $moduleName = trim((string)($raRow['nombre_modulo'] ?? ''));
         $codigoModulo = trim((string)($raRow['codigo_modulo'] ?? ''));
+        $raNumero = trim((string)($raRow['ra_numero'] ?? ''));
+        $raTexto = trim((string)($raRow['ra_texto'] ?? ''));
+        $raTextoFinal = $raTexto !== '' ? $raTexto : normalize_ra_for_display($raNumero);
         $repl['{{RA_' . $i . '_MODULO}}'] = e($codigoModulo !== '' ? $codigoModulo : $moduleName);
-        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = e(normalize_ra_for_display($raNumero));
+        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = e($raTextoFinal);
       }
 
       if (count($ras) === 0) {
@@ -267,11 +309,12 @@ try {
 
       if ($isLocal) {
         $firstRow = $ras[0] ?? [];
-        $firstModule = trim((string)($firstRow['materia_general'] ?? ''));
+        $firstModule = trim((string)($firstRow['codigo_modulo'] ?? ''));
         if ($firstModule === '') {
-          $firstModule = trim((string)($firstRow['materia_propia'] ?? ''));
+          $firstModule = trim((string)($firstRow['nombre_modulo'] ?? ''));
         }
-        $firstRa = trim((string)($firstRow['ra_numero'] ?? ''));
+        $firstRa = trim((string)($firstRow['ra_texto'] ?? ''));
+        if ($firstRa === '') $firstRa = normalize_ra_for_display(trim((string)($firstRow['ra_numero'] ?? '')));
         $html .= "\n<!-- Debug RAs informe tutor:\n"
           . 'id_practica=' . $id_practica . "\n"
           . 'id_ciclo=' . $idCiclo . "\n"
@@ -279,7 +322,8 @@ try {
           . 'ras_encontrados=' . count($ras) . "\n"
           . 'primer_modulo=' . $firstModule . "\n"
           . 'primer_ra=' . $firstRa . "\n"
-          . 'sql=' . preg_replace('/\s+/', ' ', trim($rasSql)) . "\n"
+          . 'sql=' . preg_replace('/\s+/', ' ', trim($rasSqlUsed)) . "\n"
+          . 'fallback=' . ($usedFallback ? '1' : '0') . "\n"
           . 'parametros=' . json_encode($rasParams, JSON_UNESCAPED_UNICODE) . "\n"
           . "-->\n";
       }
