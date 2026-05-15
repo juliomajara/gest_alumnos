@@ -131,22 +131,27 @@
     .motivos { margin-top: 3mm; }
     .motivos td { height: 36mm; }
 
+    .cierre-pagina-2 {
+      height: 42mm;
+      margin-top: 8mm;
+    }
+
     .firma-final {
       text-align: center;
       line-height: 1.45;
       font-size: 8pt;
-      margin-top: 2.8mm;
+      margin-top: 0;
     }
 
-    .espacio-antes-notas {
-      height: 28mm;
+    .espaciador-final {
+      height: 25mm;
     }
 
     .notas-finales {
       font-size: 5.5pt;
       line-height: 1.05;
-      border-top: 0.25mm solid #000;
-      padding-top: 1.2mm;
+      border-top: 0.2mm solid #000;
+      padding-top: 1mm;
       page-break-inside: avoid;
     }
   </style>
@@ -255,18 +260,20 @@
     <tr><td>{{MOTIVOS_NO_SUPERACION}}</td></tr>
   </table>
 
-  <div class="firma-final">
-    En <span>Getafe</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
-    El/La tutor/a de empresa u organismo equiparado
-  </div>
+  <div class="cierre-pagina-2">
+    <div class="firma-final">
+      En <span>{{LOCALIDAD_FIRMA}}</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
+      El/La tutor/a de empresa u organismo equiparado
+    </div>
 
-  <div class="espacio-antes-notas"></div>
+    <div class="espaciador-final"></div>
 
-  <div class="notas-finales">
-    <div>(1) Indíquese básico, medio o superior, según proceda.</div>
-    <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
-    <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
-    <div>{{LEYENDA_MODULOS}}</div>
+    <div class="notas-finales">
+      <div>(1) Indíquese básico, medio o superior, según proceda.</div>
+      <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
+      <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
+      <div>{{LEYENDA_MODULOS}}</div>
+    </div>
   </div>
 </body>
 </html>
