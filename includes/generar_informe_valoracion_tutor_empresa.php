@@ -101,7 +101,8 @@ try {
         '{{OBSERVACIONES_TUTOR_EMPRESA}}' => 'Texto breve de prueba.', '{{MOTIVOS_NO_SUPERACION}}' => '',
         '{{LOCALIDAD_FIRMA}}' => 'Getafe', '{{DIA_FIRMA}}' => '14', '{{MES_FIRMA}}' => 'mayo', '{{ANIO_FIRMA}}' => '2026',
       ];
-      $repl['{{RAS_ROWS}}'] = '<tr><td>M1</td><td>RA 1</td><td class="check-cell"></td><td class="check-cell"></td></tr>';
+      $repl['{{RAS_ROWS}}'] = '<tr><td class="modulo-cell">M1</td><td>RA 1</td><td class="check-cell"></td><td class="check-cell"></td></tr>';
+      $repl['{{LEYENDA_MODULOS}}'] = '';
       $html = strtr($htmlTemplate, $repl);
     } else {
       $fase = 'consulta principal';
@@ -167,6 +168,7 @@ try {
       $repl['{{PERIODO_2}}'] = '';
       $repl['{{PERIODO_3}}'] = '';
       $repl['{{RAS_ROWS}}'] = '';
+      $repl['{{LEYENDA_MODULOS}}'] = '';
 
       $idCursoEscolar = (int)($practice['id_curso_escolar'] ?? 0);
       $idCiclo = (int)($practice['id_ciclo'] ?? 0);
@@ -275,6 +277,7 @@ try {
       }
 
       $rasRowsHtml = '';
+      $modulosLeyenda = [];
       foreach ($ras as $raRow) {
         if (!is_array($raRow)) {
           continue;
@@ -287,8 +290,19 @@ try {
         $raTextoFinal = $raTexto !== '' ? $raTexto : normalize_ra_for_display($raNumero);
         $raModuloFinal = $codigoModulo !== '' ? $codigoModulo : $moduleName;
 
+        $claveLeyenda = $codigoModulo !== '' ? $codigoModulo : $moduleName;
+        if ($claveLeyenda !== '' && !isset($modulosLeyenda[$claveLeyenda])) {
+          if ($codigoModulo !== '' && $moduleName !== '') {
+            $modulosLeyenda[$claveLeyenda] = $codigoModulo . ' - ' . $moduleName;
+          } elseif ($codigoModulo !== '') {
+            $modulosLeyenda[$claveLeyenda] = $codigoModulo;
+          } else {
+            $modulosLeyenda[$claveLeyenda] = $moduleName;
+          }
+        }
+
         $rasRowsHtml .= '<tr>';
-        $rasRowsHtml .= '<td>' . e($raModuloFinal) . '</td>';
+        $rasRowsHtml .= '<td class="modulo-cell">' . e($raModuloFinal) . '</td>';
         $rasRowsHtml .= '<td>' . e($raTextoFinal) . '</td>';
         $rasRowsHtml .= '<td class="check-cell"></td>';
         $rasRowsHtml .= '<td class="check-cell"></td>';
@@ -299,6 +313,11 @@ try {
         $rasRowsHtml = '<tr><td></td><td></td><td class="check-cell"></td><td class="check-cell"></td></tr>';
       }
       $repl['{{RAS_ROWS}}'] = $rasRowsHtml;
+      $leyendaModulos = '';
+      if (!empty($modulosLeyenda)) {
+        $leyendaModulos = 'Módulos: ' . implode('; ', array_values($modulosLeyenda)) . '.';
+      }
+      $repl['{{LEYENDA_MODULOS}}'] = e($leyendaModulos);
 
       if (count($ras) === 0) {
         error_log('[informe_tutor_empresa] No se encontraron RAs para id_practica=' . $id_practica . ', id_ciclo=' . $idCiclo . ', id_curso_escolar=' . $idCursoEscolar);
