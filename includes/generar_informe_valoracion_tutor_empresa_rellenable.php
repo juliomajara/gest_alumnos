@@ -124,10 +124,10 @@ try {
         '{{TUTOR_EMPRESA_NOMBRE}}' => 'Carlos', '{{TUTOR_EMPRESA_EMAIL}}' => 'carlos@example.com',
         '{{CICLO_DENOMINACION}}' => 'Desarrollo de Aplicaciones Web', '{{GRADO}}' => 'Superior', '{{CODIGO_CICLO}}' => 'IFCS03',
         '{{HORAS_REALIZADAS}}' => '370', '{{PERIODO_1}}' => 'X', '{{PERIODO_2}}' => '', '{{PERIODO_3}}' => '',
-        '{{AREAS_PUESTOS_VALORACION}}' => 'Describa aquí las áreas y/o puestos de trabajo y la valoración del desempeño de las actividades realizadas.',
-        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}' => 'Valore aquí las competencias transversales del alumno/a.',
-        '{{OBSERVACIONES_TUTOR_EMPRESA}}' => 'Escriba aquí sus observaciones.',
-        '{{MOTIVOS_NO_SUPERACION}}' => 'Indique aquí los motivos de no superación de los resultados de aprendizaje.',
+        '{{AREAS_PUESTOS_VALORACION}}' => '.',
+        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}' => '.',
+        '{{OBSERVACIONES_TUTOR_EMPRESA}}' => '.',
+        '{{MOTIVOS_NO_SUPERACION}}' => '.',
         '{{LOCALIDAD_FIRMA}}' => 'Getafe', '{{DIA_FIRMA}}' => '14', '{{MES_FIRMA}}' => 'mayo', '{{ANIO_FIRMA}}' => '2026',
       ];
       $repl['{{RAS_ROWS}}'] = '<tr><td class="modulo-cell">M1</td><td>RA 1</td><td class="check-cell"></td><td class="check-cell"></td></tr>';
@@ -186,10 +186,10 @@ try {
         '{{GRADO}}'=>e(value($practice,'ciclo_grado')),
         '{{CODIGO_CICLO}}'=>e(value($practice,'ciclo_codigo')),
         '{{HORAS_REALIZADAS}}'=>e(value($practice,'horas')),
-        '{{AREAS_PUESTOS_VALORACION}}'=>(value($practice,'areas_puestos_trabajo') !== '' ? e(value($practice,'areas_puestos_trabajo')) : 'Describa aquí las áreas y/o puestos de trabajo y la valoración del desempeño de las actividades realizadas.'),
-        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>(value($practice,'valoracion_competencias_transversales') !== '' ? e(value($practice,'valoracion_competencias_transversales')) : 'Valore aquí las competencias transversales del alumno/a.'),
-        '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>(value($practice,'observaciones_tutor_empresa') !== '' ? e(value($practice,'observaciones_tutor_empresa')) : 'Escriba aquí sus observaciones.'),
-        '{{MOTIVOS_NO_SUPERACION}}'=>(value($practice,'motivos_no_superacion') !== '' ? e(value($practice,'motivos_no_superacion')) : 'Indique aquí los motivos de no superación de los resultados de aprendizaje.'),
+        '{{AREAS_PUESTOS_VALORACION}}'=>(value($practice,'areas_puestos_trabajo') !== '' ? e(value($practice,'areas_puestos_trabajo')) : '.'),
+        '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>(value($practice,'valoracion_competencias_transversales') !== '' ? e(value($practice,'valoracion_competencias_transversales')) : '.'),
+        '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>(value($practice,'observaciones_tutor_empresa') !== '' ? e(value($practice,'observaciones_tutor_empresa')) : '.'),
+        '{{MOTIVOS_NO_SUPERACION}}'=>(value($practice,'motivos_no_superacion') !== '' ? e(value($practice,'motivos_no_superacion')) : '.'),
         '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'direccion_localidad')),
       ];
       $fechaFirma = parse_iso_date((string)($practice['fecha_fin_extra'] ?? ''));
