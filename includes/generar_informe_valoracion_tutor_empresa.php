@@ -101,12 +101,7 @@ try {
         '{{OBSERVACIONES_TUTOR_EMPRESA}}' => 'Texto breve de prueba.', '{{MOTIVOS_NO_SUPERACION}}' => '',
         '{{LOCALIDAD_FIRMA}}' => 'Getafe', '{{DIA_FIRMA}}' => '14', '{{MES_FIRMA}}' => 'mayo', '{{ANIO_FIRMA}}' => '2026',
       ];
-      for ($i = 1; $i <= 6; $i++) {
-        $repl['{{RA_' . $i . '_MODULO}}'] = 'M' . $i;
-        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = 'RA ' . $i;
-        $repl['{{RA_' . $i . '_SUPERADO}}'] = 'X';
-        $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
-      }
+      $repl['{{RAS_ROWS}}'] = '<tr><td>M1</td><td>RA 1</td><td class="check-cell"></td><td class="check-cell"></td></tr>';
       $html = strtr($htmlTemplate, $repl);
     } else {
       $fase = 'consulta principal';
@@ -171,12 +166,7 @@ try {
       $repl['{{PERIODO_1}}'] = 'X';
       $repl['{{PERIODO_2}}'] = '';
       $repl['{{PERIODO_3}}'] = '';
-      for ($i = 1; $i <= 6; $i++) {
-        $repl['{{RA_' . $i . '_MODULO}}'] = '';
-        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = '';
-        $repl['{{RA_' . $i . '_SUPERADO}}'] = '';
-        $repl['{{RA_' . $i . '_NO_SUPERADO}}'] = '';
-      }
+      $repl['{{RAS_ROWS}}'] = '';
 
       $idCursoEscolar = (int)($practice['id_curso_escolar'] ?? 0);
       $idCiclo = (int)($practice['id_ciclo'] ?? 0);
@@ -195,8 +185,7 @@ try {
          LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
          WHERE pr.id_curso_escolar = :id_curso_escolar
            AND pr.id_ciclo = :id_ciclo
-         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC
-         LIMIT 6';
+         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC';
 
       $rasSqlFallback = 'SELECT
           pr.id_practica_ra,
@@ -209,8 +198,7 @@ try {
          LEFT JOIN modulos m ON m.id_modulo = COALESCE(pr.id_modulo, ra.id_modulo)
          WHERE TRIM(COALESCE(pr.curso_escolar, "")) = :curso_escolar_texto
            AND TRIM(COALESCE(pr.ciclo, "")) = :ciclo_texto
-         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC
-         LIMIT 6';
+         ORDER BY m.codigo ASC, CAST(ra.numero AS UNSIGNED) ASC, ra.numero ASC, pr.id_practica_ra ASC';
 
       $ras = [];
       $rasSqlUsed = '';
@@ -286,8 +274,8 @@ try {
         exit;
       }
 
-      for ($i = 1; $i <= 6; $i++) {
-        $raRow = $ras[$i - 1] ?? null;
+      $rasRowsHtml = '';
+      foreach ($ras as $raRow) {
         if (!is_array($raRow)) {
           continue;
         }
@@ -297,9 +285,20 @@ try {
         $raNumero = trim((string)($raRow['ra_numero'] ?? ''));
         $raTexto = trim((string)($raRow['ra_texto'] ?? ''));
         $raTextoFinal = $raTexto !== '' ? $raTexto : normalize_ra_for_display($raNumero);
-        $repl['{{RA_' . $i . '_MODULO}}'] = e($codigoModulo !== '' ? $codigoModulo : $moduleName);
-        $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = e($raTextoFinal);
+        $raModuloFinal = $codigoModulo !== '' ? $codigoModulo : $moduleName;
+
+        $rasRowsHtml .= '<tr>';
+        $rasRowsHtml .= '<td>' . e($raModuloFinal) . '</td>';
+        $rasRowsHtml .= '<td>' . e($raTextoFinal) . '</td>';
+        $rasRowsHtml .= '<td class="check-cell"></td>';
+        $rasRowsHtml .= '<td class="check-cell"></td>';
+        $rasRowsHtml .= '</tr>';
       }
+
+      if ($rasRowsHtml === '') {
+        $rasRowsHtml = '<tr><td></td><td></td><td class="check-cell"></td><td class="check-cell"></td></tr>';
+      }
+      $repl['{{RAS_ROWS}}'] = $rasRowsHtml;
 
       if (count($ras) === 0) {
         error_log('[informe_tutor_empresa] No se encontraron RAs para id_practica=' . $id_practica . ', id_ciclo=' . $idCiclo . ', id_curso_escolar=' . $idCursoEscolar);
