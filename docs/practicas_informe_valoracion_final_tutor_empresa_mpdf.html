@@ -50,7 +50,7 @@
 
     .title-block {
       text-align: center;
-      margin-top: 4mm;
+      margin-top: 10mm;
       margin-bottom: 6mm;
     }
 
@@ -148,7 +148,7 @@
     }
 
     .espacio-empuje {
-      height: 28mm;
+      height: 50mm;
     }
 
     .notas-finales {
@@ -159,11 +159,6 @@
       page-break-inside: avoid;
     }
 
-    .linea-notas {
-      border-top: 0.2mm solid #000;
-      height: 1mm;
-      margin-bottom: 1mm;
-    }
   </style>
 </head>
 <body>
@@ -231,11 +226,14 @@
 
   <table class="tight-block period-table">
     <tr>
-      <td style="width:44%;"><span class="label">Nº de horas realizadas:</span> <span class="value">{{HORAS_REALIZADAS}}</span></td>
-      <td style="width:24%;"><span class="label">Periodo de formación:</span></td>
-      <td style="width:10%;" class="center"><span class="label">1º</span><br>{{PERIODO_1}}</td>
-      <td style="width:10%;" class="center"><span class="label">2º</span><br>{{PERIODO_2}}</td>
-      <td style="width:12%;" class="center"><span class="label">3º</span><br>{{PERIODO_3}}</td>
+      <td style="width:44%;" class="center"><span class="label">Nº de horas realizadas:</span> <span class="value">{{HORAS_REALIZADAS}}</span></td>
+      <td style="width:26%;" class="center"><span class="label">Periodo de formación:</span></td>
+      <td style="width:7%;" class="center"><span class="label">1º</span></td>
+      <td style="width:3%;" class="center">{{PERIODO_1}}</td>
+      <td style="width:7%;" class="center"><span class="label">2º</span></td>
+      <td style="width:3%;" class="center">{{PERIODO_2}}</td>
+      <td style="width:7%;" class="center"><span class="label">3º</span></td>
+      <td style="width:3%;" class="center">{{PERIODO_3}}</td>
     </tr>
   </table>
 
@@ -282,7 +280,7 @@
     </tr>
     <tr>
       <td class="notas-finales">
-        <div class="linea-notas"></div>
+        <hr>
         <div>(1) Indíquese básico, medio o superior, según proceda.</div>
         <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
         <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
