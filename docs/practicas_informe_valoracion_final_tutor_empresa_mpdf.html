@@ -132,26 +132,30 @@
     .motivos td { height: 36mm; }
 
     .cierre-pagina-2 {
-      height: 42mm;
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 8mm;
+    }
+
+    .cierre-pagina-2 td {
+      border: none;
     }
 
     .firma-final {
       text-align: center;
       line-height: 1.45;
       font-size: 8pt;
-      margin-top: 0;
     }
 
-    .espaciador-final {
-      height: 25mm;
+    .espacio-empuje {
+      height: 28mm;
     }
 
     .notas-finales {
+      border-top: 0.2mm solid #000 !important;
+      padding-top: 1mm;
       font-size: 5.5pt;
       line-height: 1.05;
-      border-top: 0.2mm solid #000;
-      padding-top: 1mm;
       page-break-inside: avoid;
     }
   </style>
@@ -260,20 +264,24 @@
     <tr><td>{{MOTIVOS_NO_SUPERACION}}</td></tr>
   </table>
 
-  <div class="cierre-pagina-2">
-    <div class="firma-final">
-      En <span>{{LOCALIDAD_FIRMA}}</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
-      El/La tutor/a de empresa u organismo equiparado
-    </div>
-
-    <div class="espaciador-final"></div>
-
-    <div class="notas-finales">
-      <div>(1) Indíquese básico, medio o superior, según proceda.</div>
-      <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
-      <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
-      <div>{{LEYENDA_MODULOS}}</div>
-    </div>
-  </div>
+  <table class="cierre-pagina-2">
+    <tr>
+      <td class="firma-final">
+        En {{LOCALIDAD_FIRMA}} a {{DIA_FIRMA}} de {{MES_FIRMA}} de {{ANIO_FIRMA}}<br>
+        El/La tutor/a de empresa u organismo equiparado
+      </td>
+    </tr>
+    <tr>
+      <td class="espacio-empuje">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="notas-finales">
+        <div>(1) Indíquese básico, medio o superior, según proceda.</div>
+        <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
+        <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
+        <div>{{LEYENDA_MODULOS}}</div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

@@ -32,6 +32,22 @@ function normalize_ra_for_display(string $raNumero): string {
   if (stripos($raNumero, 'RA') === 0) return $raNumero;
   return 'RA ' . $raNumero;
 }
+function limpiarNombreArchivo(string $text): string {
+  $text = trim($text);
+  if ($text === '') return '';
+  if (class_exists('Transliterator')) {
+    $tr = Transliterator::create('NFD; [:Nonspacing Mark:] Remove; NFC');
+    if ($tr instanceof Transliterator) {
+      $text = $tr->transliterate($text);
+    }
+  } else {
+    $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+    if ($converted !== false) $text = $converted;
+  }
+  $text = preg_replace('/[^A-Za-z0-9]+/', '_', $text) ?? '';
+  $text = trim($text, '_');
+  return $text;
+}
 
 $fase = 'inicio';
 $id_practica = 0;
@@ -158,7 +174,7 @@ try {
         '{{VALORACION_COMPETENCIAS_TRANSVERSALES}}'=>e(value($practice,'valoracion_competencias_transversales')),
         '{{OBSERVACIONES_TUTOR_EMPRESA}}'=>e(value($practice,'observaciones_tutor_empresa')),
         '{{MOTIVOS_NO_SUPERACION}}'=>e(value($practice,'motivos_no_superacion')),
-        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma')),
+        '{{LOCALIDAD_FIRMA}}'=>e(value($practice,'localidad_firma') !== '' ? value($practice,'localidad_firma') : 'Getafe'),
       ];
       $today = new DateTimeImmutable('today');
       $repl['{{DIA_FIRMA}}'] = e($today->format('d'));
@@ -382,7 +398,13 @@ try {
   $head = file_get_contents($tmpPdf, false, null, 0, 5);
   if ($head !== '%PDF-') throw new RuntimeException('PDF corrupto: cabecera inválida.');
 
-  $filename = 'informe_valoracion_tutor_empresa_' . $id_practica . '.pdf';
+  $apellido1 = limpiarNombreArchivo((string)($practice['alumno_apellido1'] ?? ''));
+  $nombre = limpiarNombreArchivo((string)($practice['alumno_nombre'] ?? ''));
+  if ($apellido1 !== '' && $nombre !== '') {
+    $filename = 'informe_final_tutor_' . $apellido1 . '_' . $nombre . '.pdf';
+  } else {
+    $filename = 'informe_final_tutor_practica_' . $id_practica . '.pdf';
+  }
   while (ob_get_level() > 0) ob_end_clean();
   header('Content-Type: application/pdf');
   header('Content-Length: ' . (string) filesize($tmpPdf));
