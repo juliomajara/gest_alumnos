@@ -193,6 +193,8 @@ try {
           'id_ciclo' => $idCiclo,
         ]);
         $ras = $rasStmt->fetchAll(PDO::FETCH_ASSOC);
+      } else {
+        error_log('[informe_tutor_empresa] No se pudo consultar practicas_ras por falta de filtros válidos. id_practica=' . $id_practica . ', id_ciclo=' . $idCiclo . ', id_curso_escolar=' . $idCursoEscolar);
       }
 
       for ($i = 1; $i <= 6; $i++) {
@@ -210,10 +212,34 @@ try {
         $repl['{{RA_' . $i . '_MODULO}}'] = e($moduleName);
         $repl['{{RA_' . $i . '_RESULTADO_APRENDIZAJE}}'] = e($raNumero !== '' ? 'RA ' . $raNumero : '');
       }
-      $html = strtr($htmlTemplate, $repl);
-    }
 
-    $html = preg_replace('/\{\{[^}]+\}\}/', '', $html) ?? $html;
+      if (count($ras) === 0) {
+        error_log('[informe_tutor_empresa] No se encontraron RAs para id_practica=' . $id_practica . ', id_ciclo=' . $idCiclo . ', id_curso_escolar=' . $idCursoEscolar);
+      }
+
+      $html = strtr($htmlTemplate, $repl);
+
+      if ($isLocal) {
+        $firstRow = $ras[0] ?? [];
+        $firstModule = trim((string)($firstRow['materia_general'] ?? ''));
+        if ($firstModule === '') {
+          $firstModule = trim((string)($firstRow['materia_propia'] ?? ''));
+        }
+        $firstRa = trim((string)($firstRow['ra_numero'] ?? ''));
+        $html .= "\n<!-- Debug RAs informe tutor:\n"
+          . 'id_practica=' . $id_practica . "\n"
+          . 'id_ciclo=' . $idCiclo . "\n"
+          . 'id_curso_escolar=' . $idCursoEscolar . "\n"
+          . 'ras_encontrados=' . count($ras) . "\n"
+          . 'primer_modulo=' . $firstModule . "\n"
+          . 'primer_ra=' . $firstRa . "\n"
+          . 'fuente=practicas_ras por id_curso_escolar + id_ciclo (mismo patrón plan de formación)' . "\n"
+          . "-->\n";
+      }
+    }
+    if (preg_match('/{{[^}]+}}/', $html, $m) === 1) {
+      throw new RuntimeException('Quedan placeholders sin sustituir en la plantilla. Ejemplo: ' . $m[0]);
+    }
     $mpdfConfig['margin_left'] = 10;
     $mpdfConfig['margin_right'] = 10;
     $mpdfConfig['margin_top'] = 8;
