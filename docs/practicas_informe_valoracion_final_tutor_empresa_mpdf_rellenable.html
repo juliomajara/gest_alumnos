@@ -177,6 +177,7 @@
   </style>
 </head>
 <body>
+  <form action="" method="post">
   <table class="no-border logo-table">
     <tr>
       <td class="logo-cell" style="width:33%; text-align:left;">
@@ -254,16 +255,16 @@
 
   <table>
     <tr><td class="section">Áreas y/o puestos de trabajo en los que se han realizado las actividades formativas. Valoración del desempeño de las actividades realizadas por el/la alumno/a.</td></tr>
-    <tr class="box-medium"><td>
-      <input type="text" name="areas_puestos_valoracion" multiline="1" style="height:22mm; width:100%;" class="textarea">
+    <tr><td style="padding:0; border:0.2mm solid #000;">
+      <textarea name="areas_puestos_valoracion" rows="5" cols="80" wrap="virtual" style="width:100%; font-size:9pt; border:none; background:#fff;">{{AREAS_PUESTOS_VALORACION}}</textarea>
     </td></tr>
     <tr><td class="section">Valoración de las competencias transversales</td></tr>
-    <tr class="box-medium"><td>
-      <input type="text" name="valoracion_competencias_transversales" multiline="1" style="height:22mm; width:100%;" class="textarea">
+    <tr><td style="padding:0; border:0.2mm solid #000;">
+      <textarea name="valoracion_competencias_transversales" rows="5" cols="80" wrap="virtual" style="width:100%; font-size:9pt; border:none; background:#fff;">{{VALORACION_COMPETENCIAS_TRANSVERSALES}}</textarea>
     </td></tr>
     <tr><td class="section">Observaciones del tutor de empresa u organismo equiparado</td></tr>
-    <tr class="box-large"><td>
-      <input type="text" name="observaciones_tutor_empresa" multiline="1" style="height:22mm; width:100%;" class="textarea">
+    <tr><td style="padding:0; border:0.2mm solid #000;">
+      <textarea name="observaciones_tutor_empresa" rows="6" cols="80" wrap="virtual" style="width:100%; font-size:9pt; border:none; background:#fff;">{{OBSERVACIONES_TUTOR_EMPRESA}}</textarea>
     </td></tr>
   </table>
 
@@ -286,8 +287,8 @@
 
   <table class="motivos">
     <tr><td class="section" style="height:5mm;">En caso de no superar resultados de aprendizaje, exposición de motivos:</td></tr>
-    <tr><td>
-      <input type="text" name="motivos_no_superacion" multiline="1" style="height:28mm; width:100%;" class="textarea">
+    <tr><td style="padding:0; border:0.2mm solid #000;">
+      <textarea name="motivos_no_superacion" rows="6" cols="80" wrap="virtual" style="width:100%; font-size:9pt; border:none; background:#fff;">{{MOTIVOS_NO_SUPERACION}}</textarea>
     </td></tr>
   </table>
 
@@ -311,5 +312,6 @@
       </td>
     </tr>
   </table>
+  </form>
 </body>
 </html>
