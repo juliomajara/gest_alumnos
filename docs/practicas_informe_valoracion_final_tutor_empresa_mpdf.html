@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Informe de valoración final del tutor de empresa</title>
+  <style>
+    body {
+      font-family: dejavusanscondensed, dejavusans, Arial, sans-serif;
+      font-size: 8pt;
+      line-height: 1.12;
+      color: #000;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+
+    td, th {
+      border: 0.2mm solid #000;
+      padding: 1mm 1.2mm;
+      vertical-align: top;
+      font-weight: normal;
+    }
+
+    .no-border,
+    .no-border td,
+    .no-border th {
+      border: none;
+      padding: 0;
+    }
+
+    .center { text-align: center; }
+    .right { text-align: right; }
+    .bold { font-weight: bold; }
+    .italic { font-style: italic; }
+    .small { font-size: 6.4pt; line-height: 1.05; }
+    .tiny { font-size: 5.8pt; line-height: 1.05; }
+    .section { background-color: #e6e6e6; font-weight: bold; }
+    .label { font-weight: bold; }
+    .value { font-weight: normal; }
+    .nowrap { white-space: nowrap; }
+
+    .logo-table { margin-top: 0; }
+    .logo-cell { height: 10mm; vertical-align: top; }
+    img.logo-cm { width: 18mm; height: auto; }
+    img.logo-eu { width: 42mm; height: auto; }
+    img.logo-fondos { width: 36mm; height: auto; }
+
+    .title-block {
+      text-align: center;
+      margin-top: 4mm;
+      margin-bottom: 6mm;
+    }
+
+    .anexo {
+      font-weight: bold;
+      font-size: 8.5pt;
+      margin-bottom: 1mm;
+    }
+
+    .title {
+      font-weight: bold;
+      font-size: 10pt;
+      line-height: 1.05;
+    }
+
+    .meta-table {
+      width: 73%;
+      margin-left: 13.5%;
+      margin-bottom: 10mm;
+    }
+
+    .meta-table td {
+      height: 11mm;
+      text-align: center;
+      vertical-align: middle;
+      font-weight: bold;
+    }
+
+    .meta-table .value-row td {
+      height: 7mm;
+      font-weight: normal;
+    }
+
+    .block { margin-bottom: 5mm; }
+    .tight-block { margin-bottom: 2.5mm; }
+    .row-low td { height: 4.8mm; }
+    .row-mid td { height: 6mm; }
+    .box-small td { height: 15mm; }
+    .box-medium td { height: 17mm; }
+    .box-large td { height: 24mm; }
+
+    .period-table td { height: 10mm; vertical-align: middle; }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .page2-top-space {
+      height: 18mm;
+      line-height: 18mm;
+    }
+
+    .ra-table td {
+      height: 6.7mm;
+      vertical-align: middle;
+    }
+
+    .ra-table .ra-heading td {
+      height: 12mm;
+      vertical-align: middle;
+      font-weight: bold;
+    }
+
+    .ra-table .ra-subheading td {
+      height: 5mm;
+      vertical-align: middle;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .check-cell {
+      text-align: center;
+      font-size: 9pt;
+      line-height: 1;
+      vertical-align: middle;
+    }
+
+    .motivos { margin-top: 28mm; }
+    .motivos td { height: 42mm; }
+
+    .signature {
+      margin-top: 17mm;
+      text-align: center;
+      line-height: 1.55;
+      font-size: 8pt;
+    }
+
+    .footnotes {
+      margin-top: 62mm;
+      font-size: 5.6pt;
+      line-height: 1.05;
+    }
+
+    .footnote-line {
+      width: 34mm;
+      border-top: 0.25mm solid #000;
+      height: 1.5mm;
+      margin-bottom: 1.5mm;
+    }
+  </style>
+</head>
+<body>
+  <table class="no-border logo-table">
+    <tr>
+      <td class="logo-cell" style="width:33%; text-align:left;">
+        <img class="logo-cm" src="bandera_CM.png" alt="Comunidad de Madrid">
+      </td>
+      <td class="logo-cell" style="width:34%; text-align:center; padding-top:5mm;">
+        <img class="logo-eu" src="logo_cofinanciado_union_europea.png" alt="Cofinanciado por la Unión Europea">
+      </td>
+      <td class="logo-cell" style="width:33%; text-align:center; padding-top:5mm;">
+        <img class="logo-fondos" src="logo_fondos_europeos.png" alt="Fondos Europeos">
+      </td>
+    </tr>
+  </table>
+
+  <div class="title-block">
+    <div class="anexo">Anexo</div>
+    <div class="title">Informe de valoración final del tutor de la empresa u organismo equiparado</div>
+  </div>
+
+  <table class="meta-table">
+    <tr>
+      <td style="width:34%;">Curso académico</td>
+      <td style="width:33%;">Nº del Convenio o Acuerdo <sup>(2)</sup></td>
+      <td style="width:33%;">Nº del Anexo Relación<br>de alumnos<sup>(3)</sup></td>
+    </tr>
+    <tr class="value-row">
+      <td>{{CURSO_ACADEMICO}}</td>
+      <td>{{NUM_CONVENIO}}</td>
+      <td>{{NUM_ANEXO_RELACION}}</td>
+    </tr>
+  </table>
+
+  <table class="block">
+    <tr><td colspan="2" class="section">Datos del alumno</td></tr>
+    <tr class="row-mid">
+      <td style="width:58%;"><span class="label">Apellidos</span> <span class="value">{{ALUMNO_APELLIDOS}}</span></td>
+      <td style="width:42%;"><span class="label">Nombre</span> <span class="value">{{ALUMNO_NOMBRE}}</span></td>
+    </tr>
+    <tr class="row-mid"><td colspan="2"><span class="label">e-mail de contacto:</span> <span class="value">{{ALUMNO_EMAIL}}</span></td></tr>
+  </table>
+
+  <table class="tight-block">
+    <tr><td colspan="2" class="section">Datos del centro de trabajo</td></tr>
+    <tr class="row-low"><td colspan="2"><span class="label">DENOMINACIÓN:</span> <span class="value">{{CENTRO_TRABAJO_DENOMINACION}}</span></td></tr>
+    <tr class="row-low"><td colspan="2"><span class="label italic">Tutor de la empresa u organismo equiparado</span></td></tr>
+    <tr class="row-mid">
+      <td style="width:58%;"><span class="label">Apellidos</span> <span class="value">{{TUTOR_EMPRESA_APELLIDOS}}</span></td>
+      <td style="width:42%;"><span class="label">Nombre</span> <span class="value">{{TUTOR_EMPRESA_NOMBRE}}</span></td>
+    </tr>
+    <tr class="row-mid"><td colspan="2"><span class="label">E-mail del tutor empresa u organismo equiparado:</span> <span class="value">{{TUTOR_EMPRESA_EMAIL}}</span></td></tr>
+  </table>
+
+  <table class="tight-block">
+    <tr><td colspan="2" class="section">Datos de los estudios realizados</td></tr>
+    <tr class="row-low"><td colspan="2"><span class="label">DENOMINACIÓN completa del ciclo formativo / curso de especialización/programa profesional:</span> <span class="value">{{CICLO_DENOMINACION}}</span></td></tr>
+    <tr class="row-mid">
+      <td style="width:62%;"><span class="label">Grado<sup>(1)</sup></span> <span class="value">{{GRADO}}</span></td>
+      <td style="width:38%;"><span class="label">Código<sup>(2)</sup></span> <span class="value">{{CODIGO_CICLO}}</span></td>
+    </tr>
+  </table>
+
+  <table class="tight-block period-table">
+    <tr>
+      <td style="width:44%;"><span class="label">Nº de horas realizadas:</span> <span class="value">{{HORAS_REALIZADAS}}</span></td>
+      <td style="width:24%;"><span class="label">Periodo de formación:</span></td>
+      <td style="width:10%;" class="center"><span class="label">1º</span><br>{{PERIODO_1}}</td>
+      <td style="width:10%;" class="center"><span class="label">2º</span><br>{{PERIODO_2}}</td>
+      <td style="width:12%;" class="center"><span class="label">3º</span><br>{{PERIODO_3}}</td>
+    </tr>
+  </table>
+
+  <table>
+    <tr><td class="section">Áreas y/o puestos de trabajo en los que se han realizado las actividades formativas. Valoración del desempeño de las actividades realizadas por el/la alumno/a.</td></tr>
+    <tr class="box-medium"><td>{{AREAS_PUESTOS_VALORACION}}</td></tr>
+    <tr><td class="section">Valoración de las competencias transversales</td></tr>
+    <tr class="box-medium"><td>{{VALORACION_COMPETENCIAS_TRANSVERSALES}}</td></tr>
+    <tr><td class="section">Observaciones del tutor de empresa u organismo equiparado</td></tr>
+    <tr class="box-large"><td>{{OBSERVACIONES_TUTOR_EMPRESA}}</td></tr>
+  </table>
+
+  <div class="page-break"></div>
+  <div class="page2-top-space">&nbsp;</div>
+
+  <table class="ra-table">
+    <tr class="ra-heading">
+      <td colspan="2" style="width:67%;">Resultados de aprendizaje contenidos en el plan de formación, asociados a las actividades desarrolladas por el/la alumno/a</td>
+      <td style="width:17%;" class="center">Superado*</td>
+      <td style="width:16%;" class="center">No superado*</td>
+    </tr>
+    <tr class="ra-subheading">
+      <td style="width:33%;">Módulo</td>
+      <td style="width:34%;">Resultado de aprendizaje</td>
+      <td style="width:17%;"></td>
+      <td style="width:16%;"></td>
+    </tr>
+    <tr>
+      <td>{{RA_1_MODULO}}</td>
+      <td>{{RA_1_RESULTADO_APRENDIZAJE}}</td>
+      <td class="check-cell">{{RA_1_SUPERADO}}</td>
+      <td class="check-cell">{{RA_1_NO_SUPERADO}}</td>
+    </tr>
+    <tr>
+      <td>{{RA_2_MODULO}}</td>
+      <td>{{RA_2_RESULTADO_APRENDIZAJE}}</td>
+      <td class="check-cell">{{RA_2_SUPERADO}}</td>
+      <td class="check-cell">{{RA_2_NO_SUPERADO}}</td>
+    </tr>
+    <tr>
+      <td>{{RA_3_MODULO}}</td>
+      <td>{{RA_3_RESULTADO_APRENDIZAJE}}</td>
+      <td class="check-cell">{{RA_3_SUPERADO}}</td>
+      <td class="check-cell">{{RA_3_NO_SUPERADO}}</td>
+    </tr>
+    <tr>
+      <td>{{RA_4_MODULO}}</td>
+      <td>{{RA_4_RESULTADO_APRENDIZAJE}}</td>
+      <td class="check-cell">{{RA_4_SUPERADO}}</td>
+      <td class="check-cell">{{RA_4_NO_SUPERADO}}</td>
+    </tr>
+    <tr>
+      <td>{{RA_5_MODULO}}</td>
+      <td>{{RA_5_RESULTADO_APRENDIZAJE}}</td>
+      <td class="check-cell">{{RA_5_SUPERADO}}</td>
+      <td class="check-cell">{{RA_5_NO_SUPERADO}}</td>
+    </tr>
+    <tr>
+      <td>{{RA_6_MODULO}}</td>
+      <td>{{RA_6_RESULTADO_APRENDIZAJE}}</td>
+      <td class="check-cell">{{RA_6_SUPERADO}}</td>
+      <td class="check-cell">{{RA_6_NO_SUPERADO}}</td>
+    </tr>
+  </table>
+
+  <table class="motivos">
+    <tr><td class="section" style="height:5mm;">En caso de no superar resultados de aprendizaje, exposición de motivos:</td></tr>
+    <tr><td>{{MOTIVOS_NO_SUPERACION}}</td></tr>
+  </table>
+
+  <div class="signature">
+    En <span>{{LOCALIDAD_FIRMA}}</span> a <span>{{DIA_FIRMA}}</span> de <span>{{MES_FIRMA}}</span> de <span>{{ANIO_FIRMA}}</span><br>
+    El/La tutor/a de empresa u organismo equiparado<br>
+    <span class="italic">(Firma digital preferentemente)</span>
+  </div>
+
+  <div class="footnotes">
+    <div class="footnote-line"></div>
+    <div>(1) Indíquese básico, medio o superior, según proceda.</div>
+    <div>(2) Indíquese el código identificativo que consta en el correspondiente Decreto de título, curso de especialización o programa.</div>
+    <div>* A cumplimentar por el tutor/a de la empresa u organismo equiparado.</div>
+  </div>
+</body>
+</html>

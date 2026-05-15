@@ -61,6 +61,7 @@ try {
     'tempDir' => $mpdfTempDir,
     'mode' => 'utf-8',
     'format' => 'A4',
+    'orientation' => 'P',
     'default_font' => 'dejavusans',
     'allow_output_buffering' => true,
   ];
@@ -70,8 +71,8 @@ try {
     if ($debugPlainWithMargins) {
       $mpdfConfig['margin_left'] = 10;
       $mpdfConfig['margin_right'] = 10;
-      $mpdfConfig['margin_top'] = 10;
-      $mpdfConfig['margin_bottom'] = 10;
+      $mpdfConfig['margin_top'] = 8;
+      $mpdfConfig['margin_bottom'] = 7;
       $mpdfConfig['margin_header'] = 0;
       $mpdfConfig['margin_footer'] = 0;
     }
@@ -161,8 +162,8 @@ try {
     $html = preg_replace('/\{\{[^}]+\}\}/', '', $html) ?? $html;
     $mpdfConfig['margin_left'] = 10;
     $mpdfConfig['margin_right'] = 10;
-    $mpdfConfig['margin_top'] = 10;
-    $mpdfConfig['margin_bottom'] = 10;
+    $mpdfConfig['margin_top'] = 8;
+    $mpdfConfig['margin_bottom'] = 7;
     $mpdfConfig['margin_header'] = 0;
     $mpdfConfig['margin_footer'] = 0;
   }
@@ -179,6 +180,7 @@ try {
   $tmpPdf = $docsDir . DIRECTORY_SEPARATOR . 'tmp_informe_tutor_' . uniqid('', true) . '.pdf';
   $fase = 'generando PDF con mPDF';
   $mpdf = new Mpdf($mpdfConfig);
+  $mpdf->SetBasePath($docsDir . DIRECTORY_SEPARATOR);
   $mpdf->shrink_tables_to_fit = 1;
 
   $fase = 'escribiendo HTML en mPDF';
