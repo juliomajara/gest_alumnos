@@ -168,18 +168,24 @@
 
     .campo-rellenable {
       width: 100%;
-      font-family: dejavusans, Arial, sans-serif;
+      font-family: dejavusans;
       font-size: 8pt;
       border: 0.2mm solid #777;
       background-color: #fff;
-      padding: 0.8mm;
-      line-height: 1.12;
     }
 
-    .textarea-valoracion { height: 22mm; }
-    .textarea-observaciones { height: 22mm; }
-    .textarea-motivos { height: 16mm; }
-    .checkbox-field { }
+    .textarea-valoracion {
+      height: 22mm;
+    }
+
+    .textarea-motivos {
+      height: 18mm;
+    }
+
+    .checkbox-ra {
+      width: 5mm;
+      height: 5mm;
+    }
 
   </style>
 </head>
@@ -261,11 +267,11 @@
 
   <table>
     <tr><td class="section">Áreas y/o puestos de trabajo en los que se han realizado las actividades formativas. Valoración del desempeño de las actividades realizadas por el/la alumno/a.</td></tr>
-    <tr class="box-medium"><td><textarea class="campo-rellenable textarea-valoracion" name="areas_puestos_valoracion">{{AREAS_PUESTOS_VALORACION}}</textarea></td></tr>
+    <tr class="box-medium"><td><textarea name="areas_puestos_valoracion" class="campo-rellenable textarea-valoracion">{{AREAS_PUESTOS_VALORACION}}</textarea></td></tr>
     <tr><td class="section">Valoración de las competencias transversales</td></tr>
-    <tr class="box-medium"><td><textarea class="campo-rellenable textarea-valoracion" name="valoracion_competencias_transversales">{{VALORACION_COMPETENCIAS_TRANSVERSALES}}</textarea></td></tr>
+    <tr class="box-medium"><td><textarea name="valoracion_competencias_transversales" class="campo-rellenable textarea-valoracion">{{VALORACION_COMPETENCIAS_TRANSVERSALES}}</textarea></td></tr>
     <tr><td class="section">Observaciones del tutor de empresa u organismo equiparado</td></tr>
-    <tr class="box-large"><td><textarea class="campo-rellenable textarea-observaciones" name="observaciones_tutor_empresa">{{OBSERVACIONES_TUTOR_EMPRESA}}</textarea></td></tr>
+    <tr class="box-large"><td><textarea name="observaciones_tutor_empresa" class="campo-rellenable textarea-valoracion">{{OBSERVACIONES_TUTOR_EMPRESA}}</textarea></td></tr>
   </table>
 
   <div class="page-break"></div>
@@ -287,7 +293,7 @@
 
   <table class="motivos">
     <tr><td class="section" style="height:5mm;">En caso de no superar resultados de aprendizaje, exposición de motivos:</td></tr>
-    <tr><td><textarea class="campo-rellenable textarea-motivos" name="motivos_no_superacion">{{MOTIVOS_NO_SUPERACION}}</textarea></td></tr>
+    <tr><td><textarea name="motivos_no_superacion" class="campo-rellenable textarea-motivos">{{MOTIVOS_NO_SUPERACION}}</textarea></td></tr>
   </table>
 
   <table class="cierre-pagina-2">
