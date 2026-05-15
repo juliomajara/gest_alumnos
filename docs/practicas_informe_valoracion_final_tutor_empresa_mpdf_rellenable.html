@@ -165,19 +165,13 @@
       height: 1mm;
       margin-bottom: 1mm;
     }
-
-    .lineas-rellenables {
+    .textarea {
+      font-size: 9pt;
+      color: #000000;
+      background-color: #ffffff;
+      border: 0.2mm solid #777777;
+      height: 22mm;
       width: 100%;
-    }
-
-    .linea-rellenable {
-      width: 100%;
-      font-size: 8pt;
-      color: #000;
-      border: 0;
-      border-bottom: 0.2mm solid #777;
-      background-color: #fff;
-      margin-bottom: 1mm;
     }
 
   </style>
@@ -260,26 +254,17 @@
 
   <table>
     <tr><td class="section">Áreas y/o puestos de trabajo en los que se han realizado las actividades formativas. Valoración del desempeño de las actividades realizadas por el/la alumno/a.</td></tr>
-    <tr class="box-medium"><td><div class="lineas-rellenables">
-      <input type="text" name="areas_puestos_valoracion_1" value="" size="115" class="linea-rellenable">
-      <input type="text" name="areas_puestos_valoracion_2" value="" size="115" class="linea-rellenable">
-      <input type="text" name="areas_puestos_valoracion_3" value="" size="115" class="linea-rellenable">
-      <input type="text" name="areas_puestos_valoracion_4" value="" size="115" class="linea-rellenable">
-    </div></td></tr>
+    <tr class="box-medium"><td>
+      <input type="text" name="areas_puestos_valoracion" multiline="1" style="height:22mm; width:100%;" class="textarea">
+    </td></tr>
     <tr><td class="section">Valoración de las competencias transversales</td></tr>
-    <tr class="box-medium"><td><div class="lineas-rellenables">
-      <input type="text" name="valoracion_competencias_transversales_1" value="" size="115" class="linea-rellenable">
-      <input type="text" name="valoracion_competencias_transversales_2" value="" size="115" class="linea-rellenable">
-      <input type="text" name="valoracion_competencias_transversales_3" value="" size="115" class="linea-rellenable">
-      <input type="text" name="valoracion_competencias_transversales_4" value="" size="115" class="linea-rellenable">
-    </div></td></tr>
+    <tr class="box-medium"><td>
+      <input type="text" name="valoracion_competencias_transversales" multiline="1" style="height:22mm; width:100%;" class="textarea">
+    </td></tr>
     <tr><td class="section">Observaciones del tutor de empresa u organismo equiparado</td></tr>
-    <tr class="box-large"><td><div class="lineas-rellenables">
-      <input type="text" name="observaciones_tutor_empresa_1" value="" size="115" class="linea-rellenable">
-      <input type="text" name="observaciones_tutor_empresa_2" value="" size="115" class="linea-rellenable">
-      <input type="text" name="observaciones_tutor_empresa_3" value="" size="115" class="linea-rellenable">
-      <input type="text" name="observaciones_tutor_empresa_4" value="" size="115" class="linea-rellenable">
-    </div></td></tr>
+    <tr class="box-large"><td>
+      <input type="text" name="observaciones_tutor_empresa" multiline="1" style="height:22mm; width:100%;" class="textarea">
+    </td></tr>
   </table>
 
   <div class="page-break"></div>
@@ -301,11 +286,9 @@
 
   <table class="motivos">
     <tr><td class="section" style="height:5mm;">En caso de no superar resultados de aprendizaje, exposición de motivos:</td></tr>
-    <tr><td><div class="lineas-rellenables">
-      <input type="text" name="motivos_no_superacion_1" value="" size="115" class="linea-rellenable">
-      <input type="text" name="motivos_no_superacion_2" value="" size="115" class="linea-rellenable">
-      <input type="text" name="motivos_no_superacion_3" value="" size="115" class="linea-rellenable">
-    </div></td></tr>
+    <tr><td>
+      <input type="text" name="motivos_no_superacion" multiline="1" style="height:28mm; width:100%;" class="textarea">
+    </td></tr>
   </table>
 
   <table class="cierre-pagina-2">
