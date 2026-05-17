@@ -5,7 +5,6 @@ require_once __DIR__ . '/db.php';
 
 $pdo = db();
 
-$search_term = trim((string) ($_GET['q'] ?? ''));
 $allowed_groups = ['ASIR1', 'ASIR2', 'DAM1', 'DAM2', 'DAW1', 'DAW2', 'SMR1', 'SMR2'];
 $selected_group = strtoupper(trim((string) ($_GET['grupo'] ?? '')));
 
@@ -13,76 +12,68 @@ if (!in_array($selected_group, $allowed_groups, true)) {
   $selected_group = '';
 }
 
-$filters = [];
-$params = [];
+$modules = [];
+$empty_message = '';
 
-if ($search_term !== '') {
-  $filters[] = '(m.codigo LIKE :search_term OR m.abreviatura LIKE :search_term1 OR m.materia_general LIKE :search_term2 OR m.materia_propia LIKE :search_term3 OR m.tipo LIKE :search_term4)';
-  $params['search_term'] = '%' . $search_term . '%';
-  $params['search_term1'] = '%' . $search_term . '%';
-  $params['search_term2'] = '%' . $search_term . '%';
-  $params['search_term3'] = '%' . $search_term . '%';
-  $params['search_term4'] = '%' . $search_term . '%';
+if ($selected_group === '') {
+  $empty_message = "Selecciona un grupo para ver los m\xC3\xB3dulos.";
+} else {
+  $modules_stmt = $pdo->prepare(
+    'SELECT
+      m.id_modulo,
+      m.id_ciclo,
+      c.abreviatura AS ciclo_abreviatura,
+      m.id_curso,
+      cu.curso,
+      m.codigo,
+      m.abreviatura,
+      m.materia_general,
+      m.materia_propia,
+      m.horas_semanales,
+      m.horas_totales,
+      COUNT(DISTINCT ra.id_ra) AS total_ra,
+      COUNT(DISTINCT ce.id_ce) AS total_ce
+    FROM modulos m
+    LEFT JOIN ciclos c ON c.id_ciclo = m.id_ciclo
+    LEFT JOIN cursos cu ON cu.id_curso = m.id_curso
+    LEFT JOIN resultados_aprendizaje ra ON ra.id_modulo = m.id_modulo
+    LEFT JOIN criterios_evaluacion ce ON ce.id_ra = ra.id_ra
+    WHERE EXISTS (
+      SELECT 1
+      FROM grupos g
+      WHERE g.id_ciclo = m.id_ciclo
+        AND g.id_curso = m.id_curso
+        AND g.grupo LIKE :group_prefix
+    )
+    GROUP BY
+      m.id_modulo,
+      m.id_ciclo,
+      c.abreviatura,
+      m.id_curso,
+      cu.curso,
+      m.codigo,
+      m.abreviatura,
+      m.materia_general,
+      m.materia_propia,
+      m.horas_semanales,
+      m.horas_totales
+    ORDER BY c.abreviatura, cu.curso, m.abreviatura'
+  );
+
+  $modules_stmt->execute(['group_prefix' => $selected_group . '%']);
+  $modules = $modules_stmt->fetchAll();
+
+  if ($modules === []) {
+    $empty_message = "No hay m\xC3\xB3dulos para los filtros seleccionados.";
+  }
 }
 
-if ($selected_group !== '') {
-  $filters[] = 'EXISTS (
-    SELECT 1
-    FROM grupos g
-    WHERE g.id_ciclo = m.id_ciclo
-      AND g.id_curso = m.id_curso
-      AND g.grupo LIKE :group_prefix
-  )';
-  $params['group_prefix'] = $selected_group . '%';
-}
-
-$where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
-
-$modules_stmt = $pdo->prepare(
-  'SELECT
-    m.id_modulo,
-    m.id_ciclo,
-    c.abreviatura AS ciclo_abreviatura,
-    m.id_curso,
-    cu.curso,
-    m.codigo,
-    m.abreviatura,
-    m.materia_general,
-    m.materia_propia,
-    m.horas_semanales,
-    m.horas_totales,
-    COUNT(DISTINCT ra.id_ra) AS total_ra,
-    COUNT(DISTINCT ce.id_ce) AS total_ce
-  FROM modulos m
-  LEFT JOIN ciclos c ON c.id_ciclo = m.id_ciclo
-  LEFT JOIN cursos cu ON cu.id_curso = m.id_curso
-  LEFT JOIN resultados_aprendizaje ra ON ra.id_modulo = m.id_modulo
-  LEFT JOIN criterios_evaluacion ce ON ce.id_ra = ra.id_ra
-  ' . $where_clause . '
-  GROUP BY
-    m.id_modulo,
-    m.id_ciclo,
-    c.abreviatura,
-    m.id_curso,
-    cu.curso,
-    m.codigo,
-    m.abreviatura,
-    m.materia_general,
-    m.materia_propia,
-    m.horas_semanales,
-    m.horas_totales
-  ORDER BY c.abreviatura, cu.curso, m.abreviatura'
-);
-
-$modules_stmt->execute($params);
-$modules = $modules_stmt->fetchAll();
-
-function render_module_rows(array $modules): string
+function render_module_rows(array $modules, string $empty_message): string
 {
   ob_start();
   if (!$modules): ?>
     <tr>
-      <td colspan="8">No hay módulos para los filtros seleccionados.</td>
+      <td colspan="8"><?php echo htmlspecialchars($empty_message, ENT_QUOTES, 'UTF-8'); ?></td>
     </tr>
   <?php else: ?>
     <?php foreach ($modules as $module): ?>
@@ -90,7 +81,7 @@ function render_module_rows(array $modules): string
         $ciclo = 'No disponible';
         $ciclo_abreviatura = trim((string) ($module['ciclo_abreviatura'] ?? ''));
         $curso_numero = trim((string) ($module['curso'] ?? ''));
-        $curso_numero = str_replace('º', '', $curso_numero);
+        $curso_numero = str_replace("\xC2\xBA", '', $curso_numero);
         if ($ciclo_abreviatura !== '' || $curso_numero !== '') {
           $ciclo = $ciclo_abreviatura . $curso_numero;
         }
@@ -108,7 +99,7 @@ function render_module_rows(array $modules): string
       ?>
       <tr>
         <td><?php echo htmlspecialchars($ciclo, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td>
+        <td class="documents-cell">
           <?php if ($id_modulo > 0): ?>
             <a class="practice-link" href="modulo_detalle.php?id_modulo=<?php echo urlencode((string) $id_modulo); ?>"><?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?></a>
           <?php else: ?>
@@ -128,7 +119,7 @@ function render_module_rows(array $modules): string
   return ob_get_clean();
 }
 
-$rows_html = render_module_rows($modules);
+$rows_html = render_module_rows($modules, $empty_message);
 
 if (($_GET['ajax'] ?? '') === '1') {
   header('Content-Type: text/html; charset=UTF-8');
@@ -136,8 +127,11 @@ if (($_GET['ajax'] ?? '') === '1') {
   exit;
 }
 
-$page_title = 'Módulos | Gestor de Alumnos';
+$page_title = "M\xC3\xB3dulos | Gestor de Alumnos";
 $active_page = 'modulos';
+$modules_heading = $selected_group === ''
+  ? 'Listado de m&oacute;dulos'
+  : 'Listado de m&oacute;dulos de ' . htmlspecialchars($selected_group, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -157,46 +151,37 @@ $active_page = 'modulos';
     <main class="content">
       <header class="header">
         <div>
-          <h1>Módulos</h1>
-          <p class="subheading">Consulta la información de los módulos formativos y su adscripción académica.</p>
+          <h1>M&oacute;dulos</h1>
+          <p class="subheading">Consulta la informaci&oacute;n de los m&oacute;dulos formativos y su adscripci&oacute;n acad&eacute;mica.</p>
         </div>
       </header>
 
-      <form class="topbar" method="get">
-        <div class="topbar-search">
-          <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle>
-              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
-            </svg>
-          </span>
-          <input
-            type="search"
-            name="q"
-            placeholder="Buscar por código, abreviatura o materia"
-            aria-label="Buscar por código, abreviatura o materia"
-            value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
-          >
-        </div>
-        <div class="topbar-actions entity-form">
-          <label for="grupo">
-            Grupo
-            <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
-            <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Todos los grupos</option>
-            <?php foreach ($allowed_groups as $group): ?>
-              <option value="<?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_group === $group ? 'selected' : ''; ?>>
-                <?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>
-              </option>
-            <?php endforeach; ?>
-            </select>
-          </label>
-        </div>
+      <form method="get" class="panel entity-form">
+        <section class="entity-section">
+          <div class="panel-header">
+            <h3>Filtros</h3>
+            <p>Selecciona un grupo para ver los m&oacute;dulos.</p>
+          </div>
+
+          <div class="entity-grid entity-grid--4">
+            <label>
+              <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
+                <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
+                <?php foreach ($allowed_groups as $group): ?>
+                  <option value="<?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_group === $group ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </label>
+          </div>
+        </section>
       </form>
 
       <section class="panel">
         <div class="panel-header">
-          <h3>Listado de módulos</h3>
-          <p>Nivel, ciclo, curso y datos generales de cada módulo registrado.</p>
+          <h3 id="modules-heading"><?php echo $modules_heading; ?></h3>
+          <p>Nivel, ciclo, curso y datos generales de cada m&oacute;dulo registrado.</p>
         </div>
 
         <div class="panel-grid">
@@ -205,7 +190,7 @@ $active_page = 'modulos';
               <tr>
                 <th>Ciclo</th>
                 <th>Nombre</th>
-                <th>Código</th>
+                <th>C&oacute;digo</th>
                 <th>Abreviatura</th>
                 <th>Horas semanales</th>
                 <th>Horas totales</th>
@@ -222,51 +207,44 @@ $active_page = 'modulos';
     </main>
   </div>
   <script>
-    const form = document.querySelector('.topbar');
-    const searchInput = document.querySelector('input[name="q"]');
+    const form = document.querySelector('form.entity-form');
     const groupSelect = document.querySelector('select[name="grupo"]');
     const tableBody = document.querySelector('tbody');
-    let debounceTimer = null;
+    const modulesHeading = document.querySelector('#modules-heading');
 
-    const updateResults = (withDebounce = false) => {
-      if (debounceTimer) {
-        window.clearTimeout(debounceTimer);
-      }
-
-      const run = () => {
-        const params = new URLSearchParams(new FormData(form));
-        const urlParams = new URLSearchParams(params);
-
-        params.set('ajax', '1');
-
-        fetch(`modulos.php?${params.toString()}`, {
-          headers: {
-            'X-Requested-With': 'fetch'
-          }
-        })
-          .then((response) => response.text())
-          .then((html) => {
-            tableBody.innerHTML = html;
-            history.replaceState(null, '', `?${urlParams.toString()}`);
-          })
-          .catch(() => {});
-      };
-
-      if (withDebounce) {
-        debounceTimer = window.setTimeout(run, 250);
+    const updateHeading = () => {
+      if (!modulesHeading) {
         return;
       }
 
-      run();
+      modulesHeading.textContent = groupSelect.value === ''
+        ? 'Listado de m\u00F3dulos'
+        : `Listado de m\u00F3dulos de ${groupSelect.value}`;
+    };
+
+    const updateResults = () => {
+      const params = new URLSearchParams(new FormData(form));
+      const urlParams = new URLSearchParams(params);
+
+      params.set('ajax', '1');
+
+      fetch(`modulos.php?${params.toString()}`, {
+        headers: {
+          'X-Requested-With': 'fetch'
+        }
+      })
+        .then((response) => response.text())
+        .then((html) => {
+          tableBody.innerHTML = html;
+          updateHeading();
+          history.replaceState(null, '', `?${urlParams.toString()}`);
+        })
+        .catch(() => {});
     };
 
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       updateResults();
-    });
-
-    searchInput.addEventListener('input', () => {
-      updateResults(true);
     });
 
     groupSelect.addEventListener('change', () => {
