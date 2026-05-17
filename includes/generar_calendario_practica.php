@@ -429,6 +429,7 @@ try {
   $templateCandidates = [
     __DIR__ . '/docs/calendario.html',
     __DIR__ . '/calendario.html',
+    dirname(__DIR__) . '/docs/calendario.html',
   ];
   $templatePath = null;
   $template = false;
