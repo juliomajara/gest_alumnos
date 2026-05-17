@@ -1022,7 +1022,7 @@ if ($id_practica === false || $id_practica === null) {
       }
 
       if ($action === 'generar_calendario') {
-        header('Location: generar_calendario_practica.php?id_practica=' . (int) $id_practica);
+        header('Location: includes/generar_calendario_practica.php?id_practica=' . (int) $id_practica);
         exit;
       }
 
@@ -1407,7 +1407,7 @@ if ($practice_found) {
             <div class="panel-grid">
               <p><strong>Calendario</strong></p>
               <div class="header-actions">
-                <a class="primary-button" href="generar_calendario_practica.php?id_practica=<?php echo (int) $id_practica; ?>">Generar calendario</a>
+                <a class="primary-button" href="includes/generar_calendario_practica.php?id_practica=<?php echo (int) $id_practica; ?>">Generar calendario</a>
                 <?php if ($calendar_exists && $calendar_file_name !== null): ?>
                   <a class="ghost-button" href="practica_detalle.php?id_practica=<?php echo (int) $id_practica; ?>&action=descargar_calendario">Descargar calendario</a>
                 <?php endif; ?>
