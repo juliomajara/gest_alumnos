@@ -326,6 +326,9 @@ function redirect_back_or_detail(int $practiceId, ?string $status = null, ?strin
       }
       if ($status !== null) {
         $query['doc_status'] = $status;
+        unset($query['doc_error']);
+      } elseif ($error !== null) {
+        unset($query['doc_status']);
       }
       if ($error !== null) {
         $query['doc_error'] = $error;
