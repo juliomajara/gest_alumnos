@@ -105,9 +105,10 @@ function run_generator_script(string $scriptName, int $practiceId, ?string &$com
   $basePath = trim((string) dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '')), '/');
 
   if ($host !== '') {
+    $encodedScriptPath = implode('/', array_map('rawurlencode', explode('/', str_replace('\\', '/', $scriptName))));
     $url = $scheme . '://' . $host . '/'
       . ($basePath !== '' ? $basePath . '/' : '')
-      . rawurlencode($scriptName)
+      . $encodedScriptPath
       . '?id_practica=' . $practiceId;
 
     $headers = [];
