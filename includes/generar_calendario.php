@@ -98,14 +98,16 @@ function build_observaciones(?string $complementoDireccion, ?string $observacion
 }
 
 function ensure_mpdf_temp_dir(): string {
-  $tempDir = __DIR__ . '/docs/.mpdf_tmp';
-  if (!is_dir($tempDir) && !mkdir($tempDir, 0755, true) && !is_dir($tempDir)) {
+  $tmpDir = sys_get_temp_dir() . '/mpdf_tmp';
+  if (!is_dir($tmpDir) && !mkdir($tmpDir, 0755, true) && !is_dir($tmpDir)) {
     throw new RuntimeException('No se pudo crear el directorio temporal de mPDF.');
   }
-  if (!is_writable($tempDir)) {
-    throw new RuntimeException('El directorio temporal de mPDF no tiene permisos de escritura.');
+  $testFile = $tmpDir . '/_write_test.tmp';
+  if (@file_put_contents($testFile, '1') === false) {
+    throw new RuntimeException('El directorio temporal para PDFs no tiene permisos de escritura: ' . $tmpDir);
   }
-  return $tempDir;
+  @unlink($testFile);
+  return $tmpDir;
 }
 
 function month_name_es(int $month): string {
@@ -161,7 +163,7 @@ function build_months_grid_html(DateTimeImmutable $start, DateTimeImmutable $end
     $rowsHtml .= '<tr>';
     for ($j = 0; $j < 3; $j++) {
       $monthHtml = $monthsHtml[$i + $j] ?? '';
-      $rowsHtml .= '<td>' . $monthHtml . '</td>';
+      $rowsHtml .= '<td style="width:33.333%;">' . $monthHtml . '</td>';
     }
     $rowsHtml .= '</tr>';
   }
@@ -347,6 +349,9 @@ if ($id === false || $id === null) {
   redirect_back_or_detail(0, null, 'Calendario: No se ha indicado un identificador de práctica válido.');
 }
 
+$debugFlag = $_GET['mpdf_debug'] ?? getenv('CALENDARIO_MPDF_DEBUG') ?? '0';
+$mpdfDebug = in_array(strtolower(trim((string) $debugFlag)), ['1', 'true', 'yes', 'on'], true);
+
 $tempFilePath = null;
 
 try {
@@ -418,18 +423,31 @@ try {
   } catch (Throwable $e) {
   }
 
-  $templatePath = __DIR__ . '/docs/calendario.html';
-  $template = file_get_contents($templatePath);
-  if ($template === false) {
-    throw new RuntimeException('No se pudo leer la plantilla del calendario.');
+  $templateCandidates = [
+    __DIR__ . '/docs/calendario.html',
+    __DIR__ . '/calendario.html',
+  ];
+  $templatePath = null;
+  $template = false;
+  foreach ($templateCandidates as $candidate) {
+    if (!is_file($candidate) || !is_readable($candidate)) {
+      continue;
+    }
+    $content = file_get_contents($candidate);
+    if ($content !== false) {
+      $templatePath = $candidate;
+      $template = $content;
+      break;
+    }
+  }
+  if ($template === false || $templatePath === null) {
+    throw new RuntimeException('No se pudo leer la plantilla del calendario. Rutas probadas: ' . implode(', ', $templateCandidates));
   }
 
   preg_match_all('/\{\{[A-Z0-9_]+\}\}/', $template, $matches);
   $templateMarkers = array_unique($matches[0] ?? []);
 
-  $practiceForPaths = $practice;
-  unset($practiceForPaths['empresa_nombre_comercial']);
-  $paths = practicas_get_document_paths($practiceForPaths);
+  $paths = practicas_get_document_paths($practice);
 
   $contactoNombre = fallback_text(trim((string) ($practice['tutor_empresa_nombre'] ?? '') . ' ' . (string) ($practice['tutor_empresa_apellido1'] ?? '')));
 
@@ -466,9 +484,6 @@ try {
 
   $html = strtr($template, $replacements);
 
-  $debugFlag = $_GET['mpdf_debug'] ?? getenv('CALENDARIO_MPDF_DEBUG') ?? '0';
-  $mpdfDebug = in_array(strtolower(trim((string) $debugFlag)), ['1', 'true', 'yes', 'on'], true);
-
   $mpdf = new Mpdf([
     'mode' => 'utf-8',
     'format' => 'A4',
@@ -479,8 +494,23 @@ try {
   $mpdf->SetBasePath(dirname($templatePath) . '/');
 
   $tempFilePath = $paths['calendar_file_path'] . '.tmp';
+  $htmlDebugPath = $paths['calendar_file_path'] . '.html.tmp';
+  $targetDir = dirname($paths['calendar_file_path']);
+
+  if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+    throw new RuntimeException('No se pudo crear el directorio de destino del calendario: ' . $targetDir);
+  }
+  $testFile = $targetDir . '/_write_test.tmp';
+  if (@file_put_contents($testFile, '1') === false) {
+      throw new RuntimeException('El directorio de destino del calendario no tiene permisos de escritura: ' . $targetDir);
+  }
+  @unlink($testFile);
+
   if (file_exists($tempFilePath)) {
     @unlink($tempFilePath);
+  }
+  if ($mpdfDebug && @file_put_contents($htmlDebugPath, $html) === false) {
+    throw new RuntimeException('No se pudo guardar el HTML de depuración del calendario: ' . $htmlDebugPath);
   }
 
   $mpdf->WriteHTML($html);
@@ -498,6 +528,15 @@ try {
 } catch (Throwable $e) {
   if ($tempFilePath !== null && file_exists($tempFilePath)) {
     @unlink($tempFilePath);
+  }
+  if ($mpdfDebug) {
+    error_log(sprintf(
+      'Calendario mPDF error: %s in %s:%d',
+      $e->getMessage(),
+      $e->getFile(),
+      $e->getLine()
+    ));
+    redirect_back_or_detail((int) ($id ?: 0), null, 'Calendario: ' . $e->getMessage());
   }
   redirect_back_or_detail((int) ($id ?: 0), null, 'Calendario: No se pudo generar el PDF del calendario en este momento.');
 }

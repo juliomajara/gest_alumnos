@@ -524,7 +524,7 @@ try {
 
           $before_mtime = is_file($paths['calendar_file_path']) ? (int) filemtime($paths['calendar_file_path']) : 0;
           $script_output = null;
-          $executed = run_generator_script('generar_calendario.php', $id_practica, $script_output);
+          $executed = run_generator_script('generar_calendario_practica.php', $id_practica, $script_output);
           clearstatcache(true, $paths['calendar_file_path']);
           $after_mtime = is_file($paths['calendar_file_path']) ? (int) filemtime($paths['calendar_file_path']) : 0;
 

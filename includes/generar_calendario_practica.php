@@ -24,7 +24,7 @@ function gestionar_generacion_calendario_practica(array $document_paths, string 
   }
 
   if ($action === 'generar_calendario') {
-    header('Location: generar_calendario.php?id_practica=' . (int) $id_practica);
+    header('Location: generar_calendario_practica.php?id_practica=' . (int) $id_practica);
     exit;
   }
 
