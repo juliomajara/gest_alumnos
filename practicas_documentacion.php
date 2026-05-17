@@ -145,14 +145,19 @@ function run_generator_script(string $scriptName, int $practiceId, ?string &$com
       if ($locationParts !== false && isset($locationParts['query'])) {
         $locationQuery = [];
         parse_str($locationParts['query'], $locationQuery);
+        if (isset($locationQuery['doc_status']) && trim((string) $locationQuery['doc_status']) !== '') {
+          $commandOutput = $locationHeader;
+          return true;
+        }
+
         if (isset($locationQuery['doc_error'])) {
           $commandOutput = (string) $locationQuery['doc_error'];
-          return false;
+        } else {
+          $commandOutput = $locationHeader;
         }
       }
-
-      $commandOutput = $locationHeader;
-      return true;
+      // Si la respuesta HTTP no confirma estado de éxito,
+      // intentamos también la ejecución por CLI como fallback.
     }
 
     if ($responseBody !== false) {
