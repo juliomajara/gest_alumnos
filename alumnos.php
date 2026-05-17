@@ -29,6 +29,14 @@ if ($selected_course_id > 0) {
   $groups = $groups_stmt->fetchAll();
 }
 
+$selected_group_name = '';
+foreach ($groups as $group) {
+  if ((string) ($group['id_grupo'] ?? '') === $selected_group) {
+    $selected_group_name = (string) ($group['grupo'] ?? '');
+    break;
+  }
+}
+
 $students = [];
 $empty_message = '';
 
@@ -225,6 +233,9 @@ if (($_GET['ajax'] ?? '') === '1') {
 
 $page_title = 'Alumnos | Gestor de Alumnos';
 $active_page = 'alumnos';
+$students_heading = $selected_group_name !== ''
+  ? 'Listado de alumnos de ' . htmlspecialchars($selected_group_name, ENT_QUOTES, 'UTF-8')
+  : 'Listado de alumnos';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -283,7 +294,6 @@ $active_page = 'alumnos';
                     <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
                   </option>
                 <?php endforeach; ?>
-                <option value="sin" <?php echo $selected_group === 'sin' ? 'selected' : ''; ?>>Sin grupo</option>
               </select>
             </label>
 
@@ -302,7 +312,7 @@ $active_page = 'alumnos';
 
       <section class="panel">
         <div class="panel-header">
-          <h3>Listado de alumnos</h3>
+          <h3 id="students-heading"><?php echo $students_heading; ?></h3>
           <p>Grupo, apellidos y nombre, datos de contacto e identificadores básicos.</p>
         </div>
 
@@ -333,6 +343,7 @@ $active_page = 'alumnos';
     const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
     const tableBody = document.querySelector('tbody');
     const exportJsonLink = document.querySelector('#exportar-claves-json');
+    const studentsHeading = document.querySelector('#students-heading');
     let debounceTimer = null;
 
     const updateExportLink = (params) => {
@@ -344,6 +355,19 @@ $active_page = 'alumnos';
       exportParams.delete('ajax');
       exportParams.set('exportar_claves_json', '1');
       exportJsonLink.href = `alumnos.php?${exportParams.toString()}`;
+    };
+
+    const updateHeading = () => {
+      if (!studentsHeading) {
+        return;
+      }
+
+      const selectedOption = groupSelect.options[groupSelect.selectedIndex];
+      const groupName = selectedOption ? selectedOption.text.trim() : '';
+
+      studentsHeading.textContent = groupSelect.value !== '' && groupName !== ''
+        ? `Listado de alumnos de ${groupName}`
+        : 'Listado de alumnos';
     };
 
     const updateResults = (withDebounce = false) => {
@@ -366,6 +390,7 @@ $active_page = 'alumnos';
           .then((response) => response.text())
           .then((html) => {
             tableBody.innerHTML = html;
+            updateHeading();
             history.replaceState(null, '', `?${urlParams.toString()}`);
           })
           .catch(() => {});
@@ -398,6 +423,7 @@ $active_page = 'alumnos';
     });
 
     updateExportLink(new URLSearchParams(new FormData(form)));
+    updateHeading();
   </script>
 </body>
 </html>
