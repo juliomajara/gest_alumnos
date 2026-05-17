@@ -77,6 +77,22 @@ function build_order_url(string $order): string
   return 'practicas_documentacion.php' . ($query !== '' ? '?' . $query : '');
 }
 
+function build_generator_url(string $scriptRelativePath): ?string
+{
+  $scheme = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
+  $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+  if ($host === '') {
+    return null;
+  }
+
+  $basePath = trim((string) dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+  $encodedPath = implode('/', array_map('rawurlencode', explode('/', str_replace('\\', '/', $scriptRelativePath))));
+
+  return $scheme . '://' . $host . '/'
+    . ($basePath !== '' ? $basePath . '/' : '')
+    . $encodedPath;
+}
+
 function run_generator_script(string $scriptName, int $practiceId, ?string &$commandOutput = null): bool
 {
   $scriptPath = __DIR__ . '/' . $scriptName;
@@ -161,6 +177,170 @@ function run_generator_script(string $scriptName, int $practiceId, ?string &$com
   return $exitCode === 0;
 }
 
+function fetch_generator_binary_response(string $scriptRelativePath, int $practiceId, ?string &$responseBody = null, array &$responseHeaders = [], ?string &$errorMessage = null): bool
+{
+  $url = build_generator_url($scriptRelativePath);
+  if ($url === null) {
+    $errorMessage = 'No se pudo determinar la URL interna del generador.';
+    return false;
+  }
+
+  $url .= '?id_practica=' . $practiceId;
+
+  $headers = [];
+  if (!empty($_COOKIE)) {
+    $cookiePairs = [];
+    foreach ($_COOKIE as $cookieName => $cookieValue) {
+      $cookiePairs[] = rawurlencode((string) $cookieName) . '=' . rawurlencode((string) $cookieValue);
+    }
+    if ($cookiePairs !== []) {
+      $headers[] = 'Cookie: ' . implode('; ', $cookiePairs);
+    }
+  }
+
+  $context = stream_context_create([
+    'http' => [
+      'method' => 'GET',
+      'header' => $headers,
+      'ignore_errors' => true,
+      'timeout' => 60,
+    ],
+  ]);
+
+  $body = @file_get_contents($url, false, $context);
+  $capturedHeaders = $http_response_header ?? [];
+  $responseHeaders = is_array($capturedHeaders) ? $capturedHeaders : [];
+  $responseBody = $body !== false ? $body : null;
+
+  $statusCode = 0;
+  foreach ($responseHeaders as $headerLine) {
+    if (preg_match('#^HTTP/\S+\s+(\d{3})#', (string) $headerLine, $matches) === 1) {
+      $statusCode = (int) $matches[1];
+      break;
+    }
+  }
+
+  if ($statusCode < 200 || $statusCode >= 300) {
+    $errorMessage = 'El generador devolvió un estado HTTP no válido.';
+    return false;
+  }
+
+  if ($body === false || $body === '') {
+    $errorMessage = 'El generador devolvió un contenido vacío.';
+    return false;
+  }
+
+  $contentType = '';
+  foreach ($responseHeaders as $headerLine) {
+    if (stripos((string) $headerLine, 'Content-Type:') === 0) {
+      $contentType = trim((string) substr((string) $headerLine, 13));
+      break;
+    }
+  }
+
+  if (stripos($contentType, 'application/pdf') === false) {
+    $errorMessage = 'El generador no devolvió un PDF.';
+    return false;
+  }
+
+  if (strncmp($body, '%PDF-', 5) !== 0) {
+    $errorMessage = 'El PDF generado no es válido.';
+    return false;
+  }
+
+  return true;
+}
+
+function extract_download_filename_from_headers(array $responseHeaders): ?string
+{
+  foreach ($responseHeaders as $headerLine) {
+    if (stripos((string) $headerLine, 'Content-Disposition:') !== 0) {
+      continue;
+    }
+
+    $headerValue = trim((string) substr((string) $headerLine, 20));
+    if (preg_match("/filename\\*=UTF-8''([^;]+)/i", $headerValue, $matches) === 1) {
+      return rawurldecode((string) $matches[1]);
+    }
+
+    if (preg_match('/filename="([^"]+)"/i', $headerValue, $matches) === 1) {
+      return (string) $matches[1];
+    }
+
+    if (preg_match('/filename=([^;]+)/i', $headerValue, $matches) === 1) {
+      return trim((string) $matches[1], " \t\n\r\0\x0B\"");
+    }
+  }
+
+  return null;
+}
+
+function build_informe_valoracion_zip_entry_filename(array $practice): string
+{
+  $studentName = trim(implode(' ', array_filter([
+    (string) ($practice['alumno_apellido1'] ?? ''),
+    (string) ($practice['alumno_apellido2'] ?? ''),
+    (string) ($practice['alumno_nombre'] ?? ''),
+  ], static fn ($value) => trim((string) $value) !== '')));
+
+  $companyName = trim((string) ($practice['empresa_nombre_comercial'] ?? ''));
+  if ($companyName === '') {
+    $companyName = trim(implode(' ', array_filter([
+      (string) ($practice['empresa_nombre'] ?? ''),
+      (string) ($practice['empresa_apellido1'] ?? ''),
+      (string) ($practice['empresa_apellido2'] ?? ''),
+    ], static fn ($value) => trim((string) $value) !== '')));
+  }
+
+  $parts = [
+    'informe_final_tutor',
+    practicas_sanitize_filename_component((string) ($practice['anexo'] ?? ''), 20),
+    practicas_sanitize_filename_component($studentName, 80),
+    practicas_sanitize_filename_component($companyName, 80),
+  ];
+
+  $baseName = implode('_', $parts);
+  $baseName = preg_replace('/_+/u', '_', $baseName) ?? $baseName;
+  $baseName = trim($baseName, '._-');
+  if ($baseName === '') {
+    $baseName = 'informe_final_tutor_practica_' . (int) ($practice['id_practica'] ?? 0);
+  }
+
+  return $baseName . '.pdf';
+}
+
+function ensure_unique_zip_entry_name(string $fileName, array &$usedNames): string
+{
+  $pathInfo = pathinfo($fileName);
+  $baseName = (string) ($pathInfo['filename'] ?? 'documento');
+  $extension = isset($pathInfo['extension']) && $pathInfo['extension'] !== ''
+    ? '.' . (string) $pathInfo['extension']
+    : '';
+
+  $candidate = $fileName;
+  $suffix = 2;
+  while (isset($usedNames[$candidate])) {
+    $candidate = $baseName . '_' . $suffix . $extension;
+    $suffix++;
+  }
+
+  $usedNames[$candidate] = true;
+
+  return $candidate;
+}
+
+function download_zip_file_and_exit(string $zipPath, string $downloadFileName): void
+{
+  while (ob_get_level() > 0) {
+    ob_end_clean();
+  }
+
+  header('Content-Type: application/zip');
+  header('Content-Length: ' . (string) filesize($zipPath));
+  header("Content-Disposition: attachment; filename*=UTF-8''" . rawurlencode($downloadFileName));
+  readfile($zipPath);
+}
+
 $page_title = 'Documentación de prácticas | Gestor de Alumnos';
 $active_page = 'utilidades';
 
@@ -181,6 +361,7 @@ try {
   if ($_SERVER['REQUEST_METHOD'] === 'POST' && $active_course_id !== false && $active_course_id !== null) {
     $selected_programa = $_POST['generar_programa'] ?? [];
     $selected_calendario = $_POST['generar_calendario'] ?? [];
+    $selected_informe_valoracion = $_POST['generar_informe_valoracion'] ?? [];
 
     if (!is_array($selected_programa)) {
       $selected_programa = [];
@@ -188,10 +369,13 @@ try {
     if (!is_array($selected_calendario)) {
       $selected_calendario = [];
     }
+    if (!is_array($selected_informe_valoracion)) {
+      $selected_informe_valoracion = [];
+    }
 
     $selected_ids = array_unique(array_map(
       static fn (string $id): int => (int) $id,
-      array_merge(array_keys($selected_programa), array_keys($selected_calendario))
+      array_merge(array_keys($selected_programa), array_keys($selected_calendario), array_keys($selected_informe_valoracion))
     ));
     $selected_ids = array_values(array_filter($selected_ids, static fn (int $id): bool => $id > 0));
 
@@ -227,6 +411,36 @@ try {
       $selected_practices_by_id = [];
       foreach ($selected_practices as $practice) {
         $selected_practices_by_id[(int) ($practice['id_practica'] ?? 0)] = $practice;
+      }
+
+      $zipPath = null;
+      $zip = null;
+      $zipEntriesCount = 0;
+      $zipEntryNames = [];
+      $requestedInformeIds = array_values(array_filter(array_map(
+        static fn (string $id): int => (int) $id,
+        array_keys($selected_informe_valoracion)
+      ), static fn (int $id): bool => $id > 0));
+
+      if ($requestedInformeIds !== []) {
+        if (!class_exists('ZipArchive')) {
+          $generation_errors[] = 'No se puede generar el ZIP de informes porque ZipArchive no está disponible en PHP.';
+        } else {
+          $zipPath = tempnam(sys_get_temp_dir(), 'practicas_inf_');
+          if ($zipPath === false) {
+            $generation_errors[] = 'No se pudo preparar el archivo temporal para el ZIP de informes.';
+            $zipPath = null;
+          } else {
+            $zip = new ZipArchive();
+            $zipOpenResult = $zip->open($zipPath, ZipArchive::OVERWRITE);
+            if ($zipOpenResult !== true) {
+              $generation_errors[] = 'No se pudo crear el ZIP temporal de informes.';
+              @unlink($zipPath);
+              $zipPath = null;
+              $zip = null;
+            }
+          }
+        }
       }
 
       foreach ($selected_ids as $id_practica) {
@@ -320,6 +534,55 @@ try {
             $generation_errors[] = 'No se pudo generar el Calendario para la práctica #' . $id_practica . '.';
           }
         }
+
+        if (isset($selected_informe_valoracion[(string) $id_practica]) && $zip instanceof ZipArchive) {
+          $pdfContent = null;
+          $pdfHeaders = [];
+          $fetchError = null;
+          $fetched = fetch_generator_binary_response(
+            'includes/generar_informe_valoracion_tutor_empresa.php',
+            $id_practica,
+            $pdfContent,
+            $pdfHeaders,
+            $fetchError
+          );
+
+          if (!$fetched || $pdfContent === null) {
+            $generation_errors[] = 'No se pudo generar el Informe final de valoración para la práctica #' . $id_practica . '.';
+            continue;
+          }
+
+          $pdfFileName = extract_download_filename_from_headers($pdfHeaders);
+          if ($pdfFileName === null || trim($pdfFileName) === '') {
+            $pdfFileName = build_informe_valoracion_zip_entry_filename($practice);
+          }
+          $pdfFileName = ensure_unique_zip_entry_name($pdfFileName, $zipEntryNames);
+
+          if (!$zip->addFromString($pdfFileName, $pdfContent)) {
+            $generation_errors[] = 'No se pudo añadir al ZIP el Informe final de valoración de la práctica #' . $id_practica . '.';
+            continue;
+          }
+
+          $zipEntriesCount++;
+          $generated_documents[] = 'Informe final tutor empresa - ' . $pdfFileName;
+        }
+      }
+
+      if ($zip instanceof ZipArchive) {
+        $zip->close();
+
+        if ($zipEntriesCount > 0 && $zipPath !== null && is_file($zipPath)) {
+          try {
+            download_zip_file_and_exit($zipPath, 'informes_finales_tutor_empresa_curso_actual.zip');
+          } finally {
+            @unlink($zipPath);
+          }
+          exit;
+        }
+
+        if ($zipPath !== null && is_file($zipPath)) {
+          @unlink($zipPath);
+        }
       }
 
       if ($generated_documents !== []) {
@@ -398,7 +661,9 @@ try {
         <div>
           <h1>Documentación de prácticas</h1>
           <p class="subheading">Genera el Plan Formación y/o el Calendario para las prácticas del curso actual.</p>
-          <p><a class="practice-link" href="practicas_ficha_seguimiento.php">Generar ficha de seguimiento periódico</a></p>
+        </div>
+        <div class="header-actions">
+          <a class="primary-button" href="practicas_ficha_seguimiento.php">Generar fichas de seguimiento periódico</a>
         </div>
       </header>
 
@@ -453,20 +718,24 @@ try {
                     Calendario
                     <input type="checkbox" id="select-all-calendario" aria-label="Seleccionar o deseleccionar todos los Calendarios">
                   </th>
+                  <th>
+                    Informe final
+                    <input type="checkbox" id="select-all-informe-valoracion" aria-label="Seleccionar o deseleccionar todos los informes finales del tutor de empresa">
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <?php if ($load_error !== null): ?>
                   <tr>
-                    <td colspan="8"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td colspan="9"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
                   </tr>
                 <?php elseif ($active_course_id === false || $active_course_id === null): ?>
                   <tr>
-                    <td colspan="8">No hay un curso activo configurado.</td>
+                    <td colspan="9">No hay un curso activo configurado.</td>
                   </tr>
                 <?php elseif ($practices === []): ?>
                   <tr>
-                    <td colspan="8">No hay prácticas registradas para el curso actual.</td>
+                    <td colspan="9">No hay prácticas registradas para el curso actual.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($practices as $practice): ?>
@@ -507,6 +776,9 @@ try {
                       <td>
                         <input type="checkbox" name="generar_calendario[<?php echo $practice_id; ?>]" value="1">
                       </td>
+                      <td>
+                        <input type="checkbox" name="generar_informe_valoracion[<?php echo $practice_id; ?>]" value="1">
+                      </td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
@@ -525,6 +797,7 @@ try {
   <script>
     const selectAllPrograma = document.getElementById('select-all-programa');
     const selectAllCalendario = document.getElementById('select-all-calendario');
+    const selectAllInformeValoracion = document.getElementById('select-all-informe-valoracion');
 
     if (selectAllPrograma) {
       selectAllPrograma.addEventListener('change', () => {
@@ -538,6 +811,14 @@ try {
       selectAllCalendario.addEventListener('change', () => {
         document.querySelectorAll('input[name^="generar_calendario["]').forEach((checkbox) => {
           checkbox.checked = selectAllCalendario.checked;
+        });
+      });
+    }
+
+    if (selectAllInformeValoracion) {
+      selectAllInformeValoracion.addEventListener('change', () => {
+        document.querySelectorAll('input[name^="generar_informe_valoracion["]').forEach((checkbox) => {
+          checkbox.checked = selectAllInformeValoracion.checked;
         });
       });
     }
