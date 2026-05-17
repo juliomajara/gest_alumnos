@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/includes/practicas_pdfs.php';
+require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/practicas_pdfs.php';
 
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
