@@ -1,0 +1,21 @@
+# Credenciales y configuración local — nunca al repositorio
+.env
+
+# Configuración local de Claude Code
+.claude/
+
+# Dependencias
+/vendor/
+
+# Archivos temporales de generación de PDFs
+/docs/.mpdf_tmp/
+/docs/tmp_mpdf/
+/docs/tmp_anexos_3a/
+/docs/tmp_fichas_seguimiento/
+
+# Logs
+*.log
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db

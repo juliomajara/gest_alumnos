@@ -187,6 +187,9 @@ $students_heading = $selected_group_name !== ''
           <h1>Alumnos</h1>
           <p class="subheading">Consulta la información básica del alumnado y accede al detalle completo.</p>
         </div>
+        <div class="header-actions">
+          <a class="primary-button" id="exportar-claves-json" href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>">Exportar claves a JSON</a>
+        </div>
       </header>
 
       <form method="get" class="panel entity-form">
@@ -194,13 +197,6 @@ $students_heading = $selected_group_name !== ''
           <div class="panel-header">
             <h3>Filtros</h3>
             <p>Selecciona curso escolar, grupo y/o busca por nombre o apellidos.</p>
-            <p>
-              <a
-                id="exportar-claves-json"
-                class="button-secondary"
-                href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>"
-              >Exportar claves a JSON</a>
-            </p>
           </div>
 
           <div class="entity-grid entity-grid--4">
