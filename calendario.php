@@ -148,7 +148,7 @@ $active_page = 'calendario';
           </form>
         </div>
         <div class="header-actions">
-          <button class="edit-toggle" type="button" id="editToggle">Modo edición</button>
+          <button class="edit-toggle" type="button" id="editToggle">Activar modo edición</button>
           <!-- MODIFICADO -->
           <button class="edit-toggle is-active" type="button" id="modeNonLectivo" hidden>No lectivo</button>
           <!-- MODIFICADO -->
@@ -241,7 +241,7 @@ $active_page = 'calendario';
 
     const updateEditButton = () => {
       editToggle.classList.toggle('is-active', editMode);
-      editToggle.textContent = editMode ? 'Modo edición activado' : 'Modo edición';
+      editToggle.textContent = editMode ? 'Desactivar modo edición' : 'Activar modo edición';
       modeNonLectivo.hidden = !editMode;
       modeTutoria.hidden = !editMode;
     };

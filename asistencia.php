@@ -255,6 +255,9 @@ if ($vista === 'justificadas') {
           <h1>Asistencia mensual por alumno</h1>
           <p class="subheading">Consulta faltas justificadas, injustificadas y retrasos por alumno y mes.</p>
         </div>
+        <div class="header-actions">
+          <a class="primary-button" href="asistencia_importar.php">Importar asistencia</a>
+        </div>
       </header>
 
       <?php if ($errors !== []): ?>
@@ -270,40 +273,33 @@ if ($vista === 'justificadas') {
         </section>
       <?php endif; ?>
 
-      <form method="get" class="panel entity-form">
-        <section class="entity-section">
-          <div class="panel-header">
-            <h3>Filtros</h3>
-            <p>Selecciona curso escolar y grupo para ver la asistencia agrupada por mes.</p>
-          </div>
+      <form method="get" class="topbar">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="id_curso_escolar" aria-label="Curso escolar">
+              <option value="">Selecciona curso escolar</option>
+              <?php foreach ($cursos_escolares as $item): ?>
+                <option value="<?php echo (int) $item['id_curso_escolar']; ?>" <?php echo (int) $item['id_curso_escolar'] === $selected['id_curso_escolar'] ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $item['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
 
-          <div class="entity-grid entity-grid--4">
-            <label>
-              <select name="id_curso_escolar" required>
-                <option value="">Selecciona curso escolar</option>
-                <?php foreach ($cursos_escolares as $item): ?>
-                  <option value="<?php echo (int) $item['id_curso_escolar']; ?>" <?php echo (int) $item['id_curso_escolar'] === $selected['id_curso_escolar'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars((string) $item['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-
-            <label>
-              <select name="id_grupo" required>
-                <option value="">Selecciona grupo</option>
-                <?php foreach ($grupos as $item): ?>
-                  <option value="<?php echo (int) $item['id_grupo']; ?>" <?php echo (int) $item['id_grupo'] === $selected['id_grupo'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars((string) $item['grupo'], ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-
-          </div>
-        </section>
+          <label class="calendar-select">
+            <select name="id_grupo" aria-label="Grupo">
+              <option value="">Selecciona grupo</option>
+              <?php foreach ($grupos as $item): ?>
+                <option value="<?php echo (int) $item['id_grupo']; ?>" <?php echo (int) $item['id_grupo'] === $selected['id_grupo'] ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $item['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+        </div>
       </form>
 
+      <?php if ($selected['id_grupo'] > 0): ?>
       <section class="panel">
         <div class="panel-header panel-header-with-actions">
           <div>
@@ -537,12 +533,13 @@ if ($vista === 'justificadas') {
           </table>
         </div>
       </section>
+      <?php endif; ?>
     </main>
   </div>
 </body>
 <script>
   (function () {
-    var form = document.querySelector('form.entity-form');
+    var form = document.querySelector('form.topbar');
     if (!form) {
       return;
     }

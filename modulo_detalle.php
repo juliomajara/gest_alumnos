@@ -116,55 +116,51 @@ $active_page = 'modulos';
             <h3>Datos principales del módulo</h3>
             <p>Información académica y de carga horaria asociada al módulo.</p>
           </div>
-          <div class="panel-grid">
-            <table class="panel-table-aligned">
-              <tbody>
-                <tr>
-                  <th>ID</th>
-                  <td><?php echo htmlspecialchars((string) $module['id_modulo'], ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Código</th>
-                  <td><?php echo htmlspecialchars(format_value($module['codigo']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Abreviatura</th>
-                  <td><?php echo htmlspecialchars(format_value($module['abreviatura']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Tipo</th>
-                  <td><?php echo htmlspecialchars(format_value($module['tipo']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Materia general</th>
-                  <td><?php echo htmlspecialchars(format_value($module['materia_general']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Materia propia</th>
-                  <td><?php echo htmlspecialchars(format_value($module['materia_propia']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Nivel</th>
-                  <td><?php echo htmlspecialchars(format_value($module['nivel']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Ciclo</th>
-                  <td><?php echo htmlspecialchars(format_value($module['ciclo_abreviatura']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Curso</th>
-                  <td><?php echo htmlspecialchars(format_value($module['curso']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Horas semanales</th>
-                  <td><?php echo htmlspecialchars(format_value($module['horas_semanales']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-                <tr>
-                  <th>Horas totales</th>
-                  <td><?php echo htmlspecialchars(format_value($module['horas_totales']), ENT_QUOTES, 'UTF-8'); ?></td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="practica-detalle-campos">
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">ID</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) $module['id_modulo'], ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Código</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['codigo']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Abreviatura</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['abreviatura']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Tipo</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['tipo']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Materia general</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['materia_general']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Materia propia</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['materia_propia']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Nivel</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['nivel']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Ciclo</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['ciclo_abreviatura']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Curso</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['curso']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Horas semanales</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['horas_semanales']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
+            <div class="practica-detalle-campo">
+              <span class="practica-detalle-campo-etiqueta">Horas totales</span>
+              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['horas_totales']), ENT_QUOTES, 'UTF-8'); ?></span>
+            </div>
           </div>
         </section>
 

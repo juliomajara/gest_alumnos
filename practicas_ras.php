@@ -756,59 +756,47 @@ if ($filters_ready) {
           <h1>Porcentaje RA/CE en empresa</h1>
           <p class="subheading">Define el porcentaje cedido a la empresa por cada resultado de aprendizaje en un curso y ciclo concretos.</p>
         </div>
+        <div class="header-actions">
+          <a class="primary-button" href="?exportar_json=1<?php echo $can_filter_by_select_course && $selected_course_id !== '' ? '&amp;curso=' . urlencode($selected_course_id) : ($selected_course_text !== '' ? '&amp;curso_texto=' . urlencode($selected_course_text) : ''); ?><?php echo $selected_cycle_id !== '' ? '&amp;ciclo=' . urlencode($selected_cycle_id) : ''; ?>">Exportar a JSON</a>
+        </div>
       </header>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h3>Filtros</h3>
-          <p>Selecciona curso escolar y ciclo para cargar módulos y resultados de aprendizaje.</p>
-        </div>
-
-        <form method="get" class="entity-form panel-grid">
-          <div class="entity-grid entity-grid--3">
-            <?php if ($can_filter_by_select_course): ?>
-              <label>
-                <select name="curso" required>
-                  <option value="">Selecciona curso escolar</option>
-                  <?php foreach ($courses as $course): ?>
-                    <?php $course_value = (string) (int) $course['id_curso_escolar']; ?>
-                    <option value="<?php echo htmlspecialchars($course_value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_course_id === $course_value ? 'selected' : ''; ?>>
-                      <?php echo htmlspecialchars((string) $course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
-              </label>
-            <?php else: ?>
-              <label>
-                <input type="text" name="curso_texto" value="<?php echo htmlspecialchars($selected_course_text, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Ej. 2024/2025" required>
-              </label>
-            <?php endif; ?>
-
-            <label>
-              <select name="ciclo" required>
-                <option value="">Selecciona ciclo</option>
-                <?php foreach ($cycles as $cycle): ?>
-                  <?php
-                    $cycle_value = (string) (int) ($cycle['id_ciclo'] ?? 0);
-                    $cycle_short = trim((string) ($cycle['abreviatura'] ?? ''));
-                    $cycle_name = trim((string) ($cycle['ciclo'] ?? ''));
-                    $cycle_text = $cycle_short !== '' ? $cycle_short : $cycle_name;
-                  ?>
-                  <option value="<?php echo htmlspecialchars($cycle_value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_cycle_id === $cycle_value ? 'selected' : ''; ?>><?php echo htmlspecialchars($cycle_text, ENT_QUOTES, 'UTF-8'); ?></option>
+      <form method="get" class="topbar" id="practicas-ras-filter-form">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <?php if ($can_filter_by_select_course): ?>
+            <label class="calendar-select">
+              <select name="curso" required onchange="this.form.submit()" aria-label="Curso escolar">
+                <option value="">Selecciona curso escolar</option>
+                <?php foreach ($courses as $course): ?>
+                  <?php $course_value = (string) (int) $course['id_curso_escolar']; ?>
+                  <option value="<?php echo htmlspecialchars($course_value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_course_id === $course_value ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars((string) $course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                  </option>
                 <?php endforeach; ?>
               </select>
             </label>
+          <?php else: ?>
+            <label class="calendar-select">
+              <input type="text" name="curso_texto" value="<?php echo htmlspecialchars($selected_course_text, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Ej. 2024/2025" required>
+            </label>
+          <?php endif; ?>
 
-            <div class="practicas-ras-filter-actions">
-              <button type="submit" class="primary-button">Cargar</button>
-              <a
-                class="ghost-button"
-                href="?exportar_json=1<?php echo $can_filter_by_select_course && $selected_course_id !== '' ? '&amp;curso=' . urlencode($selected_course_id) : ($selected_course_text !== '' ? '&amp;curso_texto=' . urlencode($selected_course_text) : ''); ?><?php echo $selected_cycle_id !== '' ? '&amp;ciclo=' . urlencode($selected_cycle_id) : ''; ?>"
-              >Exportar a JSON</a>
-            </div>
-          </div>
-        </form>
-      </section>
+          <label class="calendar-select">
+            <select name="ciclo" required onchange="this.form.submit()" aria-label="Ciclo">
+              <option value="">Selecciona ciclo</option>
+              <?php foreach ($cycles as $cycle): ?>
+                <?php
+                  $cycle_value = (string) (int) ($cycle['id_ciclo'] ?? 0);
+                  $cycle_short = trim((string) ($cycle['abreviatura'] ?? ''));
+                  $cycle_name = trim((string) ($cycle['ciclo'] ?? ''));
+                  $cycle_text = $cycle_short !== '' ? $cycle_short : $cycle_name;
+                ?>
+                <option value="<?php echo htmlspecialchars($cycle_value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_cycle_id === $cycle_value ? 'selected' : ''; ?>><?php echo htmlspecialchars($cycle_text, ENT_QUOTES, 'UTF-8'); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+        </div>
+      </form>
 
       <?php if ($errors): ?>
         <section class="panel">

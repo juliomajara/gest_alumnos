@@ -156,29 +156,22 @@ $modules_heading = $selected_group === ''
         </div>
       </header>
 
-      <form method="get" class="panel entity-form">
-        <section class="entity-section">
-          <div class="panel-header">
-            <h3>Filtros</h3>
-            <p>Selecciona un grupo para ver los m&oacute;dulos.</p>
-          </div>
-
-          <div class="entity-grid entity-grid--4">
-            <label>
-              <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
-                <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
-                <?php foreach ($allowed_groups as $group): ?>
-                  <option value="<?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_group === $group ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-          </div>
-        </section>
+      <form method="get" class="topbar">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
+              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
+              <?php foreach ($allowed_groups as $group): ?>
+                <option value="<?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_group === $group ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+        </div>
       </form>
 
-      <section class="panel">
+      <section class="panel" id="modules-panel"<?php if ($selected_group === ''): ?> hidden<?php endif; ?>>
         <div class="panel-header">
           <h3 id="modules-heading"><?php echo $modules_heading; ?></h3>
           <p>Nivel, ciclo, curso y datos generales de cada m&oacute;dulo registrado.</p>
@@ -207,9 +200,10 @@ $modules_heading = $selected_group === ''
     </main>
   </div>
   <script>
-    const form = document.querySelector('form.entity-form');
+    const form = document.querySelector('form.topbar');
     const groupSelect = document.querySelector('select[name="grupo"]');
     const tableBody = document.querySelector('tbody');
+    const modulesPanel = document.getElementById('modules-panel');
     const modulesHeading = document.querySelector('#modules-heading');
 
     const updateHeading = () => {
@@ -236,6 +230,9 @@ $modules_heading = $selected_group === ''
         .then((response) => response.text())
         .then((html) => {
           tableBody.innerHTML = html;
+          if (modulesPanel) {
+            modulesPanel.hidden = groupSelect.value === '';
+          }
           updateHeading();
           history.replaceState(null, '', `?${urlParams.toString()}`);
         })

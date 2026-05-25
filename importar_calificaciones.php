@@ -435,7 +435,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="button-primary">Importar calificaciones</button>
+            <button type="submit" class="primary-button">Importar calificaciones</button>
           </div>
         </section>
       </form>

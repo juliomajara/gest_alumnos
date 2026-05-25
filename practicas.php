@@ -141,6 +141,7 @@ $practices_stmt = $pdo->prepare(
     p.fecha_fin,
     p.fecha_fin_extra,
     p.cancelada,
+    p.fecha_fin_real,
     a.nombre AS alumno_nombre,
     a.apellido1 AS alumno_apellido1,
     a.apellido2 AS alumno_apellido2,
@@ -253,7 +254,7 @@ function render_practice_rows(array $practices): string
   ob_start();
   if (!$practices): ?>
     <tr>
-      <td colspan="6">No hay prácticas para los filtros seleccionados.</td>
+      <td colspan="7">No hay prácticas para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($practices as $practice): ?>
@@ -310,6 +311,16 @@ function render_practice_rows(array $practices): string
         $anexo_21 = $convenio . ' / ' . $anexo;
 
         $estado = calculate_practice_status($practice);
+        $fecha_fin_real_raw = $practice['fecha_fin_real'] ?? null;
+        if ($estado === 'Finalizada') {
+          $fecha_fin_real = ($fecha_fin_real_raw !== null && $fecha_fin_real_raw !== '')
+            ? format_date($fecha_fin_real_raw)
+            : 'Fecha prevista';
+        } elseif ($estado === 'Cancelada') {
+          $fecha_fin_real = format_date($fecha_fin_real_raw);
+        } else {
+          $fecha_fin_real = '';
+        }
         $alumno_html = htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8');
 
         if ((int) ($practice['cancelada'] ?? 0) === 1) {
@@ -341,6 +352,7 @@ function render_practice_rows(array $practices): string
         </td>
         <td><?php echo htmlspecialchars($fecha_inicio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo htmlspecialchars($fecha_fin_real, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
@@ -427,6 +439,7 @@ $active_page = 'practicas';
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa'), ENT_QUOTES, 'UTF-8'); ?>">Empresa</a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_inicio'), ENT_QUOTES, 'UTF-8'); ?>">Fecha de inicio</a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin'), ENT_QUOTES, 'UTF-8'); ?>">Fecha de fin</a></th>
+                <th>Fecha fin real</th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo'), ENT_QUOTES, 'UTF-8'); ?>">Anexo 2.1</a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado'), ENT_QUOTES, 'UTF-8'); ?>">Estado</a></th>
               </tr>

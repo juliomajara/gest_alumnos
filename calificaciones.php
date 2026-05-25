@@ -392,6 +392,9 @@ if ($show_results && $students !== [] && $modules !== []) {
           <h1>Calificaciones</h1>
           <p class="subheading">Consulta las notas por curso escolar, grupo y evaluación.</p>
         </div>
+        <div class="header-actions">
+          <a class="primary-button" href="importar_calificaciones.php">Importar calificaciones</a>
+        </div>
       </header>
 
       <form class="topbar" method="get">
@@ -401,6 +404,7 @@ if ($show_results && $students !== [] && $modules !== []) {
         <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
             <select name="id_curso_escolar" onchange="this.form.submit()" aria-label="Curso escolar">
+              <option value="">Selecciona curso escolar</option>
               <?php foreach ($courses as $course): ?>
                 <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
                   <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>

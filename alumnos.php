@@ -189,53 +189,60 @@ $students_heading = $selected_group_name !== ''
         </div>
         <div class="header-actions">
           <a class="primary-button" id="exportar-claves-json" href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>">Exportar claves a JSON</a>
+          <?php
+            $_nav_params = [];
+            if ($selected_course_id > 0) $_nav_params['id_curso_escolar'] = $selected_course_id;
+            if ($selected_group !== '') $_nav_params['id_grupo'] = $selected_group;
+            $_nav_qs = $_nav_params ? '?' . http_build_query($_nav_params) : '';
+          ?>
+          <a class="primary-button" id="link-asistencia" href="asistencia.php<?php echo $_nav_qs; ?>">Asistencia</a>
+          <a class="primary-button" id="link-calificaciones" href="calificaciones.php<?php echo $_nav_qs; ?>">Calificaciones</a>
         </div>
       </header>
 
-      <form method="get" class="panel entity-form">
-        <section class="entity-section">
-          <div class="panel-header">
-            <h3>Filtros</h3>
-            <p>Selecciona curso escolar, grupo y/o busca por nombre o apellidos.</p>
+      <form method="get" class="topbar">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="id_curso_escolar" aria-label="Curso escolar">
+              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
+              <?php foreach ($courses as $course): ?>
+                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+
+          <label class="calendar-select">
+            <select name="grupo_id" aria-label="Grupo">
+              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
+              <?php foreach ($groups as $group): ?>
+                <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+
+          <div class="topbar-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar por nombre o apellidos"
+              aria-label="Buscar por nombre o apellidos"
+              value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+            >
           </div>
-
-          <div class="entity-grid entity-grid--4">
-            <label>
-              <select name="id_curso_escolar">
-                <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
-                <?php foreach ($courses as $course): ?>
-                  <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-
-            <label>
-              <select name="grupo_id">
-                <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
-                <?php foreach ($groups as $group): ?>
-                  <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($group['grupo'], ENT_QUOTES, 'UTF-8'); ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </label>
-
-            <label>
-              <input
-                type="search"
-                name="q"
-                placeholder="Buscar por nombre o apellidos"
-                aria-label="Buscar por nombre o apellidos"
-                value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
-              >
-            </label>
-          </div>
-        </section>
+        </div>
       </form>
 
-      <section class="panel">
+      <section class="panel" id="students-panel"<?php if ($selected_group === ''): ?> hidden<?php endif; ?>>
         <div class="panel-header">
           <h3 id="students-heading"><?php echo $students_heading; ?></h3>
           <p>Grupo, apellidos y nombre, datos de contacto e identificadores básicos.</p>
@@ -262,12 +269,15 @@ $students_heading = $selected_group_name !== ''
     </main>
   </div>
   <script>
-    const form = document.querySelector('form.entity-form');
+    const form = document.querySelector('form.topbar');
     const searchInput = document.querySelector('input[name="q"]');
     const groupSelect = document.querySelector('select[name="grupo_id"]');
     const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
     const tableBody = document.querySelector('tbody');
+    const studentsPanel = document.getElementById('students-panel');
     const exportJsonLink = document.querySelector('#exportar-claves-json');
+    const asistenciaLink = document.querySelector('#link-asistencia');
+    const calificacionesLink = document.querySelector('#link-calificaciones');
     const studentsHeading = document.querySelector('#students-heading');
     let debounceTimer = null;
 
@@ -280,6 +290,17 @@ $students_heading = $selected_group_name !== ''
       exportParams.delete('ajax');
       exportParams.set('exportar_claves_json', '1');
       exportJsonLink.href = `alumnos.php?${exportParams.toString()}`;
+    };
+
+    const updateNavLinks = (params) => {
+      const navParams = new URLSearchParams();
+      const courseVal = params.get('id_curso_escolar');
+      const groupVal = params.get('grupo_id');
+      if (courseVal) navParams.set('id_curso_escolar', courseVal);
+      if (groupVal) navParams.set('id_grupo', groupVal);
+      const query = navParams.toString();
+      if (asistenciaLink) asistenciaLink.href = query ? `asistencia.php?${query}` : 'asistencia.php';
+      if (calificacionesLink) calificacionesLink.href = query ? `calificaciones.php?${query}` : 'calificaciones.php';
     };
 
     const updateHeading = () => {
@@ -306,6 +327,7 @@ $students_heading = $selected_group_name !== ''
 
         params.set('ajax', '1');
         updateExportLink(urlParams);
+        updateNavLinks(urlParams);
 
         fetch(`alumnos.php?${params.toString()}`, {
           headers: {
@@ -315,6 +337,9 @@ $students_heading = $selected_group_name !== ''
           .then((response) => response.text())
           .then((html) => {
             tableBody.innerHTML = html;
+            if (studentsPanel) {
+              studentsPanel.hidden = groupSelect.value === '';
+            }
             updateHeading();
             history.replaceState(null, '', `?${urlParams.toString()}`);
           })
@@ -348,6 +373,7 @@ $students_heading = $selected_group_name !== ''
     });
 
     updateExportLink(new URLSearchParams(new FormData(form)));
+    updateNavLinks(new URLSearchParams(new FormData(form)));
     updateHeading();
   </script>
 </body>

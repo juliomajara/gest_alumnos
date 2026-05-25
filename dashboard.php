@@ -247,119 +247,189 @@ $active_page = 'dashboard';
     <?php require __DIR__ . '/includes/sidebar.php'; ?>
 
     <main class="content">
-      <header class="header">
-        <div>
-          <h1>Dashboard</h1>
-          <p class="subheading">Métricas reales del sistema para alumnos, prácticas, empresas, módulos, profesorado y seguimiento académico.</p>
+
+      <!-- HERO BANNER -->
+      <div class="db-hero">
+        <div class="db-hero-left">
+          <div class="db-hero-eyebrow">
+            <?php echo $curso_activo_nombre ? htmlspecialchars($curso_activo_nombre, ENT_QUOTES, 'UTF-8') : 'Sin curso activo'; ?>
+          </div>
+          <h1 class="db-hero-title">Panel de control</h1>
+          <p class="db-hero-sub">Métricas en tiempo real del sistema académico</p>
         </div>
-      </header>
-
-      <section class="cards">
-        <article class="card highlight">
-          <div>
-            <p class="card-label">Alumnos registrados</p>
-            <h2><?php echo $total_alumnos !== null ? number_format($total_alumnos, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $total_alumnos !== null ? 'Total general de alumnos.' : 'Sin datos disponibles'; ?></p>
+        <div class="db-hero-right">
+          <div class="db-hero-date">
+            <span class="db-hero-date-day"><?php echo date('d'); ?></span>
+            <div class="db-hero-date-info">
+              <span class="db-hero-date-month"><?php
+                $db_months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+                echo $db_months[(int)date('n') - 1] . ' ' . date('Y');
+              ?></span>
+              <span class="db-hero-date-dow"><?php
+                $db_days = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+                echo $db_days[(int)date('w')];
+              ?></span>
+            </div>
           </div>
-          <span class="card-badge">Alumnos</span>
+        </div>
+      </div>
+
+      <!-- KPI CARDS -->
+      <section class="db-kpis">
+        <article class="db-kpi db-kpi--blue">
+          <div class="db-kpi-icon"><img src="assets/icons/alumnos.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $total_alumnos !== null ? number_format($total_alumnos, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Alumnos registrados</div>
+          </div>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Alumnos en curso activo</p>
-            <h2><?php echo $alumnos_curso_activo !== null ? number_format($alumnos_curso_activo, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $alumnos_curso_activo !== null ? 'Vinculados a cursos escolares activos.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--green">
+          <div class="db-kpi-icon"><img src="assets/icons/alumnos.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $alumnos_curso_activo !== null ? number_format($alumnos_curso_activo, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">En curso activo</div>
           </div>
-          <span class="card-badge">Curso</span>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Prácticas totales</p>
-            <h2><?php echo $total_practicas !== null ? number_format($total_practicas, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $total_practicas !== null ? 'Todas las prácticas registradas.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--amber">
+          <div class="db-kpi-icon"><img src="assets/icons/practicas.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $total_practicas !== null ? number_format($total_practicas, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Prácticas totales</div>
           </div>
-          <span class="card-badge">Prácticas</span>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Prácticas activas</p>
-            <h2><?php echo $practicas_activas !== null ? number_format($practicas_activas, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $practicas_activas !== null ? 'En fecha vigente y no finalizadas.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--indigo">
+          <div class="db-kpi-icon"><img src="assets/icons/practicas.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $practicas_activas !== null ? number_format($practicas_activas, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Prácticas activas</div>
           </div>
-          <span class="card-badge">Activas</span>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Empresas registradas</p>
-            <h2><?php echo $total_empresas !== null ? number_format($total_empresas, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $total_empresas !== null ? 'Empresas disponibles para prácticas.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--purple">
+          <div class="db-kpi-icon"><img src="assets/icons/empresas.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $total_empresas !== null ? number_format($total_empresas, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Empresas</div>
           </div>
-          <span class="card-badge">Empresas</span>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Profesores</p>
-            <h2><?php echo $total_profesores !== null ? number_format($total_profesores, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $total_profesores !== null ? 'Docentes dados de alta en el sistema.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--pink">
+          <div class="db-kpi-icon"><img src="assets/icons/profesores.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $total_profesores !== null ? number_format($total_profesores, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Profesores</div>
           </div>
-          <span class="card-badge">Profesorado</span>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Calificaciones registradas</p>
-            <h2><?php echo $total_calificaciones !== null ? number_format($total_calificaciones, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $total_calificaciones !== null ? 'Registros de evaluación almacenados.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--teal">
+          <div class="db-kpi-icon"><img src="assets/icons/calificaciones.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $total_calificaciones !== null ? number_format($total_calificaciones, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Calificaciones</div>
           </div>
-          <span class="card-badge">Evaluación</span>
         </article>
-
-        <article class="card">
-          <div>
-            <p class="card-label">Asistencia del mes actual</p>
-            <h2><?php echo $asistencias_mes_actual !== null ? number_format($asistencias_mes_actual, 0, ',', '.') : '—'; ?></h2>
-            <p class="card-note"><?php echo $asistencias_mes_actual !== null ? 'Partes de asistencia de ' . date('m/Y') . '.' : 'Sin datos disponibles'; ?></p>
+        <article class="db-kpi db-kpi--orange">
+          <div class="db-kpi-icon"><img src="assets/icons/asistencia.svg" alt=""></div>
+          <div class="db-kpi-body">
+            <div class="db-kpi-value"><?php echo $asistencias_mes_actual !== null ? number_format($asistencias_mes_actual, 0, ',', '.') : '&#8212;'; ?></div>
+            <div class="db-kpi-label">Asistencia <?php echo date('m/Y'); ?></div>
           </div>
-          <span class="card-badge">Asistencia</span>
         </article>
       </section>
 
+      <!-- ACCESOS RÁPIDOS -->
+      <section>
+        <h2 class="db-section-title">Accesos rápidos</h2>
+        <div class="db-quicklinks">
+          <a href="alumnos.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/alumnos.svg" alt=""></span>
+            <span class="db-ql-label">Alumnos</span>
+          </a>
+          <a href="asistencia.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/asistencia.svg" alt=""></span>
+            <span class="db-ql-label">Asistencia</span>
+          </a>
+          <a href="calificaciones.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/calificaciones.svg" alt=""></span>
+            <span class="db-ql-label">Calificaciones</span>
+          </a>
+          <a href="modulos.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/modulos.svg" alt=""></span>
+            <span class="db-ql-label">Módulos</span>
+          </a>
+          <a href="horarios.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/horarios.svg" alt=""></span>
+            <span class="db-ql-label">Horarios</span>
+          </a>
+          <a href="empresas.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/empresas.svg" alt=""></span>
+            <span class="db-ql-label">Empresas</span>
+          </a>
+          <a href="practicas.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/practicas.svg" alt=""></span>
+            <span class="db-ql-label">Prácticas</span>
+          </a>
+          <a href="profesores.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/profesores.svg" alt=""></span>
+            <span class="db-ql-label">Profesores</span>
+          </a>
+          <a href="practicas_anexos.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/documentacion.svg" alt=""></span>
+            <span class="db-ql-label">Anexos</span>
+          </a>
+          <a href="configuracion.php" class="db-quicklink">
+            <span class="db-ql-icon"><img src="assets/icons/configuracion.svg" alt=""></span>
+            <span class="db-ql-label">Configuración</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- PANELES -->
       <section class="grid">
+
+        <!-- Estado prácticas -->
         <article class="panel">
           <div class="panel-header">
-            <h3>Resumen de prácticas por estado</h3>
-            <p>Distribución actual según estado de la práctica.</p>
+            <h3>Estado de prácticas</h3>
+            <p>Distribución actual por estado de cada práctica.</p>
           </div>
-          <ul class="activity">
-            <?php if (!$practicas_por_estado): ?>
-              <li>
-                <div>
-                  <strong>Sin datos disponibles</strong>
-                  <p>No se han encontrado estados de prácticas.</p>
-                </div>
-              </li>
-            <?php else: ?>
+          <?php if (!$practicas_por_estado): ?>
+            <p class="db-empty">Sin datos disponibles.</p>
+          <?php else: ?>
+            <?php
+              $db_total_estado = array_sum(array_column($practicas_por_estado, 'total'));
+              $db_estado_badge_map = [
+                'En curso'      => 'db-estado--green',
+                'En espera'     => 'db-estado--amber',
+                'Finalizada'    => 'db-estado--blue',
+                'Cancelada'     => 'db-estado--red',
+              ];
+            ?>
+            <ul class="db-estado-list">
               <?php foreach ($practicas_por_estado as $fila_estado): ?>
-                <li>
-                  <div>
-                    <strong><?php echo htmlspecialchars((string) $fila_estado['estado'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                    <p><?php echo (int) $fila_estado['total']; ?> práctica(s)</p>
+                <?php
+                  $db_estado_val   = (string) $fila_estado['estado'];
+                  $db_estado_count = (int) $fila_estado['total'];
+                  $db_pct          = $db_total_estado > 0 ? round($db_estado_count / $db_total_estado * 100) : 0;
+                  $db_estado_cls   = $db_estado_badge_map[$db_estado_val] ?? 'db-estado--gray';
+                ?>
+                <li class="db-estado-item">
+                  <div class="db-estado-head">
+                    <span class="db-estado-badge <?php echo $db_estado_cls; ?>"><?php echo htmlspecialchars($db_estado_val, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="db-estado-count"><?php echo $db_estado_count; ?> <small>(<?php echo $db_pct; ?>%)</small></span>
                   </div>
-                  <span class="status"><?php echo (int) $fila_estado['total']; ?></span>
+                  <div class="db-progress-bar">
+                    <div class="db-progress-fill <?php echo $db_estado_cls; ?>" style="width:<?php echo $db_pct; ?>%"></div>
+                  </div>
                 </li>
               <?php endforeach; ?>
-            <?php endif; ?>
-          </ul>
+            </ul>
+            <a href="practicas.php" class="db-panel-link-footer">Ver todas las prácticas &rarr;</a>
+          <?php endif; ?>
         </article>
 
+        <!-- Últimas prácticas -->
         <article class="panel">
           <div class="panel-header">
             <h3>Últimas prácticas registradas</h3>
-            <p>Listado reciente de prácticas creadas en el sistema.</p>
+            <p>Las 6 prácticas más recientes del sistema.</p>
           </div>
           <div class="panel-grid">
             <table>
@@ -377,6 +447,14 @@ $active_page = 'dashboard';
                     <td colspan="4">Sin datos disponibles</td>
                   </tr>
                 <?php else: ?>
+                  <?php
+                    $db_badge_map = [
+                      'En curso'   => 'db-badge--green',
+                      'En espera'  => 'db-badge--amber',
+                      'Finalizada' => 'db-badge--blue',
+                      'Cancelada'  => 'db-badge--red',
+                    ];
+                  ?>
                   <?php foreach ($ultimas_practicas as $practica): ?>
                     <?php
                       $nombre_alumno = trim(implode(' ', array_filter([
@@ -390,81 +468,115 @@ $active_page = 'dashboard';
                         trim((string) ($practica['empresa_apellido1'] ?? '')),
                         trim((string) ($practica['empresa_apellido2'] ?? '')),
                       ], static fn ($valor) => $valor !== '')));
+
+                      $db_estado_practica = (string) $practica['estado'];
+                      $db_badge_cls = $db_badge_map[$db_estado_practica] ?? 'db-badge--gray';
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars($nombre_alumno !== '' ? $nombre_alumno : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars($nombre_empresa !== '' ? $nombre_empresa : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars((string) $practica['estado'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars((string) ($practica['fecha_inicio'] ?: 'No disponible'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><span class="db-badge <?php echo $db_badge_cls; ?>"><?php echo htmlspecialchars($db_estado_practica, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                      <td><?php echo htmlspecialchars((string) ($practica['fecha_inicio'] ?: '&#8212;'), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
               </tbody>
             </table>
           </div>
+          <a href="practicas.php" class="db-panel-link-footer">Ver todas las prácticas &rarr;</a>
         </article>
 
+        <!-- Resumen académico -->
         <article class="panel">
           <div class="panel-header">
             <h3>Resumen académico</h3>
-            <p>Módulos, asignaciones y tutores por grupo del sistema.</p>
+            <p>Módulos, asignaciones y tutores por grupo.</p>
           </div>
           <div class="panel-grid">
-            <a class="panel-link" href="modulos.php">
-              <span>Módulos registrados: <?php echo $total_modulos !== null ? number_format($total_modulos, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Total de módulos configurados.</small>
+            <a class="panel-link panel-link-with-icon" href="modulos.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="modulos"></span></span>
+              <span class="panel-link-text">
+                <span>Módulos registrados</span>
+                <small><?php echo $total_modulos !== null ? number_format($total_modulos, 0, ',', '.') : 'Sin datos'; ?> configurados</small>
+              </span>
             </a>
-            <a class="panel-link" href="modulos.php">
-              <span>Asignaciones alumno-módulo: <?php echo $total_asignaciones_modulo !== null ? number_format($total_asignaciones_modulo, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Relaciones activas entre alumnado y módulos.</small>
+            <a class="panel-link panel-link-with-icon" href="modulos.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="alumnos"></span></span>
+              <span class="panel-link-text">
+                <span>Asignaciones alumno-módulo</span>
+                <small><?php echo $total_asignaciones_modulo !== null ? number_format($total_asignaciones_modulo, 0, ',', '.') : 'Sin datos'; ?> relaciones activas</small>
+              </span>
             </a>
-            <a class="panel-link" href="profesores.php">
-              <span>Tutores asignados a grupos: <?php echo $total_tutores_grupo !== null ? number_format($total_tutores_grupo, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Profesores con tutoría en grupos.</small>
+            <a class="panel-link panel-link-with-icon" href="profesores.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="profesores"></span></span>
+              <span class="panel-link-text">
+                <span>Tutores asignados a grupos</span>
+                <small><?php echo $total_tutores_grupo !== null ? number_format($total_tutores_grupo, 0, ',', '.') : 'Sin datos'; ?> con tutoría activa</small>
+              </span>
             </a>
-            <a class="panel-link" href="alumnos.php">
-              <span>Cursos activos con alumnado: <?php echo $alumnos_por_curso_activo ? count($alumnos_por_curso_activo) : 0; ?></span>
-              <small>
-                <?php if (!$alumnos_por_curso_activo): ?>
-                  Sin datos disponibles.
-                <?php else: ?>
-                  <?php
-                    $resumen_cursos = array_map(
-                      static fn ($fila) => $fila['curso_escolar'] . ': ' . $fila['total'],
-                      $alumnos_por_curso_activo
-                    );
-                    echo htmlspecialchars(implode(' · ', $resumen_cursos), ENT_QUOTES, 'UTF-8');
-                  ?>
-                <?php endif; ?>
-              </small>
+            <a class="panel-link panel-link-with-icon" href="alumnos.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="calificaciones"></span></span>
+              <span class="panel-link-text">
+                <span>Cursos activos con alumnado</span>
+                <small>
+                  <?php if (!$alumnos_por_curso_activo): ?>
+                    Sin datos disponibles
+                  <?php else: ?>
+                    <?php
+                      $resumen_cursos = array_map(
+                        static fn ($fila) => $fila['curso_escolar'] . ': ' . $fila['total'],
+                        $alumnos_por_curso_activo
+                      );
+                      echo htmlspecialchars(implode(' · ', $resumen_cursos), ENT_QUOTES, 'UTF-8');
+                    ?>
+                  <?php endif; ?>
+                </small>
+              </span>
             </a>
           </div>
         </article>
+
+        <!-- Seguimiento operativo -->
         <article class="panel">
           <div class="panel-header">
             <h3>Seguimiento operativo</h3>
-            <p>Indicadores útiles para la gestión diaria sin salir de portada.</p>
+            <p>Indicadores útiles para la gestión diaria.</p>
           </div>
           <div class="panel-grid">
-            <a class="panel-link" href="calificaciones.php">
-              <span>Calificaciones totales: <?php echo $total_calificaciones !== null ? number_format($total_calificaciones, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Visión global de la carga evaluativa registrada.</small>
+            <a class="panel-link panel-link-with-icon" href="calificaciones.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="calificaciones"></span></span>
+              <span class="panel-link-text">
+                <span>Calificaciones totales</span>
+                <small><?php echo $total_calificaciones !== null ? number_format($total_calificaciones, 0, ',', '.') : 'Sin datos'; ?> evaluaciones registradas</small>
+              </span>
             </a>
-            <a class="panel-link" href="asistencia.php">
-              <span>Registros de asistencia (mes actual): <?php echo $asistencias_mes_actual !== null ? number_format($asistencias_mes_actual, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Control del avance de asistencia en <?php echo date('m/Y'); ?>.</small>
+            <a class="panel-link panel-link-with-icon" href="asistencia.php">
+              <span class="nav-icon"><span class="nav-icon-image" style="mask-image:url('assets/icons/asistencia.svg');-webkit-mask-image:url('assets/icons/asistencia.svg')"></span></span>
+              <span class="panel-link-text">
+                <span>Asistencia (mes actual)</span>
+                <small><?php echo $asistencias_mes_actual !== null ? number_format($asistencias_mes_actual, 0, ',', '.') : 'Sin datos'; ?> partes en <?php echo date('m/Y'); ?></small>
+              </span>
             </a>
-            <a class="panel-link" href="practicas_anexos.php">
-              <span>Anexos generados: <?php echo $anexos_generados !== null ? number_format($anexos_generados, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Documentación de prácticas emitida desde la plataforma.</small>
+            <a class="panel-link panel-link-with-icon" href="practicas_anexos.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="practicas"></span></span>
+              <span class="panel-link-text">
+                <span>Anexos generados</span>
+                <small><?php echo $anexos_generados !== null ? number_format($anexos_generados, 0, ',', '.') : 'Sin datos'; ?> documentos emitidos</small>
+              </span>
             </a>
-            <a class="panel-link" href="practicas.php">
-              <span>Prácticas pendientes de fecha de inicio: <?php echo $practicas_sin_fecha_inicio !== null ? number_format($practicas_sin_fecha_inicio, 0, ',', '.') : 'Sin datos disponibles'; ?></span>
-              <small>Ayuda a detectar prácticas abiertas que requieren planificación.</small>
+            <a class="panel-link panel-link-with-icon<?php echo ($practicas_sin_fecha_inicio !== null && $practicas_sin_fecha_inicio > 0) ? ' db-alert-link' : ''; ?>" href="practicas.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="practicas"></span></span>
+              <span class="panel-link-text">
+                <span><?php echo ($practicas_sin_fecha_inicio !== null && $practicas_sin_fecha_inicio > 0) ? '&#9888;&#65039; Prácticas sin fecha de inicio' : 'Prácticas sin fecha de inicio'; ?></span>
+                <small><?php echo $practicas_sin_fecha_inicio !== null ? number_format($practicas_sin_fecha_inicio, 0, ',', '.') : 'Sin datos'; ?> pendientes de planificación</small>
+              </span>
             </a>
-            <a class="panel-link" href="alumnos.php">
-              <span>Curso escolar activo: <?php echo htmlspecialchars($curso_activo_nombre ?? 'No definido', ENT_QUOTES, 'UTF-8'); ?></span>
-              <small><?php echo $curso_activo_nombre !== null ? 'Métricas académicas priorizadas para el curso en vigor.' : 'No hay curso activo marcado; se muestra información global sin romper el dashboard.'; ?></small>
+            <a class="panel-link panel-link-with-icon" href="alumnos.php">
+              <span class="nav-icon"><span class="nav-icon-image" data-icon="alumnos"></span></span>
+              <span class="panel-link-text">
+                <span>Curso escolar activo</span>
+                <small><?php echo htmlspecialchars($curso_activo_nombre ?? 'No definido', ENT_QUOTES, 'UTF-8'); ?></small>
+              </span>
             </a>
           </div>
         </article>

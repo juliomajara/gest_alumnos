@@ -25,83 +25,50 @@ $active_page = 'configuracion';
         </div>
       </header>
 
-      <section class="grid">
-        <article class="panel">
-          <div class="panel-header">
-            <h3>Panel de opciones</h3>
-            <p>Accesos rápidos para la gestión de importaciones y utilidades.</p>
-          </div>
-          <div class="panel-grid">
-            <a class="panel-link panel-link-with-icon" href="asistencia_importar.php">
-              <span class="nav-icon" aria-hidden="true">
-                <img class="nav-icon-image" src="assets/icons/asistencia.svg" alt="">
-              </span>
-              <span class="panel-link-text">
-                <span>Importar asistencia</span>
-                <small>Importa la asistencia desde el CSV correspondiente.</small>
-              </span>
-            </a>
-            <a class="panel-link panel-link-with-icon" href="importar_calificaciones.php">
-              <span class="nav-icon" aria-hidden="true">
-                <img class="nav-icon-image" src="assets/icons/calificaciones.svg" alt="">
-              </span>
-              <span class="panel-link-text">
-                <span>Importar calificaciones</span>
-                <small>Importa notas desde CSV para un contexto académico concreto.</small>
-              </span>
-            </a>
-            <a class="panel-link panel-link-with-icon" href="practicas_dias.php">
-              <span class="nav-icon" aria-hidden="true">
-                <img class="nav-icon-image" src="assets/icons/dias_practicas.svg" alt="">
-              </span>
-              <span class="panel-link-text">
-                <span>Días de prácticas por alumno</span>
-                <small>Consulta el resumen mensual y las horas realizadas.</small>
-              </span>
-            </a>
-            <a class="panel-link panel-link-with-icon" href="practicas_documentacion.php">
-              <span class="nav-icon" aria-hidden="true">
-                <img class="nav-icon-image" src="assets/icons/documentacion.svg" alt="">
-              </span>
-              <span class="panel-link-text">
-                <span>Documentación de prácticas</span>
-                <small>Genera programas formativos y calendarios del curso actual.</small>
-              </span>
-            </a>
-            <a class="panel-link panel-link-with-icon" href="enviar_correos.php">
-              <span class="nav-icon" aria-hidden="true">
-                <img class="nav-icon-image" src="assets/icons/enviar_correos.svg" alt="">
-              </span>
-              <span class="panel-link-text">
-                <span>Envío de correos</span>
-                <small>Envía comunicaciones masivas desde la plataforma.</small>
-              </span>
-            </a>
-            <a class="panel-link panel-link-with-icon" href="#" aria-disabled="true">
-              <span class="nav-icon" aria-hidden="true">
-                <img class="nav-icon-image" src="assets/icons/acceso_ffe.svg" alt="">
-              </span>
-              <span class="panel-link-text">
-                <span>Acceso a FFE</span>
-                <small>Próximamente (enlace en preparación).</small>
-              </span>
-            </a>
-          </div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-header">
-            <h3>Más opciones</h3>
-            <p>Espacio preparado para nuevos accesos de configuración.</p>
-          </div>
-          <div class="panel-grid">
-            <a class="panel-link" href="#" aria-disabled="true">
-              <span>Reservado para futuras opciones</span>
-              <small>Añade aquí nuevos botones cuando estén disponibles.</small>
-            </a>
-          </div>
-        </article>
-      </section>
+      <div class="util-grid">
+        <a class="util-card" href="asistencia_importar.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/asistencia.svg" alt="">
+          </span>
+          <span class="util-card-title">Importar asistencia</span>
+          <span class="util-card-desc">Importa la asistencia desde el CSV correspondiente.</span>
+        </a>
+        <a class="util-card" href="importar_calificaciones.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/calificaciones.svg" alt="">
+          </span>
+          <span class="util-card-title">Importar calificaciones</span>
+          <span class="util-card-desc">Importa notas desde CSV para un contexto académico concreto.</span>
+        </a>
+        <a class="util-card" href="practicas_dias.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/dias_practicas.svg" alt="">
+          </span>
+          <span class="util-card-title">Días de prácticas por alumno</span>
+          <span class="util-card-desc">Consulta el resumen mensual y las horas realizadas.</span>
+        </a>
+        <a class="util-card" href="practicas_documentacion.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/documentacion.svg" alt="">
+          </span>
+          <span class="util-card-title">Documentación de prácticas</span>
+          <span class="util-card-desc">Genera programas formativos y calendarios del curso actual.</span>
+        </a>
+        <a class="util-card" href="enviar_correos.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/enviar_correos.svg" alt="">
+          </span>
+          <span class="util-card-title">Envío de correos</span>
+          <span class="util-card-desc">Envía comunicaciones masivas desde la plataforma.</span>
+        </a>
+        <a class="util-card util-card--disabled" href="#" aria-disabled="true" tabindex="-1">
+          <span class="util-card-icon">
+            <img src="assets/icons/acceso_ffe.svg" alt="">
+          </span>
+          <span class="util-card-title">Acceso a FFE</span>
+          <span class="util-card-desc">Próximamente (enlace en preparación).</span>
+        </a>
+      </div>
     </main>
   </div>
 </body>

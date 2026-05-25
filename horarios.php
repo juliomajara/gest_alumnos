@@ -28,7 +28,7 @@ $requestedCourse = isset($_GET['id_curso_escolar']) ? (int) $_GET['id_curso_esco
 $requestedGroup = isset($_GET['id_grupo']) ? (int) $_GET['id_grupo'] : 0;
 
 $selectedCourse = in_array($requestedCourse, $validCourseIds, true) ? $requestedCourse : $defaultCourse;
-$selectedGroup = in_array($requestedGroup, $validGroupIds, true) ? $requestedGroup : $defaultGroup;
+$selectedGroup = in_array($requestedGroup, $validGroupIds, true) ? $requestedGroup : 0;
 
 $tramos = $pdo->query('SELECT id_horario_tramo, numero_tramo, hora_inicio, hora_fin FROM horarios_tramos ORDER BY numero_tramo')->fetchAll(PDO::FETCH_ASSOC);
 
@@ -88,9 +88,33 @@ $active_page = 'horarios';
 ?>
 <!doctype html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title><?php echo htmlspecialchars($page_title, ENT_QUOTES, 'UTF-8'); ?></title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/styles.css"></head>
 <body><div class="page"><?php require __DIR__ . '/includes/sidebar.php'; ?><main class="content">
-<header class="header"><div><h1>Horarios</h1><p class="subheading">Consulta los horarios semanales de los grupos.</p></div></header>
-<section class="panel"><div class="panel-header"><h3>Configuración</h3></div>
-<form class="entity-form horarios-configuracion" method="get" action="horarios.php"><div class="horarios-configuracion-fields"><label>Curso escolar<select name="id_curso_escolar" onchange="this.form.submit()"><?php foreach ($courses as $c): ?><option value="<?php echo (int) $c['id_curso_escolar']; ?>" <?php echo (int) $c['id_curso_escolar'] === $selectedCourse ? 'selected' : ''; ?>><?php echo htmlspecialchars((string) $c['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?></option><?php endforeach; ?></select></label><label>Grupo<select name="id_grupo" onchange="this.form.submit()"><?php foreach ($groups as $g): ?><option value="<?php echo (int) $g['id_grupo']; ?>" <?php echo (int) $g['id_grupo'] === $selectedGroup ? 'selected' : ''; ?>><?php echo htmlspecialchars((string) $g['grupo'], ENT_QUOTES, 'UTF-8'); ?></option><?php endforeach; ?></select></label></div><div class="horarios-configuracion-actions"><a class="primary-button" href="horarios_editar.php?id_curso_escolar=<?php echo (int) $selectedCourse; ?>&id_grupo=<?php echo (int) $selectedGroup; ?>">Editar</a><a class="primary-button" href="horarios_importar.php?id_curso_escolar=<?php echo (int) $selectedCourse; ?>&id_grupo=<?php echo (int) $selectedGroup; ?>">Importar</a></div></form>
+<header class="header"><div><h1>Horarios</h1><p class="subheading">Consulta los horarios semanales de los grupos.</p></div><div class="header-actions"><a class="primary-button" href="horarios_editar.php?id_curso_escolar=<?php echo (int) $selectedCourse; ?>&id_grupo=<?php echo (int) $selectedGroup; ?>">Editar</a><a class="primary-button" href="horarios_importar.php?id_curso_escolar=<?php echo (int) $selectedCourse; ?>&id_grupo=<?php echo (int) $selectedGroup; ?>">Importar</a></div></header>
+<form class="topbar" method="get" action="horarios.php">
+  <div class="topbar-actions entity-grid entity-grid--4">
+    <label class="calendar-select">
+      <select name="id_curso_escolar" onchange="this.form.submit()" aria-label="Curso escolar">
+        <option value="">Selecciona curso escolar</option>
+        <?php foreach ($courses as $c): ?>
+          <option value="<?php echo (int) $c['id_curso_escolar']; ?>" <?php echo (int) $c['id_curso_escolar'] === $selectedCourse ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars((string) $c['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+    <label class="calendar-select">
+      <select name="id_grupo" onchange="this.form.submit()" aria-label="Grupo">
+        <option value="">Selecciona grupo</option>
+        <?php foreach ($groups as $g): ?>
+          <option value="<?php echo (int) $g['id_grupo']; ?>" <?php echo (int) $g['id_grupo'] === $selectedGroup ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars((string) $g['grupo'], ENT_QUOTES, 'UTF-8'); ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+    </label>
+  </div>
+</form>
+<?php if ($selectedGroup > 0): ?>
+<section class="panel">
 
 <?php if ($scheduleRows === []): ?>
   <p class="subheading">No hay horario guardado para el curso y grupo seleccionados.</p>
@@ -98,4 +122,5 @@ $active_page = 'horarios';
   <div class="panel-grid horarios-grid-wrap"><table class="horarios-grid horarios-view-table"><thead><tr><th>Tramo</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th></tr></thead><tbody><?php foreach ($tramos as $tramo): ?><tr><td><?php echo (int) $tramo['numero_tramo']; ?>ª<?php if (!empty($tramo['hora_inicio']) && !empty($tramo['hora_fin'])): ?> (<?php echo htmlspecialchars(substr((string) $tramo['hora_inicio'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>-<?php echo htmlspecialchars(substr((string) $tramo['hora_fin'], 0, 5), ENT_QUOTES, 'UTF-8'); ?>)<?php endif; ?></td><?php for ($day = 1; $day <= 5; $day++): $key = $day . '-' . (int) $tramo['id_horario_tramo']; $cell = $scheduleMap[$key] ?? null; ?><?php if ($cell !== null): $moduleId = (int) $cell['id_modulo']; $colorClass = $moduleColorMap[$moduleId] ?? 'module-color-disabled'; $moduleName = trim((string) ($cell['nombre'] ?? '')); $moduleCode = trim((string) ($cell['codigo'] ?? '')); $moduleTeacher = trim((string) ($cell['profesor'] ?? '')); $titleParts = [$moduleName]; if ($moduleCode !== '') { $titleParts[] = 'Código: ' . $moduleCode; } if ($moduleTeacher !== '') { $titleParts[] = 'Profesor: ' . $moduleTeacher; } $moduleTitle = implode(' | ', $titleParts); ?><td class="horarios-module-cell <?php echo htmlspecialchars($colorClass, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($moduleTitle, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($moduleName, ENT_QUOTES, 'UTF-8'); ?></td><?php else: ?><td class="horarios-empty-cell"></td><?php endif; ?><?php endfor; ?></tr><?php endforeach; ?></tbody></table></div>
 <?php endif; ?>
 </section>
+<?php endif; ?>
 </main></div></body></html>

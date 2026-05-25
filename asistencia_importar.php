@@ -697,8 +697,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="button-primary">Importar asistencia</button>
-            <a class="ghost-button" href="utilidades.php">Volver</a>
+            <button type="submit" class="primary-button">Importar asistencia</button>
           </div>
         </section>
       </form>

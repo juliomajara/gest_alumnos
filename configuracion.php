@@ -25,50 +25,36 @@ $active_page = 'configuracion';
         </div>
       </header>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h3>Configuración</h3>
-          <p>Página de configuración del sistema.</p>
-        </div>
-        <div class="panel-grid">
-          <a class="panel-link panel-link-with-icon" href="datos_centro.php">
-            <span class="nav-icon" aria-hidden="true">
-              <img class="nav-icon-image" src="assets/icons/datos_centro.svg" alt="">
-            </span>
-            <span class="panel-link-text">
-              <span>Datos del centro</span>
-              <small>Configuración de la información general del centro educativo.</small>
-            </span>
-          </a>
-          <a class="panel-link panel-link-with-icon" href="calendario.php">
-            <span class="nav-icon" aria-hidden="true">
-              <img class="nav-icon-image" src="assets/icons/calendario.svg" alt="">
-            </span>
-            <span class="panel-link-text">
-              <span>Calendario</span>
-              <small>Gestión del calendario académico y días no lectivos.</small>
-            </span>
-          </a>
-          <a class="panel-link panel-link-with-icon" href="alumnos_importar.php">
-            <span class="nav-icon" aria-hidden="true">
-              <img class="nav-icon-image" src="assets/icons/importar_alumnos.svg" alt="">
-            </span>
-            <span class="panel-link-text">
-              <span>Importar alumnos</span>
-              <small>Importación de alumnos desde archivos externos.</small>
-            </span>
-          </a>
-          <a class="panel-link panel-link-with-icon" href="practicas_ras.php">
-            <span class="nav-icon" aria-hidden="true">
-              <img class="nav-icon-image" src="assets/icons/porcentaje_ra.svg" alt="">
-            </span>
-            <span class="panel-link-text">
-              <span>Porcentaje RA/CE en empresa</span>
-              <small>Configuración del reparto de resultados de aprendizaje y criterios de evaluación en empresa.</small>
-            </span>
-          </a>
-        </div>
-      </section>
+      <div class="util-grid">
+        <a class="util-card" href="datos_centro.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/datos_centro.svg" alt="">
+          </span>
+          <span class="util-card-title">Datos del centro</span>
+          <span class="util-card-desc">Configuración de la información general del centro educativo.</span>
+        </a>
+        <a class="util-card" href="calendario.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/calendario.svg" alt="">
+          </span>
+          <span class="util-card-title">Calendario</span>
+          <span class="util-card-desc">Gestión del calendario académico y días no lectivos.</span>
+        </a>
+        <a class="util-card" href="alumnos_importar.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/importar_alumnos.svg" alt="">
+          </span>
+          <span class="util-card-title">Importar alumnos</span>
+          <span class="util-card-desc">Importación de alumnos desde archivos externos.</span>
+        </a>
+        <a class="util-card" href="practicas_ras.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/porcentaje_ra.svg" alt="">
+          </span>
+          <span class="util-card-title">Porcentaje RA/CE en empresa</span>
+          <span class="util-card-desc">Configuración del reparto de resultados de aprendizaje y criterios de evaluación en empresa.</span>
+        </a>
+      </div>
     </main>
   </div>
 </body>

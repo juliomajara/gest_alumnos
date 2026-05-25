@@ -883,10 +883,17 @@ $searchTerm = trim((string) ($_GET['q'] ?? ''));
 $groupFilter = (string) ($_GET['grupo_id'] ?? '');
 $groupFilter = $groupFilter === '' ? '' : $groupFilter;
 
-$students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter);
-$studentIds = array_values(array_map(static fn (array $student): int => (int) $student['id_alumno'], $students));
-$practices = fetch_practices_for_students($pdo, $studentIds);
-$docsByStudent = build_documents_by_student($practices);
+if ($groupFilter !== '') {
+  $students = fetch_students($pdo, $activeCourseId, $searchTerm, $groupFilter);
+  $studentIds = array_values(array_map(static fn (array $student): int => (int) $student['id_alumno'], $students));
+  $practices = fetch_practices_for_students($pdo, $studentIds);
+  $docsByStudent = build_documents_by_student($practices);
+} else {
+  $students = [];
+  $studentIds = [];
+  $practices = [];
+  $docsByStudent = [];
+}
 $rowsHtml = render_student_rows($students, $docsByStudent, $practices);
 
 if (($_GET['ajax'] ?? '') === '1') {
@@ -1297,7 +1304,7 @@ $active_page = '';
         <div class="topbar-actions">
           <label class="calendar-select">
             <select name="grupo_id">
-              <option value="" <?php echo $groupFilter === '' ? 'selected' : ''; ?>>Todos los grupos</option>
+              <option value="" <?php echo $groupFilter === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
               <?php foreach ($groups as $group): ?>
                 <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $groupFilter ? 'selected' : ''; ?>>
                   <?php echo h((string) $group['grupo']); ?>
@@ -1308,7 +1315,7 @@ $active_page = '';
         </div>
       </form>
 
-      <form method="post" id="sendForm" class="entity-stack entity-form">
+      <form method="post" id="sendForm" class="entity-stack entity-form" <?php echo $groupFilter === '' ? 'hidden' : ''; ?>>
         <input type="hidden" name="action" value="send_documents">
         <input type="hidden" name="selected_students" id="selectedStudentsInput" value="">
         <input type="hidden" name="selected_documents" id="selectedDocumentsInput" value="">
@@ -1671,6 +1678,11 @@ $active_page = '';
             .then((payload) => {
               tableBody.innerHTML = payload.rows_html || '';
               visibleStudentIds = Array.isArray(payload.visible_student_ids) ? payload.visible_student_ids : [];
+              if (groupSelect.value !== '') {
+                sendForm.removeAttribute('hidden');
+              } else {
+                sendForm.setAttribute('hidden', '');
+              }
               bindTableEvents();
               applySelectionStateToDOM();
               updateMessagePreview();

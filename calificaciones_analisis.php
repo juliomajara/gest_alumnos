@@ -116,18 +116,20 @@ function deviation(array $values): ?float
   return sqrt($sum_sq / $n);
 }
 
-function render_bar_chart(string $title, array $labels, array $values): string
+function render_bar_chart(string $title, array $labels, array $values, array $tooltips = [], ?float $threshold = null): string
 {
   $max = 0.0;
   foreach ($values as $value) {
     $max = max($max, (float) $value);
   }
 
-  $bar_width = 70;
-  $gap = 22;
-  $chart_height = 210;
-  $base_y = 165;
-  $svg_width = max(320, count($values) * ($bar_width + $gap) + 40);
+  $n = count($values);
+  $bar_width = max(44, min(80, (int) floor((540 - 60) / max(1, $n)) - 12));
+  $gap = 12;
+  $chart_height = 240;
+  $base_y = 182;
+  $plot_height = 130;
+  $svg_width = max(340, $n * ($bar_width + $gap) + 70);
 
   ob_start();
   ?>
@@ -135,25 +137,285 @@ function render_bar_chart(string $title, array $labels, array $values): string
     <div class="panel-header">
       <h3><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h3>
     </div>
-    <div class="panel-grid">
-      <svg viewBox="0 0 <?php echo $svg_width; ?> <?php echo $chart_height; ?>" width="100%" height="<?php echo $chart_height; ?>" role="img" aria-label="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
-        <line x1="20" y1="<?php echo $base_y; ?>" x2="<?php echo $svg_width - 20; ?>" y2="<?php echo $base_y; ?>" stroke="currentColor" stroke-width="1"></line>
-        <?php foreach ($values as $index => $value): ?>
+    <div class="ca-chart-wrap">
+      <svg viewBox="0 0 <?php echo $svg_width; ?> <?php echo $chart_height; ?>" width="100%" style="min-width:<?php echo min($svg_width, 280); ?>px;display:block;" role="img" aria-label="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
+        <?php for ($ca_g = 1; $ca_g <= 4; $ca_g++): ?>
+          <?php $ca_gy = $base_y - (int) round($ca_g * $plot_height / 4); ?>
+          <line x1="44" y1="<?php echo $ca_gy; ?>" x2="<?php echo $svg_width - 10; ?>" y2="<?php echo $ca_gy; ?>" stroke="#eef0f7" stroke-width="1" stroke-dasharray="4 3"></line>
+          <text x="40" y="<?php echo $ca_gy + 4; ?>" text-anchor="end" font-size="9" fill="#9ca3af"><?php echo round($max * $ca_g / 4, 1); ?></text>
+        <?php endfor; ?>
+        <line x1="44" y1="<?php echo $base_y; ?>" x2="<?php echo $svg_width - 10; ?>" y2="<?php echo $base_y; ?>" stroke="#d1d5db" stroke-width="1.5"></line>
+        <?php foreach ($values as $ca_i => $value): ?>
           <?php
-            $x = 30 + $index * ($bar_width + $gap);
-            $height = $max > 0 ? (int) round(((float) $value / $max) * 120) : 0;
-            $y = $base_y - $height;
-            $label = (string) ($labels[$index] ?? '');
+            $ca_x   = 52 + $ca_i * ($bar_width + $gap);
+            $ca_h   = $max > 0 ? (int) round(((float) $value / $max) * $plot_height) : 0;
+            $ca_h   = max($ca_h, (float) $value > 0 ? 2 : 0);
+            $ca_by  = $base_y - $ca_h;
+            $ca_cx  = $ca_x + intdiv($bar_width, 2);
+            $ca_lbl = (string) ($labels[$ca_i] ?? '');
+            $ca_gid = 'bg' . $ca_i . '_' . abs(crc32($title));
+            $ca_tip = htmlspecialchars((string) ($tooltips[$ca_i] ?? ''), ENT_QUOTES, 'UTF-8');
+            if ($threshold !== null) {
+              [$ca_ct, $ca_cb] = (float) $value >= $threshold ? ['#34d399', '#10b981'] : ['#f87171', '#ef4444'];
+            } else {
+              [$ca_ct, $ca_cb] = ['#818cf8', '#4f46e5'];
+            }
           ?>
-          <rect x="<?php echo $x; ?>" y="<?php echo $y; ?>" width="<?php echo $bar_width; ?>" height="<?php echo $height; ?>" rx="8" ry="8" fill="#4f46e5"></rect>
-          <text x="<?php echo $x + intdiv($bar_width, 2); ?>" y="<?php echo $y - 8; ?>" text-anchor="middle" font-size="12" fill="currentColor"><?php echo htmlspecialchars((string) round((float) $value, 2), ENT_QUOTES, 'UTF-8'); ?></text>
-          <text x="<?php echo $x + intdiv($bar_width, 2); ?>" y="188" text-anchor="middle" font-size="11" fill="currentColor"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></text>
+          <defs>
+            <linearGradient id="<?php echo $ca_gid; ?>" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="<?php echo $ca_ct; ?>"></stop>
+              <stop offset="100%" stop-color="<?php echo $ca_cb; ?>"></stop>
+            </linearGradient>
+          </defs>
+          <?php if ($ca_tip !== ''): ?>
+          <g class="ca-bar-group" data-name="<?php echo $ca_tip; ?>">
+          <?php endif; ?>
+          <rect x="<?php echo $ca_x; ?>" y="<?php echo $ca_by; ?>" width="<?php echo $bar_width; ?>" height="<?php echo $ca_h; ?>" rx="5" ry="5" fill="url(#<?php echo $ca_gid; ?>)"></rect>
+          <text x="<?php echo $ca_cx; ?>" y="<?php echo $ca_by - 5; ?>" text-anchor="middle" font-size="10" font-weight="600" fill="#374151"><?php echo round((float) $value, 1); ?></text>
+          <text x="<?php echo $ca_cx; ?>" y="<?php echo $base_y + 14; ?>" text-anchor="middle" font-size="10" fill="#6d7a99"><?php echo htmlspecialchars($ca_lbl, ENT_QUOTES, 'UTF-8'); ?></text>
+          <?php if ($ca_tip !== ''): ?>
+          </g>
+          <?php endif; ?>
         <?php endforeach; ?>
       </svg>
     </div>
   </section>
   <?php
 
+  return (string) ob_get_clean();
+}
+
+function render_pass_rate_chart(string $title, array $labels, array $values, array $tooltips = []): string
+{
+  $n = count($values);
+  $bar_width = max(44, min(80, (int) floor((540 - 60) / max(1, $n)) - 12));
+  $gap = 12;
+  $chart_height = 250;
+  $base_y = 182;
+  $plot_height = 130;
+  $svg_width = max(340, $n * ($bar_width + $gap) + 70);
+
+  ob_start();
+  ?>
+  <section class="panel">
+    <div class="panel-header">
+      <h3><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h3>
+    </div>
+    <div class="ca-chart-wrap">
+      <svg viewBox="0 0 <?php echo $svg_width; ?> <?php echo $chart_height; ?>" width="100%" style="min-width:<?php echo min($svg_width, 280); ?>px;display:block;" role="img" aria-label="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
+        <?php foreach ([25, 50, 75, 100] as $ca_pct): ?>
+          <?php $ca_gy = $base_y - (int) round($ca_pct / 100 * $plot_height); ?>
+          <?php $ca_is_ref = $ca_pct === 50 || $ca_pct === 75; ?>
+          <line x1="44" y1="<?php echo $ca_gy; ?>" x2="<?php echo $svg_width - 10; ?>" y2="<?php echo $ca_gy; ?>"
+            stroke="<?php echo $ca_pct === 50 ? '#f59e0b' : ($ca_pct === 75 ? '#10b981' : '#eef0f7'); ?>"
+            stroke-width="<?php echo $ca_is_ref ? '1.5' : '1'; ?>"
+            stroke-dasharray="<?php echo $ca_is_ref ? '6 3' : '4 3'; ?>"></line>
+          <text x="40" y="<?php echo $ca_gy + 4; ?>" text-anchor="end" font-size="9" fill="<?php echo $ca_pct === 50 ? '#f59e0b' : ($ca_pct === 75 ? '#10b981' : '#9ca3af'); ?>"><?php echo $ca_pct; ?>%</text>
+        <?php endforeach; ?>
+        <line x1="44" y1="<?php echo $base_y; ?>" x2="<?php echo $svg_width - 10; ?>" y2="<?php echo $base_y; ?>" stroke="#d1d5db" stroke-width="1.5"></line>
+        <!-- Legend -->
+        <?php $ca_leg_x = max(100, $svg_width - 140); ?>
+        <rect x="<?php echo $ca_leg_x; ?>" y="10" width="9" height="9" rx="2" fill="#10b981"></rect>
+        <text x="<?php echo $ca_leg_x + 13; ?>" y="18" font-size="9" fill="#6d7a99">&#8805;75%</text>
+        <rect x="<?php echo $ca_leg_x + 40; ?>" y="10" width="9" height="9" rx="2" fill="#f59e0b"></rect>
+        <text x="<?php echo $ca_leg_x + 53; ?>" y="18" font-size="9" fill="#6d7a99">50-75%</text>
+        <rect x="<?php echo $ca_leg_x + 92; ?>" y="10" width="9" height="9" rx="2" fill="#ef4444"></rect>
+        <text x="<?php echo $ca_leg_x + 105; ?>" y="18" font-size="9" fill="#6d7a99">&lt;50%</text>
+        <?php foreach ($values as $ca_i => $value): ?>
+          <?php
+            $ca_pv  = (float) $value;
+            $ca_x   = 52 + $ca_i * ($bar_width + $gap);
+            $ca_h   = (int) round($ca_pv / 100 * $plot_height);
+            $ca_h   = max($ca_h, $ca_pv > 0 ? 2 : 0);
+            $ca_by  = $base_y - $ca_h;
+            $ca_cx  = $ca_x + intdiv($bar_width, 2);
+            $ca_lbl = (string) ($labels[$ca_i] ?? '');
+            $ca_gid = 'pr' . $ca_i . '_' . abs(crc32($title));
+            $ca_tip = htmlspecialchars((string) ($tooltips[$ca_i] ?? ''), ENT_QUOTES, 'UTF-8');
+            if ($ca_pv >= 75) {
+              [$ca_ct, $ca_cb] = ['#34d399', '#10b981'];
+            } elseif ($ca_pv >= 50) {
+              [$ca_ct, $ca_cb] = ['#fbbf24', '#f59e0b'];
+            } else {
+              [$ca_ct, $ca_cb] = ['#f87171', '#ef4444'];
+            }
+          ?>
+          <defs>
+            <linearGradient id="<?php echo $ca_gid; ?>" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="<?php echo $ca_ct; ?>"></stop>
+              <stop offset="100%" stop-color="<?php echo $ca_cb; ?>"></stop>
+            </linearGradient>
+          </defs>
+          <?php if ($ca_tip !== ''): ?>
+          <g class="ca-bar-group" data-name="<?php echo $ca_tip; ?>">
+          <?php endif; ?>
+          <rect x="<?php echo $ca_x; ?>" y="<?php echo $ca_by; ?>" width="<?php echo $bar_width; ?>" height="<?php echo $ca_h; ?>" rx="5" ry="5" fill="url(#<?php echo $ca_gid; ?>)"></rect>
+          <text x="<?php echo $ca_cx; ?>" y="<?php echo $ca_by - 5; ?>" text-anchor="middle" font-size="10" font-weight="600" fill="#374151"><?php echo round($ca_pv, 1); ?>%</text>
+          <text x="<?php echo $ca_cx; ?>" y="<?php echo $base_y + 14; ?>" text-anchor="middle" font-size="10" fill="#6d7a99"><?php echo htmlspecialchars($ca_lbl, ENT_QUOTES, 'UTF-8'); ?></text>
+          <?php if ($ca_tip !== ''): ?>
+          </g>
+          <?php endif; ?>
+        <?php endforeach; ?>
+      </svg>
+    </div>
+  </section>
+  <?php
+  return (string) ob_get_clean();
+}
+
+function render_grade_histogram(string $title, array $histogram): string
+{
+  $max_count = max(array_merge([1], $histogram));
+  $bar_width = 46;
+  $gap = 8;
+  $chart_height = 235;
+  $base_y = 178;
+  $plot_height = 120;
+  $svg_width = 10 * ($bar_width + $gap) + 70;
+  $ref_x = 44 + 5 * ($bar_width + $gap) - (int) round($gap / 2);
+
+  ob_start();
+  ?>
+  <section class="panel">
+    <div class="panel-header">
+      <h3><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h3>
+    </div>
+    <div class="ca-chart-wrap">
+      <svg viewBox="0 0 <?php echo $svg_width; ?> <?php echo $chart_height; ?>" width="100%" style="min-width:<?php echo min($svg_width, 280); ?>px;display:block;" role="img" aria-label="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
+        <?php for ($ca_g = 1; $ca_g <= 4; $ca_g++): ?>
+          <?php $ca_gy = $base_y - (int) round($ca_g * $plot_height / 4); ?>
+          <line x1="44" y1="<?php echo $ca_gy; ?>" x2="<?php echo $svg_width - 10; ?>" y2="<?php echo $ca_gy; ?>" stroke="#eef0f7" stroke-width="1" stroke-dasharray="4 3"></line>
+          <text x="40" y="<?php echo $ca_gy + 4; ?>" text-anchor="end" font-size="9" fill="#9ca3af"><?php echo (int) round($max_count * $ca_g / 4); ?></text>
+        <?php endfor; ?>
+        <line x1="44" y1="<?php echo $base_y; ?>" x2="<?php echo $svg_width - 10; ?>" y2="<?php echo $base_y; ?>" stroke="#d1d5db" stroke-width="1.5"></line>
+        <!-- Separator suspenso / aprobado -->
+        <line x1="<?php echo $ref_x; ?>" y1="22" x2="<?php echo $ref_x; ?>" y2="<?php echo $base_y; ?>" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="5 3"></line>
+        <text x="<?php echo $ref_x - 4; ?>" y="18" text-anchor="end" font-size="9" font-weight="600" fill="#ef4444">Suspenso</text>
+        <text x="<?php echo $ref_x + 4; ?>" y="18" text-anchor="start" font-size="9" font-weight="600" fill="#10b981">Aprobado</text>
+        <?php $ca_bin_labels = ['0-1','1-2','2-3','3-4','4-5','5-6','6-7','7-8','8-9','9-10']; ?>
+        <?php foreach ($histogram as $ca_bin => $ca_count): ?>
+          <?php
+            $ca_x   = 52 + $ca_bin * ($bar_width + $gap);
+            $ca_h   = $max_count > 0 ? (int) round($ca_count / $max_count * $plot_height) : 0;
+            $ca_h   = max($ca_h, $ca_count > 0 ? 2 : 0);
+            $ca_by  = $base_y - $ca_h;
+            $ca_cx  = $ca_x + intdiv($bar_width, 2);
+            $ca_gid = 'gh' . $ca_bin . '_' . abs(crc32($title));
+            [$ca_ct, $ca_cb] = $ca_bin >= 5 ? ['#34d399', '#10b981'] : ['#f87171', '#ef4444'];
+          ?>
+          <defs>
+            <linearGradient id="<?php echo $ca_gid; ?>" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="<?php echo $ca_ct; ?>"></stop>
+              <stop offset="100%" stop-color="<?php echo $ca_cb; ?>"></stop>
+            </linearGradient>
+          </defs>
+          <rect x="<?php echo $ca_x; ?>" y="<?php echo $ca_by; ?>" width="<?php echo $bar_width; ?>" height="<?php echo $ca_h; ?>" rx="4" ry="4" fill="url(#<?php echo $ca_gid; ?>)"></rect>
+          <?php if ($ca_count > 0): ?>
+            <text x="<?php echo $ca_cx; ?>" y="<?php echo $ca_by - 5; ?>" text-anchor="middle" font-size="10" font-weight="600" fill="#374151"><?php echo $ca_count; ?></text>
+          <?php endif; ?>
+          <text x="<?php echo $ca_cx; ?>" y="<?php echo $base_y + 14; ?>" text-anchor="middle" font-size="9" fill="#6d7a99"><?php echo $ca_bin_labels[$ca_bin]; ?></text>
+        <?php endforeach; ?>
+      </svg>
+    </div>
+  </section>
+  <?php
+  return (string) ob_get_clean();
+}
+
+function render_donut_chart(string $title, array $segments): string
+{
+  $total = array_sum(array_column($segments, 'value'));
+  if ($total <= 0) {
+    return '';
+  }
+
+  $cx = 90; $cy = 90;
+  $r_outer = 70; $r_inner = 34;
+
+  $paths = [];
+  $start_angle = -90.0;
+  foreach ($segments as $seg) {
+    if ((int) $seg['value'] <= 0) {
+      continue;
+    }
+    $sweep = ($seg['value'] / $total) * 360;
+    if ($sweep < 0.5) {
+      continue;
+    }
+    $end_angle  = $start_angle + $sweep;
+    $large      = $sweep > 180 ? 1 : 0;
+    $mid_angle  = $start_angle + $sweep / 2;
+    $mid_r      = ($r_outer + $r_inner) / 2;
+    $x1  = round($cx + $r_outer * cos(deg2rad($start_angle)), 3);
+    $y1  = round($cy + $r_outer * sin(deg2rad($start_angle)), 3);
+    $x2  = round($cx + $r_outer * cos(deg2rad($end_angle)), 3);
+    $y2  = round($cy + $r_outer * sin(deg2rad($end_angle)), 3);
+    $ix1 = round($cx + $r_inner * cos(deg2rad($start_angle)), 3);
+    $iy1 = round($cy + $r_inner * sin(deg2rad($start_angle)), 3);
+    $ix2 = round($cx + $r_inner * cos(deg2rad($end_angle)), 3);
+    $iy2 = round($cy + $r_inner * sin(deg2rad($end_angle)), 3);
+    $paths[] = [
+      'd'     => "M {$x1} {$y1} A {$r_outer} {$r_outer} 0 {$large} 1 {$x2} {$y2} L {$ix2} {$iy2} A {$r_inner} {$r_inner} 0 {$large} 0 {$ix1} {$iy1} Z",
+      'color' => (string) $seg['color'],
+      'label' => (string) $seg['label'],
+      'value' => (int) $seg['value'],
+      'pct'   => round($seg['value'] * 100 / $total, 1),
+      'sweep' => $sweep,
+      'mid_x' => round($cx + $mid_r * cos(deg2rad($mid_angle)), 1),
+      'mid_y' => round($cy + $mid_r * sin(deg2rad($mid_angle)), 1),
+    ];
+    $start_angle = $end_angle;
+  }
+
+  if ($paths === []) {
+    return '';
+  }
+
+  ob_start();
+  ?>
+  <section class="panel">
+    <div class="panel-header">
+      <h3><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h3>
+    </div>
+    <div class="ca-donut-wrap">
+      <svg viewBox="0 0 180 180" width="180" height="180" role="img" aria-label="<?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>">
+        <?php foreach ($paths as $path): ?>
+          <path d="<?php echo $path['d']; ?>" fill="<?php echo htmlspecialchars($path['color'], ENT_QUOTES, 'UTF-8'); ?>" stroke="#fff" stroke-width="2"></path>
+        <?php endforeach; ?>
+        <?php foreach ($paths as $path): ?>
+          <?php if ($path['sweep'] >= 18): ?>
+            <text
+              x="<?php echo $path['mid_x']; ?>"
+              y="<?php echo round($path['mid_y'] - 4, 1); ?>"
+              text-anchor="middle"
+              font-size="<?php echo $path['sweep'] >= 40 ? '11' : '9'; ?>"
+              font-weight="700"
+              fill="#fff"><?php echo $path['pct']; ?>%</text>
+            <?php if ($path['sweep'] >= 40): ?>
+            <text
+              x="<?php echo $path['mid_x']; ?>"
+              y="<?php echo round($path['mid_y'] + 8, 1); ?>"
+              text-anchor="middle"
+              font-size="9"
+              fill="rgba(255,255,255,0.85)"><?php echo htmlspecialchars($path['value'] . ' al.', ENT_QUOTES, 'UTF-8'); ?></text>
+            <?php endif; ?>
+          <?php endif; ?>
+        <?php endforeach; ?>
+        <text x="<?php echo $cx; ?>" y="<?php echo $cy - 7; ?>" text-anchor="middle" font-size="24" font-weight="700" fill="#1f2a44"><?php echo $total; ?></text>
+        <text x="<?php echo $cx; ?>" y="<?php echo $cy + 12; ?>" text-anchor="middle" font-size="10" fill="#6d7a99">alumnos</text>
+      </svg>
+      <ul class="ca-donut-legend">
+        <?php foreach ($paths as $path): ?>
+          <li>
+            <span class="ca-donut-dot" style="background:<?php echo htmlspecialchars($path['color'], ENT_QUOTES, 'UTF-8'); ?>"></span>
+            <span class="ca-donut-label"><?php echo htmlspecialchars($path['label'], ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="ca-donut-count"><?php echo $path['value']; ?> <small>(<?php echo $path['pct']; ?>%)</small></span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
+    </div>
+  </section>
+  <?php
   return (string) ob_get_clean();
 }
 
@@ -754,6 +1016,24 @@ if ($show_results) {
       $conclusions[] = 'Respecto a la evaluación anterior, la media del grupo ' . $trend . ' (' . fmt($group_stats['var_media']) . ', sobre ' . $group_stats['notas_computables_actual'] . ' módulos computables en la evaluación actual).';
     }
   }
+
+  $grade_histogram = array_fill(0, 10, 0);
+  foreach ($grades_current as $id_alumno => $module_grades) {
+    if (!isset($students_with_computable_grades[$id_alumno])) {
+      continue;
+    }
+    foreach ($module_grades as $grade_data) {
+      $n_val = $grade_data['numeric'];
+      if ($n_val === null) {
+        continue;
+      }
+      $bin = min(9, (int) floor($n_val));
+      if ($bin < 0) {
+        $bin = 0;
+      }
+      $grade_histogram[$bin]++;
+    }
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -789,6 +1069,7 @@ if ($show_results) {
         <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
             <select name="id_curso_escolar" onchange="this.form.submit()" aria-label="Curso escolar">
+              <option value="">Selecciona curso escolar</option>
               <?php foreach ($courses as $course): ?>
                 <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
                   <?php echo htmlspecialchars($course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
@@ -854,6 +1135,73 @@ if ($show_results) {
             <h3>Contexto del análisis</h3>
             <p>Grupo <?php echo htmlspecialchars($selected_group_name, ENT_QUOTES, 'UTF-8'); ?> · Evaluación base: <?php echo htmlspecialchars($selected_evaluation_name, ENT_QUOTES, 'UTF-8'); ?> · Evaluación anterior: <?php echo htmlspecialchars($previous_evaluation_name, ENT_QUOTES, 'UTF-8'); ?></p>
           </div>
+        </section>
+
+        <section class="db-kpis">
+          <?php
+            $ca_pct_aprobado = (float) ($group_stats['pct_todo_aprobado'] ?? 0);
+            $ca_kpi_aprobado = $ca_pct_aprobado >= 75 ? 'green' : ($ca_pct_aprobado >= 50 ? 'amber' : 'orange');
+            $ca_var = $group_stats['var_media'] ?? null;
+            $ca_kpi_var = ($ca_var !== null && $ca_var > 0.01) ? 'green' : (($ca_var !== null && $ca_var < -0.01) ? 'orange' : 'teal');
+            $ca_var_arrow = ($ca_var !== null && $ca_var > 0.01) ? '&#8679;' : (($ca_var !== null && $ca_var < -0.01) ? '&#8681;' : '&#8596;');
+            $ca_riesgo = (int) ($group_stats['tres_o_mas'] ?? 0);
+          ?>
+          <article class="db-kpi db-kpi--<?php echo $ca_kpi_aprobado; ?>">
+            <div class="db-kpi-icon">&#9989;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo fmt($group_stats['pct_todo_aprobado']); ?>%</div>
+              <div class="db-kpi-label">Todo aprobado</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--blue">
+            <div class="db-kpi-icon">&#128202;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo fmt($group_stats['media']); ?></div>
+              <div class="db-kpi-label">Media del grupo</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--indigo">
+            <div class="db-kpi-icon">&#128101;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo (int) ($group_stats['total'] ?? 0); ?></div>
+              <div class="db-kpi-label">Alumnos evaluados</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--<?php echo $ca_riesgo > 0 ? 'pink' : 'green'; ?>">
+            <div class="db-kpi-icon">&#9888;&#65039;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo $ca_riesgo; ?></div>
+              <div class="db-kpi-label">En riesgo (3+ suspensos)</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--<?php echo $ca_kpi_var; ?>">
+            <div class="db-kpi-icon"><?php echo $ca_var_arrow; ?></div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo fmt($group_stats['var_media']); ?></div>
+              <div class="db-kpi-label">Variación media vs anterior</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--teal">
+            <div class="db-kpi-icon">&#127919;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo fmt($group_stats['mediana']); ?></div>
+              <div class="db-kpi-label">Mediana del grupo</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--amber">
+            <div class="db-kpi-icon">&#128200;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo fmt($group_stats['pct_mejoran']); ?>%</div>
+              <div class="db-kpi-label">Alumnos que mejoran</div>
+            </div>
+          </article>
+          <article class="db-kpi db-kpi--purple">
+            <div class="db-kpi-icon">&#128201;</div>
+            <div class="db-kpi-body">
+              <div class="db-kpi-value"><?php echo fmt($group_stats['desviacion']); ?></div>
+              <div class="db-kpi-label">Desviación típica</div>
+            </div>
+          </article>
         </section>
 
         <section class="panel">
@@ -1008,24 +1356,47 @@ if ($show_results) {
           </div>
         </section>
 
+        <div class="ca-charts-grid">
         <?php
-          $distribution_labels = ['0', '1', '2', '3+'];
-          $distribution_values = [
-            (float) ($group_stats['todo_aprobado'] ?? 0),
-            (float) ($group_stats['una'] ?? 0),
-            (float) ($group_stats['dos'] ?? 0),
-            (float) ($group_stats['tres_o_mas'] ?? 0),
-          ];
-          echo render_bar_chart('Distribución de suspensos por alumno', $distribution_labels, $distribution_values);
+          echo render_donut_chart('Distribución del alumnado por suspensos acumulados', [
+            ['label' => 'Todo aprobado', 'value' => (int) ($group_stats['todo_aprobado'] ?? 0), 'color' => '#10b981'],
+            ['label' => '1 suspensa',    'value' => (int) ($group_stats['una'] ?? 0),            'color' => '#f59e0b'],
+            ['label' => '2 suspensas',   'value' => (int) ($group_stats['dos'] ?? 0),            'color' => '#f97316'],
+            ['label' => '3 o más',       'value' => (int) ($group_stats['tres_o_mas'] ?? 0),     'color' => '#ef4444'],
+          ]);
 
-          $module_labels = [];
-          $module_values = [];
+          if (array_sum($grade_histogram) > 0) {
+            echo render_grade_histogram('Distribución de notas individuales (por tramos)', $grade_histogram);
+          }
+
+          $module_labels   = [];
+          $module_values   = [];
+          $module_tooltips = [];
           foreach ($module_rows as $module_row) {
-            $module_labels[] = (string) $module_row['codigo'];
-            $module_values[] = (float) ($module_row['pct_aprobados'] ?? 0.0);
+            $module_labels[]   = (string) $module_row['codigo'];
+            $module_values[]   = (float) ($module_row['pct_aprobados'] ?? 0.0);
+            $module_tooltips[] = (string) $module_row['nombre'];
           }
           if ($module_labels !== []) {
-            echo render_bar_chart('% de aprobados por módulo', $module_labels, $module_values);
+            echo render_pass_rate_chart('% de aprobados por módulo', $module_labels, $module_values, $module_tooltips);
+          }
+
+          $module_media_tmp = [];
+          foreach ($module_rows as $module_row) {
+            if ($module_row['media'] !== null) {
+              $module_media_tmp[] = [
+                'label'   => (string) $module_row['codigo'],
+                'value'   => (float) $module_row['media'],
+                'tooltip' => (string) $module_row['nombre'],
+              ];
+            }
+          }
+          usort($module_media_tmp, static fn (array $a, array $b): int => $a['value'] <=> $b['value']);
+          $module_media_labels   = array_column($module_media_tmp, 'label');
+          $module_media_values   = array_column($module_media_tmp, 'value');
+          $module_media_tooltips = array_column($module_media_tmp, 'tooltip');
+          if ($module_media_labels !== []) {
+            echo render_bar_chart('Media por módulo', $module_media_labels, $module_media_values, $module_media_tooltips, 5.0);
           }
 
           if (count($group_mean_history) >= 2) {
@@ -1038,6 +1409,7 @@ if ($show_results) {
             echo render_bar_chart('Evolución de la media del grupo por evaluación', $history_labels, $history_values);
           }
         ?>
+        </div>
       <?php endif; ?>
     </main>
   </div>
@@ -1060,6 +1432,43 @@ if ($show_results) {
         searchDebounceTimer = window.setTimeout(() => {
           form.submit();
         }, 250);
+      });
+    })();
+
+    (function () {
+      var tip = document.createElement('div');
+      tip.className = 'ca-bar-tooltip';
+      document.body.appendChild(tip);
+
+      function showTip(name, x, y) {
+        tip.textContent = name;
+        tip.style.left = (x + 14) + 'px';
+        tip.style.top  = (y - 10) + 'px';
+        tip.classList.add('ca-bar-tooltip--visible');
+      }
+
+      function hideTip() {
+        tip.classList.remove('ca-bar-tooltip--visible');
+      }
+
+      document.querySelectorAll('.ca-bar-group').forEach(function (g) {
+        var name = g.dataset.name;
+        if (!name) { return; }
+
+        g.addEventListener('mouseenter', function (e) {
+          showTip(name, e.clientX, e.clientY);
+        });
+
+        g.addEventListener('mousemove', function (e) {
+          tip.style.left = (e.clientX + 14) + 'px';
+          tip.style.top  = (e.clientY - 10) + 'px';
+        });
+
+        g.addEventListener('mouseleave', hideTip);
+
+        g.addEventListener('click', function (e) {
+          showTip(name, e.clientX, e.clientY);
+        });
       });
     })();
   </script>
