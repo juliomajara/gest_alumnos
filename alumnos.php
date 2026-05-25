@@ -42,9 +42,11 @@ $students = [];
 $empty_message = '';
 
 if ($selected_course_id <= 0) {
-  $empty_message = 'Selecciona un curso y un grupo para ver los alumnos.';
-} elseif ($selected_group === '') {
-  $empty_message = 'Selecciona un grupo para ver los alumnos.';
+  $empty_message = 'Selecciona un curso escolar para buscar alumnos.';
+} elseif ($selected_group === '' && $search_term === '') {
+  $empty_message = 'Selecciona un grupo o introduce un texto para buscar.';
+} elseif ($selected_group === '' && mb_strlen($search_term) < 3) {
+  $empty_message = 'Introduce al menos 3 caracteres para buscar.';
 } else {
   $filters = [];
   $params = ['id_curso_escolar' => $selected_course_id];
@@ -61,7 +63,7 @@ if ($selected_course_id <= 0) {
   } elseif (ctype_digit($selected_group)) {
     $filters[] = 'g.id_grupo = :group_id';
     $params['group_id'] = (int) $selected_group;
-  } else {
+  } elseif ($selected_group !== '') {
     $filters[] = '1 = 0';
   }
 
@@ -242,7 +244,7 @@ $students_heading = $selected_group_name !== ''
         </div>
       </form>
 
-      <section class="panel" id="students-panel"<?php if ($selected_group === ''): ?> hidden<?php endif; ?>>
+      <section class="panel" id="students-panel"<?php if ($selected_group === '' && $search_term === ''): ?> hidden<?php endif; ?>>
         <div class="panel-header">
           <h3 id="students-heading"><?php echo $students_heading; ?></h3>
           <p>Grupo, apellidos y nombre, datos de contacto e identificadores básicos.</p>
@@ -338,7 +340,7 @@ $students_heading = $selected_group_name !== ''
           .then((html) => {
             tableBody.innerHTML = html;
             if (studentsPanel) {
-              studentsPanel.hidden = groupSelect.value === '';
+              studentsPanel.hidden = groupSelect.value === '' && searchInput.value.trim() === '';
             }
             updateHeading();
             history.replaceState(null, '', `?${urlParams.toString()}`);

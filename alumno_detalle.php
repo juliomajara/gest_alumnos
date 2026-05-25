@@ -507,20 +507,6 @@ $dias_semana = [
                     </td>
                   </tr>
                   <tr>
-                    <th>Correos registrados</th>
-                    <td>
-                      <?php
-                        $correo_items = [];
-                        foreach ($emails as $email) {
-                          $etiqueta = format_value($email['etiqueta'], '');
-                          $correo_label = $etiqueta ? $etiqueta . ': ' : '';
-                          $correo_items[] = $correo_label . $email['direccion_correo'];
-                        }
-                      ?>
-                      <?php echo htmlspecialchars($correo_items ? implode(' · ', $correo_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
                     <th>Horas FFE aprobadas</th>
                     <td><?php echo htmlspecialchars(format_value($student['horas_ffe_aprobadas']), ENT_QUOTES, 'UTF-8'); ?></td>
                   </tr>
@@ -666,7 +652,7 @@ $dias_semana = [
                       <td><?php echo htmlspecialchars($ciclo_label, ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($course['curso']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($course['grupo']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($activo, ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><span class="badge-bool badge-bool--<?php echo $course['activo'] ? 'si' : 'no'; ?>"><?php echo htmlspecialchars($activo, ENT_QUOTES, 'UTF-8'); ?></span></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
@@ -848,13 +834,36 @@ $dias_semana = [
                 <?php endif; ?>
               </tbody>
             </table>
-            <p>Horas totales matriculadas: <?php echo htmlspecialchars((string) (0 + $horas_totales_matriculadas), ENT_QUOTES, 'UTF-8'); ?></p>
-            <p>Total faltas: <?php echo htmlspecialchars((string) (0 + $attendance_totals['faltas']), ENT_QUOTES, 'UTF-8'); ?></p>
-            <p>Porcentaje de faltas: <?php echo $porcentaje_faltas === null ? '—' : htmlspecialchars(rtrim(rtrim(number_format($porcentaje_faltas, 2, ',', ''), '0'), ',') . ' %', ENT_QUOTES, 'UTF-8'); ?></p>
-            <p>Fecha en que alcanzó el 10%: <?php echo htmlspecialchars(format_date($student['faltas_10_dia'], 'No alcanzado'), ENT_QUOTES, 'UTF-8'); ?></p>
-            <p>Faltas injustificadas acumuladas al alcanzar el 10%: <?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '—'), ENT_QUOTES, 'UTF-8'); ?></p>
-            <p>Fecha en que alcanzó el 15%: <?php echo htmlspecialchars(format_date($student['faltas_15_dia'], 'No alcanzado'), ENT_QUOTES, 'UTF-8'); ?></p>
-            <p>Faltas injustificadas acumuladas al alcanzar el 15%: <?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '—'), ENT_QUOTES, 'UTF-8'); ?></p>
+            <div class="attendance-summary">
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Horas totales matriculadas</span>
+                <span class="attendance-summary-value"><?php echo htmlspecialchars((string) (0 + $horas_totales_matriculadas), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Total faltas</span>
+                <span class="attendance-summary-value"><?php echo htmlspecialchars((string) (0 + $attendance_totals['faltas']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Porcentaje de faltas</span>
+                <span class="attendance-summary-value"><?php echo $porcentaje_faltas === null ? '—' : htmlspecialchars(rtrim(rtrim(number_format($porcentaje_faltas, 2, ',', ''), '0'), ',') . ' %', ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Fecha en que alcanzó el 10%</span>
+                <span class="attendance-summary-value"><?php echo htmlspecialchars(format_date($student['faltas_10_dia'], 'No alcanzado'), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Faltas injustificadas acumuladas al alcanzar el 10%</span>
+                <span class="attendance-summary-value"><?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '—'), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Fecha en que alcanzó el 15%</span>
+                <span class="attendance-summary-value"><?php echo htmlspecialchars(format_date($student['faltas_15_dia'], 'No alcanzado'), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="attendance-summary-item">
+                <span class="attendance-summary-label">Faltas injustificadas acumuladas al alcanzar el 15%</span>
+                <span class="attendance-summary-value"><?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '—'), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -916,7 +925,17 @@ $dias_semana = [
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars(format_value($practica['empresa']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars(format_value($practica['practicas_estado']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td>
+                        <?php
+                          $estado_val = format_value($practica['practicas_estado'], '');
+                          $estado_slug = $estado_val !== '' ? strtolower(str_replace(' ', '-', $estado_val)) : '';
+                        ?>
+                        <?php if ($estado_slug !== ''): ?>
+                          <span class="practica-badge practica-badge--<?php echo htmlspecialchars($estado_slug, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($estado_val, ENT_QUOTES, 'UTF-8'); ?></span>
+                        <?php else: ?>
+                          <?php echo htmlspecialchars(format_value($practica['practicas_estado']), ENT_QUOTES, 'UTF-8'); ?>
+                        <?php endif; ?>
+                      </td>
                       <td><?php echo htmlspecialchars($fechas, ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) $practica['horas'], ENT_QUOTES, 'UTF-8'); ?></td>
                       <td>

@@ -2460,6 +2460,107 @@ a.edit-toggle:focus {
   background: #f8faff;
 }
 
+/* alumno_detalle — mejoras visuales */
+
+.panel-table-aligned th,
+.panel-table-aligned td {
+  padding: 0.45rem 0.7rem;
+  vertical-align: top;
+}
+
+.panel-table-aligned th {
+  color: var(--muted);
+  font-weight: 500;
+  width: 42%;
+}
+
+.panel-table-aligned tbody tr:last-child th,
+.panel-table-aligned tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.panel-table-aligned tbody tr:nth-child(even) td {
+  background: transparent;
+}
+
+.attendance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.attendance-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--card);
+  padding: 10px 14px;
+}
+
+.attendance-summary-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.attendance-summary-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.practica-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.practica-badge--en-curso {
+  background: #e4f7ec;
+  color: #1f7a47;
+}
+
+.practica-badge--finalizada {
+  background: #eef2ff;
+  color: #4b66f3;
+}
+
+.practica-badge--cancelada {
+  background: #fee4e2;
+  color: #b42318;
+}
+
+.practica-badge--en-espera {
+  background: #fff4d6;
+  color: #b07a1c;
+}
+
+.badge-bool {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-bool--si {
+  background: #e4f7ec;
+  color: #1f7a47;
+}
+
+.badge-bool--no {
+  background: #f3f4f6;
+  color: var(--muted);
+}
+
 .practicas-anexos-card.is-complete {
   background: #dff4e7;
   border-color: #2f7a53;
@@ -3577,4 +3678,9 @@ a.edit-toggle:focus {
 
 @media (max-width: 600px) {
   .util-grid { grid-template-columns: 1fr; }
+}
+
+.nav-icon-image[data-icon="busqueda"] {
+  mask-image: url("icons/busqueda.svg");
+  -webkit-mask-image: url("icons/busqueda.svg");
 }
