@@ -256,7 +256,7 @@ if ($vista === 'justificadas') {
           <p class="subheading">Consulta faltas justificadas, injustificadas y retrasos por alumno y mes.</p>
         </div>
         <div class="header-actions">
-          <a class="primary-button" href="asistencia_importar.php">Importar asistencia</a>
+          <a class="primary-button" href="asistencia_importar.php<?php echo $selected['id_grupo'] > 0 ? '?id_grupo=' . (int) $selected['id_grupo'] : ''; ?>">Importar asistencia</a>
         </div>
       </header>
 

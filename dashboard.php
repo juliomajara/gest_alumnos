@@ -74,6 +74,7 @@ $has_grupos_tutores = table_exists($pdo, 'grupos_tutores');
 $has_calificaciones = table_exists($pdo, 'calificaciones');
 $has_asistencia_mensual = table_exists($pdo, 'asistencia_mensual');
 $has_practicas_anexos = table_exists($pdo, 'practicas_anexos');
+$has_grupos = table_exists($pdo, 'grupos');
 
 $total_alumnos = $has_alumnos
   ? fetch_scalar($pdo, 'SELECT COUNT(*) FROM alumnos')
@@ -226,6 +227,75 @@ $curso_activo_info = $has_cursos_escolares
 
 $curso_activo_nombre = (!empty($curso_activo_info) && isset($curso_activo_info[0]['curso_escolar']))
   ? (string) $curso_activo_info[0]['curso_escolar']
+  : null;
+
+$alumnos_con_10pct = ($has_alumnos && $has_alumno_curso && $has_cursos_escolares)
+  ? fetch_scalar(
+    $pdo,
+    'SELECT COUNT(DISTINCT a.id_alumno)
+     FROM alumnos a
+     INNER JOIN alumno_curso ac ON ac.id_alumno = a.id_alumno
+     INNER JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+     WHERE ce.activo = 1
+       AND a.faltas_10_dia IS NOT NULL'
+  )
+  : null;
+
+$alumnos_con_15pct = ($has_alumnos && $has_alumno_curso && $has_cursos_escolares)
+  ? fetch_scalar(
+    $pdo,
+    'SELECT COUNT(DISTINCT a.id_alumno)
+     FROM alumnos a
+     INNER JOIN alumno_curso ac ON ac.id_alumno = a.id_alumno
+     INNER JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+     WHERE ce.activo = 1
+       AND a.faltas_15_dia IS NOT NULL'
+  )
+  : null;
+
+$modulos_nota_baja = ($has_calificaciones && $has_modulos)
+  ? fetch_rows(
+    $pdo,
+    'SELECT
+      COALESCE(NULLIF(m.abreviatura, \'\'), NULLIF(m.materia_propia, \'\'), NULLIF(m.codigo, \'\'), \'Sin nombre\') AS nombre_modulo,
+      ROUND(AVG(c.nota), 2) AS nota_media,
+      COUNT(DISTINCT c.id_alumno) AS num_alumnos
+     FROM calificaciones c
+     INNER JOIN modulos m ON m.id_modulo = c.id_modulo
+     INNER JOIN cursos_escolares ce ON ce.id_curso_escolar = c.id_curso_escolar
+     WHERE ce.activo = 1
+       AND c.nota IS NOT NULL
+       AND c.nota >= 0
+     GROUP BY c.id_modulo, m.abreviatura, m.materia_propia, m.codigo
+     HAVING COUNT(DISTINCT c.id_alumno) >= 2
+     ORDER BY nota_media ASC
+     LIMIT 5'
+  )
+  : null;
+
+$grupos_absentismo = ($has_grupos && $has_alumno_curso && $has_cursos_escolares && $has_asistencia_mensual)
+  ? fetch_rows(
+    $pdo,
+    'SELECT
+      g.grupo,
+      COUNT(DISTINCT ac.id_alumno) AS num_alumnos,
+      COALESCE(SUM(am.faltas_justificadas + am.faltas_injustificadas), 0) AS total_faltas,
+      ROUND(
+        COALESCE(SUM(am.faltas_justificadas + am.faltas_injustificadas), 0)
+        / NULLIF(COUNT(DISTINCT ac.id_alumno), 0),
+        1
+      ) AS media_por_alumno
+     FROM grupos g
+     INNER JOIN alumno_curso ac ON ac.id_grupo = g.id_grupo
+     INNER JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+     LEFT JOIN asistencia_mensual am
+       ON am.id_alumno = ac.id_alumno
+       AND am.id_curso_escolar = ac.id_curso_escolar
+     WHERE ce.activo = 1
+     GROUP BY g.id_grupo, g.grupo
+     ORDER BY media_por_alumno DESC
+     LIMIT 5'
+  )
   : null;
 
 $page_title = 'Dashboard | Gestor de Alumnos';
@@ -579,6 +649,112 @@ $active_page = 'dashboard';
               </span>
             </a>
           </div>
+        </article>
+
+        <!-- Absentismo crítico -->
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Absentismo crítico</h3>
+            <p>Alumnos del curso activo que han superado los umbrales legales de faltas.</p>
+          </div>
+          <?php if ($alumnos_con_10pct === null && $alumnos_con_15pct === null): ?>
+            <p class="db-empty">Sin datos disponibles.</p>
+          <?php else: ?>
+            <div class="db-abs-grid">
+              <div class="db-abs-stat <?php echo ($alumnos_con_10pct > 0) ? 'db-abs-stat--warn' : 'db-abs-stat--ok'; ?>">
+                <span class="db-abs-stat-value"><?php echo $alumnos_con_10pct !== null ? (int) $alumnos_con_10pct : '&#8212;'; ?></span>
+                <span class="db-abs-stat-label">Alumnos &ge; 10% faltas</span>
+                <?php if ($alumnos_con_10pct !== null && $alumnos_curso_activo > 0): ?>
+                  <span class="db-abs-stat-pct"><?php echo number_format($alumnos_con_10pct / $alumnos_curso_activo * 100, 1, ',', ''); ?>% del total</span>
+                <?php endif; ?>
+              </div>
+              <div class="db-abs-stat <?php echo ($alumnos_con_15pct > 0) ? 'db-abs-stat--crit' : 'db-abs-stat--ok'; ?>">
+                <span class="db-abs-stat-value"><?php echo $alumnos_con_15pct !== null ? (int) $alumnos_con_15pct : '&#8212;'; ?></span>
+                <span class="db-abs-stat-label">Alumnos &ge; 15% faltas</span>
+                <?php if ($alumnos_con_15pct !== null && $alumnos_curso_activo > 0): ?>
+                  <span class="db-abs-stat-pct"><?php echo number_format($alumnos_con_15pct / $alumnos_curso_activo * 100, 1, ',', ''); ?>% del total</span>
+                <?php endif; ?>
+              </div>
+            </div>
+            <a href="asistencia.php" class="db-panel-link-footer">Ver asistencia &rarr;</a>
+          <?php endif; ?>
+        </article>
+
+        <!-- Módulos con nota media más baja -->
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Módulos con nota media más baja</h3>
+            <p>Hasta 5 módulos del curso activo con peor nota media (mín. 2 alumnos evaluados).</p>
+          </div>
+          <?php if (!$modulos_nota_baja): ?>
+            <p class="db-empty">Sin datos disponibles.</p>
+          <?php else: ?>
+            <ul class="db-estado-list">
+              <?php foreach ($modulos_nota_baja as $modulo): ?>
+                <?php
+                  $nota = (float) $modulo['nota_media'];
+                  $pct_barra = min(100, (int) round($nota / 10 * 100));
+                  if ($nota < 5) {
+                    $cls_nota = 'db-estado--red';
+                  } elseif ($nota < 6.5) {
+                    $cls_nota = 'db-estado--amber';
+                  } else {
+                    $cls_nota = 'db-estado--green';
+                  }
+                ?>
+                <li class="db-estado-item">
+                  <div class="db-estado-head">
+                    <span class="db-estado-badge <?php echo $cls_nota; ?>"><?php echo htmlspecialchars((string) $modulo['nombre_modulo'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="db-estado-count"><?php echo number_format($nota, 2, ',', ''); ?> <small>(<?php echo (int) $modulo['num_alumnos']; ?> alumnos)</small></span>
+                  </div>
+                  <div class="db-progress-bar">
+                    <div class="db-progress-fill <?php echo $cls_nota; ?>" style="width:<?php echo $pct_barra; ?>%"></div>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+            <a href="calificaciones_analisis.php" class="db-panel-link-footer">Ver análisis de calificaciones &rarr;</a>
+          <?php endif; ?>
+        </article>
+
+        <!-- Grupos con mayor absentismo -->
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Grupos con mayor absentismo</h3>
+            <p>Media de horas de falta por alumno en el curso activo (justificadas + injustificadas).</p>
+          </div>
+          <?php if (!$grupos_absentismo): ?>
+            <p class="db-empty">Sin datos disponibles.</p>
+          <?php else: ?>
+            <?php
+              $db_max_media_abs = max(array_map('floatval', array_column($grupos_absentismo, 'media_por_alumno'))) ?: 1;
+            ?>
+            <ul class="db-estado-list">
+              <?php foreach ($grupos_absentismo as $grupo): ?>
+                <?php
+                  $media = (float) $grupo['media_por_alumno'];
+                  $pct_barra = $db_max_media_abs > 0 ? min(100, (int) round($media / $db_max_media_abs * 100)) : 0;
+                  if ($media >= 15) {
+                    $cls_abs = 'db-estado--red';
+                  } elseif ($media >= 8) {
+                    $cls_abs = 'db-estado--amber';
+                  } else {
+                    $cls_abs = 'db-estado--green';
+                  }
+                ?>
+                <li class="db-estado-item">
+                  <div class="db-estado-head">
+                    <span class="db-estado-badge <?php echo $cls_abs; ?>"><?php echo htmlspecialchars((string) $grupo['grupo'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="db-estado-count"><?php echo number_format($media, 1, ',', ''); ?> h/alumno <small>(<?php echo (int) $grupo['num_alumnos']; ?> alumnos)</small></span>
+                  </div>
+                  <div class="db-progress-bar">
+                    <div class="db-progress-fill <?php echo $cls_abs; ?>" style="width:<?php echo $pct_barra; ?>%"></div>
+                  </div>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+            <a href="asistencia.php" class="db-panel-link-footer">Ver asistencia &rarr;</a>
+          <?php endif; ?>
         </article>
 
       </section>

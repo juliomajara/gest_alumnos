@@ -21,7 +21,7 @@ $selected = [
   'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? 0),
   'id_ciclo' => 0,
   'id_curso' => 0,
-  'id_grupo' => (int) ($_POST['id_grupo'] ?? 0),
+  'id_grupo' => (int) ($_POST['id_grupo'] ?? $_GET['id_grupo'] ?? 0),
   'id_evaluacion' => (int) ($_POST['id_evaluacion'] ?? 0),
 ];
 
@@ -322,62 +322,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php if ($errors !== []): ?>
         <section class="panel">
           <div class="panel-header">
-            <h3>Errores</h3>
+            <h3>No se puede continuar</h3>
+            <p>Corrige los siguientes errores antes de intentar importar de nuevo.</p>
           </div>
-          <ul class="form-errors">
-            <?php foreach ($errors as $error): ?>
-              <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
-            <?php endforeach; ?>
-          </ul>
+          <div class="import-list-section">
+            <ul class="import-list-items import-list-items--error">
+              <?php foreach ($errors as $error): ?>
+                <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+          </div>
         </section>
       <?php endif; ?>
 
       <?php if ($messages !== []): ?>
         <section class="panel">
           <div class="panel-header">
-            <h3>Resultado</h3>
+            <h3>Resultado de la importación</h3>
+            <p>Resumen del proceso de carga del CSV de calificaciones.</p>
           </div>
-          <div class="panel-grid">
-            <?php foreach ($messages as $message): ?>
-              <p><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p>
-            <?php endforeach; ?>
-            <p>Registros importados: <?php echo (int) $result['importadas']; ?></p>
-            <p>Alumnos no encontrados: <?php echo count($result['alumnos_no_encontrados']); ?></p>
-            <p>Módulos no encontrados: <?php echo count($result['modulos_no_encontrados']); ?></p>
-            <p>Errores de proceso: <?php echo count($result['errores']); ?></p>
+          <div class="import-counts">
+            <div class="import-count import-count--ok">
+              <span class="import-count-value"><?php echo (int) $result['importadas']; ?></span>
+              <span class="import-count-label">Calificaciones importadas</span>
+            </div>
+            <div class="import-count <?php echo count($result['alumnos_no_encontrados']) > 0 ? 'import-count--warn' : ''; ?>">
+              <span class="import-count-value"><?php echo count($result['alumnos_no_encontrados']); ?></span>
+              <span class="import-count-label">Alumnos no encontrados</span>
+            </div>
+            <div class="import-count <?php echo count($result['modulos_no_encontrados']) > 0 ? 'import-count--warn' : ''; ?>">
+              <span class="import-count-value"><?php echo count($result['modulos_no_encontrados']); ?></span>
+              <span class="import-count-label">Módulos no encontrados</span>
+            </div>
+            <div class="import-count <?php echo count($result['errores']) > 0 ? 'import-count--error' : ''; ?>">
+              <span class="import-count-value"><?php echo count($result['errores']); ?></span>
+              <span class="import-count-label">Errores de formato</span>
+            </div>
           </div>
 
           <?php if ($result['alumnos_no_encontrados'] !== []): ?>
-            <div class="panel-header">
-              <h3>Alumnos no encontrados</h3>
+            <div class="import-list-section">
+              <div class="import-list-header import-list-header--warn">Alumnos no encontrados (<?php echo count($result['alumnos_no_encontrados']); ?>)</div>
+              <ul class="import-list-items">
+                <?php foreach ($result['alumnos_no_encontrados'] as $item): ?>
+                  <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+                <?php endforeach; ?>
+              </ul>
+              <p class="import-list-hint">El nombre del CSV no coincide con ningún alumno del grupo. Comprueba tildes, espacios y el orden de apellidos.</p>
             </div>
-            <ul class="form-errors">
-              <?php foreach ($result['alumnos_no_encontrados'] as $item): ?>
-                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
-              <?php endforeach; ?>
-            </ul>
           <?php endif; ?>
 
           <?php if ($result['modulos_no_encontrados'] !== []): ?>
-            <div class="panel-header">
-              <h3>Módulos no encontrados</h3>
+            <div class="import-list-section">
+              <div class="import-list-header import-list-header--warn">Módulos no encontrados (<?php echo count($result['modulos_no_encontrados']); ?>)</div>
+              <ul class="import-list-items">
+                <?php foreach ($result['modulos_no_encontrados'] as $item): ?>
+                  <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+                <?php endforeach; ?>
+              </ul>
+              <p class="import-list-hint">El código de la cabecera del CSV no coincide con ningún módulo del ciclo seleccionado. El código debe ser exactamente igual al registrado en la base de datos (mayúsculas y sin espacios extra).</p>
             </div>
-            <ul class="form-errors">
-              <?php foreach ($result['modulos_no_encontrados'] as $item): ?>
-                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
-              <?php endforeach; ?>
-            </ul>
           <?php endif; ?>
 
           <?php if ($result['errores'] !== []): ?>
-            <div class="panel-header">
-              <h3>Errores concretos</h3>
+            <div class="import-list-section">
+              <div class="import-list-header import-list-header--error">Errores de formato (<?php echo count($result['errores']); ?>)</div>
+              <ul class="import-list-items import-list-items--error">
+                <?php foreach ($result['errores'] as $item): ?>
+                  <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
+                <?php endforeach; ?>
+              </ul>
+              <p class="import-list-hint">Las calificaciones deben ser numéricas (ej: <code>7.5</code>) o con prefijo (ej: <code>Teoría-7.5</code>). Las celdas vacías se ignoran.</p>
             </div>
-            <ul class="form-errors">
-              <?php foreach ($result['errores'] as $item): ?>
-                <li><?php echo htmlspecialchars($item, ENT_QUOTES, 'UTF-8'); ?></li>
-              <?php endforeach; ?>
-            </ul>
           <?php endif; ?>
         </section>
       <?php endif; ?>

@@ -47,19 +47,19 @@ $active_page = 'configuracion';
           <span class="util-card-title">Días de prácticas por alumno</span>
           <span class="util-card-desc">Consulta el resumen mensual y las horas realizadas.</span>
         </a>
-        <a class="util-card" href="practicas_documentacion.php">
-          <span class="util-card-icon">
-            <img src="assets/icons/documentacion.svg" alt="">
-          </span>
-          <span class="util-card-title">Documentación de prácticas</span>
-          <span class="util-card-desc">Genera programas formativos y calendarios del curso actual.</span>
-        </a>
-        <a class="util-card" href="enviar_correos.php">
+<a class="util-card" href="enviar_correos.php">
           <span class="util-card-icon">
             <img src="assets/icons/enviar_correos.svg" alt="">
           </span>
           <span class="util-card-title">Envío de correos</span>
           <span class="util-card-desc">Envía comunicaciones masivas desde la plataforma.</span>
+        </a>
+        <a class="util-card" href="dump_db.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/backup.svg" alt="">
+          </span>
+          <span class="util-card-title">Backup de base de datos</span>
+          <span class="util-card-desc">Genera y gestiona copias de seguridad completas de la base de datos.</span>
         </a>
         <a class="util-card util-card--disabled" href="#" aria-disabled="true" tabindex="-1">
           <span class="util-card-icon">

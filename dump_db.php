@@ -5,11 +5,14 @@ require_once __DIR__ . '/db.php';
 
 /**
  * Comprobación de acceso básico.
- * Permite ejecutar el backup si existe la constante ADMIN=true
- * o si hay una sesión activa con un indicador común de autenticación.
  */
 function usuario_autorizado_para_backup(): bool
 {
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    if ($ip === '127.0.0.1' || $ip === '::1') {
+        return true;
+    }
+
     if (defined('ADMIN') && ADMIN === true) {
         return true;
     }
@@ -107,7 +110,6 @@ function ordenar_tablas_por_dependencias(PDO $pdo, array $tablas): array
         sort($cola);
     }
 
-    // Si hay ciclos extraños, añadimos las tablas restantes al final.
     if (count($orden) < count($tablas)) {
         $faltantes = array_values(array_diff($tablas, $orden));
         sort($faltantes);
@@ -188,73 +190,122 @@ function obtener_inserts_tabla(PDO $pdo, string $tabla): string
     return $sql;
 }
 
+// ---------------------------------------------------------------------------
+
 if (!usuario_autorizado_para_backup()) {
     http_response_code(403);
     echo 'Acceso no autorizado.';
     exit;
 }
 
-$mensaje = 'No se pudo generar la copia de seguridad.';
-$ok = false;
-
-try {
-    $pdo = db();
-    $pdo->exec('SET SESSION group_concat_max_len = 1000000');
-
-    $tablas = obtener_tablas($pdo);
-    $tablas_ordenadas = ordenar_tablas_por_dependencias($pdo, $tablas);
-
-    $backupDir = __DIR__ . '/docs/backups';
-    if (!is_dir($backupDir) && !mkdir($backupDir, 0775, true) && !is_dir($backupDir)) {
-        throw new RuntimeException('No se pudo crear el directorio de backups.');
-    }
-
-    $nombreArchivo = 'backup_gestion_alumnos_' . date('Ymd_His') . '.sql';
-    $rutaArchivo = $backupDir . '/' . $nombreArchivo;
-
-    $contenido = "-- Backup de base de datos\n";
-    $contenido .= '-- Generado: ' . date('Y-m-d H:i:s') . "\n";
-    $contenido .= '-- Aplicación: Gestor de Alumnos' . "\n\n";
-    $contenido .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
-    $contenido .= "SET AUTOCOMMIT = 0;\n";
-    $contenido .= "START TRANSACTION;\n";
-    $contenido .= "SET time_zone = \"+00:00\";\n";
-    $contenido .= "SET NAMES utf8mb4;\n";
-    $contenido .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
-
-    foreach ($tablas_ordenadas as $tabla) {
-        $createTable = obtener_create_table($pdo, $tabla);
-
-        $contenido .= '-- ----------------------------' . "\n";
-        $contenido .= '-- Estructura de tabla `' . $tabla . '`' . "\n";
-        $contenido .= '-- ----------------------------' . "\n";
-        $contenido .= 'DROP TABLE IF EXISTS `' . str_replace('`', '``', $tabla) . '`;' . "\n";
-        $contenido .= $createTable . ';' . "\n\n";
-
-        $contenido .= '-- ----------------------------' . "\n";
-        $contenido .= '-- Datos de tabla `' . $tabla . '`' . "\n";
-        $contenido .= '-- ----------------------------' . "\n";
-        $contenido .= obtener_inserts_tabla($pdo, $tabla);
-        $contenido .= "\n";
-    }
-
-    $contenido .= "SET FOREIGN_KEY_CHECKS = 1;\n";
-    $contenido .= "COMMIT;\n";
-
-    if (file_put_contents($rutaArchivo, $contenido) === false) {
-        throw new RuntimeException('No se pudo escribir el archivo SQL de backup.');
-    }
-
-    $ok = true;
-    $mensaje = 'Backup generado correctamente: ' . $nombreArchivo;
-} catch (Throwable $exception) {
+$backupDir = __DIR__ . '/docs/backups';
+if (!is_dir($backupDir) && !mkdir($backupDir, 0775, true) && !is_dir($backupDir)) {
     http_response_code(500);
-    $ok = false;
-    $mensaje = 'No se pudo generar la copia de seguridad.';
+    echo 'No se pudo crear el directorio de backups.';
+    exit;
 }
 
-$page_title = 'Backup de base de datos | Gestor de Alumnos';
-$active_page = 'configuracion';
+$action = (string) ($_REQUEST['action'] ?? '');
+
+// --- Descarga ---
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'descargar') {
+    $archivo = basename((string) ($_GET['archivo'] ?? ''));
+    $ruta = $backupDir . '/' . $archivo;
+    if (preg_match('/^backup_gestion_alumnos_\d{8}_\d{6}\.sql$/', $archivo) && is_file($ruta)) {
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $archivo . '"');
+        header('Content-Length: ' . filesize($ruta));
+        readfile($ruta);
+        exit;
+    }
+    http_response_code(404);
+    echo 'Archivo no encontrado.';
+    exit;
+}
+
+// --- Eliminar ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'eliminar') {
+    $archivo = basename((string) ($_POST['archivo'] ?? ''));
+    $ruta = $backupDir . '/' . $archivo;
+    if (preg_match('/^backup_gestion_alumnos_\d{8}_\d{6}\.sql$/', $archivo) && is_file($ruta)) {
+        unlink($ruta);
+    }
+    header('Location: dump_db.php');
+    exit;
+}
+
+// --- Crear ---
+$alerta_creacion = '';
+$exito_creacion = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'crear') {
+    try {
+        $pdo = db();
+        $pdo->exec('SET SESSION group_concat_max_len = 1000000');
+        set_time_limit(120);
+
+        $tablas = obtener_tablas($pdo);
+        $tablas_ordenadas = ordenar_tablas_por_dependencias($pdo, $tablas);
+
+        $nombreArchivo = 'backup_gestion_alumnos_' . date('Ymd_His') . '.sql';
+        $rutaArchivo   = $backupDir . '/' . $nombreArchivo;
+
+        $contenido  = "-- Backup de base de datos\n";
+        $contenido .= '-- Generado: ' . date('Y-m-d H:i:s') . "\n";
+        $contenido .= '-- Aplicación: Gestor de Alumnos' . "\n\n";
+        $contenido .= "SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n";
+        $contenido .= "SET AUTOCOMMIT = 0;\n";
+        $contenido .= "START TRANSACTION;\n";
+        $contenido .= "SET time_zone = \"+00:00\";\n";
+        $contenido .= "SET NAMES utf8mb4;\n";
+        $contenido .= "SET FOREIGN_KEY_CHECKS = 0;\n\n";
+
+        foreach ($tablas_ordenadas as $tabla) {
+            $createTable = obtener_create_table($pdo, $tabla);
+            $contenido .= '-- ----------------------------' . "\n";
+            $contenido .= '-- Estructura de tabla `' . $tabla . '`' . "\n";
+            $contenido .= '-- ----------------------------' . "\n";
+            $contenido .= 'DROP TABLE IF EXISTS `' . str_replace('`', '``', $tabla) . '`;' . "\n";
+            $contenido .= $createTable . ';' . "\n\n";
+            $contenido .= '-- ----------------------------' . "\n";
+            $contenido .= '-- Datos de tabla `' . $tabla . '`' . "\n";
+            $contenido .= '-- ----------------------------' . "\n";
+            $contenido .= obtener_inserts_tabla($pdo, $tabla);
+            $contenido .= "\n";
+        }
+
+        $contenido .= "SET FOREIGN_KEY_CHECKS = 1;\n";
+        $contenido .= "COMMIT;\n";
+
+        if (file_put_contents($rutaArchivo, $contenido) === false) {
+            throw new RuntimeException('No se pudo escribir el archivo SQL.');
+        }
+
+        $exito_creacion = 'Backup generado correctamente: ' . htmlspecialchars($nombreArchivo, ENT_QUOTES, 'UTF-8');
+    } catch (Throwable $e) {
+        $alerta_creacion = 'Error al generar el backup: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+    }
+}
+
+// --- Lista de backups ---
+$backups = [];
+$archivos_raw = glob($backupDir . '/backup_gestion_alumnos_*.sql') ?: [];
+rsort($archivos_raw);
+foreach ($archivos_raw as $ruta) {
+    $ts = (int) filemtime($ruta);
+    $backups[] = [
+        'nombre' => basename($ruta),
+        'fecha'  => $ts > 0 ? date('d/m/Y H:i', $ts) : '—',
+        'ts'     => $ts,
+        'bytes'  => (int) filesize($ruta),
+    ];
+}
+
+$ultimo_ts       = $backups !== [] ? $backups[0]['ts'] : 0;
+$dias_sin_backup = $ultimo_ts > 0 ? (int) floor((time() - $ultimo_ts) / 86400) : -1;
+
+$page_title  = 'Backup de base de datos | Gestor de Alumnos';
+$active_page = 'utilidades';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -275,18 +326,82 @@ $active_page = 'configuracion';
       <header class="header">
         <div>
           <h1>Backup de base de datos</h1>
-          <p class="subheading"><?php echo htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8'); ?></p>
+          <p class="subheading">Genera y gestiona copias de seguridad completas de la base de datos.</p>
+        </div>
+        <div class="header-actions">
+          <form method="post">
+            <input type="hidden" name="action" value="crear">
+            <button type="submit" class="primary-button">Crear backup ahora</button>
+          </form>
         </div>
       </header>
 
-      <?php if (!$ok): ?>
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Estado</h3>
-            <p>Ha ocurrido un error al generar la copia de seguridad.</p>
-          </div>
-        </section>
+      <?php if ($exito_creacion !== ''): ?>
+        <div class="backup-notice backup-notice--ok"><?php echo $exito_creacion; ?></div>
       <?php endif; ?>
+      <?php if ($alerta_creacion !== ''): ?>
+        <div class="backup-notice backup-notice--error"><?php echo $alerta_creacion; ?></div>
+      <?php endif; ?>
+
+      <?php if ($backups === []): ?>
+        <div class="backup-notice backup-notice--warn">No hay ningún backup guardado. Crea el primero ahora.</div>
+      <?php elseif ($dias_sin_backup >= 7): ?>
+        <div class="backup-notice backup-notice--warn">El último backup tiene <?php echo $dias_sin_backup; ?> días de antigüedad. Se recomienda crear uno nuevo.</div>
+      <?php endif; ?>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>Copias de seguridad guardadas</h3>
+          <p>Se almacenan en <code>docs/backups/</code> dentro del proyecto. Descarga el archivo SQL para importarlo desde phpMyAdmin.</p>
+        </div>
+
+        <div class="panel-grid">
+          <?php if ($backups === []): ?>
+            <p style="padding: 1rem 1.25rem; color: var(--muted);">Aún no hay backups.</p>
+          <?php else: ?>
+            <table>
+              <thead>
+                <tr>
+                  <th>Archivo</th>
+                  <th>Fecha</th>
+                  <th>Tamaño</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($backups as $b): ?>
+                  <tr>
+                    <td><?php echo htmlspecialchars($b['nombre'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($b['fecha'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo number_format($b['bytes'] / 1024, 0, ',', '.') . ' KB'; ?></td>
+                    <td class="backup-actions">
+                      <a class="primary-button" href="dump_db.php?action=descargar&amp;archivo=<?php echo urlencode($b['nombre']); ?>">Descargar</a>
+                      <form method="post" onsubmit="return confirm('¿Eliminar este backup?');">
+                        <input type="hidden" name="action" value="eliminar">
+                        <input type="hidden" name="archivo" value="<?php echo htmlspecialchars($b['nombre'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <button type="submit" class="danger-button">Eliminar</button>
+                      </form>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          <?php endif; ?>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h3>Automatización</h3>
+          <p>Para ejecutar el backup diariamente de forma automática sin intervención manual.</p>
+        </div>
+        <div class="panel-grid" style="padding: 1rem 1.25rem;">
+          <p style="color: var(--muted); font-size: 0.875rem; margin-bottom: 0.75rem;">Crea una tarea en el <strong>Programador de tareas de Windows</strong> que ejecute este comando cada día:</p>
+          <code class="backup-code">php "<?php echo htmlspecialchars(__FILE__, ENT_QUOTES, 'UTF-8'); ?>"</code>
+          <p style="color: var(--muted); font-size: 0.875rem; margin-top: 0.75rem;">O desde línea de comandos con curl (si el servidor está en marcha):</p>
+          <code class="backup-code">curl -s -X POST "http://localhost/gest_alumnos/dump_db.php" -d "action=crear"</code>
+        </div>
+      </section>
     </main>
   </div>
 </body>

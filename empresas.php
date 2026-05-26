@@ -209,7 +209,7 @@ $active_page = 'empresas';
           <p class="subheading">Consulta la información básica de las empresas registradas en el sistema.</p>
         </div>
         <div class="header-actions">
-          <a class="edit-toggle" href="empresa_nueva.php">Añadir nueva empresa</a>
+          <a class="edit-toggle edit-toggle-success" href="empresa_nueva.php"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir empresa</a>
         </div>
       </header>
 

@@ -393,7 +393,7 @@ if ($show_results && $students !== [] && $modules !== []) {
           <p class="subheading">Consulta las notas por curso escolar, grupo y evaluación.</p>
         </div>
         <div class="header-actions">
-          <a class="primary-button" href="importar_calificaciones.php">Importar calificaciones</a>
+          <a class="primary-button" href="importar_calificaciones.php<?php echo (int) $selected_group > 0 ? '?id_grupo=' . (int) $selected_group : ''; ?>">Importar calificaciones</a>
         </div>
       </header>
 
