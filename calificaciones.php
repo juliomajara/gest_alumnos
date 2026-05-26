@@ -400,7 +400,7 @@ if ($show_results && $students !== [] && $modules !== []) {
       <?php
         $_tab_params_alumnos = [];
         if ($selected_course_id > 0) $_tab_params_alumnos['id_curso_escolar'] = $selected_course_id;
-        if ($selected_group !== '') $_tab_params_alumnos['grupo_id'] = $selected_group;
+        if ($selected_group !== '') $_tab_params_alumnos['id_grupo'] = $selected_group;
         $_tab_qs_alumnos = $_tab_params_alumnos ? '?' . htmlspecialchars(http_build_query($_tab_params_alumnos), ENT_QUOTES, 'UTF-8') : '';
 
         $_tab_params_asistencia = [];

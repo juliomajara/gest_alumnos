@@ -263,7 +263,7 @@ if ($vista === 'justificadas') {
       <?php
         $_tab_params_alumnos = [];
         if ($selected['id_curso_escolar'] > 0) $_tab_params_alumnos['id_curso_escolar'] = $selected['id_curso_escolar'];
-        if ($selected['id_grupo'] > 0) $_tab_params_alumnos['grupo_id'] = $selected['id_grupo'];
+        if ($selected['id_grupo'] > 0) $_tab_params_alumnos['id_grupo'] = $selected['id_grupo'];
         $_tab_qs_alumnos = $_tab_params_alumnos ? '?' . htmlspecialchars(http_build_query($_tab_params_alumnos), ENT_QUOTES, 'UTF-8') : '';
 
         $_tab_params_otras = [];

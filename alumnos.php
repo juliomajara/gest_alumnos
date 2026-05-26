@@ -13,7 +13,7 @@ $courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escol
 
 $selected_course_id = (int) ($_GET['id_curso_escolar'] ?? $active_course_id);
 $search_term = trim((string) ($_GET['q'] ?? ''));
-$selected_group = (string) ($_GET['grupo_id'] ?? '');
+$selected_group = (string) ($_GET['id_grupo'] ?? '');
 $selected_group = $selected_group === '' ? '' : $selected_group;
 
 $groups = [];
@@ -199,8 +199,8 @@ $students_heading = $selected_group_name !== ''
       ?>
       <nav class="tab-nav">
         <a class="tab-nav-link active" href="alumnos.php">Alumnos</a>
-        <a class="tab-nav-link" href="asistencia.php<?php echo $_tab_qs; ?>">Asistencia</a>
-        <a class="tab-nav-link" href="calificaciones.php<?php echo $_tab_qs; ?>">Calificaciones</a>
+        <a id="link-asistencia" class="tab-nav-link" href="asistencia.php<?php echo $_tab_qs; ?>">Asistencia</a>
+        <a id="link-calificaciones" class="tab-nav-link" href="calificaciones.php<?php echo $_tab_qs; ?>">Calificaciones</a>
       </nav>
 
       <form method="get" class="topbar">
@@ -217,7 +217,7 @@ $students_heading = $selected_group_name !== ''
           </label>
 
           <label class="calendar-select">
-            <select name="grupo_id" aria-label="Grupo">
+            <select name="id_grupo" aria-label="Grupo">
               <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
               <?php foreach ($groups as $group): ?>
                 <option value="<?php echo (int) $group['id_grupo']; ?>" <?php echo (string) $group['id_grupo'] === $selected_group ? 'selected' : ''; ?>>
@@ -274,7 +274,7 @@ $students_heading = $selected_group_name !== ''
   <script>
     const form = document.querySelector('form.topbar');
     const searchInput = document.querySelector('input[name="q"]');
-    const groupSelect = document.querySelector('select[name="grupo_id"]');
+    const groupSelect = document.querySelector('select[name="id_grupo"]');
     const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
     const tableBody = document.querySelector('tbody');
     const studentsPanel = document.getElementById('students-panel');
@@ -298,7 +298,7 @@ $students_heading = $selected_group_name !== ''
     const updateNavLinks = (params) => {
       const navParams = new URLSearchParams();
       const courseVal = params.get('id_curso_escolar');
-      const groupVal = params.get('grupo_id');
+      const groupVal = params.get('id_grupo');
       if (courseVal) navParams.set('id_curso_escolar', courseVal);
       if (groupVal) navParams.set('id_grupo', groupVal);
       const query = navParams.toString();
