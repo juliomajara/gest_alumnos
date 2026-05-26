@@ -668,14 +668,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
 
           <div class="entity-grid">
-            <label>
-              Archivo CSV
-              <input type="file" name="csv_horarios" accept=".csv,text/csv" required>
-            </label>
+            <div class="file-field">
+              <span class="file-field-label">Archivo CSV</span>
+              <div class="file-field-control">
+                <label class="file-field-btn" for="csvHorariosInput">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  Seleccionar archivo
+                </label>
+                <span class="file-field-name" id="csvHorariosName">Ningún archivo seleccionado</span>
+                <input type="file" id="csvHorariosInput" name="csv_horarios" accept=".csv,text/csv" required class="file-field-input">
+              </div>
+            </div>
           </div>
+          <script>
+            (function () {
+              var inp = document.getElementById('csvHorariosInput');
+              var nm = document.getElementById('csvHorariosName');
+              if (inp && nm) {
+                inp.addEventListener('change', function () {
+                  nm.textContent = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado';
+                });
+              }
+            })();
+          </script>
 
           <div class="form-actions">
-            <button type="submit" class="button-primary">Importar horario</button>
+            <button type="submit" class="primary-button">Importar horario</button>
           </div>
         </section>
       </form>

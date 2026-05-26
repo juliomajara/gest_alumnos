@@ -40,13 +40,7 @@ $active_page = 'configuracion';
           <span class="util-card-title">Importar calificaciones</span>
           <span class="util-card-desc">Importa notas desde CSV para un contexto académico concreto.</span>
         </a>
-        <a class="util-card" href="practicas_dias.php">
-          <span class="util-card-icon">
-            <img src="assets/icons/dias_practicas.svg" alt="">
-          </span>
-          <span class="util-card-title">Días de prácticas por alumno</span>
-          <span class="util-card-desc">Consulta el resumen mensual y las horas realizadas.</span>
-        </a>
+
 <a class="util-card" href="enviar_correos.php">
           <span class="util-card-icon">
             <img src="assets/icons/enviar_correos.svg" alt="">

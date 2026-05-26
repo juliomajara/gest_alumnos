@@ -95,6 +95,13 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
         $empresa_nombre_comercial = trim((string) ($practice['empresa_nombre_comercial'] ?? ''));
         $empresa = $empresa_nombre_comercial !== '' ? $empresa_nombre_comercial : ($empresa_nombre !== '' ? $empresa_nombre : 'No disponible');
         $estado_practica = calculate_practice_status($practice);
+        $estado_clase = match($estado_practica) {
+          'En curso'       => 'practicas-anexos-practica-estado--en-curso',
+          'Finalizada'     => 'practicas-anexos-practica-estado--finalizada',
+          'Cancelada'      => 'practicas-anexos-practica-estado--cancelada',
+          'En espera'      => 'practicas-anexos-practica-estado--en-espera',
+          default          => '',
+        };
 
         $anexos_mostrar = ['2.1', '2.2', '3', '7', '8'];
         if ((int) ($practice['circ_excep'] ?? 0) === 1) {
@@ -108,9 +115,17 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
 
       <article class="practicas-anexos-practica" data-practice-card>
         <header class="practicas-anexos-practica-head">
-          <div>
+          <button
+            type="button"
+            class="practicas-anexos-practica-toggle"
+            data-practice-toggle
+            aria-expanded="false"
+            aria-controls="practice-anexos-<?php echo $id_practica; ?>"
+          >
+            <svg class="practicas-anexos-practica-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 4 10 8 6 12"></polyline></svg>
             <h4><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?> <span class="practicas-anexos-empresa"><?php echo htmlspecialchars('(' . $empresa . ')', ENT_QUOTES, 'UTF-8'); ?></span></h4>
-          </div>
+            <span class="practicas-anexos-practica-percent" data-practice-summary-percent></span>
+          </button>
           <div class="practicas-anexos-practica-meta">
             <?php if (in_array('7', $anexos_mostrar, true)): ?>
               <button
@@ -124,11 +139,11 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
                 Añadir seguimiento Anexo 7
               </button>
             <?php endif; ?>
-            <span class="practicas-anexos-practica-estado"><?php echo htmlspecialchars($estado_practica, ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="practicas-anexos-practica-estado<?php echo $estado_clase !== '' ? ' ' . $estado_clase : ''; ?>"><?php echo htmlspecialchars($estado_practica, ENT_QUOTES, 'UTF-8'); ?></span>
           </div>
         </header>
 
-        <div class="practicas-anexos-tarjetas" data-practice-anexos>
+        <div class="practicas-anexos-tarjetas" id="practice-anexos-<?php echo $id_practica; ?>" data-practice-anexos hidden>
           <?php foreach ($anexos_mostrar as $code): ?>
             <?php
               $anexo_data = $anexos_definiciones[$code];
@@ -165,6 +180,8 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
 
                 $percent = $total_fases > 0 ? (int) round(($completadas / $total_fases) * 100) : 0;
                 $is_done = $total_fases > 0 && $completadas === $total_fases;
+                $status_class = $is_done ? ' is-complete' : ($completadas > 0 ? ' is-progress' : '');
+                $desc = htmlspecialchars(trim((string) ($anexo_data['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8');
                 $card_id = 'anexo-card-' . $id_practica . '-' . $id_anexo . '-' . $numero_seguimiento;
                 $panel_id = $card_id . '-panel';
                 $title = 'Anexo ' . $code;
@@ -173,7 +190,7 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
                 }
               ?>
               <section
-                class="practicas-anexos-card<?php echo $is_done ? ' is-complete' : ''; ?>"
+                class="practicas-anexos-card<?php echo $status_class; ?>"
                 data-anexo-card
                 data-id-practica="<?php echo $id_practica; ?>"
                 data-id-practicas-anexo="<?php echo $id_anexo; ?>"
@@ -181,76 +198,52 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
                 data-total-steps="<?php echo $total_fases; ?>"
               >
                 <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>" data-accordion-toggle>
+                  <svg class="practicas-anexos-card-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 4 10 8 6 12"></polyline></svg>
                   <span class="practicas-anexos-card-title-wrap">
                     <strong><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></strong>
-                    <span class="practicas-anexos-card-percent anexo-percent" data-progress-text>(<?php echo $percent; ?>%)</span>
+                    <?php if ($desc !== ''): ?><span class="practicas-anexos-card-desc"><?php echo $desc; ?></span><?php endif; ?>
                     <small data-card-summary hidden><?php echo $completadas; ?> de <?php echo $total_fases; ?> pasos completados</small>
+                  </span>
+                  <span class="practicas-anexos-card-progress">
+                    <progress class="practicas-anexos-progress-bar" value="<?php echo $percent; ?>" max="100" data-progress-bar></progress>
+                    <span class="practicas-anexos-card-percent anexo-percent" data-progress-text><?php echo $percent; ?>%</span>
                   </span>
                   <span class="practicas-anexos-card-icons">
                     <span class="practicas-anexos-complete-icon" data-complete-icon <?php echo $is_done ? '' : 'hidden'; ?>>✓</span>
                   </span>
                 </button>
+                <div
+                  class="practicas-anexos-card-panel"
+                  id="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>"
+                  data-id-practica="<?php echo $id_practica; ?>"
+                  data-id-practicas-anexo="<?php echo $id_anexo; ?>"
+                  data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
+                  hidden
+                >
+                  <ul class="practicas-anexos-steps">
+                    <?php foreach ($fases as $fase): ?>
+                      <?php
+                        $id_fase = (int) $fase['id'];
+                        $checked = isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][$id_fase]);
+                      ?>
+                      <li class="practicas-anexos-step-item<?php echo $checked ? ' is-checked' : ''; ?>">
+                        <label>
+                          <input
+                            type="checkbox"
+                            <?php echo $checked ? 'checked' : ''; ?>
+                            data-ajax-step
+                            data-id-practica="<?php echo $id_practica; ?>"
+                            data-id-practicas-anexo="<?php echo $id_anexo; ?>"
+                            data-id-practicas-anexo-estado="<?php echo $id_fase; ?>"
+                            data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
+                          >
+                          <span><?php echo htmlspecialchars((string) $fase['estado'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        </label>
+                      </li>
+                    <?php endforeach; ?>
+                  </ul>
+                </div>
               </section>
-            <?php endforeach; ?>
-          <?php endforeach; ?>
-        </div>
-
-        <div class="practicas-anexos-detalles">
-          <?php foreach ($anexos_mostrar as $code): ?>
-            <?php
-              $anexo_data = $anexos_definiciones[$code];
-              $id_anexo = (int) $anexo_data['id'];
-              $fases = $anexo_data['fases'];
-              $seguimientos = [1];
-
-              if ($code === '7') {
-                $seguimientos = [];
-                if (isset($marcados[$id_practica][$id_anexo]) && is_array($marcados[$id_practica][$id_anexo])) {
-                  $seguimientos = array_keys($marcados[$id_practica][$id_anexo]);
-                  sort($seguimientos);
-                }
-                if ($seguimientos === []) {
-                  $seguimientos = [1];
-                }
-              }
-            ?>
-            <?php foreach ($seguimientos as $numero_seguimiento): ?>
-              <?php
-                $numero_seguimiento = (int) $numero_seguimiento;
-                $card_id = 'anexo-card-' . $id_practica . '-' . $id_anexo . '-' . $numero_seguimiento;
-                $panel_id = $card_id . '-panel';
-              ?>
-              <div
-                class="practicas-anexos-card-panel"
-                id="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>"
-                data-id-practica="<?php echo $id_practica; ?>"
-                data-id-practicas-anexo="<?php echo $id_anexo; ?>"
-                data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
-                hidden
-              >
-                <ul class="practicas-anexos-steps">
-                  <?php foreach ($fases as $fase): ?>
-                    <?php
-                      $id_fase = (int) $fase['id'];
-                      $checked = isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][$id_fase]);
-                    ?>
-                    <li>
-                      <label>
-                        <input
-                          type="checkbox"
-                          <?php echo $checked ? 'checked' : ''; ?>
-                          data-ajax-step
-                          data-id-practica="<?php echo $id_practica; ?>"
-                          data-id-practicas-anexo="<?php echo $id_anexo; ?>"
-                          data-id-practicas-anexo-estado="<?php echo $id_fase; ?>"
-                          data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
-                        >
-                        <span><?php echo htmlspecialchars((string) $fase['estado'], ENT_QUOTES, 'UTF-8'); ?></span>
-                      </label>
-                    </li>
-                  <?php endforeach; ?>
-                </ul>
-              </div>
             <?php endforeach; ?>
           <?php endforeach; ?>
         </div>
@@ -639,7 +632,7 @@ $active_page = 'practicas';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/styles.css">
+  <link rel="stylesheet" href="assets/styles.css?v=2">
 </head>
 <body>
   <div class="page">
@@ -652,6 +645,13 @@ $active_page = 'practicas';
           <p class="subheading">Consulta y actualiza el estado de los anexos por práctica, alumno y empresa.</p>
         </div>
       </header>
+
+      <nav class="tab-nav">
+        <a class="tab-nav-link" href="practicas.php">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
+        <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
+        <a class="tab-nav-link active" href="practicas_anexos.php">Seguimiento de Anexos</a>
+      </nav>
 
       <form class="topbar" method="get">
         <div class="topbar-search">
@@ -731,6 +731,7 @@ $active_page = 'practicas';
         }
         if (summaryPercent) {
           summaryPercent.textContent = `${percent}%`;
+          summaryPercent.classList.toggle('is-complete', percent === 100 && total > 0);
         }
       };
 
@@ -749,14 +750,21 @@ $active_page = 'practicas';
         }
 
         if (progressText) {
-          progressText.textContent = `(${percent}%)`;
+          progressText.textContent = `${percent}%`;
+        }
+
+        const progressBar = card.querySelector('[data-progress-bar]');
+        if (progressBar) {
+          progressBar.value = percent;
         }
 
         if (completeIcon) {
           completeIcon.hidden = done !== total || total === 0;
         }
 
-        card.classList.toggle('is-complete', done === total && total > 0);
+        const isComplete = done === total && total > 0;
+        card.classList.toggle('is-complete', isComplete);
+        card.classList.toggle('is-progress', done > 0 && !isComplete);
 
         const practiceCard = card.closest('[data-practice-card]');
         if (practiceCard) {
@@ -841,10 +849,14 @@ $active_page = 'practicas';
 
         card.innerHTML = `
           <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="${panelId}" data-accordion-toggle>
+            <svg class="practicas-anexos-card-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 4 10 8 6 12"></polyline></svg>
             <span class="practicas-anexos-card-title-wrap">
               <strong>Anexo 7 - Seg. ${numeroSeguimiento}</strong>
-              <span class="practicas-anexos-card-percent anexo-percent" data-progress-text>(0%)</span>
               <small data-card-summary hidden>0 de ${fases.length} pasos completados</small>
+            </span>
+            <span class="practicas-anexos-card-progress">
+              <progress class="practicas-anexos-progress-bar" value="0" max="100" data-progress-bar></progress>
+              <span class="practicas-anexos-card-percent anexo-percent" data-progress-text>0%</span>
             </span>
             <span class="practicas-anexos-card-icons">
               <span class="practicas-anexos-complete-icon" data-complete-icon hidden>✓</span>
@@ -873,10 +885,7 @@ $active_page = 'practicas';
         });
 
         panelContainer.appendChild(card);
-        const detailsContainer = practiceCard.querySelector('.practicas-anexos-detalles');
-        if (detailsContainer) {
-          detailsContainer.appendChild(panel);
-        }
+        card.appendChild(panel);
 
         const toggle = card.querySelector('[data-accordion-toggle]');
         if (toggle) bindAccordion(toggle);
@@ -926,6 +935,17 @@ $active_page = 'practicas';
         });
       };
 
+      const bindPracticeToggle = (button) => {
+        button.addEventListener('click', () => {
+          const expanded = button.getAttribute('aria-expanded') === 'true';
+          const targetId = button.getAttribute('aria-controls');
+          const target = targetId ? document.getElementById(targetId) : null;
+          if (!target) return;
+          button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+          target.hidden = expanded;
+        });
+      };
+
       const initAnexosEvents = (scope) => {
         const root = scope || document;
         root.querySelectorAll('[data-accordion-toggle]').forEach(bindAccordion);
@@ -933,6 +953,7 @@ $active_page = 'practicas';
         root.querySelectorAll('[data-anexo-card]').forEach(refreshCard);
         root.querySelectorAll('[data-practice-card]').forEach(refreshPracticeSummary);
         root.querySelectorAll('[data-add-anexo7]').forEach(bindAddAnexo7Button);
+        root.querySelectorAll('[data-practice-toggle]').forEach(bindPracticeToggle);
       };
 
       initAnexosEvents(document);

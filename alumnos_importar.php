@@ -1083,45 +1083,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       </header>
 
-      <section class="panel">
-        <div class="panel-header">
-          <h3 class="panel-title-with-help">
-            CSV de alumnos
-            <span class="help-tooltip">
-              <button
-                type="button"
-                class="help-tooltip-trigger"
-                aria-label="Ayuda para exportar el CSV de alumnos"
-                aria-describedby="csv-help"
-              >
-                ?
-              </button>
-              <span class="help-tooltip-content" id="csv-help" role="tooltip">
-                <span class="help-tooltip-title">Cómo exportar el CSV desde Raíces</span>
-                <ol>
-                  <li>Entrar en Raíces.</li>
-                  <li>Navegar a Utilidades &gt; Explotación de datos.</li>
-                  <li>En el campo "Módulo" seleccionar "Matriculación".</li>
-                  <li>En el campo "Consulta" seleccionar "Matriculados con materias y profesores".</li>
-                  <li>En el campo "Curso académico" seleccionar el actual.</li>
-                  <li>En el campo "Exportar los datos al formato" seleccionar "Fichero CSV".</li>
-                </ol>
+      <form method="post" enctype="multipart/form-data" class="panel entity-form">
+        <section class="entity-section">
+          <div class="panel-header">
+            <h3 class="panel-title-with-help">
+              CSV de alumnos
+              <span class="help-tooltip">
+                <button
+                  type="button"
+                  class="help-tooltip-trigger"
+                  aria-label="Ayuda para exportar el CSV de alumnos"
+                  aria-describedby="csv-help"
+                >
+                  ?
+                </button>
+                <span class="help-tooltip-content" id="csv-help" role="tooltip">
+                  <span class="help-tooltip-title">Cómo exportar el CSV desde Raíces</span>
+                  <ol>
+                    <li>Entrar en Raíces.</li>
+                    <li>Navegar a Utilidades &gt; Explotación de datos.</li>
+                    <li>En el campo "Módulo" seleccionar "Matriculación".</li>
+                    <li>En el campo "Consulta" seleccionar "Matriculados con materias y profesores".</li>
+                    <li>En el campo "Curso académico" seleccionar el actual.</li>
+                    <li>En el campo "Exportar los datos al formato" seleccionar "Fichero CSV".</li>
+                  </ol>
+                </span>
               </span>
-            </span>
-          </h3>
-          <p>Selecciona el archivo CSV exportado desde el sistema académico y confirma la importación.</p>
-        </div>
+            </h3>
+            <p>Selecciona el archivo CSV exportado desde el sistema académico y confirma la importación.</p>
+          </div>
 
-        <div class="panel-grid">
-          <form method="post" enctype="multipart/form-data">
-            <label>
-              Archivo CSV
-              <input type="file" name="csv_file" accept=".csv" required>
-            </label>
+          <div class="entity-grid">
+            <div class="file-field">
+              <span class="file-field-label">Archivo CSV</span>
+              <div class="file-field-control">
+                <label class="file-field-btn" for="csvAlumnosInput">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  Seleccionar archivo
+                </label>
+                <span class="file-field-name" id="csvAlumnosName">Ningún archivo seleccionado</span>
+                <input type="file" id="csvAlumnosInput" name="csv_file" accept=".csv" required class="file-field-input">
+              </div>
+            </div>
+          </div>
+          <script>
+            (function () {
+              var inp = document.getElementById('csvAlumnosInput');
+              var nm = document.getElementById('csvAlumnosName');
+              if (inp && nm) {
+                inp.addEventListener('change', function () {
+                  nm.textContent = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado';
+                });
+              }
+            })();
+          </script>
+
+          <div class="form-actions">
             <button class="primary-button" type="submit">Procesar CSV</button>
-          </form>
-        </div>
-      </section>
+          </div>
+        </section>
+      </form>
 
       <?php if ($messages): ?>
         <section class="panel">

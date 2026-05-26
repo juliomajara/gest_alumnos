@@ -397,6 +397,23 @@ if ($show_results && $students !== [] && $modules !== []) {
         </div>
       </header>
 
+      <?php
+        $_tab_params_alumnos = [];
+        if ($selected_course_id > 0) $_tab_params_alumnos['id_curso_escolar'] = $selected_course_id;
+        if ($selected_group !== '') $_tab_params_alumnos['grupo_id'] = $selected_group;
+        $_tab_qs_alumnos = $_tab_params_alumnos ? '?' . htmlspecialchars(http_build_query($_tab_params_alumnos), ENT_QUOTES, 'UTF-8') : '';
+
+        $_tab_params_asistencia = [];
+        if ($selected_course_id > 0) $_tab_params_asistencia['id_curso_escolar'] = $selected_course_id;
+        if ($selected_group !== '') $_tab_params_asistencia['id_grupo'] = $selected_group;
+        $_tab_qs_asistencia = $_tab_params_asistencia ? '?' . htmlspecialchars(http_build_query($_tab_params_asistencia), ENT_QUOTES, 'UTF-8') : '';
+      ?>
+      <nav class="tab-nav">
+        <a class="tab-nav-link" href="alumnos.php<?php echo $_tab_qs_alumnos; ?>">Alumnos</a>
+        <a class="tab-nav-link" href="asistencia.php<?php echo $_tab_qs_asistencia; ?>">Asistencia</a>
+        <a class="tab-nav-link active" href="calificaciones.php">Calificaciones</a>
+      </nav>
+
       <form class="topbar" method="get">
         <?php if ($show_all_students): ?>
           <input type="hidden" name="mostrar_todos" value="1">

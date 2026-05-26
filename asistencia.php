@@ -260,6 +260,23 @@ if ($vista === 'justificadas') {
         </div>
       </header>
 
+      <?php
+        $_tab_params_alumnos = [];
+        if ($selected['id_curso_escolar'] > 0) $_tab_params_alumnos['id_curso_escolar'] = $selected['id_curso_escolar'];
+        if ($selected['id_grupo'] > 0) $_tab_params_alumnos['grupo_id'] = $selected['id_grupo'];
+        $_tab_qs_alumnos = $_tab_params_alumnos ? '?' . htmlspecialchars(http_build_query($_tab_params_alumnos), ENT_QUOTES, 'UTF-8') : '';
+
+        $_tab_params_otras = [];
+        if ($selected['id_curso_escolar'] > 0) $_tab_params_otras['id_curso_escolar'] = $selected['id_curso_escolar'];
+        if ($selected['id_grupo'] > 0) $_tab_params_otras['id_grupo'] = $selected['id_grupo'];
+        $_tab_qs_otras = $_tab_params_otras ? '?' . htmlspecialchars(http_build_query($_tab_params_otras), ENT_QUOTES, 'UTF-8') : '';
+      ?>
+      <nav class="tab-nav">
+        <a class="tab-nav-link" href="alumnos.php<?php echo $_tab_qs_alumnos; ?>">Alumnos</a>
+        <a class="tab-nav-link active" href="asistencia.php">Asistencia</a>
+        <a class="tab-nav-link" href="calificaciones.php<?php echo $_tab_qs_otras; ?>">Calificaciones</a>
+      </nav>
+
       <?php if ($errors !== []): ?>
         <section class="panel">
           <div class="panel-header">

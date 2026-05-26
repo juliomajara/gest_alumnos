@@ -189,18 +189,19 @@ $students_heading = $selected_group_name !== ''
           <h1>Alumnos</h1>
           <p class="subheading">Consulta la información básica del alumnado y accede al detalle completo.</p>
         </div>
-        <div class="header-actions">
-          <a class="primary-button" id="exportar-claves-json" href="<?php echo htmlspecialchars('alumnos.php?' . http_build_query(array_merge($_GET, ['exportar_claves_json' => '1'])), ENT_QUOTES, 'UTF-8'); ?>">Exportar claves a JSON</a>
-          <?php
-            $_nav_params = [];
-            if ($selected_course_id > 0) $_nav_params['id_curso_escolar'] = $selected_course_id;
-            if ($selected_group !== '') $_nav_params['id_grupo'] = $selected_group;
-            $_nav_qs = $_nav_params ? '?' . http_build_query($_nav_params) : '';
-          ?>
-          <a class="primary-button" id="link-asistencia" href="asistencia.php<?php echo $_nav_qs; ?>">Asistencia</a>
-          <a class="primary-button" id="link-calificaciones" href="calificaciones.php<?php echo $_nav_qs; ?>">Calificaciones</a>
-        </div>
       </header>
+
+      <?php
+        $_tab_params = [];
+        if ($selected_course_id > 0) $_tab_params['id_curso_escolar'] = $selected_course_id;
+        if ($selected_group !== '') $_tab_params['id_grupo'] = $selected_group;
+        $_tab_qs = $_tab_params ? '?' . htmlspecialchars(http_build_query($_tab_params), ENT_QUOTES, 'UTF-8') : '';
+      ?>
+      <nav class="tab-nav">
+        <a class="tab-nav-link active" href="alumnos.php">Alumnos</a>
+        <a class="tab-nav-link" href="asistencia.php<?php echo $_tab_qs; ?>">Asistencia</a>
+        <a class="tab-nav-link" href="calificaciones.php<?php echo $_tab_qs; ?>">Calificaciones</a>
+      </nav>
 
       <form method="get" class="topbar">
         <div class="topbar-actions entity-grid entity-grid--4">

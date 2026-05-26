@@ -395,11 +395,16 @@ $active_page = 'practicas';
           <p class="subheading">Consulta las prácticas registradas y su estado para cada alumno y empresa.</p>
         </div>
         <div class="header-actions">
-          <a class="primary-button" href="practicas_documentacion.php">Documentación</a>
-          <a class="primary-button" href="practicas_anexos.php">Seguimiento de Anexos</a>
           <a class="edit-toggle edit-toggle-success" href="practica_nueva.php"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir práctica</a>
         </div>
       </header>
+
+      <nav class="tab-nav">
+        <a class="tab-nav-link active" href="practicas.php">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
+        <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
+      </nav>
 
       <form class="topbar" method="get">
         <div class="topbar-search">

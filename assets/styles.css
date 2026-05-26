@@ -30,6 +30,7 @@ body {
 .page {
   display: grid;
   grid-template-columns: 190px 1fr;
+  grid-template-rows: auto 1fr;
   min-height: 100vh;
   transition: grid-template-columns 0.2s ease;
 }
@@ -354,11 +355,16 @@ body {
   font-size: 0.8rem;
 }
 
+.sidebar {
+  grid-row: 1 / -1;
+}
+
 .content {
   padding: 28px 32px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  grid-row: 2;
 }
 
 .topbar {
@@ -453,6 +459,33 @@ body {
 
 .header-actions form {
   margin: 0;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.tab-nav-link {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-nav-link:hover {
+  color: #1d4ed8;
+}
+
+.tab-nav-link.active {
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
 }
 
 .calendar-select-form {
@@ -1406,6 +1439,61 @@ a.edit-toggle:focus {
 
 .entity-repeatable-item ul {
   padding-left: 18px;
+}
+
+/* ===== FILE FIELD ===== */
+.file-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-field-label {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.file-field-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.file-field-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.file-field-btn:hover {
+  background: var(--bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.file-field-name {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.file-field-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
 }
 
 .available-fields-list {
@@ -2403,24 +2491,75 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-practica {
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   border-radius: 12px;
   background: #fff;
   padding: 10px;
   display: grid;
   gap: 10px;
+  box-shadow: 0 1px 3px rgba(22, 35, 63, 0.06), 0 4px 12px rgba(22, 35, 63, 0.04);
 }
 
 .practicas-anexos-practica-head {
   display: flex;
   justify-content: space-between;
   gap: 14px;
-  align-items: flex-start;
+  align-items: center;
 }
 
-.practicas-anexos-practica-head h4 {
+.practicas-anexos-practica-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.practicas-anexos-practica-toggle h4 {
   margin: 0;
   font-size: 1rem;
+}
+
+.practicas-anexos-practica-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.practicas-anexos-practica-toggle[aria-expanded='true'] .practicas-anexos-practica-chevron {
+  transform: rotate(90deg);
+}
+
+.practicas-anexos-practica-percent {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.practicas-anexos-practica-toggle[aria-expanded='true'] .practicas-anexos-practica-percent {
+  display: none;
+}
+
+.practicas-anexos-practica-percent.is-complete {
+  background: #e4f7ec;
+  border-color: #a8dfc0;
+  color: #1f7a47;
+}
+
+.practicas-anexos-practica-head h4,
+.practicas-anexos-practica-toggle h4 {
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 .practicas-anexos-empresa {
@@ -2452,6 +2591,30 @@ a.edit-toggle:focus {
   color: var(--muted);
 }
 
+.practicas-anexos-practica-estado--en-curso {
+  background: #e4f7ec;
+  border-color: #a8dfc0;
+  color: #1f7a47;
+}
+
+.practicas-anexos-practica-estado--finalizada {
+  background: #eef2ff;
+  border-color: #c0cafd;
+  color: #4b66f3;
+}
+
+.practicas-anexos-practica-estado--cancelada {
+  background: #fee4e2;
+  border-color: #fbb4ae;
+  color: #b42318;
+}
+
+.practicas-anexos-practica-estado--en-espera {
+  background: #fff4d6;
+  border-color: #f5d98a;
+  color: #b07a1c;
+}
+
 .practicas-anexos-practica-meta p {
   width: 100%;
   margin-left: auto;
@@ -2465,16 +2628,22 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-tarjetas {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
 }
 
 .practicas-anexos-card {
-  border: 2px solid var(--primary-dark);
-  border-radius: 999px;
-  background: #f8faff;
+  border: 1px solid var(--border);
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.practicas-anexos-card.is-progress {
+  border-left-color: var(--primary);
 }
 
 /* alumno_detalle — mejoras visuales */
@@ -2579,20 +2748,42 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-card.is-complete {
-  background: #dff4e7;
-  border-color: #2f7a53;
+  background: #f0faf4;
+  border-left-color: #2f7a53;
+  border-color: #c8ead6;
 }
 
 .practicas-anexos-card-head {
-  width: auto;
+  width: 100%;
   border: 0;
   background: transparent;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
+  gap: 8px;
+  padding: 7px 12px;
   text-align: left;
   cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.practicas-anexos-card-head:hover {
+  background: #f5f7ff;
+}
+
+.practicas-anexos-card-head[aria-expanded='true'] {
+  background: #eef1ff;
+}
+
+.practicas-anexos-card-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.practicas-anexos-card-head[aria-expanded='true'] .practicas-anexos-card-chevron {
+  transform: rotate(90deg);
 }
 
 .practicas-anexos-card-title-wrap {
@@ -2611,6 +2802,16 @@ a.edit-toggle:focus {
   line-height: 1.15;
 }
 
+.practicas-anexos-card-desc {
+  font-size: 0.67rem;
+  color: var(--muted);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
 .practicas-anexos-card-percent {
   color: var(--muted);
   font-size: 0.66rem;
@@ -2626,11 +2827,55 @@ a.edit-toggle:focus {
   color: var(--muted);
 }
 
+.practicas-anexos-card-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.practicas-anexos-progress-bar {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 72px;
+  height: 5px;
+  border: none;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.practicas-anexos-progress-bar::-webkit-progress-bar {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.practicas-anexos-progress-bar::-webkit-progress-value {
+  background: var(--muted);
+  border-radius: 999px;
+  transition: width 0.2s ease;
+}
+
+.practicas-anexos-progress-bar::-moz-progress-bar {
+  background: var(--muted);
+  border-radius: 999px;
+}
+
+.practicas-anexos-card.is-progress .practicas-anexos-progress-bar::-webkit-progress-value,
+.practicas-anexos-card.is-progress .practicas-anexos-progress-bar::-moz-progress-bar {
+  background: var(--primary);
+}
+
+.practicas-anexos-card.is-complete .practicas-anexos-progress-bar::-webkit-progress-value,
+.practicas-anexos-card.is-complete .practicas-anexos-progress-bar::-moz-progress-bar {
+  background: #2f7a53;
+}
+
 .practicas-anexos-card-icons {
   display: inline-flex;
   align-items: center;
   gap: 0;
-  margin-left: auto;
 }
 
 .practicas-anexos-complete-icon {
@@ -2651,11 +2896,12 @@ a.edit-toggle:focus {
 }
 
 .practicas-anexos-card-panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
   padding: 10px 14px 12px;
-  background: #fff;
-  margin-top: 8px;
+  background: #fafafa;
+  margin-top: 0;
 }
 
 .practicas-anexos-detalles {
@@ -2671,11 +2917,23 @@ a.edit-toggle:focus {
   gap: 8px;
 }
 
+.practicas-anexos-step-item {
+  border-radius: 6px;
+  padding: 3px 6px;
+  transition: background 0.1s ease;
+}
+
+.practicas-anexos-step-item:has(input:checked) {
+  background: #e8f7ef;
+}
+
 .practicas-anexos-steps label {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   color: var(--text);
+  cursor: pointer;
+  width: 100%;
 }
 
 .practicas-anexos-steps input[type='checkbox'] {
@@ -2709,6 +2967,10 @@ a.edit-toggle:focus {
   padding: 3px 10px;
   font-size: 0.7rem;
   border-radius: 999px;
+}
+
+.practicas-anexos-practica-head:has([data-practice-toggle][aria-expanded='false']) .practicas-anexos-add-tracking {
+  display: none;
 }
 
 .practicas-anexos-practica-total {
@@ -3573,6 +3835,7 @@ a.edit-toggle:focus {
   .db-quicklink:hover { transform: none; }
   .db-progress-fill { animation: none; }
 }
+
 
 /* ===== CALIFICACIONES ANÁLISIS — CHARTS ===== */
 

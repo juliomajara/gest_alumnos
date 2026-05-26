@@ -673,6 +673,13 @@ try {
         </div>
       </header>
 
+      <nav class="tab-nav">
+        <a class="tab-nav-link" href="practicas.php">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
+        <a class="tab-nav-link active" href="practicas_documentacion.php">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
+      </nav>
+
       <section class="panel">
         <div class="panel-header">
           <h3>Listado del curso actual</h3>
