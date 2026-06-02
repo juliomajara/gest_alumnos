@@ -23,6 +23,49 @@ function normalize_date(?string $v): string {
   $d = DateTimeImmutable::createFromFormat('Y-m-d', $v);
   return $d ? $d->format('d/m/Y') : $v;
 }
+function to_ymd(?string $v): string {
+  $v = trim((string)$v);
+  if ($v === '') return '';
+  if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) return $v;
+  $d = DateTimeImmutable::createFromFormat('d/m/Y', $v);
+  return $d ? $d->format('Y-m-d') : '';
+}
+function get_no_lectivos_lookup(PDO $pdo): array {
+  try { $rows = $pdo->query('SELECT fecha FROM no_lectivos')->fetchAll(PDO::FETCH_COLUMN); return array_fill_keys((array)$rows, true); } catch (Throwable $e) { return []; }
+}
+function compute_months_in_range(string $inicio, string $fin): array {
+  $d1 = DateTimeImmutable::createFromFormat('Y-m-d', $inicio);
+  $d2 = DateTimeImmutable::createFromFormat('Y-m-d', $fin);
+  if (!$d1 || !$d2 || $d1 > $d2) return [];
+  $months = []; $cursor = $d1->modify('first day of this month');
+  $finMes = $d2->modify('first day of this month');
+  while ($cursor <= $finMes) { $months[] = ['year'=>(int)$cursor->format('Y'),'month'=>(int)$cursor->format('n'),'value'=>$cursor->format('Y-m')]; $cursor = $cursor->modify('+1 month'); }
+  return $months;
+}
+function first_lectivo_day_in_month(int $year, int $month, string $practicaInicio, array $noLectivos): string {
+  $daysInMonth = (int)(new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('t');
+  for ($d = 1; $d <= $daysInMonth; $d++) {
+    $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $d);
+    if ($dateStr < $practicaInicio) continue;
+    $dow = (int)(new DateTimeImmutable($dateStr))->format('N');
+    if ($dow >= 6) continue;
+    if (isset($noLectivos[$dateStr])) continue;
+    return $dateStr;
+  }
+  return '';
+}
+function last_lectivo_day_in_month(int $year, int $month, string $practicaFin, array $noLectivos): string {
+  $daysInMonth = (int)(new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('t');
+  for ($d = $daysInMonth; $d >= 1; $d--) {
+    $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $d);
+    if ($dateStr > $practicaFin) continue;
+    $dow = (int)(new DateTimeImmutable($dateStr))->format('N');
+    if ($dow >= 6) continue;
+    if (isset($noLectivos[$dateStr])) continue;
+    return $dateStr;
+  }
+  return '';
+}
 function ensure_dir(string $path): void {
   if (!is_dir($path) && !mkdir($path, 0775, true) && !is_dir($path)) throw new RuntimeException('No se pudo crear carpeta temporal.');
   if (!is_writable($path)) throw new RuntimeException('La carpeta temporal no tiene permisos de escritura.');
@@ -108,7 +151,7 @@ $activityMap = [
   'sistemas_operativos_en_red_ra2'=>['modulo'=>'Sistemas Operativos en Red','ra'=>'2'], 'sistemas_operativos_en_red_ra4'=>['modulo'=>'Sistemas Operativos en Red','ra'=>'4'], 'sistemas_operativos_en_red_ra6'=>['modulo'=>'Sistemas Operativos en Red','ra'=>'6'],
   'servicios_en_red_ra6'=>['modulo'=>'Servicios en Red','ra'=>'6'],
 ];
-$errors = []; $warnings=[]; $formData = null;
+$errors = []; $warnings=[]; $formData = null; $mesesDisponibles = null; $mesSeleccionado = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'analizar_pdf') {
   try {
     if (!isset($_FILES['pdf_alumno']) || (int)$_FILES['pdf_alumno']['error'] !== UPLOAD_ERR_OK) throw new RuntimeException('Debes subir un archivo PDF o JSON válido.');
@@ -168,7 +211,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
       'fecha_fin'=>normalize_date((string)($fields['fecha_fin'] ?? $practica['fecha_fin_extra'] ?? $practica['fecha_fin'] ?? '')),
       'fecha_firma'=>normalize_date((string)($fields['fecha_fin'] ?? $practica['fecha_fin_extra'] ?? $practica['fecha_fin'] ?? '')), 'filas'=>$rows,
     ];
+    $practicaInicioRaw = to_ymd((string)($practica['fecha_inicio'] ?? ''));
+    $practicaFinRaw = to_ymd((string)($practica['fecha_fin_extra'] ?? $practica['fecha_fin'] ?? ''));
+    if ($practicaInicioRaw !== '' && $practicaFinRaw !== '') {
+      $calculatedMonths = compute_months_in_range($practicaInicioRaw, $practicaFinRaw);
+      if (!empty($calculatedMonths)) { $mesesDisponibles = $calculatedMonths; $formData['_practica_inicio_raw'] = $practicaInicioRaw; $formData['_practica_fin_raw'] = $practicaFinRaw; }
+    }
   } catch (Throwable $e) { $errors[]=$e->getMessage(); }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'seleccionar_mes') {
+  try {
+    $mesVal = trim((string)($_POST['mes_seguimiento'] ?? ''));
+    if (!preg_match('/^\d{4}-\d{2}$/', $mesVal)) throw new RuntimeException('Mes no válido.');
+    [$yearStr, $monthStr] = explode('-', $mesVal);
+    $year = (int)$yearStr; $month = (int)$monthStr;
+    $practicaInicioRaw = trim((string)($_POST['practica_inicio_raw'] ?? ''));
+    $practicaFinRaw = trim((string)($_POST['practica_fin_raw'] ?? ''));
+    if ($practicaInicioRaw === '' || $practicaFinRaw === '') throw new RuntimeException('Faltan fechas de prácticas.');
+    $pdo = db();
+    $noLectivos = get_no_lectivos_lookup($pdo);
+    $fechaInicioYmd = first_lectivo_day_in_month($year, $month, $practicaInicioRaw, $noLectivos);
+    $fechaFinYmd = last_lectivo_day_in_month($year, $month, $practicaFinRaw, $noLectivos);
+    $filasJson = trim((string)($_POST['filas_json'] ?? ''));
+    $filas = json_decode($filasJson, true);
+    if (!is_array($filas)) $filas = [];
+    $formData = [
+      'curso_academico'=>trim((string)($_POST['curso_academico']??'')), 'num_convenio'=>trim((string)($_POST['num_convenio']??'')), 'num_anexo_relacion'=>trim((string)($_POST['num_anexo_relacion']??'')),
+      'alumno_apellidos'=>trim((string)($_POST['alumno_apellidos']??'')), 'alumno_nombre'=>trim((string)($_POST['alumno_nombre']??'')), 'alumno_email'=>trim((string)($_POST['alumno_email']??'')),
+      'centro_trabajo_denominacion'=>trim((string)($_POST['centro_trabajo_denominacion']??'')),
+      'tutor_empresa_apellidos'=>trim((string)($_POST['tutor_empresa_apellidos']??'')), 'tutor_empresa_nombre'=>trim((string)($_POST['tutor_empresa_nombre']??'')), 'tutor_empresa_email'=>trim((string)($_POST['tutor_empresa_email']??'')),
+      'fecha_inicio'=>normalize_date($fechaInicioYmd), 'fecha_fin'=>normalize_date($fechaFinYmd), 'fecha_firma'=>normalize_date($fechaFinYmd),
+      'filas'=>$filas,
+    ];
+    $mesSeleccionado = $mesVal;
+  } catch (Throwable $e) { $errors[] = $e->getMessage(); }
 }
 ?>
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?php echo h($page_title); ?></title><link rel="stylesheet" href="assets/styles.css"><style>.bloque-alumno-apellidos,.bloque-centro-trabajo,.seccion-actividades{margin-top:1rem;}.acciones-analizar-pdf{margin-top:1rem;}.acciones-ficha{margin-top:1.5rem;}.tabla-actividades{width:100%;table-layout:fixed;}.tabla-actividades .col-actividad{width:55%;}.tabla-actividades .col-codigo-modulo{width:10%;}.tabla-actividades .col-ra{width:5%;}.tabla-actividades .col-estado{width:10%;}.tabla-actividades .col-observaciones{width:20%;}.tabla-actividades input,.tabla-actividades select,.tabla-actividades textarea{width:100%;box-sizing:border-box;}table.tabla-actividades tbody tr,table.tabla-actividades tbody tr:nth-child(odd),table.tabla-actividades tbody tr:nth-child(even),table.tabla-actividades tbody tr:nth-of-type(odd),table.tabla-actividades tbody tr:nth-of-type(even),table.tabla-actividades tbody tr:hover,table.tabla-actividades tbody td,table.tabla-actividades tbody th{background:#ffffff !important;background-color:#ffffff !important;}</style></head><body><div class="page"><?php require __DIR__ . '/includes/sidebar.php'; ?><main class="content"><header class="header"><div><h1>Ficha de seguimiento periódico</h1><p class="subheading">Sube el PDF rellenado por el alumno, revisa los datos y genera la ficha final.</p></div></header>
@@ -176,6 +252,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'anali
 <?php if($warnings): ?><section class="panel"><ul class="form-errors"><?php foreach($warnings as $wr): ?><li><?php echo h($wr); ?></li><?php endforeach; ?></ul></section><?php endif; ?>
 <?php if($formData===null): ?>
 <section class="panel"><form method="post" enctype="multipart/form-data" class="entity-form"><input type="hidden" name="accion" value="analizar_pdf"><div class="file-field"><span class="file-field-label">PDF o JSON del alumno (máx. 10MB)</span><div class="file-field-control"><label class="file-field-btn" for="pdfAlumnoInput"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Seleccionar archivo</label><span class="file-field-name" id="pdfAlumnoName">Ningún archivo seleccionado</span><input type="file" id="pdfAlumnoInput" name="pdf_alumno" accept="application/pdf,.pdf,application/json,.json" required class="file-field-input"></div></div><script>(function(){var inp=document.getElementById('pdfAlumnoInput');var nm=document.getElementById('pdfAlumnoName');if(inp&&nm){inp.addEventListener('change',function(){nm.textContent=this.files[0]?this.files[0].name:'Ningún archivo seleccionado';});}})();</script><div class="acciones-analizar-pdf"><button class="primary-button" type="submit">Analizar archivo</button></div></form></section>
+<?php elseif($mesesDisponibles !== null && $mesSeleccionado === null): ?>
+<section class="panel"><form method="post" class="entity-form">
+<input type="hidden" name="accion" value="seleccionar_mes">
+<input type="hidden" name="practica_inicio_raw" value="<?php echo h((string)($formData['_practica_inicio_raw'] ?? '')); ?>">
+<input type="hidden" name="practica_fin_raw" value="<?php echo h((string)($formData['_practica_fin_raw'] ?? '')); ?>">
+<input type="hidden" name="curso_academico" value="<?php echo h((string)$formData['curso_academico']); ?>">
+<input type="hidden" name="num_convenio" value="<?php echo h((string)$formData['num_convenio']); ?>">
+<input type="hidden" name="num_anexo_relacion" value="<?php echo h((string)$formData['num_anexo_relacion']); ?>">
+<input type="hidden" name="alumno_apellidos" value="<?php echo h((string)$formData['alumno_apellidos']); ?>">
+<input type="hidden" name="alumno_nombre" value="<?php echo h((string)$formData['alumno_nombre']); ?>">
+<input type="hidden" name="alumno_email" value="<?php echo h((string)$formData['alumno_email']); ?>">
+<input type="hidden" name="centro_trabajo_denominacion" value="<?php echo h((string)$formData['centro_trabajo_denominacion']); ?>">
+<input type="hidden" name="tutor_empresa_apellidos" value="<?php echo h((string)$formData['tutor_empresa_apellidos']); ?>">
+<input type="hidden" name="tutor_empresa_nombre" value="<?php echo h((string)$formData['tutor_empresa_nombre']); ?>">
+<input type="hidden" name="tutor_empresa_email" value="<?php echo h((string)$formData['tutor_empresa_email']); ?>">
+<input type="hidden" name="filas_json" value="<?php echo h((string)(json_encode($formData['filas']) ?: '[]')); ?>">
+<div class="entity-grid entity-grid--3"><?php $meses_es=[1=>'enero',2=>'febrero',3=>'marzo',4=>'abril',5=>'mayo',6=>'junio',7=>'julio',8=>'agosto',9=>'septiembre',10=>'octubre',11=>'noviembre',12=>'diciembre']; ?>
+<label>Mes del seguimiento<select name="mes_seguimiento" required><option value="">-- Selecciona un mes --</option><?php foreach($mesesDisponibles as $mes): ?><option value="<?php echo h($mes['value']); ?>"><?php echo h(ucfirst($meses_es[$mes['month']]).' '.$mes['year']); ?></option><?php endforeach; ?></select></label>
+</div>
+<div class="acciones-analizar-pdf"><button class="primary-button" type="submit">Seleccionar mes</button></div>
+</form></section>
 <?php else: ?>
 <section class="panel"><form method="post" action="includes/generar_ficha_seguimiento_periodico.php" class="entity-form">
 <div class="entity-grid entity-grid--6">
