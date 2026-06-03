@@ -417,11 +417,10 @@ try {
 
   $apellido1 = limpiarNombreArchivo((string)($practice['alumno_apellido1'] ?? ''));
   $nombre = limpiarNombreArchivo((string)($practice['alumno_nombre'] ?? ''));
-  if ($apellido1 !== '' && $nombre !== '') {
-    $filename = 'informe_final_tutor_' . $apellido1 . '_' . $nombre . '.pdf';
-  } else {
-    $filename = 'informe_final_tutor_practica_' . $id_practica . '.pdf';
-  }
+  $convenio = limpiarNombreArchivo((string)($practice['empresa_convenio'] ?? ''));
+  $anexo = limpiarNombreArchivo((string)($practice['anexo'] ?? ''));
+  $baseName = implode('_', array_filter(['A9', $convenio, $anexo, $apellido1, $nombre], fn($p) => $p !== ''));
+  $filename = ($baseName !== '' ? $baseName : 'A9_practica_' . $id_practica) . '.pdf';
   while (ob_get_level() > 0) ob_end_clean();
   header('Content-Type: application/pdf');
   header('Content-Length: ' . (string) filesize($tmpPdf));
