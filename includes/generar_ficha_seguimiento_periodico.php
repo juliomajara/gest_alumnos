@@ -68,9 +68,7 @@ foreach ($filas as $row) {
   if (!is_array($row)) continue;
   $actividadTexto = trim((string)($row['actividad'] ?? ''));
   $estado = normalize_estado_seguimiento((string)($row['estado'] ?? ''));
-  if ($actividadTexto !== '') {
-    $estado = 'superado';
-  } elseif (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) {
+  if (!in_array($estado, ['no_superado', 'en_proceso', 'superado'], true)) {
     $estado = '';
   }
   $dynamicRowsHtml .= '<tr class="row-fill">'
