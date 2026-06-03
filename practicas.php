@@ -404,6 +404,7 @@ $active_page = 'practicas';
         <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
         <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
         <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
+        <a class="tab-nav-link" href="practicas_listado.php">Listado</a>
       </nav>
 
       <form class="topbar" method="get">
