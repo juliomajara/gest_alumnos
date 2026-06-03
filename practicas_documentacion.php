@@ -571,6 +571,33 @@ try {
 
           $zipEntriesCount++;
           $generated_documents[] = 'Informe final tutor empresa - ' . $pdfFileName;
+
+          $pdfRellenableContent = null;
+          $pdfRellenableHeaders = [];
+          $fetchRellenableError = null;
+          $fetchedRellenable = fetch_generator_binary_response(
+            'includes/generar_informe_valoracion_tutor_empresa_rellenable.php',
+            $id_practica,
+            $pdfRellenableContent,
+            $pdfRellenableHeaders,
+            $fetchRellenableError
+          );
+
+          if ($fetchedRellenable && $pdfRellenableContent !== null) {
+            $pdfRellenableFileName = extract_download_filename_from_headers($pdfRellenableHeaders);
+            if ($pdfRellenableFileName === null || trim($pdfRellenableFileName) === '') {
+              $pdfRellenableFileName = pathinfo($pdfFileName, PATHINFO_FILENAME) . '_rellenable.pdf';
+            }
+            $pdfRellenableFileName = ensure_unique_zip_entry_name($pdfRellenableFileName, $zipEntryNames);
+            if ($zip->addFromString($pdfRellenableFileName, $pdfRellenableContent)) {
+              $zipEntriesCount++;
+              $generated_documents[] = 'Informe final tutor empresa (rellenable) - ' . $pdfRellenableFileName;
+            } else {
+              $generation_errors[] = 'No se pudo añadir al ZIP el informe rellenable de la práctica #' . $id_practica . '.';
+            }
+          } else {
+            $generation_errors[] = 'No se pudo generar el informe rellenable para la práctica #' . $id_practica . '.';
+          }
         }
       }
 
