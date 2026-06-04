@@ -895,6 +895,21 @@ a.edit-toggle:focus {
   justify-content: flex-end;
 }
 
+.panel-header-actions input[type="date"] {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: #f9faff;
+  font-family: inherit;
+}
+
+.panel-header-actions input[type="date"]:focus {
+  outline: 2px solid rgba(107, 138, 253, 0.35);
+  border-color: rgba(107, 138, 253, 0.5);
+}
+
 .panel-title-with-help {
   display: flex;
   align-items: center;

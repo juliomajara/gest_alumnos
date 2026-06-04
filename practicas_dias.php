@@ -71,10 +71,31 @@ $months = [
   6 => 'jun',
 ];
 
-$allowed_orders = ['default', 'alumno'];
-$order_param = (string) ($_GET['orden'] ?? 'default');
-$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'default';
+$allowed_orders = ['alumno_asc', 'alumno_desc', 'horas_asc', 'horas_desc', 'estado_asc', 'estado_desc'];
+$order_param = (string) ($_GET['orden'] ?? '');
+$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno_asc';
+[$sort_col, $sort_dir] = explode('_', $current_order, 2);
+
+function sort_url_dias(string $col, string $cur_col, string $cur_dir): string {
+  $params = $_GET;
+  $params['orden'] = $col . '_' . (($col === $cur_col && $cur_dir === 'asc') ? 'desc' : 'asc');
+  return 'practicas_dias.php?' . http_build_query($params);
+}
+function sort_ind_dias(string $col, string $cur_col, string $cur_dir): string {
+  if ($col !== $cur_col) return '';
+  return $cur_dir === 'asc' ? ' ▲' : ' ▼';
+}
 $solo_activos = (string) ($_GET['solo_activos'] ?? '') === '1';
+
+$fecha_param = trim((string) ($_GET['fecha'] ?? ''));
+$fecha_seleccionada = null;
+if ($fecha_param !== '') {
+  $d = DateTimeImmutable::createFromFormat('Y-m-d', $fecha_param);
+  if ($d !== false && $d->format('Y-m-d') === $fecha_param) {
+    $fecha_seleccionada = $d->setTime(0, 0, 0);
+  }
+}
+$fecha_input_value = ($fecha_seleccionada ?? new DateTimeImmutable('today'))->format('Y-m-d');
 
 $student_rows = [];
 $load_error = null;
@@ -135,7 +156,7 @@ try {
         $schedule_by_practice[$practice_id][$day][] = $row;
       }
 
-      $hoy = new DateTimeImmutable('today');
+      $hoy = $fecha_seleccionada ?? new DateTimeImmutable('today');
       $current_month = (int) $hoy->format('n');
       $current_year = (int) $hoy->format('Y');
       $course_start_year = $current_month >= 9 ? $current_year : $current_year - 1;
@@ -154,15 +175,14 @@ try {
         );
       }
 
-      usort($student_rows, static function (array $left, array $right) use ($current_order): int {
-        if ($current_order === 'alumno') {
-          return [$left['apellido1'], $left['name']] <=> [$right['apellido1'], $right['name']];
-        }
-
-        $left_has_hours = (float) $left['current_month_seconds'] > 0 ? 0 : 1;
-        $right_has_hours = (float) $right['current_month_seconds'] > 0 ? 0 : 1;
-
-        return [$left_has_hours, $left['apellido1'], $left['name']] <=> [$right_has_hours, $right['apellido1'], $right['name']];
+      usort($student_rows, static function (array $left, array $right) use ($sort_col, $sort_dir): int {
+        $name_cmp = [$left['apellido1'], $left['name']] <=> [$right['apellido1'], $right['name']];
+        $cmp = match ($sort_col) {
+          'horas'  => ((float) $left['seconds'] <=> (float) $right['seconds']) ?: $name_cmp,
+          'estado' => ($left['status'] <=> $right['status']) ?: $name_cmp,
+          default  => $name_cmp,
+        };
+        return $sort_dir === 'desc' ? -$cmp : $cmp;
       });
     }
   }
@@ -214,26 +234,30 @@ try {
       </nav>
 
       <section class="panel">
-        <div class="panel-header">
-          <h3>Resumen mensual del curso actual</h3>
-          <p>Alumnado con prácticas registradas, días por mes y horas acumuladas.</p>
+        <div class="panel-header-with-actions">
+          <div class="panel-header">
+            <h3>Resumen mensual del curso actual</h3>
+            <p>Alumnado con prácticas registradas, días por mes y horas acumuladas.</p>
+          </div>
+          <div class="panel-header-actions">
+            <form method="get" id="form-fecha-calculo">
+              <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
+              <?php if ($solo_activos): ?><input type="hidden" name="solo_activos" value="1"><?php endif; ?>
+              <input type="date" id="fecha-calculo" name="fecha" value="<?php echo htmlspecialchars($fecha_input_value, ENT_QUOTES, 'UTF-8'); ?>">
+            </form>
+          </div>
         </div>
 
         <div class="panel-grid">
           <table>
             <thead>
               <tr>
-                <?php
-                  $alumno_order_params = $_GET;
-                  $alumno_order_params['orden'] = $current_order === 'alumno' ? 'default' : 'alumno';
-                  $alumno_order_query = http_build_query($alumno_order_params);
-                ?>
-                <th><a class="practice-link" href="practicas_dias.php<?php echo $alumno_order_query !== '' ? '?' . htmlspecialchars($alumno_order_query, ENT_QUOTES, 'UTF-8') : ''; ?>">Alumno</a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(sort_url_dias('alumno', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Alumno<?php echo sort_ind_dias('alumno', $sort_col, $sort_dir); ?></a></th>
                 <?php foreach ($months as $month_name): ?>
                   <th><?php echo htmlspecialchars($month_name, ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
-                <th>Horas realizadas</th>
-                <th>Estado</th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(sort_url_dias('horas', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Horas realizadas<?php echo sort_ind_dias('horas', $sort_col, $sort_dir); ?></a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(sort_url_dias('estado', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Estado<?php echo sort_ind_dias('estado', $sort_col, $sort_dir); ?></a></th>
               </tr>
             </thead>
             <tbody>
@@ -274,5 +298,13 @@ try {
       </section>
     </main>
   </div>
+  <script>
+    (function () {
+      var inp = document.getElementById('fecha-calculo');
+      if (inp) {
+        inp.addEventListener('change', function () { this.form.submit(); });
+      }
+    })();
+  </script>
 </body>
 </html>

@@ -67,14 +67,17 @@ function calculate_practice_status(array $practice): string
   return 'Finalizada';
 }
 
-function build_order_url(string $order): string
+function build_order_url(string $col, string $cur_col, string $cur_dir): string
 {
   $params = $_GET;
-  $params['orden'] = $order;
-
+  $params['orden'] = $col . '_' . (($col === $cur_col && $cur_dir === 'asc') ? 'desc' : 'asc');
   $query = http_build_query($params);
-
   return 'practicas_documentacion.php' . ($query !== '' ? '?' . $query : '');
+}
+function sort_ind_doc(string $col, string $cur_col, string $cur_dir): string
+{
+  if ($col !== $cur_col) return '';
+  return $cur_dir === 'asc' ? ' ▲' : ' ▼';
 }
 
 function build_generator_url(string $scriptRelativePath): ?string
@@ -356,9 +359,12 @@ $practices = [];
 $generated_documents = [];
 $generation_errors = [];
 $generation_summary = null;
-$allowed_orders = ['alumno', 'empresa', 'anexo', 'fecha_inicio', 'fecha_fin', 'estado'];
-$order_param = (string) ($_GET['orden'] ?? 'alumno');
-$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno';
+$allowed_orders = ['alumno_asc', 'alumno_desc', 'empresa_asc', 'empresa_desc', 'anexo_asc', 'anexo_desc', 'fecha_inicio_asc', 'fecha_inicio_desc', 'fecha_fin_asc', 'fecha_fin_desc', 'estado_asc', 'estado_desc'];
+$order_param = (string) ($_GET['orden'] ?? '');
+$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno_asc';
+$_last_us = strrpos($current_order, '_');
+$sort_col = $_last_us !== false ? substr($current_order, 0, $_last_us) : 'alumno';
+$sort_dir = $_last_us !== false ? substr($current_order, $_last_us + 1) : 'asc';
 
 try {
   $pdo = db();
@@ -629,19 +635,14 @@ try {
   }
 
   if ($active_course_id !== false && $active_course_id !== null) {
-    $order_clause = match ($current_order) {
-      'empresa' => 'ORDER BY e.nombre ASC, p.id_practica ASC',
-      'anexo' => 'ORDER BY CAST(p.anexo AS UNSIGNED) ASC, p.id_practica ASC',
-      'fecha_inicio' => 'ORDER BY p.fecha_inicio ASC, p.id_practica ASC',
-      'fecha_fin' => 'ORDER BY p.fecha_fin ASC, p.id_practica ASC',
-      'estado' => "ORDER BY CASE
-        WHEN p.cancelada = 1 THEN 1
-        WHEN p.fecha_inicio IS NULL OR p.fecha_inicio = '' OR p.fecha_fin_extra IS NULL OR p.fecha_fin_extra = '' THEN 2
-        WHEN CURDATE() < p.fecha_inicio THEN 3
-        WHEN CURDATE() <= p.fecha_fin_extra THEN 4
-        ELSE 5
-      END ASC, p.id_practica ASC",
-      default => 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica ASC',
+    $dir = $sort_dir === 'desc' ? 'DESC' : 'ASC';
+    $order_clause = match ($sort_col) {
+      'empresa'      => "ORDER BY e.nombre $dir, p.id_practica ASC",
+      'anexo'        => "ORDER BY CAST(p.anexo AS UNSIGNED) $dir, p.id_practica ASC",
+      'fecha_inicio' => "ORDER BY p.fecha_inicio $dir, p.id_practica ASC",
+      'fecha_fin'    => "ORDER BY p.fecha_fin $dir, p.id_practica ASC",
+      'estado'       => "ORDER BY CASE WHEN p.cancelada = 1 THEN 1 WHEN p.fecha_inicio IS NULL OR p.fecha_fin_extra IS NULL THEN 2 WHEN CURDATE() < p.fecha_inicio THEN 3 WHEN CURDATE() <= p.fecha_fin_extra THEN 4 ELSE 5 END $dir, p.id_practica ASC",
+      default        => "ORDER BY a.apellido1 $dir, a.apellido2 $dir, a.nombre $dir, p.id_practica ASC",
     };
 
     $practices_stmt = $pdo->prepare(
@@ -745,12 +746,12 @@ try {
             <table>
               <thead>
                 <tr>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('alumno'), ENT_QUOTES, 'UTF-8'); ?>">Alumno</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa'), ENT_QUOTES, 'UTF-8'); ?>">Empresa</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo'), ENT_QUOTES, 'UTF-8'); ?>">Anexo</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_inicio'), ENT_QUOTES, 'UTF-8'); ?>">Fecha inicio</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin'), ENT_QUOTES, 'UTF-8'); ?>">Fecha fin</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado'), ENT_QUOTES, 'UTF-8'); ?>">Estado</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('alumno', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Alumno<?php echo sort_ind_doc('alumno', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Empresa<?php echo sort_ind_doc('empresa', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Anexo<?php echo sort_ind_doc('anexo', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_inicio', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Fecha inicio<?php echo sort_ind_doc('fecha_inicio', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Fecha fin<?php echo sort_ind_doc('fecha_fin', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Estado<?php echo sort_ind_doc('estado', $sort_col, $sort_dir); ?></a></th>
                   <th>
                     Plan Formación
                     <input type="checkbox" id="select-all-programa" aria-label="Seleccionar o deseleccionar todos los Plan Formación">

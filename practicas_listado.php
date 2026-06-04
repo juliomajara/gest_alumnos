@@ -15,33 +15,42 @@ function format_date_listado(?string $value): string
   return $date ? $date->format('d/m/Y') : $value;
 }
 
-function build_order_url_listado(string $order): string
+function build_order_url_listado(string $col, string $cur_col, string $cur_dir): string
 {
   $params = $_GET;
-  $params['orden'] = $order;
+  $params['orden'] = $col . '_' . (($col === $cur_col && $cur_dir === 'asc') ? 'desc' : 'asc');
   $query = http_build_query($params);
   return 'practicas_listado.php' . ($query !== '' ? '?' . $query : '');
+}
+function sort_ind_listado(string $col, string $cur_col, string $cur_dir): string
+{
+  if ($col !== $cur_col) return '';
+  return $cur_dir === 'asc' ? ' ▲' : ' ▼';
 }
 
 $load_error = null;
 $active_course_id = null;
 $practices = [];
 
-$allowed_orders = ['alumno', 'localidad_alumno', 'localidad_empresa', 'fecha_inicio', 'fecha_fin'];
-$order_param = (string) ($_GET['orden'] ?? 'alumno');
-$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno';
+$allowed_orders = ['alumno_asc', 'alumno_desc', 'localidad_alumno_asc', 'localidad_alumno_desc', 'localidad_empresa_asc', 'localidad_empresa_desc', 'fecha_inicio_asc', 'fecha_inicio_desc', 'fecha_fin_asc', 'fecha_fin_desc'];
+$order_param = (string) ($_GET['orden'] ?? '');
+$current_order = in_array($order_param, $allowed_orders, true) ? $order_param : 'alumno_asc';
+$_last_us = strrpos($current_order, '_');
+$sort_col = $_last_us !== false ? substr($current_order, 0, $_last_us) : 'alumno';
+$sort_dir = $_last_us !== false ? substr($current_order, $_last_us + 1) : 'asc';
 
 try {
   $pdo = db();
   $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
 
   if ($active_course_id !== false && $active_course_id !== null) {
-    $order_clause = match ($current_order) {
-      'localidad_alumno'  => 'ORDER BY la.nombre ASC, a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC',
-      'localidad_empresa' => 'ORDER BY le.nombre ASC, a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC',
-      'fecha_inicio'      => 'ORDER BY p.fecha_inicio ASC, a.apellido1 ASC, a.nombre ASC',
-      'fecha_fin'         => 'ORDER BY p.fecha_fin_extra ASC, a.apellido1 ASC, a.nombre ASC',
-      default             => 'ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica ASC',
+    $dir = $sort_dir === 'desc' ? 'DESC' : 'ASC';
+    $order_clause = match ($sort_col) {
+      'localidad_alumno'  => "ORDER BY la.nombre $dir, a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC",
+      'localidad_empresa' => "ORDER BY le.nombre $dir, a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC",
+      'fecha_inicio'      => "ORDER BY p.fecha_inicio $dir, a.apellido1 ASC, a.nombre ASC",
+      'fecha_fin'         => "ORDER BY p.fecha_fin_extra $dir, a.apellido1 ASC, a.nombre ASC",
+      default             => "ORDER BY a.apellido1 $dir, a.apellido2 $dir, a.nombre $dir, p.id_practica ASC",
     };
 
     $stmt = $pdo->prepare(
@@ -111,11 +120,11 @@ try {
             <table>
               <thead>
                 <tr>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('alumno'), ENT_QUOTES, 'UTF-8'); ?>">Alumno</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('localidad_alumno'), ENT_QUOTES, 'UTF-8'); ?>">Localidad alumno</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('localidad_empresa'), ENT_QUOTES, 'UTF-8'); ?>">Localidad centro de trabajo</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('fecha_inicio'), ENT_QUOTES, 'UTF-8'); ?>">Fecha inicio</a></th>
-                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('fecha_fin'), ENT_QUOTES, 'UTF-8'); ?>">Fecha fin real</a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('alumno', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Alumno<?php echo sort_ind_listado('alumno', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('localidad_alumno', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Localidad alumno<?php echo sort_ind_listado('localidad_alumno', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('localidad_empresa', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Localidad centro de trabajo<?php echo sort_ind_listado('localidad_empresa', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('fecha_inicio', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Fecha inicio<?php echo sort_ind_listado('fecha_inicio', $sort_col, $sort_dir); ?></a></th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_listado('fecha_fin', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Fecha fin real<?php echo sort_ind_listado('fecha_fin', $sort_col, $sort_dir); ?></a></th>
                 </tr>
               </thead>
               <tbody>
