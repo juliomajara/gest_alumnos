@@ -14,9 +14,9 @@ if (!in_array($selected_group, $allowed_groups, true)) {
 
 $allowed_orders_mod = ['nombre_asc', 'nombre_desc', 'codigo_asc', 'codigo_desc', 'horas_semanales_asc', 'horas_semanales_desc', 'horas_totales_asc', 'horas_totales_desc'];
 $order_param_mod = (string) ($_GET['orden'] ?? '');
-$current_order_mod = in_array($order_param_mod, $allowed_orders_mod, true) ? $order_param_mod : '';
-$_last_us_mod = $current_order_mod !== '' ? strrpos($current_order_mod, '_') : false;
-$sort_col_mod = $_last_us_mod !== false ? substr($current_order_mod, 0, $_last_us_mod) : '';
+$current_order_mod = in_array($order_param_mod, $allowed_orders_mod, true) ? $order_param_mod : 'nombre_asc';
+$_last_us_mod = strrpos($current_order_mod, '_');
+$sort_col_mod = $_last_us_mod !== false ? substr($current_order_mod, 0, $_last_us_mod) : 'nombre';
 $sort_dir_mod = $_last_us_mod !== false ? substr($current_order_mod, $_last_us_mod + 1) : 'asc';
 
 function build_order_url_modulos(string $col, string $cur_col, string $cur_dir): string {
@@ -184,7 +184,7 @@ $modules_heading = $selected_group === ''
       </header>
 
       <form method="get" class="topbar">
-        <?php if ($current_order_mod !== ''): ?><input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order_mod, ENT_QUOTES, 'UTF-8'); ?>"><?php endif; ?>
+        <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order_mod, ENT_QUOTES, 'UTF-8'); ?>">
         <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
             <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
