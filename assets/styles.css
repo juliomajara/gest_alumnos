@@ -951,27 +951,71 @@ a.edit-toggle:focus {
   position: absolute;
   top: calc(100% + 10px);
   left: 0;
-  min-width: 260px;
-  max-width: 320px;
+  min-width: 280px;
+  max-width: 340px;
   background: var(--card);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
   border-radius: 10px;
-  box-shadow: var(--shadow);
-  padding: 12px 14px;
+  box-shadow: 0 8px 28px rgba(22, 35, 63, 0.12), 0 2px 6px rgba(22, 35, 63, 0.06);
+  padding: 0;
+  overflow: hidden;
   font-size: 0.8rem;
   color: var(--text);
   line-height: 1.4;
   opacity: 0;
   transform: translateY(-6px);
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease;
   z-index: 20;
 }
 
 .help-tooltip-title {
-  font-weight: 600;
+  font-weight: 700;
   display: block;
-  margin-bottom: 6px;
+  font-size: 0.78rem;
+  color: var(--primary-dark);
+  padding: 9px 14px 8px;
+  background: #f5f7ff;
+  border-bottom: 1px solid var(--border);
+}
+
+.help-tooltip-content > div {
+  padding: 8px 14px;
+  color: var(--muted);
+  font-size: 0.79rem;
+}
+
+.help-tooltip-content > table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.79rem;
+}
+
+.help-tooltip-content > table thead th {
+  padding: 7px 14px 6px;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  background: #fafbff;
+}
+
+.help-tooltip-content > table td {
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.help-tooltip-content > table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.help-tooltip-content > table tbody td:last-child {
+  font-weight: 700;
+  color: var(--primary-dark);
 }
 
 .help-tooltip-content ol {
@@ -989,6 +1033,12 @@ a.edit-toggle:focus {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .help-tooltip-content {
+    transition: opacity 0.01ms;
+  }
 }
 
 .panel-grid {
@@ -2162,6 +2212,14 @@ a.edit-toggle:focus {
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.practicas-ras-popover__close:hover {
+  background: var(--bg);
+  color: var(--text);
 }
 
 .practicas-ras-popover__title,
@@ -2196,9 +2254,194 @@ a.edit-toggle:focus {
   text-decoration: underline;
 }
 
+.panel-grid .empresa-name-trigger--practicas {
+  cursor: pointer;
+}
+
 .panel-grid .empresa-name-trigger--practicas:hover,
 .panel-grid .empresa-name-trigger--practicas:focus-visible {
+  opacity: 0.65;
+}
+
+.nota-grade-trigger {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  display: block;
+  width: 100%;
+  text-align: center;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.nota-grade-trigger:hover {
+  color: var(--primary-dark);
+}
+
+.nota-grade-trigger:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Popover variante módulo (profesores.php) ──────────────── */
+
+.practicas-ras-popover--modulo {
+  padding: 0;
+  overflow: hidden;
+  width: min(300px, calc(100vw - 24px));
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  max-height: none;
+}
+
+.practicas-ras-popover__header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 44px 11px 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.practicas-ras-popover__eyebrow {
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.practicas-ras-popover--modulo .practicas-ras-popover__title {
+  font-size: 0.95rem;
   font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.practicas-ras-popover__header .practicas-ras-popover__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  align-self: auto;
+  font-size: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.practicas-ras-popover--modulo .practicas-ras-popover__criteria {
+  padding: 4px 0;
+  gap: 0;
+  list-style: none;
+}
+
+.practicas-ras-popover--modulo .practicas-ras-popover__criteria li {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 8px;
+}
+
+.practicas-ras-popover--modulo .practicas-ras-popover__criteria li:last-child {
+  border-bottom: none;
+}
+
+.practicas-ras-popover--modulo .practicas-ras-popover__criteria li strong {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.practicas-ras-popover--modulo .practicas-ras-popover__criteria li span {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.practicas-ras-popover__footer {
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.practicas-ras-popover__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  text-decoration: none;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.practicas-ras-popover__link:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* ── Tooltip flotante al pasar el ratón por la abreviatura ─── */
+
+.modulo-tooltip {
+  position: fixed;
+  z-index: 200;
+  background: #1f2a44;
+  color: #fff;
+  border-radius: 10px;
+  padding: 9px 13px;
+  pointer-events: none;
+  max-width: 240px;
+  box-shadow: 0 8px 24px rgba(22, 35, 63, 0.22);
+}
+
+.modulo-tooltip__name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: block;
+}
+
+.modulo-tooltip__separator {
+  display: block;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 5px 0;
+}
+
+.modulo-tooltip__hint {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.55);
+  display: block;
+}
+
+.copy-trigger {
+  cursor: pointer;
+  transition: opacity 0.15s ease, color 0.25s ease;
+}
+
+.copy-trigger:hover {
+  opacity: 0.65;
+}
+
+.copy-trigger--copied {
+  color: #2a7a52;
 }
 
 .practica-horario-detalle-table {
@@ -2682,6 +2925,12 @@ a.edit-toggle:focus {
 
 .panel-table-aligned tbody tr:nth-child(even) td {
   background: transparent;
+}
+
+.entity-section-header h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .attendance-summary {

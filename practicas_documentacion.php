@@ -351,7 +351,7 @@ function download_zip_file_and_exit(string $zipPath, string $downloadFileName): 
 }
 
 $page_title = 'Documentación de prácticas | Gestor de Alumnos';
-$active_page = 'utilidades';
+$active_page = 'practicas';
 
 $load_error = null;
 $active_course_id = null;

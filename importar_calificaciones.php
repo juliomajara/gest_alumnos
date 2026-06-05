@@ -6,7 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $page_title = 'Importar calificaciones | Gestor de Alumnos';
-$active_page = 'configuracion';
+$active_page = 'alumnos';
 
 $messages = [];
 $errors = [];
@@ -17,8 +17,10 @@ $result = [
   'errores' => [],
 ];
 
+$active_course_id = (int) ($pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn() ?: 0);
+
 $selected = [
-  'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? 0),
+  'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? $active_course_id),
   'id_ciclo' => 0,
   'id_curso' => 0,
   'id_grupo' => (int) ($_POST['id_grupo'] ?? $_GET['id_grupo'] ?? 0),
@@ -63,7 +65,7 @@ function normalize_csv_text(string $value): string {
   return trim($value);
 }
 
-function parse_calificacion(string $raw): ?array {
+function parse_calificacion(string $raw): array|false|null {
   $raw = trim($raw);
   if ($raw === '') {
     return null;
@@ -77,11 +79,27 @@ function parse_calificacion(string $raw): ?array {
     ];
   }
 
+  if (preg_match('/^([0-9]+(?:[\.,][0-9]+)?)-([A-Za-z]{1,10})$/', $raw, $m)) {
+    return [
+      'calificacion_original' => $raw,
+      'prefijo' => strtoupper($m[2]),
+      'nota' => (float) str_replace(',', '.', $m[1]),
+    ];
+  }
+
   if (preg_match('/^[0-9]+(?:[\.,][0-9]+)?$/', $raw)) {
     return [
       'calificacion_original' => $raw,
       'prefijo' => null,
       'nota' => (float) str_replace(',', '.', $raw),
+    ];
+  }
+
+  if (preg_match('/^[A-Za-z0-9]{1,20}$/', $raw)) {
+    return [
+      'calificacion_original' => $raw,
+      'prefijo' => strtoupper($raw),
+      'nota' => null,
     ];
   }
 

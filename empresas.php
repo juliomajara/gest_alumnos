@@ -6,7 +6,24 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
-$sort = (string) ($_GET['sort'] ?? '');
+$allowed_orders_emp = ['nombre_asc', 'nombre_desc', 'convenio_asc', 'convenio_desc'];
+$order_param_emp = (string) ($_GET['orden'] ?? '');
+$current_order_emp = in_array($order_param_emp, $allowed_orders_emp, true) ? $order_param_emp : 'nombre_asc';
+$_last_us_emp = strrpos($current_order_emp, '_');
+$sort_col_emp = $_last_us_emp !== false ? substr($current_order_emp, 0, $_last_us_emp) : 'nombre';
+$sort_dir_emp = $_last_us_emp !== false ? substr($current_order_emp, $_last_us_emp + 1) : 'asc';
+
+function build_order_url_emp(string $col, string $cur_col, string $cur_dir): string {
+  $params = $_GET;
+  $params['orden'] = $col . '_' . (($col === $cur_col && $cur_dir === 'asc') ? 'desc' : 'asc');
+  unset($params['ajax']);
+  $query = http_build_query($params);
+  return 'empresas.php' . ($query !== '' ? '?' . $query : '');
+}
+function sort_ind_emp(string $col, string $cur_col, string $cur_dir): string {
+  if ($col !== $cur_col) return '';
+  return $cur_dir === 'asc' ? ' ▲' : ' ▼';
+}
 
 $filters = [];
 $params = [];
@@ -25,17 +42,12 @@ if ($search_term !== '') {
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
-$order_by_clause = 'e.nombre, e.apellido1, e.apellido2';
-if ($sort === 'convenio') {
-  $order_by_clause = 'e.convenio + 0 ASC';
-} elseif ($sort === 'nombre') {
-  $order_by_clause = 'CASE
-    WHEN TRIM(COALESCE(e.nombre_comercial, \'\')) <> \'\'
-      AND TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2)) <> TRIM(COALESCE(e.nombre_comercial, \'\'))
-      THEN TRIM(COALESCE(e.nombre_comercial, \'\'))
-    ELSE TRIM(CONCAT_WS(" ", e.nombre, e.apellido1, e.apellido2))
-  END ASC';
-}
+$dir_emp = $sort_dir_emp === 'desc' ? 'DESC' : 'ASC';
+$nombre_expr_emp = "CASE WHEN TRIM(COALESCE(e.nombre_comercial, '')) <> '' AND TRIM(CONCAT_WS(' ', e.nombre, e.apellido1, e.apellido2)) <> TRIM(COALESCE(e.nombre_comercial, '')) THEN TRIM(COALESCE(e.nombre_comercial, '')) ELSE TRIM(CONCAT_WS(' ', e.nombre, e.apellido1, e.apellido2)) END";
+$order_by_clause = match ($sort_col_emp) {
+  'convenio' => "e.convenio + 0 $dir_emp",
+  default    => "$nombre_expr_emp $dir_emp",
+};
 
 $companies_stmt = $pdo->prepare(
   'SELECT
@@ -230,7 +242,7 @@ $active_page = 'empresas';
           >
         </div>
         <div class="topbar-actions"></div>
-        <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sort, ENT_QUOTES, 'UTF-8'); ?>">
+        <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order_emp, ENT_QUOTES, 'UTF-8'); ?>">
       </form>
 
       <section class="panel">
@@ -243,8 +255,8 @@ $active_page = 'empresas';
           <table>
             <thead>
               <tr>
-                <th><a class="practice-link" href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'convenio']), ENT_QUOTES, 'UTF-8'); ?>">Convenio</a></th>
-                <th><a class="practice-link" href="?<?php echo htmlspecialchars(http_build_query(['q' => $search_term, 'sort' => 'nombre']), ENT_QUOTES, 'UTF-8'); ?>">Nombre</a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_emp('convenio', $sort_col_emp, $sort_dir_emp), ENT_QUOTES, 'UTF-8'); ?>">Convenio<?php echo sort_ind_emp('convenio', $sort_col_emp, $sort_dir_emp); ?></a></th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_emp('nombre', $sort_col_emp, $sort_dir_emp), ENT_QUOTES, 'UTF-8'); ?>">Nombre<?php echo sort_ind_emp('nombre', $sort_col_emp, $sort_dir_emp); ?></a></th>
                 <th>CIF</th>
                 <th>Contacto</th>
                 <th>Teléfono</th>

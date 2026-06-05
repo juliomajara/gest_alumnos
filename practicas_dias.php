@@ -56,7 +56,7 @@ function calculate_practice_status(array $practice): string
 }
 
 $page_title = 'Días de prácticas | Gestor de Alumnos';
-$active_page = 'utilidades';
+$active_page = 'practicas';
 
 $months = [
   9 => 'sep',

@@ -198,7 +198,7 @@ if (!usuario_autorizado_para_backup()) {
     exit;
 }
 
-$backupDir = __DIR__ . '/docs/backups';
+$backupDir = __DIR__ . '/database/backups';
 if (!is_dir($backupDir) && !mkdir($backupDir, 0775, true) && !is_dir($backupDir)) {
     http_response_code(500);
     echo 'No se pudo crear el directorio de backups.';
@@ -352,7 +352,7 @@ $active_page = 'utilidades';
       <section class="panel">
         <div class="panel-header">
           <h3>Copias de seguridad guardadas</h3>
-          <p>Se almacenan en <code>docs/backups/</code> dentro del proyecto. Descarga el archivo SQL para importarlo desde phpMyAdmin.</p>
+          <p>Se almacenan en <code>database/backups/</code> dentro del proyecto. Descarga el archivo SQL para importarlo desde phpMyAdmin.</p>
         </div>
 
         <div class="panel-grid">

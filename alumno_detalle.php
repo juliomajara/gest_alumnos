@@ -448,74 +448,112 @@ $dias_semana = [
           </div>
         </section>
       <?php else: ?>
+        <?php $edad_strip = calculate_age($student['fecha_nacimiento']); ?>
+        <div class="attendance-summary">
+          <div class="attendance-summary-item">
+            <span class="attendance-summary-label">NIA</span>
+            <span class="attendance-summary-value"><?php echo htmlspecialchars(format_value($student['nia']), ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <div class="attendance-summary-item">
+            <span class="attendance-summary-label">DNI</span>
+            <span class="attendance-summary-value"><?php echo htmlspecialchars(format_value($student['dni']), ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <?php if ($grupo_actual): ?>
+          <div class="attendance-summary-item">
+            <span class="attendance-summary-label">Grupo</span>
+            <span class="attendance-summary-value"><?php echo htmlspecialchars($grupo_actual, ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <?php endif; ?>
+          <?php if ($edad_strip !== null): ?>
+          <div class="attendance-summary-item">
+            <span class="attendance-summary-label">Edad</span>
+            <span class="attendance-summary-value"><?php echo htmlspecialchars((string) $edad_strip . ' años', ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <?php endif; ?>
+          <?php if ($telefono_principal): ?>
+          <div class="attendance-summary-item">
+            <span class="attendance-summary-label">Teléfono</span>
+            <span class="attendance-summary-value"><?php echo htmlspecialchars($telefono_principal, ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <?php endif; ?>
+          <?php if ($correo_educamadrid): ?>
+          <div class="attendance-summary-item">
+            <span class="attendance-summary-label">EducaMadrid</span>
+            <span class="attendance-summary-value"><?php echo htmlspecialchars($correo_educamadrid, ENT_QUOTES, 'UTF-8'); ?></span>
+          </div>
+          <?php endif; ?>
+        </div>
         <div class="grid">
           <section class="panel">
             <div class="panel-header">
               <h3>Datos personales y contacto</h3>
               <p>Información básica de identificación y contacto del alumno.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>NIA</th>
-                    <td><?php echo htmlspecialchars(format_value($student['nia']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>DNI</th>
-                    <td><?php echo htmlspecialchars(format_value($student['dni']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Nº Seguridad Social</th>
-                    <td><?php echo htmlspecialchars(format_value($student['seg_soc']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Fecha de nacimiento</th>
-                    <td>
-                      <?php
-                        $fecha_nacimiento = format_date($student['fecha_nacimiento']);
-                        $edad_alumno = calculate_age($student['fecha_nacimiento']);
-                        $edad_texto = $edad_alumno !== null ? ' (' . $edad_alumno . ' años)' : '';
-                      ?>
-                      <?php echo htmlspecialchars($fecha_nacimiento . $edad_texto, ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Teléfono principal</th>
-                    <td><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Email EducaMadrid</th>
-                    <td><?php echo htmlspecialchars(format_value($correo_educamadrid), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Email personal</th>
-                    <td><?php echo htmlspecialchars(format_value($correo_personal), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Teléfonos registrados</th>
-                    <td>
-                      <?php
-                        $telefono_items = [];
-                        foreach ($phones as $phone) {
-                          $etiqueta = format_value($phone['etiqueta'], '');
-                          $telefono_label = $etiqueta ? $etiqueta . ': ' : '';
-                          $telefono_items[] = $telefono_label . $phone['telefono'];
-                        }
-                      ?>
-                      <?php echo htmlspecialchars($telefono_items ? implode(' · ', $telefono_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Horas FFE aprobadas</th>
-                    <td><?php echo htmlspecialchars(format_value($student['horas_ffe_aprobadas']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Repite curso</th>
-                    <td><?php echo htmlspecialchars(format_bool($student['repite_curso']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">NIA</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['nia']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">DNI</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['dni']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Nº Seguridad Social</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['seg_soc']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Fecha de nacimiento</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $fecha_nacimiento = format_date($student['fecha_nacimiento']);
+                    $edad_alumno = calculate_age($student['fecha_nacimiento']);
+                    $edad_texto = $edad_alumno !== null ? ' (' . $edad_alumno . ' años)' : '';
+                  ?>
+                  <?php echo htmlspecialchars($fecha_nacimiento . $edad_texto, ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Teléfono principal</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Email EducaMadrid</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($correo_educamadrid), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Email personal</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($correo_personal), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Teléfonos registrados</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $telefono_items = [];
+                    foreach ($phones as $phone) {
+                      $etiqueta = format_value($phone['etiqueta'], '');
+                      $telefono_label = $etiqueta ? $etiqueta . ': ' : '';
+                      $telefono_items[] = $telefono_label . $phone['telefono'];
+                    }
+                  ?>
+                  <?php echo htmlspecialchars($telefono_items ? implode(' · ', $telefono_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Horas FFE aprobadas</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['horas_ffe_aprobadas']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Repite curso</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php $repite_slug = $student['repite_curso'] === null ? '' : ($student['repite_curso'] ? 'si' : 'no'); ?>
+                  <?php if ($repite_slug !== ''): ?>
+                    <span class="badge-bool badge-bool--<?php echo $repite_slug; ?>"><?php echo htmlspecialchars(format_bool($student['repite_curso']), ENT_QUOTES, 'UTF-8'); ?></span>
+                  <?php else: ?>
+                    <?php echo htmlspecialchars(format_bool($student['repite_curso']), ENT_QUOTES, 'UTF-8'); ?>
+                  <?php endif; ?>
+                </span>
+              </div>
             </div>
           </section>
 
@@ -524,35 +562,31 @@ $dias_semana = [
               <h3>Tutores legales</h3>
               <p>Datos de contacto de las personas tutoras asociadas al alumno.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>Tutor/a 1</th>
-                    <td><?php echo htmlspecialchars(format_value($student['nombre_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Teléfono tutor/a 1</th>
-                    <td><?php echo htmlspecialchars(format_value($student['telefono_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Correo tutor/a 1</th>
-                    <td><?php echo htmlspecialchars(format_value($student['correo_tutor1']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Tutor/a 2</th>
-                    <td><?php echo htmlspecialchars(format_value($student['nombre_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Teléfono tutor/a 2</th>
-                    <td><?php echo htmlspecialchars(format_value($student['telefono_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Correo tutor/a 2</th>
-                    <td><?php echo htmlspecialchars(format_value($student['correo_tutor2']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Tutor/a 1</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['nombre_tutor1']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Teléfono tutor/a 1</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['telefono_tutor1']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Correo tutor/a 1</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['correo_tutor1']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Tutor/a 2</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['nombre_tutor2']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Teléfono tutor/a 2</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['telefono_tutor2']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Correo tutor/a 2</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['correo_tutor2']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
             </div>
           </section>
         </div>
@@ -563,23 +597,19 @@ $dias_semana = [
               <h3>Dirección y localización</h3>
               <p>Provincia, localidad y código postal registrados para el alumno.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>Provincia</th>
-                    <td><?php echo htmlspecialchars(format_value($student['provincia']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Localidad</th>
-                    <td><?php echo htmlspecialchars(format_value($student['localidad']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                  <tr>
-                    <th>Código postal</th>
-                    <td><?php echo htmlspecialchars(format_value($student['cp']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Provincia</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['provincia']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Localidad</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['localidad']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Código postal</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['cp']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
             </div>
           </section>
 
@@ -588,29 +618,25 @@ $dias_semana = [
               <h3>Faltas y observaciones</h3>
               <p>Resumen de faltas acumuladas y comentarios del equipo docente.</p>
             </div>
-            <div class="panel-grid">
-              <table class="panel-table-aligned">
-                <tbody>
-                  <tr>
-                    <th>Faltas 10 días</th>
-                    <td>
-                      <?php echo htmlspecialchars(format_date($student['faltas_10_dia']), ENT_QUOTES, 'UTF-8'); ?>
-                      (<?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Faltas 15 días</th>
-                    <td>
-                      <?php echo htmlspecialchars(format_date($student['faltas_15_dia']), ENT_QUOTES, 'UTF-8'); ?>
-                      (<?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Comentarios</th>
-                    <td><?php echo htmlspecialchars(format_value($student['comentarios']), ENT_QUOTES, 'UTF-8'); ?></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Faltas 10 días</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php echo htmlspecialchars(format_date($student['faltas_10_dia']), ENT_QUOTES, 'UTF-8'); ?>
+                  (<?php echo htmlspecialchars(format_value($student['faltas_10_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
+                </span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Faltas 15 días</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php echo htmlspecialchars(format_date($student['faltas_15_dia']), ENT_QUOTES, 'UTF-8'); ?>
+                  (<?php echo htmlspecialchars(format_value($student['faltas_15_cantidad'], '0'), ENT_QUOTES, 'UTF-8'); ?>)
+                </span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Comentarios</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['comentarios']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
             </div>
           </section>
         </div>
@@ -952,33 +978,44 @@ $dias_semana = [
               </tbody>
             </table>
           </div>
-          <div class="panel-grid">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID práctica</th>
-                  <th>Día</th>
-                  <th>Hora entrada</th>
-                  <th>Hora salida</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!$horarios): ?>
+          <div class="entity-section">
+            <div class="entity-section-header">
+              <h4>Horario de prácticas</h4>
+            </div>
+            <?php
+              $practica_empresa_map = [];
+              foreach ($practicas as $practica_item) {
+                $practica_empresa_map[(int) $practica_item['id_practica']] = format_value($practica_item['empresa']);
+              }
+            ?>
+            <div class="panel-grid">
+              <table>
+                <thead>
                   <tr>
-                    <td colspan="4">No hay horarios de prácticas registrados.</td>
+                    <th>Empresa</th>
+                    <th>Día</th>
+                    <th>Hora entrada</th>
+                    <th>Hora salida</th>
                   </tr>
-                <?php else: ?>
-                  <?php foreach ($horarios as $horario): ?>
+                </thead>
+                <tbody>
+                  <?php if (!$horarios): ?>
                     <tr>
-                      <td><?php echo htmlspecialchars((string) $horario['id_practica'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($dias_semana[(int) $horario['dia_semana']] ?? 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($horario['hora_entrada'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($horario['hora_salida'], ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td colspan="4">No hay horarios de prácticas registrados.</td>
                     </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
+                  <?php else: ?>
+                    <?php foreach ($horarios as $horario): ?>
+                      <tr>
+                        <td><?php echo htmlspecialchars($practica_empresa_map[(int) $horario['id_practica']] ?? 'Práctica ' . $horario['id_practica'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($dias_semana[(int) $horario['dia_semana']] ?? 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($horario['hora_entrada'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($horario['hora_salida'], ENT_QUOTES, 'UTF-8'); ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       <?php endif; ?>

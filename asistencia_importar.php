@@ -6,7 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $page_title = 'Importar asistencia mensual | Gestor de Alumnos';
-$active_page = 'configuracion';
+$active_page = 'alumnos';
 
 $messages = [];
 $errors = [];

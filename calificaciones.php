@@ -6,7 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $page_title = 'Calificaciones | Gestor de Alumnos';
-$active_page = 'calificaciones';
+$active_page = 'alumnos';
 
 $courses = $pdo->query(
   'SELECT id_curso_escolar, curso_escolar, activo
@@ -539,19 +539,14 @@ if ($show_results && $students !== [] && $modules !== []) {
                       $module_tooltip_title = implode(' - ', $module_title_parts);
                     ?>
                     <th>
-                      <span class="help-tooltip">
-                        <span tabindex="0"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
-                        <span class="help-tooltip-content" role="tooltip">
-                          <span class="help-tooltip-title">
-                            <?php echo htmlspecialchars($module_tooltip_title, ENT_QUOTES, 'UTF-8'); ?>
-                          </span>
-                          <div>
-                            <?php if ($module_name !== ''): ?>
-                              <div><?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
-                            <?php endif; ?>
-                          </div>
-                        </span>
-                      </span>
+                      <span class="empresa-name-trigger empresa-name-trigger--practicas"
+                        role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"
+                        data-modulo-id="<?php echo (int) $module['id_modulo']; ?>"
+                        data-modulo-nombre="<?php echo htmlspecialchars($module_name !== '' ? $module_name : $module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>"
+                        data-modulo-curso="<?php echo htmlspecialchars($module_course_label, ENT_QUOTES, 'UTF-8'); ?>"
+                        data-modulo-codigo="<?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>"
+                        data-modulo-abreviatura="<?php echo htmlspecialchars($module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>"
+                      ><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
                     </th>
                   <?php endforeach; ?>
                 </tr>
@@ -606,38 +601,20 @@ if ($show_results && $students !== [] && $modules !== []) {
                           $display_grade = $grades_by_student[$id_alumno][$id_modulo] ?? '—';
                           $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
                         ?>
+                        <?php
+                          $ev_data = array_map(static fn($r) => ['ev' => (string) $r['evaluacion'], 'nota' => (string) $r['nota']], $history_rows);
+                          $ev_json = htmlspecialchars(json_encode($ev_data, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                          $nota_nombre = $module_name !== '' ? $module_name : $module_abbreviation;
+                        ?>
                         <td data-grade-cell="1">
-                          <span class="help-tooltip">
-                            <span tabindex="0"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></span>
-                            <span class="help-tooltip-content" role="tooltip">
-                              <span class="help-tooltip-title">
-                                <?php echo htmlspecialchars($module_tooltip_title, ENT_QUOTES, 'UTF-8'); ?>
-                              </span>
-                              <?php if ($module_name !== ''): ?>
-                                <div><?php echo htmlspecialchars($module_name, ENT_QUOTES, 'UTF-8'); ?></div>
-                              <?php endif; ?>
-                              <?php if ($history_rows === []): ?>
-                                <div>Sin calificaciones registradas.</div>
-                              <?php else: ?>
-                                <table>
-                                  <thead>
-                                    <tr>
-                                      <th>Evaluación</th>
-                                      <th>Nota</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    <?php foreach ($history_rows as $history_row): ?>
-                                      <tr>
-                                        <td><?php echo htmlspecialchars($history_row['evaluacion'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                        <td><?php echo htmlspecialchars($history_row['nota'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                      </tr>
-                                    <?php endforeach; ?>
-                                  </tbody>
-                                </table>
-                              <?php endif; ?>
-                            </span>
-                          </span>
+                          <button type="button" class="nota-grade-trigger"
+                            aria-haspopup="dialog" aria-expanded="false"
+                            data-modulo-id="<?php echo (int) $id_modulo; ?>"
+                            data-modulo-nombre="<?php echo htmlspecialchars($nota_nombre, ENT_QUOTES, 'UTF-8'); ?>"
+                            data-modulo-codigo="<?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>"
+                            data-nota="<?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?>"
+                            data-evaluaciones="<?php echo $ev_json; ?>"
+                          ><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></button>
                         </td>
                       <?php endforeach; ?>
                     </tr>
@@ -650,6 +627,32 @@ if ($show_results && $students !== [] && $modules !== []) {
       <?php endif; ?>
     </main>
   </div>
+  <div class="modulo-tooltip" id="modulo-tooltip-cal" hidden>
+    <span class="modulo-tooltip__name" id="modulo-tooltip-cal-name"></span>
+    <span class="modulo-tooltip__separator" aria-hidden="true"></span>
+    <span class="modulo-tooltip__hint">Haz clic para saber más</span>
+  </div>
+
+  <div class="practicas-ras-popover-layer" id="modulo-detail-layer-cal" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close-cal tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo" id="modulo-detail-popover-cal" role="dialog" aria-modal="false" aria-labelledby="modulo-detail-title-cal" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Módulo</span>
+        <span id="modulo-detail-title-cal" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-popover-close-cal aria-label="Cerrar detalle del módulo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <ul class="practicas-ras-popover__criteria" id="modulo-detail-data-cal"></ul>
+      <div class="practicas-ras-popover__footer">
+        <a id="modulo-detail-link-cal" class="practicas-ras-popover__link" href="#">Ver módulo completo →</a>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function () {
       const form = document.querySelector('.topbar');
@@ -669,9 +672,6 @@ if ($show_results && $students !== [] && $modules !== []) {
       }
 
       const tooltipContainers = document.querySelectorAll('.help-tooltip');
-      if (!tooltipContainers.length) {
-        return;
-      }
 
       const gap = 10;
       let activeTooltip = null;
@@ -799,7 +799,7 @@ if ($show_results && $students !== [] && $modules !== []) {
       const applyHighlight = () => {
         clearHighlight();
         gradeCells.forEach((cell) => {
-          const gradeElement = cell.querySelector('.help-tooltip > span[tabindex]');
+          const gradeElement = cell.querySelector('.nota-grade-trigger');
           const gradeText = gradeElement ? gradeElement.textContent.trim() : '';
           if (!numericGradePattern.test(gradeText)) {
             return;
@@ -832,6 +832,229 @@ if ($show_results && $students !== [] && $modules !== []) {
           }
 
           clearHighlight();
+        });
+      }
+    })();
+
+    (function () {
+      const modTooltip = document.getElementById('modulo-tooltip-cal');
+      const modTooltipName = document.getElementById('modulo-tooltip-cal-name');
+      const modLayer = document.getElementById('modulo-detail-layer-cal');
+      const modPopover = document.getElementById('modulo-detail-popover-cal');
+      const modTitle = document.getElementById('modulo-detail-title-cal');
+      const modDetailLink = document.getElementById('modulo-detail-link-cal');
+      const modDetailList = document.getElementById('modulo-detail-data-cal');
+      const modThead = document.querySelector('.panel-grid table thead');
+
+      if (!modThead || !modTooltip) {
+        return;
+      }
+
+      let modActiveTrigger = null;
+      let modTooltipVisible = false;
+
+      const setPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = modPopover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+        modPopover.style.top = `${Math.max(gutter, top)}px`;
+        modPopover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closePopover = () => {
+        modPopover.hidden = true;
+        modLayer.hidden = true;
+        if (modActiveTrigger) {
+          modActiveTrigger.setAttribute('aria-expanded', 'false');
+        }
+        modActiveTrigger = null;
+      };
+
+      const getVal = (v) => ((v || '').trim() !== '' ? (v || '').trim() : 'No disponible');
+
+      const addInfoItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        item.appendChild(valueSpan);
+        modDetailList.appendChild(item);
+      };
+
+      const modEyebrow = modPopover.querySelector('.practicas-ras-popover__eyebrow');
+
+      const openPopover = (trigger) => {
+        if (modActiveTrigger && modActiveTrigger !== trigger) {
+          modActiveTrigger.setAttribute('aria-expanded', 'false');
+        }
+        if (modEyebrow) { modEyebrow.textContent = 'Módulo'; }
+        modTitle.textContent = trigger.dataset.moduloNombre || 'Módulo';
+        const moduloId = (trigger.dataset.moduloId || '').trim();
+        if (modDetailLink) {
+          modDetailLink.setAttribute('href', moduloId !== '' ? `modulo_detalle.php?id_modulo=${encodeURIComponent(moduloId)}` : '#');
+        }
+        modDetailList.innerHTML = '';
+        addInfoItem('Código', getVal(trigger.dataset.moduloCodigo));
+        addInfoItem('Abreviatura', getVal(trigger.dataset.moduloAbreviatura));
+        addInfoItem('Curso', getVal(trigger.dataset.moduloCurso));
+        addInfoItem('Nombre', getVal(trigger.dataset.moduloNombre));
+        modActiveTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        modLayer.hidden = false;
+        modPopover.hidden = false;
+        setPopoverPosition(trigger);
+      };
+
+      const updateTooltipPosition = (x, y) => {
+        const offset = 14;
+        let left = x + offset;
+        let top = y + offset;
+        const w = modTooltip.offsetWidth || 200;
+        const h = modTooltip.offsetHeight || 60;
+        if (left + w > window.innerWidth - 8) { left = x - w - offset; }
+        if (top + h > window.innerHeight - 8) { top = y - h - offset; }
+        modTooltip.style.left = `${Math.max(8, left)}px`;
+        modTooltip.style.top = `${Math.max(8, top)}px`;
+      };
+
+      modThead.addEventListener('mouseover', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger--practicas');
+        if (trigger && modThead.contains(trigger) && modPopover.hidden) {
+          modTooltipName.textContent = trigger.dataset.moduloNombre || trigger.textContent.trim();
+          modTooltip.hidden = false;
+          modTooltipVisible = true;
+          updateTooltipPosition(event.clientX, event.clientY);
+        } else if (modTooltipVisible && !event.target.closest('.empresa-name-trigger--practicas')) {
+          modTooltip.hidden = true;
+          modTooltipVisible = false;
+        }
+      });
+
+      modThead.addEventListener('mousemove', (event) => {
+        if (modTooltipVisible) {
+          updateTooltipPosition(event.clientX, event.clientY);
+        }
+      });
+
+      modThead.addEventListener('mouseleave', () => {
+        modTooltip.hidden = true;
+        modTooltipVisible = false;
+      });
+
+      modThead.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger--practicas');
+        if (!trigger || !modThead.contains(trigger)) {
+          return;
+        }
+        modTooltip.hidden = true;
+        modTooltipVisible = false;
+        if (modActiveTrigger === trigger && !modPopover.hidden) {
+          closePopover();
+          return;
+        }
+        openPopover(trigger);
+      });
+
+      modThead.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger--practicas');
+        if (trigger && modThead.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
+
+      modLayer.querySelectorAll('[data-popover-close-cal]').forEach((el) => {
+        el.addEventListener('click', closePopover);
+      });
+
+      window.addEventListener('resize', () => {
+        if (modActiveTrigger && !modPopover.hidden) {
+          setPopoverPosition(modActiveTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (modActiveTrigger && !modPopover.hidden) {
+          setPopoverPosition(modActiveTrigger);
+        }
+      }, true);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modPopover.hidden) {
+          closePopover();
+        }
+      });
+
+      const modTbody = document.querySelector('.panel-grid table tbody');
+
+      if (modTbody) {
+        modTbody.addEventListener('click', (event) => {
+          const trigger = event.target.closest('.nota-grade-trigger');
+          if (!trigger || !modTbody.contains(trigger)) {
+            return;
+          }
+          if (modActiveTrigger === trigger && !modPopover.hidden) {
+            closePopover();
+            return;
+          }
+          if (modActiveTrigger && modActiveTrigger !== trigger) {
+            modActiveTrigger.setAttribute('aria-expanded', 'false');
+          }
+
+          const moduloId = (trigger.dataset.moduloId || '').trim();
+          const moduloCodigo = (trigger.dataset.moduloCodigo || '').trim();
+          const moduloNombre = (trigger.dataset.moduloNombre || '').trim();
+          const notaActual = (trigger.dataset.nota || '').trim();
+
+          if (modEyebrow) { modEyebrow.textContent = moduloCodigo || 'Nota'; }
+          modTitle.textContent = moduloNombre || 'Módulo';
+          if (modDetailLink) {
+            modDetailLink.setAttribute('href', moduloId !== '' ? `modulo_detalle.php?id_modulo=${encodeURIComponent(moduloId)}` : '#');
+          }
+
+          modDetailList.innerHTML = '';
+          if (notaActual !== '' && notaActual !== '—') {
+            addInfoItem('Nota final', notaActual);
+          }
+
+          let evaluaciones = [];
+          try { evaluaciones = JSON.parse(trigger.dataset.evaluaciones || '[]'); } catch (_) {}
+
+          if (evaluaciones.length === 0) {
+            addInfoItem('Evaluaciones', 'Sin calificaciones registradas');
+          } else {
+            evaluaciones.forEach((row) => { addInfoItem(row.ev, row.nota); });
+          }
+
+          modActiveTrigger = trigger;
+          trigger.setAttribute('aria-expanded', 'true');
+          modLayer.hidden = false;
+          modPopover.hidden = false;
+          setPopoverPosition(trigger);
+        });
+
+        modTbody.addEventListener('keydown', (event) => {
+          const trigger = event.target.closest('.nota-grade-trigger');
+          if (trigger && modTbody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            trigger.click();
+          }
         });
       }
     })();

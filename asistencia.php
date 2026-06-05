@@ -8,7 +8,7 @@ require_once __DIR__ . '/includes/generar_anexo_4a.php';
 $pdo = db();
 
 $page_title = 'Asistencia mensual por alumno | Gestor de Alumnos';
-$active_page = 'configuracion';
+$active_page = 'alumnos';
 
 $errors = [];
 

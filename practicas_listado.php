@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/db.php';
 
 $page_title = 'Listado de prácticas | Gestor de Alumnos';
-$active_page = 'utilidades';
+$active_page = 'practicas';
 
 function format_date_listado(?string $value): string
 {

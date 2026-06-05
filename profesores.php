@@ -9,6 +9,18 @@ $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares W
 $active_course_id = $active_course_id ? (int) $active_course_id : 0;
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
+$allowed_orders_prof = ['nombre_asc', 'nombre_desc'];
+$order_param_prof = (string) ($_GET['orden'] ?? '');
+$current_order_prof = in_array($order_param_prof, $allowed_orders_prof, true) ? $order_param_prof : 'nombre_asc';
+$sort_dir_prof = str_ends_with($current_order_prof, '_desc') ? 'desc' : 'asc';
+
+function build_order_url_prof(string $cur_dir): string {
+  $params = $_GET;
+  $params['orden'] = 'nombre_' . ($cur_dir === 'asc' ? 'desc' : 'asc');
+  unset($params['ajax']);
+  $query = http_build_query($params);
+  return 'profesores.php' . ($query !== '' ? '?' . $query : '');
+}
 
 $filters = [];
 $params = [
@@ -27,6 +39,8 @@ if ($search_term !== '') {
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
 
 // Nota para evitar HY093 en PDO: no reutilizar el mismo nombre de placeholder en múltiples JOIN.
+$dir_prof = $sort_dir_prof === 'desc' ? 'DESC' : 'ASC';
+$order_by_sql_prof = "p.apellido1 $dir_prof, p.apellido2 $dir_prof, p.nombre $dir_prof";
 $teachers_stmt = $pdo->prepare(
   'SELECT
     p.id_profesor,
@@ -87,7 +101,7 @@ $teachers_stmt = $pdo->prepare(
   ) c ON c.id_entidad = p.id_profesor
   ' . $where_clause . '
   GROUP BY p.id_profesor, p.apellido1, p.apellido2, p.nombre, p.dni
-  ORDER BY p.apellido1, p.apellido2, p.nombre'
+  ORDER BY ' . $order_by_sql_prof
 );
 
 $teachers_stmt->execute($params);
@@ -197,6 +211,24 @@ function format_modules(mixed $modules): string
   return implode(', ', $renderedItems);
 }
 
+function format_copyable_values(mixed $value): string
+{
+  $clean = display_value($value);
+  if ($clean === '') {
+    return '';
+  }
+  $items = array_filter(array_map('trim', explode(',', $clean)), static fn(string $s): bool => $s !== '');
+  if (!$items) {
+    return '';
+  }
+  $parts = [];
+  foreach ($items as $item) {
+    $escaped = htmlspecialchars($item, ENT_QUOTES, 'UTF-8');
+    $parts[] = '<span class="copy-trigger" role="button" tabindex="0" title="Copiar al portapapeles" data-copy="' . $escaped . '">' . $escaped . '</span>';
+  }
+  return implode(', ', $parts);
+}
+
 function render_teacher_rows(array $teachers): string
 {
   ob_start();
@@ -220,8 +252,8 @@ function render_teacher_rows(array $teachers): string
         <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($grupos_tutor, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo $modulos; ?></td>
-        <td><?php echo htmlspecialchars($telefonos, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($correos, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php echo format_copyable_values($telefonos); ?></td>
+        <td><?php echo format_copyable_values($correos); ?></td>
         <td><a href="<?php echo htmlspecialchars($editarUrl, ENT_QUOTES, 'UTF-8'); ?>">Editar</a></td>
       </tr>
     <?php endforeach; ?>
@@ -281,6 +313,7 @@ $active_page = 'profesores';
           >
         </div>
         <div class="topbar-actions"></div>
+        <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order_prof, ENT_QUOTES, 'UTF-8'); ?>">
       </form>
 
       <section class="panel">
@@ -293,7 +326,7 @@ $active_page = 'profesores';
           <table>
             <thead>
               <tr>
-                <th>Profesor</th>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_prof($sort_dir_prof), ENT_QUOTES, 'UTF-8'); ?>">Profesor<?php echo $sort_dir_prof === 'asc' ? ' ▲' : ' ▼'; ?></a></th>
                 <th>DNI</th>
                 <th>Tutor</th>
                 <th>Módulos</th>
@@ -311,12 +344,29 @@ $active_page = 'profesores';
     </main>
   </div>
 
+  <div class="modulo-tooltip" id="modulo-tooltip" hidden>
+    <span class="modulo-tooltip__name" id="modulo-tooltip-name"></span>
+    <span class="modulo-tooltip__separator" aria-hidden="true"></span>
+    <span class="modulo-tooltip__hint">Haz clic para saber más</span>
+  </div>
+
   <div class="practicas-ras-popover-layer" id="modulo-detail-layer" hidden>
     <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
-    <div class="practicas-ras-popover" id="modulo-detail-popover" role="dialog" aria-modal="false" aria-labelledby="modulo-detail-title" hidden>
-      <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del módulo">×</button>
-      <a id="modulo-detail-title" class="practicas-ras-popover__title" href="#"></a>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo" id="modulo-detail-popover" role="dialog" aria-modal="false" aria-labelledby="modulo-detail-title" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Módulo</span>
+        <span id="modulo-detail-title" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del módulo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
       <ul class="practicas-ras-popover__criteria" id="modulo-detail-data"></ul>
+      <div class="practicas-ras-popover__footer">
+        <a id="modulo-detail-link" class="practicas-ras-popover__link" href="#">Ver módulo completo →</a>
+      </div>
     </div>
   </div>
 
@@ -327,9 +377,13 @@ $active_page = 'profesores';
     const layer = document.getElementById('modulo-detail-layer');
     const popover = document.getElementById('modulo-detail-popover');
     const title = document.getElementById('modulo-detail-title');
+    const detailLink = document.getElementById('modulo-detail-link');
     const detailList = document.getElementById('modulo-detail-data');
+    const tooltip = document.getElementById('modulo-tooltip');
+    const tooltipName = document.getElementById('modulo-tooltip-name');
     let debounceTimer = null;
     let activeTrigger = null;
+    let tooltipVisible = false;
 
     const updateResults = (withDebounce = false) => {
       if (debounceTimer) {
@@ -417,9 +471,11 @@ $active_page = 'profesores';
       const addInfoItem = (label, value) => {
         const item = document.createElement('li');
         const strong = document.createElement('strong');
-        strong.textContent = `${label}: `;
+        strong.textContent = label;
         item.appendChild(strong);
-        item.appendChild(document.createTextNode(value));
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        item.appendChild(valueSpan);
         detailList.appendChild(item);
       };
 
@@ -430,10 +486,8 @@ $active_page = 'profesores';
 
         title.textContent = trigger.dataset.moduloNombre || 'Módulo';
         const moduloId = (trigger.dataset.moduloId || '').trim();
-        if (moduloId !== '') {
-          title.setAttribute('href', `modulo_detalle.php?id_modulo=${encodeURIComponent(moduloId)}`);
-        } else {
-          title.setAttribute('href', '#');
+        if (detailLink) {
+          detailLink.setAttribute('href', moduloId !== '' ? `modulo_detalle.php?id_modulo=${encodeURIComponent(moduloId)}` : '#');
         }
         detailList.innerHTML = '';
 
@@ -493,6 +547,68 @@ $active_page = 'profesores';
         }
       });
     }
+
+    if (tooltip && tooltipName) {
+      const updateTooltipPosition = (x, y) => {
+        const offset = 14;
+        let left = x + offset;
+        let top = y + offset;
+        const w = tooltip.offsetWidth || 200;
+        const h = tooltip.offsetHeight || 60;
+        if (left + w > window.innerWidth - 8) {
+          left = x - w - offset;
+        }
+        if (top + h > window.innerHeight - 8) {
+          top = y - h - offset;
+        }
+        tooltip.style.left = `${Math.max(8, left)}px`;
+        tooltip.style.top = `${Math.max(8, top)}px`;
+      };
+
+      tableBody.addEventListener('mouseover', (event) => {
+        const trigger = event.target.closest('.empresa-name-trigger--practicas');
+        if (trigger && tableBody.contains(trigger) && (!popover || popover.hidden)) {
+          tooltipName.textContent = trigger.dataset.moduloNombre || trigger.textContent;
+          tooltip.hidden = false;
+          tooltipVisible = true;
+          updateTooltipPosition(event.clientX, event.clientY);
+        } else if (tooltipVisible && !event.target.closest('.empresa-name-trigger--practicas')) {
+          tooltip.hidden = true;
+          tooltipVisible = false;
+        }
+      });
+
+      tableBody.addEventListener('mousemove', (event) => {
+        if (tooltipVisible) {
+          updateTooltipPosition(event.clientX, event.clientY);
+        }
+      });
+
+      tableBody.addEventListener('mouseout', (event) => {
+        if (tooltipVisible && !event.relatedTarget?.closest('.empresa-name-trigger--practicas')) {
+          tooltip.hidden = true;
+          tooltipVisible = false;
+        }
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('.copy-trigger');
+      if (!trigger) return;
+      const text = (trigger.dataset.copy || '').trim();
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        trigger.classList.add('copy-trigger--copied');
+        setTimeout(() => trigger.classList.remove('copy-trigger--copied'), 1600);
+      }).catch(() => {});
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target.closest('.copy-trigger')) {
+        event.preventDefault();
+        event.target.closest('.copy-trigger').click();
+      }
+    });
   </script>
 </body>
 </html>

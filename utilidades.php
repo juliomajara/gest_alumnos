@@ -26,20 +26,6 @@ $active_page = 'configuracion';
       </header>
 
       <div class="util-grid">
-        <a class="util-card" href="asistencia_importar.php">
-          <span class="util-card-icon">
-            <img src="assets/icons/asistencia.svg" alt="">
-          </span>
-          <span class="util-card-title">Importar asistencia</span>
-          <span class="util-card-desc">Importa la asistencia desde el CSV correspondiente.</span>
-        </a>
-        <a class="util-card" href="importar_calificaciones.php">
-          <span class="util-card-icon">
-            <img src="assets/icons/calificaciones.svg" alt="">
-          </span>
-          <span class="util-card-title">Importar calificaciones</span>
-          <span class="util-card-desc">Importa notas desde CSV para un contexto académico concreto.</span>
-        </a>
 
 <a class="util-card" href="enviar_correos.php">
           <span class="util-card-icon">

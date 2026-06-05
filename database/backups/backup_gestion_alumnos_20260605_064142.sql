@@ -1,5 +1,5 @@
 -- Backup de base de datos
--- Generado: 2026-05-25 22:12:40
+-- Generado: 2026-06-05 06:41:42
 -- Aplicación: Gestor de Alumnos
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -18388,7 +18388,7 @@ CREATE TABLE `practicas_anexos_seguimiento` (
   CONSTRAINT `fk_pas_anexo` FOREIGN KEY (`id_practicas_anexo`) REFERENCES `practicas_anexos` (`id_practicas_anexo`) ON UPDATE CASCADE,
   CONSTRAINT `fk_pas_estado` FOREIGN KEY (`id_practicas_anexo_estado`) REFERENCES `practicas_anexos_estados` (`id_practicas_anexo_estado`) ON UPDATE CASCADE,
   CONSTRAINT `fk_pas_practica` FOREIGN KEY (`id_practica`) REFERENCES `practicas` (`id_practica`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=140 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ----------------------------
 -- Datos de tabla `practicas_anexos_seguimiento`
@@ -18416,7 +18416,6 @@ INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (27, 12, 1, 2, 1, '2026-04-25 16:49:25', '2026-04-25 16:49:25');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (28, 12, 1, 3, 1, '2026-04-25 16:49:25', '2026-04-25 16:49:25');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (29, 12, 1, 4, 1, '2026-04-25 16:49:28', '2026-04-25 16:49:28');
-INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (32, 18, 1, 2, 1, '2026-04-27 13:08:03', '2026-04-27 13:08:03');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (33, 18, 1, 3, 1, '2026-04-27 13:08:04', '2026-04-27 13:08:04');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (34, 18, 1, 4, 1, '2026-04-27 13:26:45', '2026-04-27 13:26:45');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (35, 18, 1, 5, 1, '2026-04-27 13:26:48', '2026-04-27 13:26:48');
@@ -18427,7 +18426,6 @@ INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (40, 18, 3, 3, 1, '2026-04-27 13:27:14', '2026-04-27 13:27:14');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (41, 18, 3, 4, 1, '2026-04-27 13:27:15', '2026-04-27 13:27:15');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (42, 18, 3, 9, 1, '2026-04-27 13:27:16', '2026-04-27 13:27:16');
-INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (43, 18, 5, 3, 1, '2026-04-27 13:27:20', '2026-04-27 13:27:20');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (44, 18, 5, 4, 1, '2026-04-27 13:27:20', '2026-04-27 13:27:20');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (45, 18, 6, 3, 1, '2026-04-27 13:27:23', '2026-04-27 13:27:23');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (46, 18, 6, 4, 1, '2026-04-27 13:27:25', '2026-04-27 13:27:25');
@@ -18496,6 +18494,25 @@ INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (116, 36, 3, 3, 1, '2026-05-20 18:14:21', '2026-05-20 18:14:21');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (117, 36, 3, 4, 1, '2026-05-20 18:14:21', '2026-05-20 18:14:21');
 INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (118, 36, 3, 9, 1, '2026-05-20 18:14:22', '2026-05-20 18:14:22');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (120, 18, 5, 3, 1, '2026-05-26 22:22:47', '2026-05-26 22:22:47');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (121, 18, 1, 2, 1, '2026-05-26 22:44:45', '2026-05-26 22:44:45');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (122, 3, 3, 3, 1, '2026-05-26 22:59:39', '2026-05-26 22:59:39');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (123, 3, 1, 2, 1, '2026-05-26 22:59:59', '2026-05-26 22:59:59');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (124, 3, 1, 3, 1, '2026-05-26 22:59:59', '2026-05-26 22:59:59');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (125, 3, 1, 4, 1, '2026-05-26 23:00:00', '2026-05-26 23:00:00');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (126, 3, 1, 5, 1, '2026-05-26 23:00:01', '2026-05-26 23:00:01');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (127, 3, 1, 6, 1, '2026-05-26 23:00:03', '2026-05-26 23:00:03');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (128, 25, 1, 2, 1, '2026-06-03 09:53:19', '2026-06-03 09:53:19');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (129, 25, 1, 3, 1, '2026-06-03 09:53:20', '2026-06-03 09:53:20');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (130, 25, 1, 4, 1, '2026-06-03 09:53:21', '2026-06-03 09:53:21');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (131, 25, 1, 5, 1, '2026-06-03 09:53:21', '2026-06-03 09:53:21');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (132, 25, 1, 6, 1, '2026-06-03 09:53:22', '2026-06-03 09:53:22');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (133, 25, 2, 5, 1, '2026-06-03 09:53:26', '2026-06-03 09:53:26');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (134, 25, 2, 6, 1, '2026-06-03 09:53:27', '2026-06-03 09:53:27');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (135, 25, 3, 3, 1, '2026-06-03 09:53:29', '2026-06-03 09:53:29');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (136, 25, 3, 4, 1, '2026-06-03 09:53:29', '2026-06-03 09:53:29');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (137, 25, 5, 3, 1, '2026-06-03 09:53:34', '2026-06-03 09:53:34');
+INSERT INTO `practicas_anexos_seguimiento` (`id_practica_anexo_seguimiento`, `id_practica`, `id_practicas_anexo`, `id_practicas_anexo_estado`, `numero_seguimiento`, `fecha_creacion`, `fecha_actualizacion`) VALUES (139, 25, 6, 3, 1, '2026-06-03 09:53:44', '2026-06-03 09:53:44');
 
 -- ----------------------------
 -- Estructura de tabla `practicas_horario`
