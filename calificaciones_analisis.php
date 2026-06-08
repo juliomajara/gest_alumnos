@@ -435,7 +435,8 @@ $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $
   ? (int) $_GET['id_curso_escolar']
   : $active_course_id;
 
-$selected_group = (string) ($_GET['id_grupo'] ?? '');
+$default_group_id = (string) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: '');
+$selected_group = (string) ($_GET['id_grupo'] ?? $default_group_id);
 $selected_group = ctype_digit($selected_group) ? $selected_group : '';
 
 $selected_evaluation = isset($_GET['id_evaluacion']) && ctype_digit((string) $_GET['id_evaluacion'])

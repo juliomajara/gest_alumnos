@@ -1244,9 +1244,9 @@ if ($practice_found) {
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Nombre y apellidos</span><span class="practica-detalle-campo-valor"><a class="practice-link" href="alumno_detalle.php?id_alumno=<?php echo (int) $practice['id_alumno']; ?>"><?php echo htmlspecialchars($student_name, ENT_QUOTES, 'UTF-8'); ?></a></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">NIA</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_nia']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">DNI</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_dni']), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email personal</span><span class="practica-detalle-campo-valor"><?php $alumno_email_personal = trim((string) ($practice['alumno_email_personal'] ?? '')); ?><?php if ($alumno_email_personal !== ''): ?><span data-copy="<?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email EducaMadrid</span><span class="practica-detalle-campo-valor"><?php $alumno_email_educamadrid = trim((string) ($practice['alumno_email_educamadrid'] ?? '')); ?><?php if ($alumno_email_educamadrid !== ''): ?><span data-copy="<?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($practice['alumno_telefono']), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email personal</span><span class="practica-detalle-campo-valor"><?php $alumno_email_personal = trim((string) ($practice['alumno_email_personal'] ?? '')); ?><?php if ($alumno_email_personal !== ''): ?><span class="copy-trigger" data-copy="<?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_personal, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Email EducaMadrid</span><span class="practica-detalle-campo-valor"><?php $alumno_email_educamadrid = trim((string) ($practice['alumno_email_educamadrid'] ?? '')); ?><?php if ($alumno_email_educamadrid !== ''): ?><span class="copy-trigger" data-copy="<?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($alumno_email_educamadrid, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono</span><span class="practica-detalle-campo-valor"><?php $val = trim((string) ($practice['alumno_telefono'] ?? '')); if ($val !== '') { $v = htmlspecialchars($val, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo 'No disponible'; } ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Fecha de nacimiento</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($student_birth_date, ENT_QUOTES, 'UTF-8'); ?></span></div>
             </div>
           </section>
@@ -1263,8 +1263,8 @@ if ($practice_found) {
                 <span class="practica-detalle-campo-valor">
                   <div><?php echo htmlspecialchars(format_value($practice['empresa_contacto_nombre']), ENT_QUOTES, 'UTF-8'); ?></div>
                   <?php $empresa_contacto_email = trim((string) ($practice['empresa_contacto_email'] ?? '')); ?>
-                  <div><?php if ($empresa_contacto_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></div>
-                  <div><?php echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div><?php if ($empresa_contacto_email !== ''): ?><span class="copy-trigger" data-copy="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></div>
+                  <div><?php $val = trim((string) ($practice['empresa_contacto_telefono'] ?? '')); if ($val !== '') { $v = htmlspecialchars($val, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($practice['empresa_contacto_telefono']), ENT_QUOTES, 'UTF-8'); } ?></div>
                 </span>
               </div>
               <div class="practica-detalle-campo">
@@ -1272,8 +1272,8 @@ if ($practice_found) {
                 <span class="practica-detalle-campo-valor">
                   <div><?php echo htmlspecialchars(full_name_name_first($practice, 'tutor'), ENT_QUOTES, 'UTF-8'); ?></div>
                   <?php $tutor_empresa_email = trim((string) ($practice['tutor_empresa_email'] ?? '')); ?>
-                  <div><?php if ($tutor_empresa_email !== ''): ?><span data-copy="<?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></div>
-                  <div><?php echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div><?php if ($tutor_empresa_email !== ''): ?><span class="copy-trigger" data-copy="<?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tutor_empresa_email, ENT_QUOTES, 'UTF-8'); ?></span><?php else: ?>No disponible<?php endif; ?></div>
+                  <div><?php $val = trim((string) ($practice['tutor_empresa_telefono'] ?? '')); if ($val !== '') { $v = htmlspecialchars($val, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($practice['tutor_empresa_telefono']), ENT_QUOTES, 'UTF-8'); } ?></div>
                 </span>
               </div>
             </div>
@@ -1644,7 +1644,7 @@ if ($practice_found) {
 
     document.addEventListener('click', (event) => {
       const target = event.target.closest('[data-copy]');
-      if (!target) {
+      if (!target || target.classList.contains('copy-trigger')) {
         return;
       }
 
@@ -1876,5 +1876,6 @@ if ($practice_found) {
         });
     });
   </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

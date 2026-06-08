@@ -42,7 +42,8 @@ $grupos_stmt = $pdo->prepare(
 $grupos_stmt->execute(['id_curso_escolar' => $curso_escolar_id]);
 $grupos = $grupos_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$grupo_id = (string) ($_GET['id_grupo'] ?? '');
+$default_group_id = (string) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: '');
+$grupo_id = (string) ($_GET['id_grupo'] ?? $default_group_id);
 if ($tipo !== 'alumno') {
   $grupo_id = '';
 }

@@ -54,6 +54,13 @@ $active_page = 'configuracion';
           <span class="util-card-title">Porcentaje RA/CE en empresa</span>
           <span class="util-card-desc">Configuración del reparto de resultados de aprendizaje y criterios de evaluación en empresa.</span>
         </a>
+        <a class="util-card" href="grupo_por_defecto.php">
+          <span class="util-card-icon">
+            <img src="assets/icons/grupo_por_defecto.svg" alt="">
+          </span>
+          <span class="util-card-title">Grupo por defecto</span>
+          <span class="util-card-desc">Grupo que aparece preseleccionado al abrir las páginas de alumnos, calificaciones, asistencia y horarios.</span>
+        </a>
       </div>
     </main>
   </div>

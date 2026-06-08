@@ -5,11 +5,19 @@ require_once __DIR__ . '/db.php';
 
 $pdo = db();
 
-$allowed_groups = ['ASIR1', 'ASIR2', 'DAM1', 'DAM2', 'DAW1', 'DAW2', 'SMR1', 'SMR2'];
-$selected_group = strtoupper(trim((string) ($_GET['grupo'] ?? '')));
-
-if (!in_array($selected_group, $allowed_groups, true)) {
-  $selected_group = '';
+$default_group_id = (int) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: 0);
+$grupos = $pdo->query('SELECT id_grupo, grupo FROM grupos ORDER BY grupo')->fetchAll();
+$valid_group_ids = array_map('intval', array_column($grupos, 'id_grupo'));
+$selected_group_id = isset($_GET['id_grupo']) ? (int) $_GET['id_grupo'] : $default_group_id;
+if (!in_array($selected_group_id, $valid_group_ids, true)) {
+  $selected_group_id = 0;
+}
+$selected_group_name = '';
+foreach ($grupos as $g) {
+  if ((int) $g['id_grupo'] === $selected_group_id) {
+    $selected_group_name = (string) $g['grupo'];
+    break;
+  }
 }
 
 $allowed_orders_mod = ['nombre_asc', 'nombre_desc', 'codigo_asc', 'codigo_desc', 'horas_semanales_asc', 'horas_semanales_desc', 'horas_totales_asc', 'horas_totales_desc'];
@@ -34,7 +42,7 @@ function sort_ind_modulos(string $col, string $cur_col, string $cur_dir): string
 $modules = [];
 $empty_message = '';
 
-if ($selected_group === '') {
+if ($selected_group_id === 0) {
   $empty_message = "Selecciona un grupo para ver los m\xC3\xB3dulos.";
 } else {
   $dir_mod = $sort_dir_mod === 'desc' ? 'DESC' : 'ASC';
@@ -70,7 +78,7 @@ if ($selected_group === '') {
       FROM grupos g
       WHERE g.id_ciclo = m.id_ciclo
         AND g.id_curso = m.id_curso
-        AND g.grupo LIKE :group_prefix
+        AND g.id_grupo = :id_grupo
     )
     GROUP BY
       m.id_modulo,
@@ -87,7 +95,7 @@ if ($selected_group === '') {
     ' . $order_by_sql
   );
 
-  $modules_stmt->execute(['group_prefix' => $selected_group . '%']);
+  $modules_stmt->execute(['id_grupo' => $selected_group_id]);
   $modules = $modules_stmt->fetchAll();
 
   if ($modules === []) {
@@ -156,9 +164,9 @@ if (($_GET['ajax'] ?? '') === '1') {
 
 $page_title = "M\xC3\xB3dulos | Gestor de Alumnos";
 $active_page = 'modulos';
-$modules_heading = $selected_group === ''
+$modules_heading = $selected_group_id === 0
   ? 'Listado de m&oacute;dulos'
-  : 'Listado de m&oacute;dulos de ' . htmlspecialchars($selected_group, ENT_QUOTES, 'UTF-8');
+  : 'Listado de m&oacute;dulos de ' . htmlspecialchars($selected_group_name, ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -187,11 +195,11 @@ $modules_heading = $selected_group === ''
         <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order_mod, ENT_QUOTES, 'UTF-8'); ?>">
         <div class="topbar-actions entity-grid entity-grid--4">
           <label class="calendar-select">
-            <select name="grupo" id="grupo" aria-label="Filtrar por grupo">
-              <option value="" <?php echo $selected_group === '' ? 'selected' : ''; ?>>Selecciona grupo</option>
-              <?php foreach ($allowed_groups as $group): ?>
-                <option value="<?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selected_group === $group ? 'selected' : ''; ?>>
-                  <?php echo htmlspecialchars($group, ENT_QUOTES, 'UTF-8'); ?>
+            <select name="id_grupo" id="id_grupo" aria-label="Filtrar por grupo">
+              <option value="" <?php echo $selected_group_id === 0 ? 'selected' : ''; ?>>Selecciona grupo</option>
+              <?php foreach ($grupos as $g): ?>
+                <option value="<?php echo (int) $g['id_grupo']; ?>" <?php echo (int) $g['id_grupo'] === $selected_group_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $g['grupo'], ENT_QUOTES, 'UTF-8'); ?>
                 </option>
               <?php endforeach; ?>
             </select>
@@ -199,7 +207,7 @@ $modules_heading = $selected_group === ''
         </div>
       </form>
 
-      <section class="panel" id="modules-panel"<?php if ($selected_group === ''): ?> hidden<?php endif; ?>>
+      <section class="panel" id="modules-panel"<?php if ($selected_group_id === 0): ?> hidden<?php endif; ?>>
         <div class="panel-header">
           <h3 id="modules-heading"><?php echo $modules_heading; ?></h3>
           <p>Nivel, ciclo, curso y datos generales de cada m&oacute;dulo registrado.</p>
@@ -229,7 +237,7 @@ $modules_heading = $selected_group === ''
   </div>
   <script>
     const form = document.querySelector('form.topbar');
-    const groupSelect = document.querySelector('select[name="grupo"]');
+    const groupSelect = document.querySelector('select[name="id_grupo"]');
     const tableBody = document.querySelector('tbody');
     const modulesPanel = document.getElementById('modules-panel');
     const modulesHeading = document.querySelector('#modules-heading');
@@ -239,19 +247,20 @@ $modules_heading = $selected_group === ''
         return;
       }
 
+      const selectedOption = groupSelect.options[groupSelect.selectedIndex];
       modulesHeading.textContent = groupSelect.value === ''
         ? 'Listado de m\u00F3dulos'
-        : `Listado de m\u00F3dulos de ${groupSelect.value}`;
+        : `Listado de m\u00F3dulos de ${selectedOption.text}`;
     };
 
     const updateSortLinks = () => {
       document.querySelectorAll('thead a.practice-link').forEach((link) => {
         const url = new URL(link.href, window.location.href);
-        const grupo = groupSelect.value;
-        if (grupo) {
-          url.searchParams.set('grupo', grupo);
+        const idGrupo = groupSelect.value;
+        if (idGrupo) {
+          url.searchParams.set('id_grupo', idGrupo);
         } else {
-          url.searchParams.delete('grupo');
+          url.searchParams.delete('id_grupo');
         }
         link.href = url.toString();
       });

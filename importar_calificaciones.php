@@ -19,11 +19,12 @@ $result = [
 
 $active_course_id = (int) ($pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn() ?: 0);
 
+$default_group_id = (int) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: 0);
 $selected = [
   'id_curso_escolar' => (int) ($_POST['id_curso_escolar'] ?? $active_course_id),
   'id_ciclo' => 0,
   'id_curso' => 0,
-  'id_grupo' => (int) ($_POST['id_grupo'] ?? $_GET['id_grupo'] ?? 0),
+  'id_grupo' => (int) ($_POST['id_grupo'] ?? $_GET['id_grupo'] ?? $default_group_id),
   'id_evaluacion' => (int) ($_POST['id_evaluacion'] ?? 0),
 ];
 

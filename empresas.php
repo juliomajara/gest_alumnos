@@ -173,12 +173,12 @@ function render_company_rows(array $companies): string
         <td><?php echo htmlspecialchars($contacto, ENT_QUOTES, 'UTF-8'); ?></td>
         <td>
           <?php if ($telefono !== ''): ?>
-            <span data-copy="<?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="copy-trigger" data-copy="<?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></span>
           <?php endif; ?>
         </td>
         <td>
           <?php if ($correo !== ''): ?>
-            <span data-copy="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="copy-trigger" data-copy="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></span>
           <?php endif; ?>
         </td>
       </tr>
@@ -370,7 +370,7 @@ $active_page = 'empresas';
 
     document.addEventListener('click', (event) => {
       const target = event.target.closest('[data-copy]');
-      if (!target) {
+      if (!target || target.classList.contains('copy-trigger')) {
         return;
       }
 
@@ -379,5 +379,6 @@ $active_page = 'empresas';
 
 
   </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

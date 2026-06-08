@@ -387,34 +387,36 @@ $dias_semana = [
             <div class="practica-detalle-campos">
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">CIF</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($company['cif']), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Empresa</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($nombre_empresa_mostrar), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono principal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></span></div>
-              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Correo principal</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($correo_principal), ENT_QUOTES, 'UTF-8'); ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Teléfono principal</span><span class="practica-detalle-campo-valor"><?php if ($telefono_principal) { $v = htmlspecialchars($telefono_principal, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); } ?></span></div>
+              <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Correo principal</span><span class="practica-detalle-campo-valor"><?php if ($correo_principal) { $v = htmlspecialchars($correo_principal, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($correo_principal), ENT_QUOTES, 'UTF-8'); } ?></span></div>
               <div class="practica-detalle-campo">
                 <span class="practica-detalle-campo-etiqueta">Teléfonos registrados</span>
                 <span class="practica-detalle-campo-valor">
                   <?php
-                    $telefono_items = [];
+                    $telefono_parts = [];
                     foreach ($phones as $phone) {
-                      $etiqueta = format_value($phone['etiqueta'], '');
-                      $telefono_label = $etiqueta ? $etiqueta . ': ' : '';
-                      $telefono_items[] = $telefono_label . $phone['telefono'];
+                      $etiqueta_raw = format_value($phone['etiqueta'], '');
+                      $tel_html = htmlspecialchars((string) $phone['telefono'], ENT_QUOTES, 'UTF-8');
+                      $etiqueta_html = $etiqueta_raw ? htmlspecialchars($etiqueta_raw, ENT_QUOTES, 'UTF-8') . ': ' : '';
+                      $telefono_parts[] = $etiqueta_html . '<span class="copy-trigger" data-copy="' . $tel_html . '">' . $tel_html . '</span>';
                     }
+                    echo $telefono_parts ? implode(' · ', $telefono_parts) : 'No disponible';
                   ?>
-                  <?php echo htmlspecialchars($telefono_items ? implode(' · ', $telefono_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
                 </span>
               </div>
               <div class="practica-detalle-campo">
                 <span class="practica-detalle-campo-etiqueta">Correos registrados</span>
                 <span class="practica-detalle-campo-valor">
                   <?php
-                    $correo_items = [];
+                    $correo_parts = [];
                     foreach ($emails as $email) {
-                      $etiqueta = format_value($email['etiqueta'], '');
-                      $correo_label = $etiqueta ? $etiqueta . ': ' : '';
-                      $correo_items[] = $correo_label . $email['direccion_correo'];
+                      $etiqueta_raw = format_value($email['etiqueta'], '');
+                      $correo_html = htmlspecialchars((string) $email['direccion_correo'], ENT_QUOTES, 'UTF-8');
+                      $etiqueta_html = $etiqueta_raw ? htmlspecialchars($etiqueta_raw, ENT_QUOTES, 'UTF-8') . ': ' : '';
+                      $correo_parts[] = $etiqueta_html . '<span class="copy-trigger" data-copy="' . $correo_html . '">' . $correo_html . '</span>';
                     }
+                    echo $correo_parts ? implode(' · ', $correo_parts) : 'No disponible';
                   ?>
-                  <?php echo htmlspecialchars($correo_items ? implode(' · ', $correo_items) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?>
                 </span>
               </div>
             </div>
@@ -741,5 +743,6 @@ $dias_semana = [
       <?php endif; ?>
     </main>
   </div>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

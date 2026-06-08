@@ -111,103 +111,104 @@ $active_page = 'modulos';
           </div>
         </section>
       <?php else: ?>
-        <section class="panel">
-          <div class="panel-header">
-            <h3>Datos principales del módulo</h3>
-            <p>Información académica y de carga horaria asociada al módulo.</p>
-          </div>
-          <div class="practica-detalle-campos">
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">ID</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars((string) $module['id_modulo'], ENT_QUOTES, 'UTF-8'); ?></span>
+        <div class="grid">
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Datos del módulo</h3>
+              <p>Identificación y nombre del módulo.</p>
             </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Código</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['codigo']), ENT_QUOTES, 'UTF-8'); ?></span>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Código</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['codigo']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Abreviatura</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['abreviatura']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Tipo</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['tipo']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Materia general</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['materia_general']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Materia propia</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['materia_propia']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
             </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Abreviatura</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['abreviatura']), ENT_QUOTES, 'UTF-8'); ?></span>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h3>Clasificación y carga horaria</h3>
+              <p>Nivel, ciclo, curso y horas asignadas al módulo.</p>
             </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Tipo</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['tipo']), ENT_QUOTES, 'UTF-8'); ?></span>
+            <div class="practica-detalle-campos">
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Nivel</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['nivel']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Ciclo</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['ciclo_abreviatura']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Curso</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['curso']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Horas semanales</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['horas_semanales']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Horas totales</span>
+                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['horas_totales']), ENT_QUOTES, 'UTF-8'); ?></span>
+              </div>
             </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Materia general</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['materia_general']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Materia propia</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['materia_propia']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Nivel</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['nivel']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Ciclo</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['ciclo_abreviatura']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Curso</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['curso']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Horas semanales</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['horas_semanales']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-            <div class="practica-detalle-campo">
-              <span class="practica-detalle-campo-etiqueta">Horas totales</span>
-              <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($module['horas_totales']), ENT_QUOTES, 'UTF-8'); ?></span>
-            </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
         <section class="panel">
           <div class="panel-header">
             <h3>Resultados de aprendizaje</h3>
             <p>Bloques de resultados de aprendizaje y criterios de evaluación asociados.</p>
           </div>
-        </section>
-
-        <?php if (!$learning_results): ?>
-          <section class="panel">
-            <div class="panel-header">
-              <h3>Sin resultados de aprendizaje</h3>
-              <p>Este módulo no tiene resultados de aprendizaje registrados.</p>
+          <?php if (!$learning_results): ?>
+            <p>Este módulo no tiene resultados de aprendizaje registrados.</p>
+          <?php else: ?>
+            <div class="modulo-ra-list">
+              <?php foreach ($learning_results as $ra): ?>
+                <?php
+                  $ra_id = (int) $ra['id_ra'];
+                  $criteria = $criteria_by_ra[$ra_id] ?? [];
+                  $ra_number = (string) ($ra['numero'] ?? '');
+                ?>
+                <div class="modulo-ra">
+                  <div class="modulo-ra__header">
+                    <span class="modulo-ra__number">RA <?php echo htmlspecialchars($ra_number !== '' ? $ra_number : '-', ENT_QUOTES, 'UTF-8'); ?></span>
+                    <p class="modulo-ra__desc"><?php echo nl2br(htmlspecialchars(format_value($ra['descripcion']), ENT_QUOTES, 'UTF-8')); ?></p>
+                  </div>
+                  <?php if (!$criteria): ?>
+                    <p>No hay criterios de evaluación asociados a este resultado de aprendizaje.</p>
+                  <?php else: ?>
+                    <ul class="modulo-ra__criteria">
+                      <?php foreach ($criteria as $criterion): ?>
+                        <?php $codigo = trim((string) ($criterion['codigo'] ?? '')); ?>
+                        <li>
+                          <span class="modulo-ra__code"><?php echo htmlspecialchars($codigo !== '' ? $codigo . ')' : '-', ENT_QUOTES, 'UTF-8'); ?></span>
+                          <span><?php echo htmlspecialchars(format_value($criterion['descripcion']), ENT_QUOTES, 'UTF-8'); ?></span>
+                        </li>
+                      <?php endforeach; ?>
+                    </ul>
+                  <?php endif; ?>
+                </div>
+              <?php endforeach; ?>
             </div>
-          </section>
-        <?php else: ?>
-          <?php foreach ($learning_results as $ra): ?>
-            <?php
-              $ra_id = (int) $ra['id_ra'];
-              $criteria = $criteria_by_ra[$ra_id] ?? [];
-              $ra_number = (string) ($ra['numero'] ?? '');
-            ?>
-            <section class="panel">
-              <div class="panel-header">
-                <h3>RA <?php echo htmlspecialchars($ra_number !== '' ? $ra_number : '-', ENT_QUOTES, 'UTF-8'); ?></h3>
-                <p><?php echo nl2br(htmlspecialchars(format_value($ra['descripcion']), ENT_QUOTES, 'UTF-8')); ?></p>
-              </div>
-              <div class="panel-grid">
-                <?php if (!$criteria): ?>
-                  <p>No hay criterios de evaluación asociados a este resultado de aprendizaje.</p>
-                <?php else: ?>
-                  <ul>
-                    <?php foreach ($criteria as $criterion): ?>
-                      <?php $codigo = trim((string) ($criterion['codigo'] ?? '')); ?>
-                      <li>
-                        <strong><?php echo htmlspecialchars($codigo !== '' ? $codigo . ')' : '-', ENT_QUOTES, 'UTF-8'); ?></strong>
-                        <?php echo htmlspecialchars(format_value($criterion['descripcion']), ENT_QUOTES, 'UTF-8'); ?>
-                      </li>
-                    <?php endforeach; ?>
-                  </ul>
-                <?php endif; ?>
-              </div>
-            </section>
-          <?php endforeach; ?>
-        <?php endif; ?>
+          <?php endif; ?>
+        </section>
       <?php endif; ?>
     </main>
   </div>

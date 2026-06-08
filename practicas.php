@@ -143,9 +143,12 @@ $practices_stmt = $pdo->prepare(
     p.fecha_fin_extra,
     p.cancelada,
     p.fecha_fin_real,
+    a.id_alumno,
     a.nombre AS alumno_nombre,
     a.apellido1 AS alumno_apellido1,
     a.apellido2 AS alumno_apellido2,
+    a.nia AS alumno_nia,
+    a.dni AS alumno_dni,
     e.id_empresa,
     e.nombre AS empresa_nombre,
     e.nombre_comercial AS empresa_nombre_comercial,
@@ -222,12 +225,38 @@ $practices_stmt = $pdo->prepare(
         )
       ORDER BY tet.id_telefono ASC
       LIMIT 1
-    ) AS empresa_tutor_telefono
+    ) AS empresa_tutor_telefono,
+    ld.nombre AS practica_localidad,
+    atal.telefono AS alumno_telefono,
+    acor_educa.direccion_correo AS alumno_correo_educamadrid,
+    acor_personal.direccion_correo AS alumno_correo_personal
   FROM practicas p
   INNER JOIN alumnos a
     ON a.id_alumno = p.id_alumno
   INNER JOIN empresas e
     ON e.id_empresa = p.id_empresa
+  LEFT JOIN direcciones d
+    ON d.id_direccion = p.id_direccion
+  LEFT JOIN localidades ld
+    ON ld.id_localidad = d.id_localidad
+  LEFT JOIN (
+    SELECT id_entidad, MIN(telefono) AS telefono
+    FROM telefonos
+    WHERE entidad_tipo = "alumno"
+    GROUP BY id_entidad
+  ) atal ON atal.id_entidad = a.id_alumno
+  LEFT JOIN (
+    SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+    FROM correos
+    WHERE entidad_tipo = "alumno" AND etiqueta = "educamadrid"
+    GROUP BY id_entidad
+  ) acor_educa ON acor_educa.id_entidad = a.id_alumno
+  LEFT JOIN (
+    SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+    FROM correos
+    WHERE entidad_tipo = "alumno" AND etiqueta = "personal"
+    GROUP BY id_entidad
+  ) acor_personal ON acor_personal.id_entidad = a.id_alumno
   ' . $where_clause . '
   ' . $order_clause
 );
@@ -299,6 +328,7 @@ function render_practice_rows(array $practices): string
         $empresa_tutor_email = $empresa_tutor_email !== '' ? $empresa_tutor_email : 'No disponible';
         $empresa_tutor_telefono = trim((string) ($practice['empresa_tutor_telefono'] ?? ''));
         $empresa_tutor_telefono = $empresa_tutor_telefono !== '' ? $empresa_tutor_telefono : 'No disponible';
+        $empresa_localidad = trim((string) ($practice['practica_localidad'] ?? ''));
 
         $fecha_inicio = format_date($practice['fecha_inicio'] ?? null);
         $fecha_fin = format_date($practice['fecha_fin'] ?? null);
@@ -322,6 +352,12 @@ function render_practice_rows(array $practices): string
         } else {
           $fecha_fin_real = '';
         }
+        $alumno_id = (int) ($practice['id_alumno'] ?? 0);
+        $alumno_nia = trim((string) ($practice['alumno_nia'] ?? ''));
+        $alumno_dni = trim((string) ($practice['alumno_dni'] ?? ''));
+        $alumno_telefono = trim((string) ($practice['alumno_telefono'] ?? ''));
+        $alumno_correo_educamadrid = trim((string) ($practice['alumno_correo_educamadrid'] ?? ''));
+        $alumno_correo_personal = trim((string) ($practice['alumno_correo_personal'] ?? ''));
         $alumno_html = htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8');
 
         if ((int) ($practice['cancelada'] ?? 0) === 1) {
@@ -330,9 +366,21 @@ function render_practice_rows(array $practices): string
       ?>
       <tr>
         <td>
-          <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) $practice['id_practica']); ?>">
-            <?php echo $alumno_html; ?>
-          </a>
+          <span
+            class="alumno-name-trigger"
+            role="button"
+            tabindex="0"
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            data-alumno-id="<?php echo $alumno_id; ?>"
+            data-alumno-nombre="<?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?>"
+            data-alumno-nia="<?php echo htmlspecialchars($alumno_nia, ENT_QUOTES, 'UTF-8'); ?>"
+            data-alumno-dni="<?php echo htmlspecialchars($alumno_dni, ENT_QUOTES, 'UTF-8'); ?>"
+            data-alumno-telefono="<?php echo htmlspecialchars($alumno_telefono, ENT_QUOTES, 'UTF-8'); ?>"
+            data-alumno-correo-educamadrid="<?php echo htmlspecialchars($alumno_correo_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"
+            data-alumno-correo-personal="<?php echo htmlspecialchars($alumno_correo_personal, ENT_QUOTES, 'UTF-8'); ?>"
+            data-practica-id="<?php echo (int) $practice['id_practica']; ?>"
+          ><?php echo $alumno_html; ?></span>
         </td>
         <td>
           <span
@@ -341,6 +389,8 @@ function render_practice_rows(array $practices): string
             tabindex="0"
             aria-haspopup="dialog"
             aria-expanded="false"
+            data-empresa-id="<?php echo (int) $practice['id_empresa']; ?>"
+            data-empresa-localidad="<?php echo htmlspecialchars($empresa_localidad, ENT_QUOTES, 'UTF-8'); ?>"
             data-empresa-nombre="<?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?>"
             data-empresa-cif="<?php echo htmlspecialchars($empresa_cif, ENT_QUOTES, 'UTF-8'); ?>"
             data-contacto-nombre="<?php echo htmlspecialchars($empresa_contacto_nombre, ENT_QUOTES, 'UTF-8'); ?>"
@@ -461,10 +511,41 @@ $active_page = 'practicas';
 
   <div class="practicas-ras-popover-layer" id="empresa-detail-layer" hidden>
     <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
-    <div class="practicas-ras-popover" id="empresa-detail-popover" role="dialog" aria-modal="false" aria-labelledby="empresa-detail-title" hidden>
-      <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle de la empresa">×</button>
-      <h3 id="empresa-detail-title" class="practicas-ras-popover__title"></h3>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--empresa" id="empresa-detail-popover" role="dialog" aria-modal="false" aria-labelledby="empresa-detail-title" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Empresa</span>
+        <span id="empresa-detail-title" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle de la empresa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
       <ul class="practicas-ras-popover__criteria" id="empresa-detail-data"></ul>
+      <div class="practicas-ras-popover__footer">
+        <a id="empresa-detail-link" class="practicas-ras-popover__link" href="#">Ver empresa completa →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="practicas-ras-popover-layer" id="alumno-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--empresa" id="alumno-detail-popover" role="dialog" aria-modal="false" aria-labelledby="alumno-detail-title" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Alumno</span>
+        <span id="alumno-detail-title" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del alumno">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
+      <div class="practicas-ras-popover__footer">
+        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver alumno completo →</a>
+      </div>
     </div>
   </div>
 
@@ -476,6 +557,7 @@ $active_page = 'practicas';
     const popover = document.getElementById('empresa-detail-popover');
     const title = document.getElementById('empresa-detail-title');
     const detailList = document.getElementById('empresa-detail-data');
+    const detailLink = document.getElementById('empresa-detail-link');
     let debounceTimer = null;
     let activeTrigger = null;
 
@@ -584,20 +666,22 @@ $active_page = 'practicas';
           return document.createTextNode(value);
         }
 
-        const copyLink = document.createElement('a');
-        copyLink.href = '#';
-        copyLink.textContent = value;
-        copyLink.dataset.copyValue = value;
-        return copyLink;
+        const trigger = document.createElement('span');
+        trigger.className = 'copy-trigger';
+        trigger.dataset.copy = value;
+        trigger.textContent = value;
+        return trigger;
       };
 
       const addInfoItem = (label, value) => {
         const item = document.createElement('li');
         const strong = document.createElement('strong');
-        strong.textContent = `${label}: `;
+        strong.textContent = label;
         item.appendChild(strong);
 
-        item.appendChild(document.createTextNode(value));
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        item.appendChild(valueSpan);
 
         detailList.appendChild(item);
       };
@@ -605,19 +689,21 @@ $active_page = 'practicas';
       const addPersonItem = (label, person, email, phone) => {
         const item = document.createElement('li');
         const strong = document.createElement('strong');
-        strong.textContent = `${label}: `;
+        strong.textContent = label;
         item.appendChild(strong);
-        item.appendChild(document.createTextNode(person));
 
-        const contactLine = document.createElement('div');
-        const emailNode = createCopyNode(email);
-        const phoneNode = createCopyNode(phone);
+        const valueSpan = document.createElement('span');
+        valueSpan.appendChild(document.createTextNode(person));
 
-        contactLine.appendChild(emailNode);
-        contactLine.appendChild(document.createTextNode(' / '));
-        contactLine.appendChild(phoneNode);
-        item.appendChild(contactLine);
+        const emailLine = document.createElement('div');
+        emailLine.appendChild(createCopyNode(email));
+        valueSpan.appendChild(emailLine);
 
+        const phoneLine = document.createElement('div');
+        phoneLine.appendChild(createCopyNode(phone));
+        valueSpan.appendChild(phoneLine);
+
+        item.appendChild(valueSpan);
         detailList.appendChild(item);
       };
 
@@ -627,9 +713,14 @@ $active_page = 'practicas';
         }
 
         title.textContent = trigger.dataset.empresaNombre || 'Empresa';
+        if (detailLink) {
+          const empresaId = (trigger.dataset.empresaId || '').trim();
+          detailLink.setAttribute('href', empresaId !== '' ? `empresa_detalle.php?id_empresa=${encodeURIComponent(empresaId)}` : '#');
+        }
         detailList.innerHTML = '';
 
         addInfoItem('CIF', getValueOrFallback(trigger.dataset.empresaCif));
+        addInfoItem('Localidad', getValueOrFallback(trigger.dataset.empresaLocalidad));
         addPersonItem(
           'Persona de contacto',
           getValueOrFallback(trigger.dataset.contactoNombre),
@@ -683,6 +774,7 @@ $active_page = 'practicas';
             window.setTimeout(() => {
               copyButton.textContent = originalText;
             }, 1000);
+            if (window.showCopyToast) { window.showCopyToast(copyValue); }
           })
           .catch(() => {});
       });
@@ -725,6 +817,154 @@ $active_page = 'practicas';
         }
       });
     }
+    const alumnoLayer = document.getElementById('alumno-detail-layer');
+    const alumnoPopover = document.getElementById('alumno-detail-popover');
+    const alumnoTitle = document.getElementById('alumno-detail-title');
+    const alumnoDetailList = document.getElementById('alumno-detail-data');
+    const alumnoDetailLink = document.getElementById('alumno-detail-link');
+    let activeAlumnoTrigger = null;
+
+    if (alumnoLayer && alumnoPopover && alumnoTitle && alumnoDetailList) {
+      const setAlumnoPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = alumnoPopover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        alumnoPopover.style.top = `${Math.max(gutter, top)}px`;
+        alumnoPopover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closeAlumnoPopover = () => {
+        alumnoPopover.hidden = true;
+        alumnoLayer.hidden = true;
+        if (activeAlumnoTrigger) {
+          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeAlumnoTrigger = null;
+      };
+
+      const getAlumnoValueOrFallback = (value) => {
+        const normalized = (value || '').trim();
+        return normalized !== '' ? normalized : 'No disponible';
+      };
+
+      const addAlumnoInfoItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        item.appendChild(valueSpan);
+        alumnoDetailList.appendChild(item);
+      };
+
+      const addAlumnoCopyItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        if (value !== '') {
+          const trigger = document.createElement('span');
+          trigger.className = 'copy-trigger';
+          trigger.dataset.copy = value;
+          trigger.textContent = value;
+          valueSpan.appendChild(trigger);
+        } else {
+          valueSpan.textContent = 'No disponible';
+        }
+        item.appendChild(valueSpan);
+        alumnoDetailList.appendChild(item);
+      };
+
+      const openAlumnoPopover = (trigger) => {
+        if (activeAlumnoTrigger && activeAlumnoTrigger !== trigger) {
+          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
+        }
+
+        alumnoTitle.textContent = trigger.dataset.alumnoNombre || 'Alumno';
+
+        if (alumnoDetailLink) {
+          const alumnoId = (trigger.dataset.alumnoId || '').trim();
+          alumnoDetailLink.setAttribute('href', alumnoId !== '' ? `alumno_detalle.php?id_alumno=${encodeURIComponent(alumnoId)}` : '#');
+        }
+
+        alumnoDetailList.innerHTML = '';
+        addAlumnoInfoItem('NIA', getAlumnoValueOrFallback(trigger.dataset.alumnoNia));
+        addAlumnoInfoItem('DNI', getAlumnoValueOrFallback(trigger.dataset.alumnoDni));
+        addAlumnoCopyItem('EducaMadrid', (trigger.dataset.alumnoCorreoEducamadrid || '').trim());
+        addAlumnoCopyItem('Correo personal', (trigger.dataset.alumnoCorreoPersonal || '').trim());
+        addAlumnoCopyItem('Teléfono', (trigger.dataset.alumnoTelefono || '').trim());
+
+        activeAlumnoTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        alumnoLayer.hidden = false;
+        alumnoPopover.hidden = false;
+        setAlumnoPopoverPosition(trigger);
+      };
+
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.alumno-name-trigger');
+        if (trigger && tableBody.contains(trigger)) {
+          if (activeAlumnoTrigger === trigger && !alumnoPopover.hidden) {
+            closeAlumnoPopover();
+            return;
+          }
+          openAlumnoPopover(trigger);
+          return;
+        }
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.alumno-name-trigger');
+        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
+
+      alumnoLayer.querySelectorAll('[data-popover-close]').forEach((element) => {
+        element.addEventListener('click', closeAlumnoPopover);
+      });
+
+      window.addEventListener('resize', () => {
+        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
+          setAlumnoPopoverPosition(activeAlumnoTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
+          setAlumnoPopoverPosition(activeAlumnoTrigger);
+        }
+      }, true);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !alumnoPopover.hidden) {
+          closeAlumnoPopover();
+        }
+      });
+    }
   </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

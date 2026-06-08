@@ -24,8 +24,9 @@ if ($defaultCourse <= 0 && isset($courses[0]['id_curso_escolar'])) {
 
 $defaultGroup = isset($groups[0]['id_grupo']) ? (int) $groups[0]['id_grupo'] : 0;
 
+$default_group_id = (int) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: 0);
 $requestedCourse = isset($_GET['id_curso_escolar']) ? (int) $_GET['id_curso_escolar'] : 0;
-$requestedGroup = isset($_GET['id_grupo']) ? (int) $_GET['id_grupo'] : 0;
+$requestedGroup = isset($_GET['id_grupo']) ? (int) $_GET['id_grupo'] : $default_group_id;
 
 $selectedCourse = in_array($requestedCourse, $validCourseIds, true) ? $requestedCourse : $defaultCourse;
 $selectedGroup = in_array($requestedGroup, $validGroupIds, true) ? $requestedGroup : 0;

@@ -13,7 +13,8 @@ $courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escol
 
 $selected_course_id = (int) ($_GET['id_curso_escolar'] ?? $active_course_id);
 $search_term = trim((string) ($_GET['q'] ?? ''));
-$selected_group = (string) ($_GET['id_grupo'] ?? '');
+$default_group_id = (string) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: '');
+$selected_group = (string) ($_GET['id_grupo'] ?? $default_group_id);
 $selected_group = $selected_group === '' ? '' : $selected_group;
 
 $groups = [];
@@ -117,7 +118,7 @@ function render_student_rows(array $students, string $empty_message): string
   ob_start();
   if (!$students): ?>
     <tr>
-      <td colspan="6"><?php echo htmlspecialchars($empty_message, ENT_QUOTES, 'UTF-8'); ?></td>
+      <td colspan="5"><?php echo htmlspecialchars($empty_message, ENT_QUOTES, 'UTF-8'); ?></td>
     </tr>
   <?php else: ?>
     <?php foreach ($students as $student): ?>
@@ -132,14 +133,13 @@ function render_student_rows(array $students, string $empty_message): string
         $detalle_url = sprintf('alumno_detalle.php?id_alumno=%d', (int) $student['id_alumno']);
       ?>
       <tr>
-        <td><?php echo htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8'); ?></td>
         <td>
           <a class="practice-link" href="<?php echo htmlspecialchars($detalle_url, ENT_QUOTES, 'UTF-8'); ?>">
             <?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>
           </a>
         </td>
-        <td><?php echo htmlspecialchars($telefono, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($email_personal, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?php if ($student['telefono']) { $v = htmlspecialchars($student['telefono'], ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo 'No disponible'; } ?></td>
+        <td><?php if ($student['correo_personal']) { $v = htmlspecialchars($student['correo_personal'], ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo 'No disponible'; } ?></td>
         <td><?php echo htmlspecialchars($nia, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($dni, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
@@ -255,7 +255,6 @@ $students_heading = $selected_group_name !== ''
           <table>
             <thead>
               <tr>
-                <th>Grupo</th>
                 <th>Apellidos y nombre</th>
                 <th>Teléfono</th>
                 <th>Correo personal</th>
@@ -379,5 +378,6 @@ $students_heading = $selected_group_name !== ''
     updateNavLinks(new URLSearchParams(new FormData(form)));
     updateHeading();
   </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

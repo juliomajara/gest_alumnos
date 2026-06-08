@@ -24,11 +24,77 @@ $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $
   ? (int) $_GET['id_curso_escolar']
   : $active_course_id;
 
-$selected_group = (string) ($_GET['id_grupo'] ?? '');
+$default_group_id = (string) ($pdo->query("SELECT valor FROM `config` WHERE `clave` = 'grupo_por_defecto' LIMIT 1")->fetchColumn() ?: '');
+$selected_group = (string) ($_GET['id_grupo'] ?? $default_group_id);
 $selected_group = ctype_digit($selected_group) ? $selected_group : '';
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
 $show_all_students = isset($_GET['mostrar_todos']) && (string) $_GET['mostrar_todos'] === '1';
+
+$sort_col_raw = preg_replace('/[^a-z0-9_]/', '', (string) ($_GET['orden_col'] ?? ''));
+$sort_modulo_id = 0;
+if (preg_match('/^modulo_(\d+)$/', $sort_col_raw, $sort_matches)) {
+  $sort_modulo_id = (int) $sort_matches[1];
+}
+$sort_dir = ((string) ($_GET['orden_dir'] ?? 'asc') === 'desc') ? 'desc' : 'asc';
+
+function build_order_url_cal(int $modulo_id, int $cur_sort_id, string $cur_sort_dir): string {
+  $params = $_GET;
+  $params['orden_col'] = 'modulo_' . $modulo_id;
+  $params['orden_dir'] = ($cur_sort_id === $modulo_id && $cur_sort_dir === 'desc') ? 'asc' : 'desc';
+  $query = http_build_query($params);
+  return 'calificaciones.php' . ($query !== '' ? '?' . $query : '');
+}
+
+function sort_ind_cal(int $modulo_id, int $cur_sort_id, string $cur_sort_dir): string {
+  if ($modulo_id !== $cur_sort_id) {
+    return '';
+  }
+  return $cur_sort_dir === 'asc' ? ' ▲' : ' ▼';
+}
+
+$sort_by_nombre = ($sort_col_raw === 'nombre');
+
+function grade_sort_key(string $grade): ?float {
+  $g = trim($grade);
+  if ($g === '' || $g === '—') {
+    return null;
+  }
+  if ($g === 'NE') {
+    return -300.0;
+  }
+  if (preg_match('/^CV-(\d+(?:\.\d+)?)$/i', $g, $m)) {
+    return -200.0 + (float) $m[1];
+  }
+  if (preg_match('/^TC-(\d+(?:\.\d+)?)$/i', $g, $m)) {
+    return -100.0 + (float) $m[1];
+  }
+  if (preg_match('/^(\d+(?:\.\d+)?)-MH$/i', $g, $m)) {
+    return (float) $m[1] + 0.5;
+  }
+  if (preg_match('/^(\d+(?:\.\d+)?)-P$/i', $g, $m)) {
+    return (float) $m[1] - 0.5;
+  }
+  if (is_numeric($g)) {
+    return (float) $g;
+  }
+  return null;
+}
+
+function build_order_url_nombre_cal(string $cur_sort_col_raw, string $cur_sort_dir): string {
+  $params = $_GET;
+  $params['orden_col'] = 'nombre';
+  $params['orden_dir'] = ($cur_sort_col_raw === 'nombre' && $cur_sort_dir === 'asc') ? 'desc' : 'asc';
+  $query = http_build_query($params);
+  return 'calificaciones.php' . ($query !== '' ? '?' . $query : '');
+}
+
+function sort_ind_nombre_cal(string $cur_sort_col_raw, string $cur_sort_dir): string {
+  if ($cur_sort_col_raw !== 'nombre') {
+    return '';
+  }
+  return $cur_sort_dir === 'asc' ? ' ▲' : ' ▼';
+}
 
 $normal_evaluation_names = [
   '1ª evaluación',
@@ -147,10 +213,33 @@ if ($show_results) {
        a.apellido1,
        a.apellido2,
        a.nombre,
-       g.grupo
+       a.nia AS alumno_nia,
+       a.dni AS alumno_dni,
+       g.grupo,
+       atal.telefono AS alumno_telefono,
+       acor_educa.direccion_correo AS alumno_correo_educamadrid,
+       acor_personal.direccion_correo AS alumno_correo_personal
      FROM alumno_curso ac
      INNER JOIN alumnos a ON a.id_alumno = ac.id_alumno
      LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
+     LEFT JOIN (
+       SELECT id_entidad, MIN(telefono) AS telefono
+       FROM telefonos
+       WHERE entidad_tipo = "alumno"
+       GROUP BY id_entidad
+     ) atal ON atal.id_entidad = a.id_alumno
+     LEFT JOIN (
+       SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+       FROM correos
+       WHERE entidad_tipo = "alumno" AND etiqueta = "educamadrid"
+       GROUP BY id_entidad
+     ) acor_educa ON acor_educa.id_entidad = a.id_alumno
+     LEFT JOIN (
+       SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+       FROM correos
+       WHERE entidad_tipo = "alumno" AND etiqueta = "personal"
+       GROUP BY id_entidad
+     ) acor_personal ON acor_personal.id_entidad = a.id_alumno
      WHERE ac.id_curso_escolar = :id_curso_escolar
        AND ac.id_grupo = :id_grupo
        AND (
@@ -369,6 +458,33 @@ if ($show_results && $students !== [] && $modules !== []) {
   } else {
     $modules = [];
   }
+
+  if ($sort_by_nombre && $visible_students !== []) {
+    usort($visible_students, static function (array $a, array $b) use ($sort_dir): int {
+      $name_a = trim((string) ($a['apellido1'] ?? '')) . ' ' . trim((string) ($a['apellido2'] ?? '')) . ' ' . trim((string) ($a['nombre'] ?? ''));
+      $name_b = trim((string) ($b['apellido1'] ?? '')) . ' ' . trim((string) ($b['apellido2'] ?? '')) . ' ' . trim((string) ($b['nombre'] ?? ''));
+      $cmp = strcmp(mb_strtolower($name_a, 'UTF-8'), mb_strtolower($name_b, 'UTF-8'));
+      return $sort_dir === 'desc' ? -$cmp : $cmp;
+    });
+  } elseif ($sort_modulo_id > 0 && $visible_students !== []) {
+    usort($visible_students, static function (array $a, array $b) use ($grades_by_student, $sort_modulo_id, $sort_dir): int {
+      $grade_a = $grades_by_student[(int) $a['id_alumno']][$sort_modulo_id] ?? '—';
+      $grade_b = $grades_by_student[(int) $b['id_alumno']][$sort_modulo_id] ?? '—';
+      $num_a = grade_sort_key($grade_a);
+      $num_b = grade_sort_key($grade_b);
+      if ($num_a === null && $num_b === null) {
+        return 0;
+      }
+      if ($num_a === null) {
+        return 1;
+      }
+      if ($num_b === null) {
+        return -1;
+      }
+      $cmp = $num_a <=> $num_b;
+      return $sort_dir === 'desc' ? -$cmp : $cmp;
+    });
+  }
 }
 ?>
 <!DOCTYPE html>
@@ -515,7 +631,7 @@ if ($show_results && $students !== [] && $modules !== []) {
             <table>
               <thead>
                 <tr>
-                  <th>Apellidos y nombre</th>
+                  <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_nombre_cal($sort_col_raw, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Apellidos y nombre<?php echo sort_ind_nombre_cal($sort_col_raw, $sort_dir); ?></a></th>
                   <?php foreach ($modules as $module): ?>
                     <?php
                       $module_code = trim((string) $module['codigo']);
@@ -539,14 +655,18 @@ if ($show_results && $students !== [] && $modules !== []) {
                       $module_tooltip_title = implode(' - ', $module_title_parts);
                     ?>
                     <th>
-                      <span class="empresa-name-trigger empresa-name-trigger--practicas"
-                        role="button" tabindex="0" aria-haspopup="dialog" aria-expanded="false"
+                      <span
+                        class="empresa-name-trigger empresa-name-trigger--practicas"
+                        role="button"
+                        tabindex="0"
+                        aria-haspopup="dialog"
+                        aria-expanded="false"
                         data-modulo-id="<?php echo (int) $module['id_modulo']; ?>"
                         data-modulo-nombre="<?php echo htmlspecialchars($module_name !== '' ? $module_name : $module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>"
                         data-modulo-curso="<?php echo htmlspecialchars($module_course_label, ENT_QUOTES, 'UTF-8'); ?>"
                         data-modulo-codigo="<?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>"
                         data-modulo-abreviatura="<?php echo htmlspecialchars($module_abbreviation, ENT_QUOTES, 'UTF-8'); ?>"
-                      ><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?></span>
+                      ><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url_cal((int) $module['id_modulo'], $sort_modulo_id, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8') . sort_ind_cal((int) $module['id_modulo'], $sort_modulo_id, $sort_dir); ?></a></span>
                     </th>
                   <?php endforeach; ?>
                 </tr>
@@ -575,7 +695,20 @@ if ($show_results && $students !== [] && $modules !== []) {
                         . trim((string) $student['nombre']);
                     ?>
                     <tr>
-                      <td><a class="practice-link" href="alumno_detalle.php?id_alumno=<?php echo (int) $id_alumno; ?>"><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></a></td>
+                      <td><span
+                        class="alumno-name-trigger"
+                        role="button"
+                        tabindex="0"
+                        aria-haspopup="dialog"
+                        aria-expanded="false"
+                        data-alumno-id="<?php echo $id_alumno; ?>"
+                        data-alumno-nombre="<?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>"
+                        data-alumno-nia="<?php echo htmlspecialchars((string) ($student['alumno_nia'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-alumno-dni="<?php echo htmlspecialchars((string) ($student['alumno_dni'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-alumno-telefono="<?php echo htmlspecialchars((string) ($student['alumno_telefono'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-alumno-correo-educamadrid="<?php echo htmlspecialchars((string) ($student['alumno_correo_educamadrid'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-alumno-correo-personal="<?php echo htmlspecialchars((string) ($student['alumno_correo_personal'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                      ><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></span></td>
                       <?php foreach ($modules as $module): ?>
                         <?php
                           $id_modulo = (int) $module['id_modulo'];
@@ -602,19 +735,40 @@ if ($show_results && $students !== [] && $modules !== []) {
                           $history_rows = $grades_history_by_student[$id_alumno][$id_modulo] ?? [];
                         ?>
                         <?php
-                          $ev_data = array_map(static fn($r) => ['ev' => (string) $r['evaluacion'], 'nota' => (string) $r['nota']], $history_rows);
-                          $ev_json = htmlspecialchars(json_encode($ev_data, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
-                          $nota_nombre = $module_name !== '' ? $module_name : $module_abbreviation;
+                          $tooltip_title = $module_code;
+                          if ($module_name !== '') {
+                            $tooltip_title .= ' – ' . $module_name;
+                          }
                         ?>
                         <td data-grade-cell="1">
-                          <button type="button" class="nota-grade-trigger"
-                            aria-haspopup="dialog" aria-expanded="false"
-                            data-modulo-id="<?php echo (int) $id_modulo; ?>"
-                            data-modulo-nombre="<?php echo htmlspecialchars($nota_nombre, ENT_QUOTES, 'UTF-8'); ?>"
-                            data-modulo-codigo="<?php echo htmlspecialchars($module_code, ENT_QUOTES, 'UTF-8'); ?>"
-                            data-nota="<?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?>"
-                            data-evaluaciones="<?php echo $ev_json; ?>"
-                          ><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></button>
+                          <span class="help-tooltip">
+                            <button type="button" class="nota-grade-trigger"><?php echo htmlspecialchars($display_grade, ENT_QUOTES, 'UTF-8'); ?></button>
+                            <span class="help-tooltip-content" role="tooltip">
+                              <span class="help-tooltip-title">
+                                <?php echo htmlspecialchars($tooltip_title, ENT_QUOTES, 'UTF-8'); ?>
+                              </span>
+                              <?php if ($history_rows === []): ?>
+                                <div>Sin calificaciones registradas.</div>
+                              <?php else: ?>
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Evaluación</th>
+                                      <th>Nota</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <?php foreach ($history_rows as $history_row): ?>
+                                      <tr>
+                                        <td><?php echo htmlspecialchars($history_row['evaluacion'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?php echo htmlspecialchars($history_row['nota'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                      </tr>
+                                    <?php endforeach; ?>
+                                  </tbody>
+                                </table>
+                              <?php endif; ?>
+                            </span>
+                          </span>
                         </td>
                       <?php endforeach; ?>
                     </tr>
@@ -629,8 +783,6 @@ if ($show_results && $students !== [] && $modules !== []) {
   </div>
   <div class="modulo-tooltip" id="modulo-tooltip-cal" hidden>
     <span class="modulo-tooltip__name" id="modulo-tooltip-cal-name"></span>
-    <span class="modulo-tooltip__separator" aria-hidden="true"></span>
-    <span class="modulo-tooltip__hint">Haz clic para saber más</span>
   </div>
 
   <div class="practicas-ras-popover-layer" id="modulo-detail-layer-cal" hidden>
@@ -649,6 +801,26 @@ if ($show_results && $students !== [] && $modules !== []) {
       <ul class="practicas-ras-popover__criteria" id="modulo-detail-data-cal"></ul>
       <div class="practicas-ras-popover__footer">
         <a id="modulo-detail-link-cal" class="practicas-ras-popover__link" href="#">Ver módulo completo →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="practicas-ras-popover-layer" id="alumno-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--empresa" id="alumno-detail-popover" role="dialog" aria-modal="false" aria-labelledby="alumno-detail-title" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Alumno</span>
+        <span id="alumno-detail-title" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del alumno">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
+      <div class="practicas-ras-popover__footer">
+        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver alumno completo →</a>
       </div>
     </div>
   </div>
@@ -962,6 +1134,9 @@ if ($show_results && $students !== [] && $modules !== []) {
         if (!trigger || !modThead.contains(trigger)) {
           return;
         }
+        if (event.target.closest('a')) {
+          return;
+        }
         modTooltip.hidden = true;
         modTooltipVisible = false;
         if (modActiveTrigger === trigger && !modPopover.hidden) {
@@ -1000,64 +1175,158 @@ if ($show_results && $students !== [] && $modules !== []) {
           closePopover();
         }
       });
-
-      const modTbody = document.querySelector('.panel-grid table tbody');
-
-      if (modTbody) {
-        modTbody.addEventListener('click', (event) => {
-          const trigger = event.target.closest('.nota-grade-trigger');
-          if (!trigger || !modTbody.contains(trigger)) {
-            return;
-          }
-          if (modActiveTrigger === trigger && !modPopover.hidden) {
-            closePopover();
-            return;
-          }
-          if (modActiveTrigger && modActiveTrigger !== trigger) {
-            modActiveTrigger.setAttribute('aria-expanded', 'false');
-          }
-
-          const moduloId = (trigger.dataset.moduloId || '').trim();
-          const moduloCodigo = (trigger.dataset.moduloCodigo || '').trim();
-          const moduloNombre = (trigger.dataset.moduloNombre || '').trim();
-          const notaActual = (trigger.dataset.nota || '').trim();
-
-          if (modEyebrow) { modEyebrow.textContent = moduloCodigo || 'Nota'; }
-          modTitle.textContent = moduloNombre || 'Módulo';
-          if (modDetailLink) {
-            modDetailLink.setAttribute('href', moduloId !== '' ? `modulo_detalle.php?id_modulo=${encodeURIComponent(moduloId)}` : '#');
-          }
-
-          modDetailList.innerHTML = '';
-          if (notaActual !== '' && notaActual !== '—') {
-            addInfoItem('Nota final', notaActual);
-          }
-
-          let evaluaciones = [];
-          try { evaluaciones = JSON.parse(trigger.dataset.evaluaciones || '[]'); } catch (_) {}
-
-          if (evaluaciones.length === 0) {
-            addInfoItem('Evaluaciones', 'Sin calificaciones registradas');
-          } else {
-            evaluaciones.forEach((row) => { addInfoItem(row.ev, row.nota); });
-          }
-
-          modActiveTrigger = trigger;
-          trigger.setAttribute('aria-expanded', 'true');
-          modLayer.hidden = false;
-          modPopover.hidden = false;
-          setPopoverPosition(trigger);
-        });
-
-        modTbody.addEventListener('keydown', (event) => {
-          const trigger = event.target.closest('.nota-grade-trigger');
-          if (trigger && modTbody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault();
-            trigger.click();
-          }
-        });
-      }
     })();
   </script>
+  <script>
+    const tableBody = document.querySelector('tbody');
+    const alumnoLayer = document.getElementById('alumno-detail-layer');
+    const alumnoPopover = document.getElementById('alumno-detail-popover');
+    const alumnoTitle = document.getElementById('alumno-detail-title');
+    const alumnoDetailList = document.getElementById('alumno-detail-data');
+    const alumnoDetailLink = document.getElementById('alumno-detail-link');
+    let activeAlumnoTrigger = null;
+
+    if (alumnoLayer && alumnoPopover && alumnoTitle && alumnoDetailList) {
+      const setAlumnoPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = alumnoPopover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        alumnoPopover.style.top = `${Math.max(gutter, top)}px`;
+        alumnoPopover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closeAlumnoPopover = () => {
+        alumnoPopover.hidden = true;
+        alumnoLayer.hidden = true;
+        if (activeAlumnoTrigger) {
+          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeAlumnoTrigger = null;
+      };
+
+      const getAlumnoValueOrFallback = (value) => {
+        const normalized = (value || '').trim();
+        return normalized !== '' ? normalized : 'No disponible';
+      };
+
+      const addAlumnoInfoItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        item.appendChild(valueSpan);
+        alumnoDetailList.appendChild(item);
+      };
+
+      const addAlumnoCopyItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        if (value !== '') {
+          const trigger = document.createElement('span');
+          trigger.className = 'copy-trigger';
+          trigger.dataset.copy = value;
+          trigger.textContent = value;
+          valueSpan.appendChild(trigger);
+        } else {
+          valueSpan.textContent = 'No disponible';
+        }
+        item.appendChild(valueSpan);
+        alumnoDetailList.appendChild(item);
+      };
+
+      const openAlumnoPopover = (trigger) => {
+        if (activeAlumnoTrigger && activeAlumnoTrigger !== trigger) {
+          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
+        }
+
+        alumnoTitle.textContent = trigger.dataset.alumnoNombre || 'Alumno';
+
+        if (alumnoDetailLink) {
+          const alumnoId = (trigger.dataset.alumnoId || '').trim();
+          alumnoDetailLink.setAttribute('href', alumnoId !== '' ? `alumno_detalle.php?id_alumno=${encodeURIComponent(alumnoId)}` : '#');
+        }
+
+        alumnoDetailList.innerHTML = '';
+        addAlumnoInfoItem('NIA', getAlumnoValueOrFallback(trigger.dataset.alumnoNia));
+        addAlumnoInfoItem('DNI', getAlumnoValueOrFallback(trigger.dataset.alumnoDni));
+        addAlumnoCopyItem('EducaMadrid', (trigger.dataset.alumnoCorreoEducamadrid || '').trim());
+        addAlumnoCopyItem('Correo personal', (trigger.dataset.alumnoCorreoPersonal || '').trim());
+        addAlumnoCopyItem('Teléfono', (trigger.dataset.alumnoTelefono || '').trim());
+
+        activeAlumnoTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        alumnoLayer.hidden = false;
+        alumnoPopover.hidden = false;
+        setAlumnoPopoverPosition(trigger);
+      };
+
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.alumno-name-trigger');
+        if (trigger && tableBody.contains(trigger)) {
+          if (activeAlumnoTrigger === trigger && !alumnoPopover.hidden) {
+            closeAlumnoPopover();
+            return;
+          }
+          openAlumnoPopover(trigger);
+          return;
+        }
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.alumno-name-trigger');
+        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
+
+      alumnoLayer.querySelectorAll('[data-popover-close]').forEach((element) => {
+        element.addEventListener('click', closeAlumnoPopover);
+      });
+
+      window.addEventListener('resize', () => {
+        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
+          setAlumnoPopoverPosition(activeAlumnoTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
+          setAlumnoPopoverPosition(activeAlumnoTrigger);
+        }
+      }, true);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !alumnoPopover.hidden) {
+          closeAlumnoPopover();
+        }
+      });
+    }
+  </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

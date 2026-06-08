@@ -56,13 +56,19 @@ try {
     $stmt = $pdo->prepare(
       'SELECT DISTINCT
          p.id_practica,
+         a.id_alumno,
          a.nombre      AS alumno_nombre,
          a.apellido1   AS alumno_apellido1,
          a.apellido2   AS alumno_apellido2,
+         a.nia         AS alumno_nia,
+         a.dni         AS alumno_dni,
          la.nombre     AS localidad_alumno,
          le.nombre     AS localidad_empresa,
          p.fecha_inicio,
-         p.fecha_fin_extra
+         p.fecha_fin_extra,
+         atal.telefono AS alumno_telefono,
+         acor_educa.direccion_correo AS alumno_correo_educamadrid,
+         acor_personal.direccion_correo AS alumno_correo_personal
        FROM practicas p
        INNER JOIN alumnos a       ON a.id_alumno   = p.id_alumno
        INNER JOIN alumno_curso ac ON ac.id_alumno  = p.id_alumno
@@ -70,6 +76,24 @@ try {
        LEFT JOIN localidades la   ON la.id_localidad = a.id_localidad
        LEFT JOIN direcciones d    ON d.id_direccion  = p.id_direccion
        LEFT JOIN localidades le   ON le.id_localidad = d.id_localidad
+       LEFT JOIN (
+         SELECT id_entidad, MIN(telefono) AS telefono
+         FROM telefonos
+         WHERE entidad_tipo = "alumno"
+         GROUP BY id_entidad
+       ) atal ON atal.id_entidad = a.id_alumno
+       LEFT JOIN (
+         SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+         FROM correos
+         WHERE entidad_tipo = "alumno" AND etiqueta = "educamadrid"
+         GROUP BY id_entidad
+       ) acor_educa ON acor_educa.id_entidad = a.id_alumno
+       LEFT JOIN (
+         SELECT id_entidad, MIN(direccion_correo) AS direccion_correo
+         FROM correos
+         WHERE entidad_tipo = "alumno" AND etiqueta = "personal"
+         GROUP BY id_entidad
+       ) acor_personal ON acor_personal.id_entidad = a.id_alumno
        ' . $order_clause
     );
     $stmt->execute(['active_course_id' => (int) $active_course_id]);
@@ -143,12 +167,30 @@ try {
                       $nombre_completo = $apellidos !== '' && $nombre !== ''
                         ? $apellidos . ', ' . $nombre
                         : ($apellidos !== '' ? $apellidos : ($nombre !== '' ? $nombre : 'No disponible'));
+                      $alumno_id = (int) ($practice['id_alumno'] ?? 0);
+                      $alumno_nia = trim((string) ($practice['alumno_nia'] ?? ''));
+                      $alumno_dni = trim((string) ($practice['alumno_dni'] ?? ''));
+                      $alumno_telefono = trim((string) ($practice['alumno_telefono'] ?? ''));
+                      $alumno_correo_educamadrid = trim((string) ($practice['alumno_correo_educamadrid'] ?? ''));
+                      $alumno_correo_personal = trim((string) ($practice['alumno_correo_personal'] ?? ''));
                     ?>
                     <tr>
                       <td>
-                        <a class="practice-link" href="practica_detalle.php?id_practica=<?php echo urlencode((string) (int) $practice['id_practica']); ?>">
-                          <?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>
-                        </a>
+                        <span
+                          class="alumno-name-trigger"
+                          role="button"
+                          tabindex="0"
+                          aria-haspopup="dialog"
+                          aria-expanded="false"
+                          data-alumno-id="<?php echo $alumno_id; ?>"
+                          data-alumno-nombre="<?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?>"
+                          data-alumno-nia="<?php echo htmlspecialchars($alumno_nia, ENT_QUOTES, 'UTF-8'); ?>"
+                          data-alumno-dni="<?php echo htmlspecialchars($alumno_dni, ENT_QUOTES, 'UTF-8'); ?>"
+                          data-alumno-telefono="<?php echo htmlspecialchars($alumno_telefono, ENT_QUOTES, 'UTF-8'); ?>"
+                          data-alumno-correo-educamadrid="<?php echo htmlspecialchars($alumno_correo_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"
+                          data-alumno-correo-personal="<?php echo htmlspecialchars($alumno_correo_personal, ENT_QUOTES, 'UTF-8'); ?>"
+                          data-practica-id="<?php echo (int) $practice['id_practica']; ?>"
+                        ><?php echo htmlspecialchars($nombre_completo, ENT_QUOTES, 'UTF-8'); ?></span>
                       </td>
                       <td><?php echo htmlspecialchars((string) ($practice['localidad_alumno'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars((string) ($practice['localidad_empresa'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
@@ -164,5 +206,177 @@ try {
       </section>
     </main>
   </div>
+
+  <div class="practicas-ras-popover-layer" id="alumno-detail-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--empresa" id="alumno-detail-popover" role="dialog" aria-modal="false" aria-labelledby="alumno-detail-title" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Alumno</span>
+        <span id="alumno-detail-title" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del alumno">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
+      <div class="practicas-ras-popover__footer">
+        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver alumno completo →</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tableBody = document.querySelector('tbody');
+    const alumnoLayer = document.getElementById('alumno-detail-layer');
+    const alumnoPopover = document.getElementById('alumno-detail-popover');
+    const alumnoTitle = document.getElementById('alumno-detail-title');
+    const alumnoDetailList = document.getElementById('alumno-detail-data');
+    const alumnoDetailLink = document.getElementById('alumno-detail-link');
+    let activeAlumnoTrigger = null;
+
+    if (alumnoLayer && alumnoPopover && alumnoTitle && alumnoDetailList) {
+      const setAlumnoPopoverPosition = (trigger) => {
+        const triggerRect = trigger.getBoundingClientRect();
+        const popoverRect = alumnoPopover.getBoundingClientRect();
+        const gutter = 12;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let top = triggerRect.top;
+        let left = triggerRect.right + gutter;
+
+        if (left + popoverRect.width > viewportWidth - gutter) {
+          left = triggerRect.left - popoverRect.width - gutter;
+        }
+
+        if (left < gutter) {
+          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+          top = triggerRect.bottom + gutter;
+        }
+
+        if (top + popoverRect.height > viewportHeight - gutter) {
+          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+        }
+
+        alumnoPopover.style.top = `${Math.max(gutter, top)}px`;
+        alumnoPopover.style.left = `${Math.max(gutter, left)}px`;
+      };
+
+      const closeAlumnoPopover = () => {
+        alumnoPopover.hidden = true;
+        alumnoLayer.hidden = true;
+        if (activeAlumnoTrigger) {
+          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
+        }
+        activeAlumnoTrigger = null;
+      };
+
+      const getAlumnoValueOrFallback = (value) => {
+        const normalized = (value || '').trim();
+        return normalized !== '' ? normalized : 'No disponible';
+      };
+
+      const addAlumnoInfoItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        item.appendChild(valueSpan);
+        alumnoDetailList.appendChild(item);
+      };
+
+      const addAlumnoCopyItem = (label, value) => {
+        const item = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = label;
+        item.appendChild(strong);
+        const valueSpan = document.createElement('span');
+        if (value !== '') {
+          const trigger = document.createElement('span');
+          trigger.className = 'copy-trigger';
+          trigger.dataset.copy = value;
+          trigger.textContent = value;
+          valueSpan.appendChild(trigger);
+        } else {
+          valueSpan.textContent = 'No disponible';
+        }
+        item.appendChild(valueSpan);
+        alumnoDetailList.appendChild(item);
+      };
+
+      const openAlumnoPopover = (trigger) => {
+        if (activeAlumnoTrigger && activeAlumnoTrigger !== trigger) {
+          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
+        }
+
+        alumnoTitle.textContent = trigger.dataset.alumnoNombre || 'Alumno';
+
+        if (alumnoDetailLink) {
+          const alumnoId = (trigger.dataset.alumnoId || '').trim();
+          alumnoDetailLink.setAttribute('href', alumnoId !== '' ? `alumno_detalle.php?id_alumno=${encodeURIComponent(alumnoId)}` : '#');
+        }
+
+        alumnoDetailList.innerHTML = '';
+        addAlumnoInfoItem('NIA', getAlumnoValueOrFallback(trigger.dataset.alumnoNia));
+        addAlumnoInfoItem('DNI', getAlumnoValueOrFallback(trigger.dataset.alumnoDni));
+        addAlumnoCopyItem('EducaMadrid', (trigger.dataset.alumnoCorreoEducamadrid || '').trim());
+        addAlumnoCopyItem('Correo personal', (trigger.dataset.alumnoCorreoPersonal || '').trim());
+        addAlumnoCopyItem('Teléfono', (trigger.dataset.alumnoTelefono || '').trim());
+
+        activeAlumnoTrigger = trigger;
+        trigger.setAttribute('aria-expanded', 'true');
+        alumnoLayer.hidden = false;
+        alumnoPopover.hidden = false;
+        setAlumnoPopoverPosition(trigger);
+      };
+
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.alumno-name-trigger');
+        if (trigger && tableBody.contains(trigger)) {
+          if (activeAlumnoTrigger === trigger && !alumnoPopover.hidden) {
+            closeAlumnoPopover();
+            return;
+          }
+          openAlumnoPopover(trigger);
+          return;
+        }
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const trigger = event.target.closest('.alumno-name-trigger');
+        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          trigger.click();
+        }
+      });
+
+      alumnoLayer.querySelectorAll('[data-popover-close]').forEach((element) => {
+        element.addEventListener('click', closeAlumnoPopover);
+      });
+
+      window.addEventListener('resize', () => {
+        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
+          setAlumnoPopoverPosition(activeAlumnoTrigger);
+        }
+      });
+
+      window.addEventListener('scroll', () => {
+        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
+          setAlumnoPopoverPosition(activeAlumnoTrigger);
+        }
+      }, true);
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !alumnoPopover.hidden) {
+          closeAlumnoPopover();
+        }
+      });
+    }
+  </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>

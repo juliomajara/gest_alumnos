@@ -346,8 +346,6 @@ $active_page = 'profesores';
 
   <div class="modulo-tooltip" id="modulo-tooltip" hidden>
     <span class="modulo-tooltip__name" id="modulo-tooltip-name"></span>
-    <span class="modulo-tooltip__separator" aria-hidden="true"></span>
-    <span class="modulo-tooltip__hint">Haz clic para saber más</span>
   </div>
 
   <div class="practicas-ras-popover-layer" id="modulo-detail-layer" hidden>
@@ -592,23 +590,7 @@ $active_page = 'profesores';
       });
     }
 
-    document.addEventListener('click', (event) => {
-      const trigger = event.target.closest('.copy-trigger');
-      if (!trigger) return;
-      const text = (trigger.dataset.copy || '').trim();
-      if (!text) return;
-      navigator.clipboard.writeText(text).then(() => {
-        trigger.classList.add('copy-trigger--copied');
-        setTimeout(() => trigger.classList.remove('copy-trigger--copied'), 1600);
-      }).catch(() => {});
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if ((event.key === 'Enter' || event.key === ' ') && event.target.closest('.copy-trigger')) {
-        event.preventDefault();
-        event.target.closest('.copy-trigger').click();
-      }
-    });
   </script>
+  <script src="assets/copy.js"></script>
 </body>
 </html>
