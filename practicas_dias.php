@@ -282,6 +282,7 @@ try {
         <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
         <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
         <a class="tab-nav-link" href="practicas_listado.php">Listado</a>
+        <a class="tab-nav-link" href="practicas_contacto.php">Correos</a>
       </nav>
 
       <section class="panel">

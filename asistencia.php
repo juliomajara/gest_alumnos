@@ -249,7 +249,7 @@ foreach ($meses_nombres as $mes_nombre => $mes_abreviado) {
   ];
 }
 
-$total_columnas_asistencia = 4 + count($meses_curso) + 3;
+$total_columnas_asistencia = 4 + count($meses_curso) + 1;
 $vista_titulo = 'Faltas Injustificadas';
 if ($vista === 'justificadas') {
   $vista_titulo = 'Faltas Justificadas';
@@ -374,7 +374,7 @@ if ($vista === 'justificadas') {
                 <?php foreach ($meses_curso as $mes): ?>
                   <th colspan="1"><?php echo htmlspecialchars((string) $mes['mes'], ENT_QUOTES, 'UTF-8'); ?></th>
                 <?php endforeach; ?>
-                <th colspan="3">Totales</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -562,9 +562,7 @@ if ($vista === 'justificadas') {
                         <td class="<?php echo htmlspecialchars($injustificadas_class, ENT_QUOTES, 'UTF-8'); ?>" title="<?php echo htmlspecialchars($injustificadas_title, ENT_QUOTES, 'UTF-8'); ?>" style="<?php echo htmlspecialchars($celda_style, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $valor_mes; ?></td>
                       <?php endif; ?>
                     <?php endforeach; ?>
-                    <td><strong><?php echo $total_i; ?></strong></td>
-                    <td><strong><?php echo $total_j; ?></strong></td>
-                    <td><strong><?php echo $total_r; ?></strong></td>
+                    <td><strong><?php echo $mostrar_retrasos ? $total_r : ($mostrar_justificadas ? $total_j : $total_i); ?></strong></td>
                   </tr>
                 <?php endforeach; ?>
               <?php endif; ?>
