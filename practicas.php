@@ -446,6 +446,16 @@ $active_page = 'practicas';
           <p class="subheading">Consulta las prácticas registradas y su estado para cada alumno y empresa.</p>
         </div>
         <div class="header-actions">
+          <a class="primary-button" href="includes/practicas_exportar.php?<?php echo htmlspecialchars(http_build_query([
+            'q'      => $search_term,
+            'orden'  => $current_order,
+            'formato' => 'excel',
+          ]), ENT_QUOTES, 'UTF-8'); ?>">Exportar Excel</a>
+          <a class="primary-button" href="includes/practicas_exportar.php?<?php echo htmlspecialchars(http_build_query([
+            'q'      => $search_term,
+            'orden'  => $current_order,
+            'formato' => 'pdf',
+          ]), ENT_QUOTES, 'UTF-8'); ?>">Exportar PDF</a>
           <a class="edit-toggle edit-toggle-success" href="practica_nueva.php"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir práctica</a>
         </div>
       </header>
