@@ -1059,6 +1059,20 @@ if ($show_results) {
           <p class="subheading">Métricas individuales, globales y por módulo a partir de la evaluación seleccionada.</p>
         </div>
         <div class="header-actions">
+          <?php if ($show_results): ?>
+            <a class="primary-button" href="includes/analisis_exportar.php?<?php echo htmlspecialchars(http_build_query([
+              'id_curso_escolar' => $selected_course_id,
+              'id_grupo'         => $selected_group,
+              'id_evaluacion'    => $selected_evaluation,
+              'formato'          => 'excel',
+            ]), ENT_QUOTES, 'UTF-8'); ?>">Exportar Excel</a>
+            <a class="primary-button" href="includes/analisis_exportar.php?<?php echo htmlspecialchars(http_build_query([
+              'id_curso_escolar' => $selected_course_id,
+              'id_grupo'         => $selected_group,
+              'id_evaluacion'    => $selected_evaluation,
+              'formato'          => 'pdf',
+            ]), ENT_QUOTES, 'UTF-8'); ?>">Exportar PDF</a>
+          <?php endif; ?>
           <a class="ghost-button" href="calificaciones.php?<?php echo htmlspecialchars(http_build_query([
             'id_grupo' => $selected_group,
             'id_evaluacion' => $selected_evaluation,
