@@ -3313,6 +3313,161 @@ a.edit-toggle:focus {
   }
 }
 
+.practicas-anexos-tabla-scroll {
+  overflow-x: visible;
+}
+
+.practicas-anexos-tabla {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.practicas-anexos-tabla-th-alumno {
+  text-align: left;
+  vertical-align: bottom;
+  padding: 4px 6px 5px;
+  font-weight: 600;
+  white-space: nowrap;
+  width: 1px;
+  border: 1px solid var(--border);
+  background: #f5f7ff;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.practicas-anexos-tabla-th-grupo {
+  text-align: center;
+  font-weight: 600;
+  padding: 3px 4px;
+  border: 1px solid var(--border);
+  background: #f5f7ff;
+  white-space: nowrap;
+}
+
+.practicas-anexos-tabla-th-rotado {
+  vertical-align: bottom;
+  padding: 0 6px 3px;
+  min-width: 20px;
+  width: 20px;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.practicas-anexos-tabla-th-rotado > div {
+  display: inline-block;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  padding-bottom: 3px;
+  vertical-align: bottom;
+}
+
+.practicas-anexos-tabla-th-rotado > div > span {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  line-height: 0.5;
+}
+
+.practicas-anexos-tabla-td-alumno.is-cancelada {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.practicas-anexos-tabla-td-vacio {
+  background: #f5f5f5 !important;
+}
+
+.practicas-anexos-tabla-td-check.is-complete .practicas-anexos-tabla-check:checked {
+  background: #2f7a53;
+  border-color: #2f7a53;
+}
+
+.practicas-anexos-tabla-td-alumno {
+  padding: 2px 6px;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  width: 1px;
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+  font-weight: 600;
+}
+
+.practicas-anexos-tabla-tr:nth-child(even) .practicas-anexos-tabla-td-alumno {
+  background: #fafafa;
+}
+
+.practicas-anexos-tabla-tr:hover .practicas-anexos-tabla-td-alumno {
+  background: #f0f3ff;
+}
+
+.practicas-anexos-tabla-td-alumno.is-all-complete {
+  background: #d4f7e6 !important;
+}
+
+.practicas-anexos-tabla-td-check {
+  text-align: center;
+  padding: 2px;
+  border: 1px solid var(--border);
+  min-width: 20px;
+  width: 20px;
+}
+
+.practicas-anexos-tabla-tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.practicas-anexos-tabla-tr:hover td {
+  background: #f0f3ff;
+}
+
+.practicas-anexos-tabla-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.practicas-anexos-tabla-check::after {
+  content: '';
+}
+
+.practicas-anexos-tabla-check:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.practicas-anexos-tabla-check:checked::after {
+  content: '✕';
+  color: #fff;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.practicas-anexos-tabla-sep {
+  border-left: 2px solid #8b9dc3 !important;
+}
+
+.practicas-anexos-tabla th:last-child,
+.practicas-anexos-tabla td:last-child {
+  border-right: 1px solid var(--border);
+}
+
 .horarios-configuracion {
   display: flex;
   justify-content: flex-start;

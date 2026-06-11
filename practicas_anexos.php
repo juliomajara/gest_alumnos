@@ -65,195 +65,249 @@ function calculate_practice_status(array $practice): string
   return 'Finalizada';
 }
 
+function calculate_anexo7_months(array $practice): int
+{
+  if ((int) ($practice['cancelada'] ?? 0) === 1) {
+    $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
+    $fecha_fin_real = (string) ($practice['fecha_fin_real'] ?? '');
+    if ($fecha_inicio === '' || $fecha_fin_real === '') { return 0; }
+    $start = DateTimeImmutable::createFromFormat('Y-m-d', $fecha_inicio);
+    $end   = DateTimeImmutable::createFromFormat('Y-m-d', $fecha_fin_real);
+    if ($start === false || $end === false) { return 0; }
+    $months = ((int) $end->format('Y') - (int) $start->format('Y')) * 12
+              + ((int) $end->format('n') - (int) $start->format('n'))
+              + 1;
+    return max(0, $months);
+  }
+
+  $fecha_inicio = (string) ($practice['fecha_inicio'] ?? '');
+  $fecha_fin = (string) ($practice['fecha_fin_extra'] ?? '');
+
+  if ($fecha_inicio === '' || $fecha_fin === '') {
+    return 0;
+  }
+
+  $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+  if ($today < $fecha_inicio) {
+    return 0;
+  }
+
+  $effective_end = $fecha_fin < $today ? $fecha_fin : $today;
+
+  $start = DateTimeImmutable::createFromFormat('Y-m-d', $fecha_inicio);
+  $end = DateTimeImmutable::createFromFormat('Y-m-d', $effective_end);
+
+  if ($start === false || $end === false) {
+    return 0;
+  }
+
+  $months = ((int) $end->format('Y') - (int) $start->format('Y')) * 12
+            + ((int) $end->format('n') - (int) $start->format('n'))
+            + 1;
+
+  return max(0, $months);
+}
+
 function render_practicas_anexos_lista(array $practices, array $anexos_definiciones, array $marcados): string
 {
+  $codigos_tabla = ['2.1', '2.2', '3', '7', '8'];
+
+  $display_labels_tabla = [
+    'datos solicitados'                => "Datos\nsolicitados",
+    'enviado a firmar por la empresa'  => "Enviado a firmar\npor la empresa",
+    'firmado por la empresa'           => "Firmado por\nla empresa",
+    'enviado a firmar por el director' => "Enviado a firmar\npor el director",
+    'firmado por el director'          => "Firmado por\nel director",
+    'devuelto a la empresa'            => "Devuelto a\nla empresa",
+  ];
+
+  $grupos = [];
+  foreach ($codigos_tabla as $code) {
+    if (isset($anexos_definiciones[$code]) && $anexos_definiciones[$code]['fases'] !== []) {
+      $grupos[$code] = $anexos_definiciones[$code];
+    }
+  }
+
+  $meses_por_practica = [];
+  $max_seguimientos_a7 = 1;
+  if (isset($grupos['7'])) {
+    foreach ($practices as $practice) {
+      $meses = calculate_anexo7_months($practice);
+      $meses_por_practica[(int) $practice['id_practica']] = $meses;
+      if ($meses > $max_seguimientos_a7) {
+        $max_seguimientos_a7 = $meses;
+      }
+    }
+  }
+
   ob_start();
   ?>
-  <div class="practicas-anexos-lista" data-practicas-anexos-list>
+  <div class="practicas-anexos-tabla-wrap" data-practicas-anexos-list>
     <?php if ($practices === []): ?>
       <p>No hay prácticas para los filtros seleccionados.</p>
-    <?php endif; ?>
-
-    <?php foreach ($practices as $practice): ?>
-      <?php
-        $id_practica = (int) $practice['id_practica'];
-        $alumno_apellidos = trim(implode(' ', array_filter([
-          (string) ($practice['alumno_apellido1'] ?? ''),
-          (string) ($practice['alumno_apellido2'] ?? ''),
-        ], static fn($value): bool => trim($value) !== '')));
-        $alumno_nombre = trim((string) ($practice['alumno_nombre'] ?? ''));
-        $alumno = trim($alumno_apellidos . ', ' . $alumno_nombre, ' ,');
-        if ($alumno === '') {
-          $alumno = 'No disponible';
-        }
-
-        $empresa_nombre = trim(implode(' ', array_filter([
-          (string) ($practice['empresa_nombre'] ?? ''),
-          (string) ($practice['empresa_apellido1'] ?? ''),
-          (string) ($practice['empresa_apellido2'] ?? ''),
-        ], static fn($value): bool => trim($value) !== '')));
-        $empresa_nombre_comercial = trim((string) ($practice['empresa_nombre_comercial'] ?? ''));
-        $empresa = $empresa_nombre_comercial !== '' ? $empresa_nombre_comercial : ($empresa_nombre !== '' ? $empresa_nombre : 'No disponible');
-        $estado_practica = calculate_practice_status($practice);
-        $estado_clase = match($estado_practica) {
-          'En curso'       => 'practicas-anexos-practica-estado--en-curso',
-          'Finalizada'     => 'practicas-anexos-practica-estado--finalizada',
-          'Cancelada'      => 'practicas-anexos-practica-estado--cancelada',
-          'En espera'      => 'practicas-anexos-practica-estado--en-espera',
-          default          => '',
-        };
-
-        $anexos_mostrar = ['2.1', '2.2', '3', '7', '8'];
-        if ((int) ($practice['circ_excep'] ?? 0) === 1) {
-          $anexos_mostrar[] = '4';
-        }
-
-        $anexos_mostrar = array_values(array_filter($anexos_mostrar, static fn(string $code): bool => isset($anexos_definiciones[$code])));
-        $global_total = 0;
-        $global_completados = 0;
-      ?>
-
-      <article class="practicas-anexos-practica" data-practice-card>
-        <header class="practicas-anexos-practica-head">
-          <button
-            type="button"
-            class="practicas-anexos-practica-toggle"
-            data-practice-toggle
-            aria-expanded="false"
-            aria-controls="practice-anexos-<?php echo $id_practica; ?>"
-          >
-            <svg class="practicas-anexos-practica-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 4 10 8 6 12"></polyline></svg>
-            <h4><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?> <span class="practicas-anexos-empresa"><?php echo htmlspecialchars('(' . $empresa . ')', ENT_QUOTES, 'UTF-8'); ?></span></h4>
-            <span class="practicas-anexos-practica-percent" data-practice-summary-percent></span>
-          </button>
-          <div class="practicas-anexos-practica-meta">
-            <?php if (in_array('7', $anexos_mostrar, true)): ?>
-              <button
-                type="button"
-                class="primary-button practicas-anexos-add-tracking"
-                data-add-anexo7
-                data-id-practica="<?php echo $id_practica; ?>"
-                data-id-practicas-anexo="<?php echo (int) $anexos_definiciones['7']['id']; ?>"
-                data-anexo7-fases='<?php echo htmlspecialchars((string) json_encode($anexos_definiciones['7']['fases'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>'
-              >
-                Añadir seguimiento Anexo 7
-              </button>
-            <?php endif; ?>
-            <span class="practicas-anexos-practica-estado<?php echo $estado_clase !== '' ? ' ' . $estado_clase : ''; ?>"><?php echo htmlspecialchars($estado_practica, ENT_QUOTES, 'UTF-8'); ?></span>
-          </div>
-        </header>
-
-        <div class="practicas-anexos-tarjetas" id="practice-anexos-<?php echo $id_practica; ?>" data-practice-anexos hidden>
-          <?php foreach ($anexos_mostrar as $code): ?>
+    <?php else: ?>
+    <div class="practicas-anexos-tabla-scroll">
+      <table class="practicas-anexos-tabla">
+        <thead>
+          <tr>
+            <th class="practicas-anexos-tabla-th-alumno" rowspan="2">Alumno</th>
+            <?php foreach ($grupos as $code => $anexo_data): ?>
+              <?php
+                $colspan_grupo = (string) $code === '7'
+                  ? count($anexo_data['fases']) * $max_seguimientos_a7
+                  : count($anexo_data['fases']);
+              ?>
+              <th colspan="<?php echo $colspan_grupo; ?>" class="practicas-anexos-tabla-th-grupo practicas-anexos-tabla-sep">
+                A<?php echo htmlspecialchars((string) $code, ENT_QUOTES, 'UTF-8'); ?>
+              </th>
+            <?php endforeach; ?>
+          </tr>
+          <tr>
+            <?php foreach ($grupos as $code => $anexo_data): ?>
+              <?php if ((string) $code === '7'): ?>
+                <?php for ($seg = 1; $seg <= $max_seguimientos_a7; $seg++): ?>
+                  <?php foreach ($anexo_data['fases'] as $idx => $fase): ?>
+                    <th class="practicas-anexos-tabla-th-rotado<?php echo $idx === 0 ? ' practicas-anexos-tabla-sep' : ''; ?>">
+                      <div><span><?php echo nl2br(htmlspecialchars($display_labels_tabla[normalize_text((string) $fase['estado'])] ?? (string) $fase['estado'], ENT_QUOTES, 'UTF-8')); ?></span></div>
+                    </th>
+                  <?php endforeach; ?>
+                <?php endfor; ?>
+              <?php else: ?>
+                <?php foreach ($anexo_data['fases'] as $idx => $fase): ?>
+                  <th class="practicas-anexos-tabla-th-rotado<?php echo $idx === 0 ? ' practicas-anexos-tabla-sep' : ''; ?>">
+                    <div><span><?php echo nl2br(htmlspecialchars($display_labels_tabla[normalize_text((string) $fase['estado'])] ?? (string) $fase['estado'], ENT_QUOTES, 'UTF-8')); ?></span></div>
+                  </th>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            <?php endforeach; ?>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($practices as $practice): ?>
             <?php
-              $anexo_data = $anexos_definiciones[$code];
-              $id_anexo = (int) $anexo_data['id'];
-              $fases = $anexo_data['fases'];
-              $seguimientos = [1];
-
-              if ($code === '7') {
-                $seguimientos = [];
-                if (isset($marcados[$id_practica][$id_anexo]) && is_array($marcados[$id_practica][$id_anexo])) {
-                  $seguimientos = array_keys($marcados[$id_practica][$id_anexo]);
-                  sort($seguimientos);
-                }
-                if ($seguimientos === []) {
-                  $seguimientos = [1];
+              $id_practica = (int) $practice['id_practica'];
+              $alumno_apellidos = trim(implode(' ', array_filter([
+                (string) ($practice['alumno_apellido1'] ?? ''),
+                (string) ($practice['alumno_apellido2'] ?? ''),
+              ], static fn($value): bool => trim($value) !== '')));
+              $alumno_nombre = trim((string) ($practice['alumno_nombre'] ?? ''));
+              $alumno = trim($alumno_apellidos . ', ' . $alumno_nombre, ' ,');
+              if ($alumno === '') {
+                $alumno = 'No disponible';
+              }
+            ?>
+            <?php
+              $todo_completo = true;
+              foreach ($grupos as $_code => $_anexo_data) {
+                $_id_anexo = (int) $_anexo_data['id'];
+                if ((string) $_code === '7') {
+                  $_meses = $meses_por_practica[$id_practica] ?? 0;
+                  for ($_s = 1; $_s <= $_meses; $_s++) {
+                    foreach ($_anexo_data['fases'] as $_fc) {
+                      if (!isset($marcados[$id_practica][$_id_anexo][$_s][(int) $_fc['id']])) {
+                        $todo_completo = false;
+                        break 3;
+                      }
+                    }
+                  }
+                } else {
+                  foreach ($_anexo_data['fases'] as $_fc) {
+                    if (!isset($marcados[$id_practica][$_id_anexo][1][(int) $_fc['id']])) {
+                      $todo_completo = false;
+                      break 2;
+                    }
+                  }
                 }
               }
             ?>
-
-            <?php foreach ($seguimientos as $numero_seguimiento): ?>
-              <?php
-                $numero_seguimiento = (int) $numero_seguimiento;
-                $total_fases = count($fases);
-                $completadas = 0;
-                foreach ($fases as $fase) {
-                  $id_fase = (int) $fase['id'];
-                  if (isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][$id_fase])) {
-                    $completadas++;
-                  }
-                }
-
-                $global_total += $total_fases;
-                $global_completados += $completadas;
-
-                $percent = $total_fases > 0 ? (int) round(($completadas / $total_fases) * 100) : 0;
-                $is_done = $total_fases > 0 && $completadas === $total_fases;
-                $status_class = $is_done ? ' is-complete' : ($completadas > 0 ? ' is-progress' : '');
-                $desc = htmlspecialchars(trim((string) ($anexo_data['descripcion'] ?? '')), ENT_QUOTES, 'UTF-8');
-                $card_id = 'anexo-card-' . $id_practica . '-' . $id_anexo . '-' . $numero_seguimiento;
-                $panel_id = $card_id . '-panel';
-                $title = 'Anexo ' . $code;
-                if ($code === '7') {
-                  $title .= ' - Seg. ' . $numero_seguimiento;
-                }
-              ?>
-              <section
-                class="practicas-anexos-card<?php echo $status_class; ?>"
-                data-anexo-card
-                data-id-practica="<?php echo $id_practica; ?>"
-                data-id-practicas-anexo="<?php echo $id_anexo; ?>"
-                data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
-                data-total-steps="<?php echo $total_fases; ?>"
-              >
-                <button class="practicas-anexos-card-head" type="button" aria-expanded="false" aria-controls="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>" data-accordion-toggle>
-                  <svg class="practicas-anexos-card-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 4 10 8 6 12"></polyline></svg>
-                  <span class="practicas-anexos-card-title-wrap">
-                    <strong><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></strong>
-                    <?php if ($desc !== ''): ?><span class="practicas-anexos-card-desc"><?php echo $desc; ?></span><?php endif; ?>
-                    <small data-card-summary hidden><?php echo $completadas; ?> de <?php echo $total_fases; ?> pasos completados</small>
-                  </span>
-                  <span class="practicas-anexos-card-progress">
-                    <progress class="practicas-anexos-progress-bar" value="<?php echo $percent; ?>" max="100" data-progress-bar></progress>
-                    <span class="practicas-anexos-card-percent anexo-percent" data-progress-text><?php echo $percent; ?>%</span>
-                  </span>
-                  <span class="practicas-anexos-card-icons">
-                    <span class="practicas-anexos-complete-icon" data-complete-icon <?php echo $is_done ? '' : 'hidden'; ?>>✓</span>
-                  </span>
-                </button>
-                <div
-                  class="practicas-anexos-card-panel"
-                  id="<?php echo htmlspecialchars($panel_id, ENT_QUOTES, 'UTF-8'); ?>"
-                  data-id-practica="<?php echo $id_practica; ?>"
-                  data-id-practicas-anexo="<?php echo $id_anexo; ?>"
-                  data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
-                  hidden
-                >
-                  <ul class="practicas-anexos-steps">
-                    <?php foreach ($fases as $fase): ?>
+            <tr class="practicas-anexos-tabla-tr">
+              <td class="practicas-anexos-tabla-td-alumno<?php echo (int) ($practice['cancelada'] ?? 0) === 1 ? ' is-cancelada' : ''; ?><?php echo $todo_completo ? ' is-all-complete' : ''; ?>"><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?></td>
+              <?php foreach ($grupos as $code => $anexo_data): ?>
+                <?php if ((string) $code === '7'): ?>
+                  <?php
+                    $id_anexo = (int) $anexo_data['id'];
+                    $meses_practica = $meses_por_practica[$id_practica] ?? 0;
+                  ?>
+                  <?php for ($seg = 1; $seg <= $max_seguimientos_a7; $seg++): ?>
+                    <?php if ($seg <= $meses_practica): ?>
                       <?php
-                        $id_fase = (int) $fase['id'];
-                        $checked = isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][$id_fase]);
+                        $seg_completo = $anexo_data['fases'] !== [];
+                        foreach ($anexo_data['fases'] as $fase_check) {
+                          if (!isset($marcados[$id_practica][$id_anexo][$seg][(int) $fase_check['id']])) {
+                            $seg_completo = false;
+                            break;
+                          }
+                        }
                       ?>
-                      <li class="practicas-anexos-step-item<?php echo $checked ? ' is-checked' : ''; ?>">
-                        <label>
+                      <?php foreach ($anexo_data['fases'] as $idx => $fase): ?>
+                        <?php
+                          $id_fase = (int) $fase['id'];
+                          $checked = isset($marcados[$id_practica][$id_anexo][$seg][$id_fase]);
+                        ?>
+                        <td class="practicas-anexos-tabla-td-check<?php echo $idx === 0 ? ' practicas-anexos-tabla-sep' : ''; ?><?php echo $seg_completo ? ' is-complete' : ''; ?>"
+                            data-id-practicas-anexo="<?php echo $id_anexo; ?>"
+                            data-numero-seguimiento="<?php echo $seg; ?>">
                           <input
                             type="checkbox"
+                            class="practicas-anexos-tabla-check"
                             <?php echo $checked ? 'checked' : ''; ?>
+                            title="<?php echo htmlspecialchars('Anexo ' . (string) $code . ' (mes ' . $seg . ') - ' . ucwords((string) $fase['estado']), ENT_QUOTES, 'UTF-8'); ?>"
                             data-ajax-step
                             data-id-practica="<?php echo $id_practica; ?>"
                             data-id-practicas-anexo="<?php echo $id_anexo; ?>"
                             data-id-practicas-anexo-estado="<?php echo $id_fase; ?>"
-                            data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
+                            data-numero-seguimiento="<?php echo $seg; ?>"
                           >
-                          <span><?php echo htmlspecialchars((string) $fase['estado'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        </label>
-                      </li>
-                    <?php endforeach; ?>
-                  </ul>
-                </div>
-              </section>
-            <?php endforeach; ?>
+                        </td>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <?php foreach ($anexo_data['fases'] as $idx => $fase): ?>
+                        <td class="practicas-anexos-tabla-td-check practicas-anexos-tabla-td-vacio<?php echo $idx === 0 ? ' practicas-anexos-tabla-sep' : ''; ?>"></td>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
+                  <?php endfor; ?>
+                <?php else: ?>
+                  <?php
+                    $id_anexo = (int) $anexo_data['id'];
+                    $numero_seguimiento = 1;
+                    $grupo_completo = $anexo_data['fases'] !== [];
+                    foreach ($anexo_data['fases'] as $fase_check) {
+                      if (!isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][(int) $fase_check['id']])) {
+                        $grupo_completo = false;
+                        break;
+                      }
+                    }
+                  ?>
+                  <?php foreach ($anexo_data['fases'] as $idx => $fase): ?>
+                    <?php
+                      $id_fase = (int) $fase['id'];
+                      $checked = isset($marcados[$id_practica][$id_anexo][$numero_seguimiento][$id_fase]);
+                    ?>
+                    <td class="practicas-anexos-tabla-td-check<?php echo $idx === 0 ? ' practicas-anexos-tabla-sep' : ''; ?><?php echo $grupo_completo ? ' is-complete' : ''; ?>"
+                        data-id-practicas-anexo="<?php echo $id_anexo; ?>"
+                        data-numero-seguimiento="<?php echo $numero_seguimiento; ?>">
+                      <input
+                        type="checkbox"
+                        class="practicas-anexos-tabla-check"
+                        <?php echo $checked ? 'checked' : ''; ?>
+                        title="<?php echo htmlspecialchars('Anexo ' . (string) $code . ' - ' . ucwords((string) $fase['estado']), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-ajax-step
+                        data-id-practica="<?php echo $id_practica; ?>"
+                        data-id-practicas-anexo="<?php echo $id_anexo; ?>"
+                        data-id-practicas-anexo-estado="<?php echo $id_fase; ?>"
+                        data-numero-seguimiento="<?php echo $numero_seguimiento; ?>"
+                      >
+                    </td>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </tr>
           <?php endforeach; ?>
-        </div>
-
-        <?php
-          $global_percent = $global_total > 0 ? (int) round(($global_completados / $global_total) * 100) : 0;
-        ?>
-        <div class="practicas-anexos-practica-total" data-initial-completed="<?php echo $global_completados; ?>" data-initial-total="<?php echo $global_total; ?>" data-initial-percent="<?php echo $global_percent; ?>"></div>
-      </article>
-    <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php endif; ?>
   </div>
   <?php
   return (string) ob_get_clean();
@@ -509,6 +563,8 @@ $practices_stmt = $pdo->prepare(
     p.cancelada,
     p.fecha_inicio,
     p.fecha_fin_extra,
+    p.fecha_fin,
+    p.fecha_fin_real,
     a.nombre AS alumno_nombre,
     a.apellido1 AS alumno_apellido1,
     a.apellido2 AS alumno_apellido2,
@@ -832,7 +888,35 @@ $active_page = 'practicas';
           if (card) {
             refreshCard(card);
           }
+
+          refreshGrupoCompletion(input);
         });
+      };
+
+      const refreshGrupoCompletion = (input) => {
+        const row = input.closest('tr.practicas-anexos-tabla-tr');
+        if (!row) return;
+        const idAnexo = input.dataset.idPracticasAnexo;
+        const numSeg = input.dataset.numeroSeguimiento || '1';
+        if (!idAnexo) return;
+        const cells = row.querySelectorAll(
+          'td.practicas-anexos-tabla-td-check[data-id-practicas-anexo="' + idAnexo + '"][data-numero-seguimiento="' + numSeg + '"]'
+        );
+        if (cells.length === 0) return;
+        const allChecked = Array.from(cells).every((td) => {
+          const cb = td.querySelector('.practicas-anexos-tabla-check');
+          return cb ? cb.checked : false;
+        });
+        cells.forEach((td) => td.classList.toggle('is-complete', allChecked));
+        if (row) { refreshAlumnoCompletion(row); }
+      };
+
+      const refreshAlumnoCompletion = (row) => {
+        const tdAlumno = row.querySelector('.practicas-anexos-tabla-td-alumno');
+        if (!tdAlumno) return;
+        const checkboxes = Array.from(row.querySelectorAll('.practicas-anexos-tabla-check'));
+        if (checkboxes.length === 0) return;
+        tdAlumno.classList.toggle('is-all-complete', checkboxes.every(cb => cb.checked));
       };
 
       const createAnexo7Card = (practiceCard, idPractica, idAnexo, numeroSeguimiento, fases) => {
@@ -952,6 +1036,7 @@ $active_page = 'practicas';
         const root = scope || document;
         root.querySelectorAll('[data-accordion-toggle]').forEach(bindAccordion);
         root.querySelectorAll('input[data-ajax-step]').forEach(bindStepInput);
+        root.querySelectorAll('input[data-ajax-step]').forEach(refreshGrupoCompletion);
         root.querySelectorAll('[data-anexo-card]').forEach(refreshCard);
         root.querySelectorAll('[data-practice-card]').forEach(refreshPracticeSummary);
         root.querySelectorAll('[data-add-anexo7]').forEach(bindAddAnexo7Button);
