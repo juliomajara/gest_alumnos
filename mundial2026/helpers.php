@@ -27,6 +27,30 @@ function write_json(string $file, array $data): void {
     fclose($handle);
 }
 
+// ── HTTP FETCH (cURL preferred, file_get_contents fallback) ───────────────────
+
+function fetch_url(string $url): ?string {
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_USERAGENT      => 'Mundial2026-App/1.0',
+            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        ]);
+        $result = curl_exec($ch);
+        $code   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return ($result !== false && $code === 200) ? $result : null;
+    }
+    // Fallback for servers with allow_url_fopen enabled
+    $ctx = stream_context_create(['http' => ['timeout' => 10, 'user_agent' => 'Mundial2026-App/1.0']]);
+    $result = @file_get_contents($url, false, $ctx);
+    return $result !== false ? $result : null;
+}
+
 // ── MATCHES ───────────────────────────────────────────────────────────────────
 
 function get_matches(): array {
@@ -40,9 +64,8 @@ function get_matches(): array {
     }
 
     // Fetch from API
-    $ctx = stream_context_create(['http' => ['timeout' => 8]]);
-    $json = @file_get_contents(MATCHES_API_URL, false, $ctx);
-    if ($json !== false) {
+    $json = fetch_url(MATCHES_API_URL);
+    if ($json !== null) {
         $raw = json_decode($json, true);
         if ($raw && isset($raw['matches'])) {
             $data = normalise_matches($raw['matches']);
