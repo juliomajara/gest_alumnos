@@ -39,11 +39,17 @@ include 'includes/head.php';
   </div>
 <?php else: ?>
 
+  <!-- View all bets button -->
+  <div style="padding:12px 16px 4px;display:flex;gap:8px">
+    <a href="todas_apuestas.php" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;color:var(--text)">
+      📋 Ver todas las apuestas
+    </a>
+  </div>
+
   <!-- Podium -->
   <?php if (count($podium) >= 1): ?>
   <div class="podium">
     <?php
-    // Order: 2nd, 1st, 3rd for visual podium
     $podium_order = [];
     if (isset($podium[1])) $podium_order[] = [2, $podium[1]];
     $podium_order[] = [1, $podium[0]];
@@ -51,15 +57,17 @@ include 'includes/head.php';
     ?>
     <?php foreach ($podium_order as [$rank, $entry]): ?>
       <?php $is_me = $entry['user_id'] === $user['id']; ?>
-      <div class="podium-slot rank-<?= $rank ?>">
-        <div class="podium-avatar">
-          <?= mb_strtoupper(mb_substr($entry['name'], 0, 2)) ?>
+      <a href="perfil_publico.php?uid=<?= urlencode($entry['user_id']) ?>" style="text-decoration:none;color:inherit">
+        <div class="podium-slot rank-<?= $rank ?>">
+          <div class="podium-avatar">
+            <?= mb_strtoupper(mb_substr($entry['name'], 0, 2)) ?>
+          </div>
+          <div class="podium-medal"><?= ['🥇','🥈','🥉'][$rank-1] ?></div>
+          <div class="podium-name"><?= h($entry['name']) ?><?= $is_me ? ' (tú)' : '' ?></div>
+          <div class="podium-pts"><strong><?= $entry['total'] ?></strong> pts</div>
+          <div class="podium-bar"></div>
         </div>
-        <div class="podium-medal"><?= ['🥇','🥈','🥉'][$rank-1] ?></div>
-        <div class="podium-name"><?= h($entry['name']) ?><?= $is_me ? ' (tú)' : '' ?></div>
-        <div class="podium-pts"><strong><?= $entry['total'] ?></strong> pts</div>
-        <div class="podium-bar"></div>
-      </div>
+      </a>
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
@@ -75,19 +83,20 @@ include 'includes/head.php';
     <?php foreach ($board as $i => $entry): ?>
       <?php $rank = $i + 1; $is_me = $entry['user_id'] === $user['id']; ?>
       <?php if ($rank <= 3 && count($podium) >= 3): continue; endif; ?>
-      <div class="lb-row <?= $is_me ? 'me' : '' ?>">
-        <span class="lb-rank">#<?= $rank ?></span>
-        <div>
-          <div class="lb-name"><?= h($entry['name']) ?><?= $is_me ? ' <span style="color:var(--primary);font-size:.7rem">tú</span>' : '' ?></div>
-          <div class="lb-details">
-            ⚽ <?= $entry['match_pts'] ?>pts partidos
-            · 🏆 <?= $entry['top4_pts'] ?>pts top4
-            · <?= $entry['predictions'] ?> predicciones
-            · <?= $entry['exact'] ?> exactos
+      <a href="perfil_publico.php?uid=<?= urlencode($entry['user_id']) ?>" style="text-decoration:none;color:inherit;display:block">
+        <div class="lb-row <?= $is_me ? 'me' : '' ?>">
+          <span class="lb-rank">#<?= $rank ?></span>
+          <div style="flex:1;min-width:0">
+            <div class="lb-name"><?= h($entry['name']) ?><?= $is_me ? ' <span style="color:var(--primary);font-size:.7rem">tú</span>' : '' ?></div>
+            <div class="lb-details">
+              ⚽ <?= $entry['match_pts'] ?>pts · 🏆 <?= $entry['top4_pts'] ?>pts top4
+              · <?= $entry['predictions'] ?> apuestas · <?= $entry['exact'] ?> exactos
+            </div>
           </div>
+          <span class="lb-pts"><?= $entry['total'] ?></span>
+          <span style="color:var(--text-dim);font-size:.8rem">›</span>
         </div>
-        <span class="lb-pts"><?= $entry['total'] ?></span>
-      </div>
+      </a>
     <?php endforeach; ?>
 
     <!-- Always show "me" at bottom if out of visible area -->
