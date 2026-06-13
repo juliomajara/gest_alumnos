@@ -57,28 +57,26 @@ function get_matches(): array {
     $cache_file = DATA_DIR . '/matches.json';
     $overrides  = read_json(DATA_DIR . '/results_override.json');
 
-    // Use cache if fresh
     if (file_exists($cache_file) && (time() - filemtime($cache_file)) < CACHE_TTL) {
         $data = read_json($cache_file);
-        return apply_overrides($data, $overrides);
-    }
-
-    // Fetch from API
-    $json = fetch_url(MATCHES_API_URL);
-    if ($json !== null) {
-        $raw = json_decode($json, true);
-        if ($raw && isset($raw['matches'])) {
-            $data = normalise_matches($raw['matches']);
-            write_json($cache_file, $data);
-            return apply_overrides($data, $overrides);
+    } else {
+        $json = fetch_url(MATCHES_API_URL);
+        if ($json !== null) {
+            $raw = json_decode($json, true);
+            if ($raw && isset($raw['matches'])) {
+                $data = normalise_matches($raw['matches']);
+                write_json($cache_file, $data);
+            }
+        }
+        if (empty($data)) {
+            $data = file_exists($cache_file) ? read_json($cache_file) : [];
         }
     }
 
-    // Fall back to stale cache
-    if (file_exists($cache_file)) {
-        return apply_overrides(read_json($cache_file), $overrides);
-    }
-    return [];
+    $result = apply_overrides($data, $overrides);
+    // Always sort by kickoff_utc regardless of cache state
+    usort($result, fn($a, $b) => strcmp($a['kickoff_utc'] ?? '9999', $b['kickoff_utc'] ?? '9999'));
+    return $result;
 }
 
 function normalise_matches(array $raw): array {
