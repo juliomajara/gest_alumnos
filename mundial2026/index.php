@@ -62,45 +62,107 @@ $assets_base = '';
       </button>
     </form>
 
-    <p class="login-note">
-      Si es tu primera vez, se creará una cuenta automáticamente.<br>
-      Si ya tienes cuenta, introduce el mismo PIN de siempre.
+    <!-- Confirmation box (hidden until needed) -->
+    <div id="confirm-box" style="display:none;margin-top:16px;background:rgba(255,152,0,.08);border:1px solid rgba(255,152,0,.3);border-radius:12px;padding:16px">
+      <p style="font-size:.88rem;color:#ff9800;margin-bottom:12px;line-height:1.5">
+        ⚠️ No encontramos ninguna cuenta con el nombre <strong id="confirm-name"></strong>.<br>
+        ¿Es la primera vez que entras y quieres crear una cuenta nueva?
+      </p>
+      <div style="display:flex;gap:8px">
+        <button id="confirm-yes" style="flex:1;padding:11px;border-radius:8px;border:none;background:#ffd700;color:#000;font-weight:800;cursor:pointer;font-size:.9rem">
+          ✅ Sí, crear cuenta
+        </button>
+        <button id="confirm-no" style="flex:1;padding:11px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#e0eaff;font-weight:600;cursor:pointer;font-size:.9rem">
+          ✏️ Corregir nombre
+        </button>
+      </div>
+    </div>
+
+    <p class="login-note" id="login-note">
+      Si ya tienes cuenta, introduce tu nombre exactamente como lo registraste y tu PIN.
     </p>
   </div>
 </div>
 <script src="assets/app.js"></script>
 <script>
-document.getElementById('login-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const btn  = document.getElementById('login-btn');
-  const err  = document.getElementById('login-error');
-  const name = document.getElementById('name').value.trim();
-  const pins = document.querySelectorAll('.pin-input');
-  const pin  = Array.from(pins).map(p => p.value).join('');
+async function doLogin(name, pin, confirmNew = false) {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
 
-  err.style.display = 'none';
-  if (!name) { err.textContent = 'Escribe tu nombre'; err.style.display = ''; return; }
-  if (pin.length !== 4) { err.textContent = 'El PIN debe ser de 4 dígitos'; err.style.display = ''; return; }
-
-  btn.disabled = true; btn.textContent = 'Entrando…';
+  btn.disabled = true;
+  btn.textContent = 'Comprobando…';
 
   try {
     const fd = new FormData();
-    fd.append('name', name); fd.append('pin', pin);
+    fd.append('name', name);
+    fd.append('pin', pin);
+    if (confirmNew) fd.append('confirm_new', '1');
+
     const res  = await fetch('api/auth.php', { method: 'POST', body: fd });
     const data = await res.json();
+
     if (data.ok) {
+      btn.textContent = '🎉 Entrando…';
       window.location.href = 'partidos.php';
-    } else {
-      err.textContent = data.error || 'Error desconocido';
-      err.style.display = '';
-      btn.disabled = false; btn.textContent = '⚽ Entrar';
+      return;
     }
+
+    // New user — needs confirmation
+    if (data.is_new) {
+      document.getElementById('confirm-name').textContent = '"' + name + '"';
+      document.getElementById('confirm-box').style.display = '';
+      document.getElementById('login-note').style.display = 'none';
+      btn.disabled = false;
+      btn.textContent = '⚽ Entrar';
+      return;
+    }
+
+    // Error
+    err.textContent = data.error || 'Error desconocido';
+    err.style.display = '';
+    btn.disabled = false;
+    btn.textContent = '⚽ Entrar';
+
   } catch {
     err.textContent = 'Error de conexión. Inténtalo de nuevo.';
     err.style.display = '';
-    btn.disabled = false; btn.textContent = '⚽ Entrar';
+    btn.disabled = false;
+    btn.textContent = '⚽ Entrar';
   }
+}
+
+function getPinValue() {
+  return Array.from(document.querySelectorAll('.pin-input')).map(p => p.value).join('');
+}
+
+document.getElementById('login-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const err  = document.getElementById('login-error');
+  const name = document.getElementById('name').value.trim();
+  const pin  = getPinValue();
+
+  err.style.display = 'none';
+  document.getElementById('confirm-box').style.display = 'none';
+  document.getElementById('login-note').style.display = '';
+
+  if (!name) { err.textContent = 'Escribe tu nombre'; err.style.display = ''; return; }
+  if (pin.length !== 4) { err.textContent = 'El PIN debe ser de 4 dígitos'; err.style.display = ''; return; }
+
+  doLogin(name, pin, false);
+});
+
+document.getElementById('confirm-yes').addEventListener('click', () => {
+  const name = document.getElementById('name').value.trim();
+  const pin  = getPinValue();
+  document.getElementById('confirm-box').style.display = 'none';
+  doLogin(name, pin, true);
+});
+
+document.getElementById('confirm-no').addEventListener('click', () => {
+  document.getElementById('confirm-box').style.display = 'none';
+  document.getElementById('login-note').style.display = '';
+  document.getElementById('name').focus();
+  document.getElementById('name').select();
 });
 </script>
 </body>

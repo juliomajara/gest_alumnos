@@ -31,7 +31,12 @@ if ($existing) {
     echo json_encode(['ok' => true, 'new' => false, 'name' => $existing['name']]); exit;
 }
 
-// New user
+// New user — require explicit confirmation to avoid typos
+if (empty($_POST['confirm_new'])) {
+    echo json_encode(['ok' => false, 'is_new' => true, 'name' => $name]);
+    exit;
+}
+
 $user = create_user($name, $pin);
 $_SESSION['user'] = ['id' => $user['id'], 'name' => $user['name']];
 echo json_encode(['ok' => true, 'new' => true, 'name' => $user['name']]);

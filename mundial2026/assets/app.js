@@ -116,21 +116,30 @@ function initPredictionForms() {
 }
 
 function updatePredDisplay(form, g1, g2) {
-  // Update the pred-info section inside the footer (within the form)
+  // Update pred-info section
   const predInfo = form.querySelector('.pred-info');
   if (predInfo) {
     predInfo.innerHTML =
       `<span class="text-muted" style="font-size:.75rem">Tu apuesta:</span>` +
       `<span class="pred-score">${g1} - ${g2}</span>`;
   }
-  // If there's a standalone pts badge outside the form, update it too
+
   const card = form.closest('.match-card');
   if (card) {
     const ptsSpan = card.querySelector('.pred-pts');
     if (ptsSpan) { ptsSpan.textContent = 'Pendiente'; ptsSpan.className = 'pred-pts pending'; }
     // Mark card as having a prediction (for filter tabs)
     card.classList.add('has-pred');
+
+    // ── Re-apply active filter so the card stays visible ──────────────────
+    const activeFilter = document.querySelector('.tab-btn.active')?.dataset.filter;
+    if (activeFilter === 'my') {
+      card.style.display = '';              // show the card
+      const group = card.closest('.match-group');
+      if (group) group.style.display = ''; // show its group if hidden
+    }
   }
+
   // Update the top-bar counter by re-counting from DOM
   const badge = document.querySelector('.top-bar-badge');
   if (badge) {
