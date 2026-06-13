@@ -90,6 +90,7 @@ function initPredictionForms() {
           showToast(isNew ? '✅ Apuesta guardada' : '🔄 Apuesta actualizada', 'success');
           updatePredDisplay(form, parseInt(g1), parseInt(g2));
           btn.textContent = 'Cambiar';
+          btn.classList.add('saved');
         } else {
           showToast(data.error || 'Error al guardar', 'error');
           btn.textContent = prevText;

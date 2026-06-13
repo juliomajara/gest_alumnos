@@ -295,7 +295,10 @@ img { display: block; max-width: 100%; }
   font-weight: 700; font-size: .82rem;
   cursor: pointer; white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
-  transition: transform .1s, opacity .15s;
+  transition: transform .1s, opacity .15s, background .2s;
+}
+.save-btn.saved {
+  background: var(--success); color: #000;
 }
 .save-btn:active { transform: scale(.95); opacity: .85; }
 .save-btn:disabled { background: var(--card2); color: var(--text-dim); cursor: default; }
