@@ -11,12 +11,18 @@ foreach ($all_preds as $p) {
     if ($p['user_id'] === $user['id']) $my_preds[$p['match_id']] = $p;
 }
 
-// Group matches by round/group
+// Group matches by round/group, preserving chronological order within each group
 $groups = [];
 foreach ($matches as $m) {
     $key = $m['group'] ?? $m['round'] ?? 'Otros';
     $groups[$key][] = $m;
 }
+// Sort groups by the kickoff of their earliest match
+uasort($groups, function ($a, $b) {
+    $ea = min(array_map(fn($m) => $m['kickoff_utc'] ?? '9999', $a));
+    $eb = min(array_map(fn($m) => $m['kickoff_utc'] ?? '9999', $b));
+    return strcmp($ea, $eb);
+});
 
 $my_count = count($my_preds);
 $total    = count($matches);

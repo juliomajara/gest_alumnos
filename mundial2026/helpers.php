@@ -102,6 +102,7 @@ function normalise_matches(array $raw): array {
             'ground'      => $m['ground'] ?? null,
         ];
     }
+    usort($matches, fn($a, $b) => strcmp($a['kickoff_utc'] ?? '9999', $b['kickoff_utc'] ?? '9999'));
     return $matches;
 }
 
