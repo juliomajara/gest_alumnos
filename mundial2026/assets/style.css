@@ -144,6 +144,22 @@ img { display: block; max-width: 100%; }
   padding: 2px 8px; font-size: .7rem; color: var(--text-muted);
 }
 
+/* ── Date separator ─────────────────────────────────────────────────────── */
+#matches-list { padding-bottom: 8px; }
+.date-header-row {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--primary);
+  padding: 18px 0 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.date-header-row::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: rgba(255,215,0,.15);
+}
+
 /* ── Filter Tabs ───────────────────────────────────────────────────────── */
 .filter-tabs {
   display: flex; gap: 6px;

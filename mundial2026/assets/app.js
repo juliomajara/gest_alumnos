@@ -156,30 +156,39 @@ function initFilterTabs() {
       btn.addEventListener('click', () => {
         container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
-        const filter = btn.dataset.filter;
-        document.querySelectorAll('.match-group[data-group]').forEach(group => {
-          const groupName = group.dataset.group;
-          const show = filter === 'all'
-            || (filter === 'groups' && groupName.toLowerCase().startsWith('group'))
-            || (filter === 'knockout' && !groupName.toLowerCase().startsWith('group'))
-            || (filter === 'my' && group.querySelectorAll('.match-card.has-pred').length > 0);
-          group.style.display = show ? '' : 'none';
-
-          // For "my" filter: also hide individual cards without prediction
-          if (filter === 'my') {
-            group.querySelectorAll('.match-card').forEach(card => {
-              card.style.display = card.classList.contains('has-pred') ? '' : 'none';
-            });
-          } else {
-            group.querySelectorAll('.match-card').forEach(card => {
-              card.style.display = '';
-            });
-          }
-        });
+        applyFilter(btn.dataset.filter);
       });
     });
   });
+}
+
+function applyFilter(filter) {
+  document.querySelectorAll('.date-group').forEach(group => {
+    let anyVisible = false;
+    group.querySelectorAll('.match-card').forEach(card => {
+      let show = false;
+      if (filter === 'all')    show = true;
+      if (filter === 'my')     show = card.classList.contains('has-pred');
+      if (filter === 'open')   show = card.classList.contains('open');
+      if (filter === 'done')   show = card.classList.contains('has-result');
+      card.style.display = show ? '' : 'none';
+      if (show) anyVisible = true;
+    });
+    // Hide the date group header when no cards are visible
+    group.style.display = anyVisible ? '' : 'none';
+  });
+}
+
+// ── Scroll to first open match ────────────────────────────────────────────────
+function scrollToFirstOpen() {
+  const anchor = document.getElementById('primer-abierto');
+  if (!anchor) return;
+  // Small delay so the page is fully laid out
+  setTimeout(() => {
+    const topBarH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--top-h')) || 56;
+    const y = anchor.getBoundingClientRect().top + window.scrollY - topBarH - 8;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  }, 120);
 }
 
 // ── Top 4 duplicate team guard ────────────────────────────────────────────────
@@ -231,4 +240,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initTop4Selects();
   initCountdowns();
   enforceTop4Unique(Array.from(document.querySelectorAll('.pos-select')));
+  scrollToFirstOpen();
 });
