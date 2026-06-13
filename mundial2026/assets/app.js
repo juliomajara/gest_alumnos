@@ -56,6 +56,10 @@ function initPinInputs() {
 // ── Match prediction forms ────────────────────────────────────────────────────
 function initPredictionForms() {
   document.querySelectorAll('.predict-form').forEach(form => {
+    // Track whether this form already has a saved prediction
+    const btn = form.querySelector('.save-btn');
+    form.dataset.saved = btn && btn.textContent.trim() === 'Cambiar' ? '1' : '0';
+
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const btn = form.querySelector('.save-btn');
@@ -67,6 +71,7 @@ function initPredictionForms() {
         showToast('Introduce ambos goles', 'error'); return;
       }
 
+      const prevText = btn.textContent.trim();
       btn.disabled = true;
       btn.textContent = '…';
 
@@ -80,26 +85,30 @@ function initPredictionForms() {
         const data = await res.json();
 
         if (data.ok) {
-          showToast('✅ Predicción guardada', 'success');
+          const isNew = form.dataset.saved === '0';
+          form.dataset.saved = '1';
+          showToast(isNew ? '✅ Apuesta guardada' : '🔄 Apuesta actualizada', 'success');
           updatePredDisplay(form, parseInt(g1), parseInt(g2));
+          btn.textContent = 'Cambiar';
         } else {
           showToast(data.error || 'Error al guardar', 'error');
+          btn.textContent = prevText;
         }
       } catch {
         showToast('Error de conexión', 'error');
+        btn.textContent = prevText;
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Guardar';
       }
     });
 
-    // Score input navigation
+    // Score input: auto-advance and select on focus
     const inputs = form.querySelectorAll('.score-input');
     inputs.forEach((inp, i) => {
       inp.addEventListener('input', e => {
         const val = e.target.value.replace(/\D/g, '').slice(0, 2);
         e.target.value = val;
-        if (val.length === 2 && i < inputs.length - 1) inputs[i + 1].focus();
+        if (val.length >= 1 && i < inputs.length - 1) inputs[i + 1].focus();
       });
       inp.addEventListener('focus', () => inp.select());
     });
@@ -107,12 +116,28 @@ function initPredictionForms() {
 }
 
 function updatePredDisplay(form, g1, g2) {
-  const footer = form.closest('.match-card')?.querySelector('.match-footer');
-  if (!footer) return;
-  const predSpan = footer.querySelector('.pred-score');
-  if (predSpan) predSpan.textContent = `${g1} - ${g2}`;
-  const ptsSpan = footer.querySelector('.pred-pts');
-  if (ptsSpan) { ptsSpan.textContent = 'Pendiente'; ptsSpan.className = 'pred-pts pending'; }
+  // Update the pred-info section inside the footer (within the form)
+  const predInfo = form.querySelector('.pred-info');
+  if (predInfo) {
+    predInfo.innerHTML =
+      `<span class="text-muted" style="font-size:.75rem">Tu apuesta:</span>` +
+      `<span class="pred-score">${g1} - ${g2}</span>`;
+  }
+  // If there's a standalone pts badge outside the form, update it too
+  const card = form.closest('.match-card');
+  if (card) {
+    const ptsSpan = card.querySelector('.pred-pts');
+    if (ptsSpan) { ptsSpan.textContent = 'Pendiente'; ptsSpan.className = 'pred-pts pending'; }
+    // Mark card as having a prediction (for filter tabs)
+    card.classList.add('has-pred');
+  }
+  // Update the top-bar counter by re-counting from DOM
+  const badge = document.querySelector('.top-bar-badge');
+  if (badge) {
+    const done  = document.querySelectorAll('.match-card.has-pred').length;
+    const total = document.querySelectorAll('.match-card').length;
+    badge.textContent = `${done}/${total} predichos`;
+  }
 }
 
 // ── Filter Tabs ───────────────────────────────────────────────────────────────

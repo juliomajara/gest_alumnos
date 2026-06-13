@@ -127,7 +127,7 @@ include 'includes/head.php';
                     <span class="text-muted" style="font-size:.75rem">Sin predicción</span>
                   <?php endif; ?>
                 </div>
-                <button type="submit" class="save-btn"><?= $pred ? 'Actualizar' : 'Guardar' ?></button>
+                <button type="submit" class="save-btn"><?= $pred ? 'Cambiar' : 'Guardar' ?></button>
               </div>
             </form>
 
