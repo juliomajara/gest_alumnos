@@ -330,15 +330,16 @@ function get_leaderboard(): array {
         ];
     }
 
-    // Merge
-    $all_ids = array_unique(array_merge(array_keys($user_match_pts), array_keys($user_top4_pts)));
-    $board   = [];
-    foreach ($all_ids as $uid) {
-        $match_info = $user_match_pts[$uid] ?? ['name' => ($user_top4_pts[$uid]['name'] ?? '?'), 'match' => 0, 'count' => 0, 'exact' => 0];
+    // Start from ALL registered users so everyone appears even with 0 pts
+    $all_users = read_json(DATA_DIR . '/users.json');
+    $board = [];
+    foreach ($all_users as $u) {
+        $uid        = $u['id'];
+        $match_info = $user_match_pts[$uid] ?? ['match' => 0, 'count' => 0, 'exact' => 0];
         $top4_pts   = $user_top4_pts[$uid]['pts'] ?? 0;
         $board[] = [
             'user_id'     => $uid,
-            'name'        => $match_info['name'],
+            'name'        => $u['name'],
             'match_pts'   => $match_info['match'],
             'top4_pts'    => $top4_pts,
             'total'       => $match_info['match'] + $top4_pts,
@@ -347,7 +348,7 @@ function get_leaderboard(): array {
             'top4_pred'   => $user_top4_pts[$uid]['pred'] ?? null,
         ];
     }
-    usort($board, fn($a, $b) => $b['total'] <=> $a['total'] ?: $b['exact'] <=> $a['exact']);
+    usort($board, fn($a, $b) => $b['total'] <=> $a['total'] ?: $b['exact'] <=> $a['exact'] ?: strcmp($a['name'], $b['name']));
     return $board;
 }
 
