@@ -365,6 +365,7 @@ function render_practice_rows(array $practices): string
         }
       ?>
       <tr>
+        <td><a class="empresa-name-trigger--practicas" href="practica_detalle.php?id_practica=<?php echo (int) $practice['id_practica']; ?>"><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></a></td>
         <td>
           <span
             class="alumno-name-trigger"
@@ -404,7 +405,6 @@ function render_practice_rows(array $practices): string
         <td><?php echo htmlspecialchars($fecha_inicio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin_real, ENT_QUOTES, 'UTF-8'); ?></td>
-        <td><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($estado, ENT_QUOTES, 'UTF-8'); ?></td>
       </tr>
     <?php endforeach; ?>
@@ -502,12 +502,12 @@ $active_page = 'practicas';
           <table>
             <thead>
               <tr>
+                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Convenio/Anexo<?php echo sort_ind('anexo', $sort_col, $sort_dir); ?></a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('alumno', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Alumno<?php echo sort_ind('alumno', $sort_col, $sort_dir); ?></a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('empresa', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Empresa<?php echo sort_ind('empresa', $sort_col, $sort_dir); ?></a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_inicio', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Fecha de inicio<?php echo sort_ind('fecha_inicio', $sort_col, $sort_dir); ?></a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('fecha_fin', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Fecha de fin<?php echo sort_ind('fecha_fin', $sort_col, $sort_dir); ?></a></th>
                 <th>Fecha fin real</th>
-                <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('anexo', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Anexo 2.1<?php echo sort_ind('anexo', $sort_col, $sort_dir); ?></a></th>
                 <th><a class="practice-link" href="<?php echo htmlspecialchars(build_order_url('estado', $sort_col, $sort_dir), ENT_QUOTES, 'UTF-8'); ?>">Estado<?php echo sort_ind('estado', $sort_col, $sort_dir); ?></a></th>
               </tr>
             </thead>
@@ -535,7 +535,7 @@ $active_page = 'practicas';
       </div>
       <ul class="practicas-ras-popover__criteria" id="empresa-detail-data"></ul>
       <div class="practicas-ras-popover__footer">
-        <a id="empresa-detail-link" class="practicas-ras-popover__link" href="#">Ver empresa completa →</a>
+        <a id="empresa-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles de la empresa →</a>
       </div>
     </div>
   </div>
@@ -555,7 +555,7 @@ $active_page = 'practicas';
       </div>
       <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
       <div class="practicas-ras-popover__footer">
-        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver alumno completo →</a>
+        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles de alumno →</a>
       </div>
     </div>
   </div>

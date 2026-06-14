@@ -2195,9 +2195,9 @@ a.edit-toggle:focus {
   max-height: min(72vh, 560px);
   overflow: auto;
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1px solid #c5cfe6;
   border-radius: 10px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 16px 40px rgba(22, 35, 63, 0.13);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -2254,12 +2254,28 @@ a.edit-toggle:focus {
   text-decoration: underline;
 }
 
+.practicas-ras-popover--modulo.practicas-ras-popover--emp-alumnos {
+  width: min(380px, calc(100vw - 24px));
+}
+
+.practicas-ras-popover--modulo.practicas-ras-popover--emp-alumnos .practicas-ras-popover__criteria li {
+  align-items: start;
+  grid-template-columns: 80px 1fr;
+}
+
+a.empresa-name-trigger--practicas {
+  color: inherit;
+  text-decoration: none;
+}
+
 .panel-grid .empresa-name-trigger--practicas {
   cursor: pointer;
 }
 
 .panel-grid .empresa-name-trigger--practicas:hover,
-.panel-grid .empresa-name-trigger--practicas:focus-visible {
+.panel-grid .empresa-name-trigger--practicas:focus-visible,
+.practicas-ras-popover .empresa-name-trigger--practicas:hover,
+.practicas-ras-popover .empresa-name-trigger--practicas:focus-visible {
   opacity: 0.65;
 }
 
@@ -2309,8 +2325,8 @@ a.edit-toggle:focus {
 }
 
 .practicas-ras-popover__header {
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  background: #eaecf6;
+  border-bottom: 1px solid #c5cfe6;
   padding: 12px 44px 11px 16px;
   position: relative;
   display: flex;
@@ -2450,6 +2466,11 @@ a.edit-toggle:focus {
   pointer-events: none;
   max-width: 240px;
   box-shadow: 0 8px 24px rgba(22, 35, 63, 0.22);
+}
+
+.modulo-tooltip--inline {
+  white-space: nowrap;
+  max-width: none;
 }
 
 .modulo-tooltip__name {
@@ -3431,7 +3452,7 @@ a.edit-toggle:focus {
   -webkit-appearance: none;
   width: 15px;
   height: 15px;
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid #8b9dc3;
   border-radius: 3px;
   background: #fff;
   display: inline-flex;

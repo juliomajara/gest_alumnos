@@ -6,7 +6,7 @@ require_once __DIR__ . '/db.php';
 $pdo = db();
 
 $search_term = trim((string) ($_GET['q'] ?? ''));
-$allowed_orders_emp = ['nombre_asc', 'nombre_desc', 'convenio_asc', 'convenio_desc'];
+$allowed_orders_emp = ['nombre_asc', 'nombre_desc', 'convenio_asc', 'convenio_desc', 'practicas_asc', 'practicas_desc'];
 $order_param_emp = (string) ($_GET['orden'] ?? '');
 $current_order_emp = in_array($order_param_emp, $allowed_orders_emp, true) ? $order_param_emp : 'nombre_asc';
 $_last_us_emp = strrpos($current_order_emp, '_');
@@ -126,12 +126,53 @@ $companies_stmt = $pdo->prepare(
 $companies_stmt->execute($params);
 $companies = $companies_stmt->fetchAll();
 
-function render_company_rows(array $companies): string
+$practicas_emp_stmt = $pdo->query(
+  'SELECT p.id_empresa,
+          ce.curso_escolar,
+          COUNT(DISTINCT p.id_alumno) AS num_alumnos,
+          COALESCE(ci.abreviatura, \'\') AS ciclo
+   FROM practicas p
+   INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
+   INNER JOIN (
+     SELECT id_alumno, MAX(id_curso_escolar) AS max_ce
+     FROM alumno_curso
+     GROUP BY id_alumno
+   ) ac_max ON ac_max.id_alumno = p.id_alumno AND ac_max.max_ce = ac.id_curso_escolar
+   INNER JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+   LEFT JOIN ciclos ci ON ci.id_ciclo = ac.id_ciclo
+   WHERE p.cancelada = 0
+   GROUP BY p.id_empresa, ce.id_curso_escolar, ci.id_ciclo, ce.curso_escolar, ci.abreviatura
+   ORDER BY ce.curso_escolar ASC, ci.abreviatura ASC'
+);
+$practicas_por_empresa = [];
+foreach ($practicas_emp_stmt->fetchAll() as $pr_row) {
+  $practicas_por_empresa[(int) $pr_row['id_empresa']][] = $pr_row;
+}
+
+if ($sort_col_emp === 'practicas') {
+  usort($companies, static function (array $a, array $b) use ($practicas_por_empresa, $sort_dir_emp): int {
+    $pa = $practicas_por_empresa[(int) ($a['id_empresa'] ?? 0)] ?? [];
+    $pb = $practicas_por_empresa[(int) ($b['id_empresa'] ?? 0)] ?? [];
+    $last_a = $pa ? $pa[count($pa) - 1] : null;
+    $last_b = $pb ? $pb[count($pb) - 1] : null;
+    $curso_a = $last_a ? (string) $last_a['curso_escolar'] : '';
+    $curso_b = $last_b ? (string) $last_b['curso_escolar'] : '';
+    $cmp = strcmp($curso_a, $curso_b);
+    if ($cmp !== 0) {
+      return $sort_dir_emp === 'asc' ? $cmp : -$cmp;
+    }
+    $n_a = $last_a ? (int) $last_a['num_alumnos'] : 0;
+    $n_b = $last_b ? (int) $last_b['num_alumnos'] : 0;
+    return $sort_dir_emp === 'asc' ? ($n_a - $n_b) : ($n_b - $n_a);
+  });
+}
+
+function render_company_rows(array $companies, array $practicas_por_empresa): string
 {
   ob_start();
   if (!$companies): ?>
     <tr>
-      <td colspan="6">No hay empresas para los filtros seleccionados.</td>
+      <td colspan="7">No hay empresas para los filtros seleccionados.</td>
     </tr>
   <?php else: ?>
     <?php foreach ($companies as $company): ?>
@@ -160,6 +201,7 @@ function render_company_rows(array $companies): string
         $telefono = (string) ($company['telefono'] ?? '');
         $correo = (string) ($company['correo'] ?? '');
         $convenio = (string) ($company['convenio'] ?? '');
+        $practicas_emp = $practicas_por_empresa[$idEmpresa] ?? [];
       ?>
       <tr>
         <td><?php echo htmlspecialchars($convenio, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -181,6 +223,26 @@ function render_company_rows(array $companies): string
             <span class="copy-trigger" data-copy="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?></span>
           <?php endif; ?>
         </td>
+        <td>
+          <?php foreach ($practicas_emp as $pi => $pr): ?>
+            <?php if ($pi > 0): ?><br><?php endif; ?>
+            <span
+              class="practicas-emp-trigger empresa-name-trigger--practicas"
+              role="button"
+              tabindex="0"
+              aria-haspopup="dialog"
+              aria-expanded="false"
+              data-empresa-id="<?php echo $idEmpresa; ?>"
+              data-empresa-nombre="<?php echo htmlspecialchars($nombre, ENT_QUOTES, 'UTF-8'); ?>"
+            ><?php
+              echo htmlspecialchars($pr['curso_escolar'], ENT_QUOTES, 'UTF-8')
+                . ' - ' . (int) $pr['num_alumnos'];
+              if ($pr['ciclo'] !== '') {
+                echo ' - ' . htmlspecialchars($pr['ciclo'], ENT_QUOTES, 'UTF-8');
+              }
+            ?></span>
+          <?php endforeach; ?>
+        </td>
       </tr>
     <?php endforeach; ?>
   <?php endif;
@@ -188,12 +250,55 @@ function render_company_rows(array $companies): string
   return ob_get_clean();
 }
 
-$rows_html = render_company_rows($companies);
+$rows_html = render_company_rows($companies, $practicas_por_empresa);
 
 if (($_GET['ajax'] ?? '') === '1') {
   header('Content-Type: text/html; charset=UTF-8');
   echo $rows_html;
   exit;
+}
+
+$alumnos_emp_stmt = $pdo->query(
+  'SELECT p.id_empresa,
+          ce.curso_escolar,
+          a.id_alumno,
+          TRIM(CONCAT_WS(\' \', a.nombre, a.apellido1, a.apellido2)) AS alumno_nombre,
+          COALESCE(ci.abreviatura, \'\') AS ciclo,
+          p.cancelada,
+          p.fecha_inicio,
+          p.fecha_fin_extra
+   FROM practicas p
+   INNER JOIN alumnos a ON a.id_alumno = p.id_alumno
+   INNER JOIN alumno_curso ac ON ac.id_alumno = p.id_alumno
+   INNER JOIN (
+     SELECT id_alumno, MAX(id_curso_escolar) AS max_ce
+     FROM alumno_curso
+     GROUP BY id_alumno
+   ) ac_max ON ac_max.id_alumno = p.id_alumno AND ac_max.max_ce = ac.id_curso_escolar
+   INNER JOIN cursos_escolares ce ON ce.id_curso_escolar = ac.id_curso_escolar
+   LEFT JOIN ciclos ci ON ci.id_ciclo = ac.id_ciclo
+   ORDER BY ce.curso_escolar DESC, a.apellido1, a.apellido2, a.nombre'
+);
+$today = date('Y-m-d');
+$alumnos_por_empresa = [];
+foreach ($alumnos_emp_stmt->fetchAll() as $al_row) {
+  $id_emp = (int) $al_row['id_empresa'];
+  if ((int) $al_row['cancelada'] === 1) {
+    $estado = 'Cancelada';
+  } elseif ($al_row['fecha_fin_extra'] !== null && (string) $al_row['fecha_fin_extra'] < $today) {
+    $estado = 'Finalizada';
+  } elseif ($al_row['fecha_inicio'] !== null && (string) $al_row['fecha_inicio'] > $today) {
+    $estado = 'En espera';
+  } else {
+    $estado = 'En curso';
+  }
+  $alumnos_por_empresa[$id_emp][] = [
+    'curso'      => (string) $al_row['curso_escolar'],
+    'id_alumno'  => (int) $al_row['id_alumno'],
+    'nombre'     => (string) $al_row['alumno_nombre'],
+    'ciclo'      => (string) $al_row['ciclo'],
+    'estado'     => $estado,
+  ];
 }
 
 $page_title = 'Empresas | Gestor de Alumnos';
@@ -261,6 +366,12 @@ $active_page = 'empresas';
                 <th>Contacto</th>
                 <th>Teléfono</th>
                 <th>Correo</th>
+                <th><?php
+                  $_pr_next = ($sort_col_emp === 'practicas' && $sort_dir_emp === 'desc') ? 'asc' : 'desc';
+                  $_pr_p = $_GET; $_pr_p['orden'] = 'practicas_' . $_pr_next; unset($_pr_p['ajax']);
+                  $_pr_q = http_build_query($_pr_p);
+                  $_pr_url = 'empresas.php' . ($_pr_q !== '' ? '?' . $_pr_q : '');
+                ?><a class="practice-link" href="<?php echo htmlspecialchars($_pr_url, ENT_QUOTES, 'UTF-8'); ?>">Prácticas<?php echo sort_ind_emp('practicas', $sort_col_emp, $sort_dir_emp); ?></a></th>
               </tr>
             </thead>
             <tbody>
@@ -380,5 +491,161 @@ $active_page = 'empresas';
 
   </script>
   <script src="assets/copy.js"></script>
+
+  <div class="practicas-ras-popover-layer" id="practicas-emp-layer" hidden>
+    <button type="button" class="practicas-ras-popover-backdrop" data-emp-pract-close tabindex="-1" aria-hidden="true"></button>
+    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--emp-alumnos" id="practicas-emp-popover" role="dialog" aria-modal="false" aria-labelledby="practicas-emp-title" hidden>
+      <div class="practicas-ras-popover__header">
+        <span class="practicas-ras-popover__eyebrow">Empresa</span>
+        <span id="practicas-emp-title" class="practicas-ras-popover__title"></span>
+        <button type="button" class="practicas-ras-popover__close" data-emp-pract-close aria-label="Cerrar detalle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <ul class="practicas-ras-popover__criteria" id="practicas-emp-data"></ul>
+    </div>
+  </div>
+
+  <script>
+    const alumnosPorEmpresa = <?php echo json_encode($alumnos_por_empresa, JSON_UNESCAPED_UNICODE); ?>;
+    const empPractLayer = document.getElementById('practicas-emp-layer');
+    const empPractPopover = document.getElementById('practicas-emp-popover');
+    const empPractTitle = document.getElementById('practicas-emp-title');
+    const empPractData = document.getElementById('practicas-emp-data');
+    let activeEmpPractTrigger = null;
+
+    const setEmpPractPosition = (trigger) => {
+      const triggerRect = trigger.getBoundingClientRect();
+      const popoverRect = empPractPopover.getBoundingClientRect();
+      const gutter = 12;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      let top = triggerRect.top;
+      let left = triggerRect.right + gutter;
+
+      if (left + popoverRect.width > viewportWidth - gutter) {
+        left = triggerRect.left - popoverRect.width - gutter;
+      }
+
+      if (left < gutter) {
+        left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
+        top = triggerRect.bottom + gutter;
+      }
+
+      if (top + popoverRect.height > viewportHeight - gutter) {
+        top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
+      }
+
+      empPractPopover.style.top = `${Math.max(gutter, top)}px`;
+      empPractPopover.style.left = `${Math.max(gutter, left)}px`;
+    };
+
+    const closeEmpPractPopover = () => {
+      empPractPopover.hidden = true;
+      empPractLayer.hidden = true;
+      if (activeEmpPractTrigger) {
+        activeEmpPractTrigger.setAttribute('aria-expanded', 'false');
+      }
+      activeEmpPractTrigger = null;
+    };
+
+    const openEmpPractPopover = (trigger) => {
+      if (activeEmpPractTrigger && activeEmpPractTrigger !== trigger) {
+        activeEmpPractTrigger.setAttribute('aria-expanded', 'false');
+      }
+
+      const empresaId = trigger.dataset.empresaId || '';
+      const alumnos = alumnosPorEmpresa[empresaId] || [];
+
+      empPractTitle.textContent = trigger.dataset.empresaNombre || 'Empresa';
+
+      empPractData.innerHTML = '';
+      if (alumnos.length === 0) {
+        const item = document.createElement('li');
+        item.appendChild(document.createElement('strong'));
+        const span = document.createElement('span');
+        span.textContent = 'Sin alumnos registrados';
+        item.appendChild(span);
+        empPractData.appendChild(item);
+      } else {
+        const byCourse = {};
+        const courseOrder = [];
+        alumnos.forEach((a) => {
+          if (!byCourse[a.curso]) {
+            byCourse[a.curso] = [];
+            courseOrder.push(a.curso);
+          }
+          byCourse[a.curso].push(a);
+        });
+        courseOrder.forEach((curso) => {
+          const item = document.createElement('li');
+          const strong = document.createElement('strong');
+          strong.textContent = curso;
+          item.appendChild(strong);
+          const span = document.createElement('span');
+          byCourse[curso].forEach((a, i) => {
+            if (i > 0) span.appendChild(document.createElement('br'));
+            const link = document.createElement('a');
+            link.className = 'empresa-name-trigger--practicas';
+            link.href = `alumno_detalle.php?id_alumno=${encodeURIComponent(a.id_alumno)}`;
+            link.textContent = a.ciclo ? `• ${a.nombre} (${a.ciclo})` : `• ${a.nombre}`;
+            span.appendChild(link);
+          });
+          item.appendChild(span);
+          empPractData.appendChild(item);
+        });
+      }
+
+      activeEmpPractTrigger = trigger;
+      trigger.setAttribute('aria-expanded', 'true');
+      empPractLayer.hidden = false;
+      empPractPopover.hidden = false;
+      setEmpPractPosition(trigger);
+    };
+
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('.practicas-emp-trigger');
+      if (trigger) {
+        if (activeEmpPractTrigger === trigger && !empPractPopover.hidden) {
+          closeEmpPractPopover();
+          return;
+        }
+        openEmpPractPopover(trigger);
+        return;
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const trigger = event.target.closest('.practicas-emp-trigger');
+      if (trigger && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        trigger.click();
+        return;
+      }
+      if (event.key === 'Escape' && !empPractPopover.hidden) {
+        closeEmpPractPopover();
+      }
+    });
+
+    empPractLayer.querySelectorAll('[data-emp-pract-close]').forEach((el) => {
+      el.addEventListener('click', closeEmpPractPopover);
+    });
+
+    window.addEventListener('resize', () => {
+      if (activeEmpPractTrigger && !empPractPopover.hidden) {
+        setEmpPractPosition(activeEmpPractTrigger);
+      }
+    });
+
+    window.addEventListener('scroll', () => {
+      if (activeEmpPractTrigger && !empPractPopover.hidden) {
+        setEmpPractPosition(activeEmpPractTrigger);
+      }
+    }, true);
+  </script>
 </body>
 </html>

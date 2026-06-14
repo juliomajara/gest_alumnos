@@ -298,6 +298,7 @@ if ($vista === 'justificadas') {
         <a class="tab-nav-link" href="alumnos.php<?php echo $_tab_qs_alumnos; ?>">Alumnos</a>
         <a class="tab-nav-link active" href="asistencia.php">Asistencia</a>
         <a class="tab-nav-link" href="calificaciones.php<?php echo $_tab_qs_otras; ?>">Calificaciones</a>
+        <a class="tab-nav-link" href="alumnos_contacto.php<?php echo $_tab_qs_otras; ?>">Correos</a>
       </nav>
 
       <?php if ($errors !== []): ?>
@@ -589,7 +590,7 @@ if ($vista === 'justificadas') {
       </div>
       <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
       <div class="practicas-ras-popover__footer">
-        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver alumno completo →</a>
+        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles de alumno →</a>
       </div>
     </div>
   </div>

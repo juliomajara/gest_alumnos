@@ -252,7 +252,7 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
                             type="checkbox"
                             class="practicas-anexos-tabla-check"
                             <?php echo $checked ? 'checked' : ''; ?>
-                            title="<?php echo htmlspecialchars('Anexo ' . (string) $code . ' (mes ' . $seg . ') - ' . ucwords((string) $fase['estado']), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-tooltip="<?php echo htmlspecialchars('Anexo ' . (string) $code . ' (mes ' . $seg . ') - ' . ucfirst((string) $fase['estado']), ENT_QUOTES, 'UTF-8'); ?>"
                             data-ajax-step
                             data-id-practica="<?php echo $id_practica; ?>"
                             data-id-practicas-anexo="<?php echo $id_anexo; ?>"
@@ -291,7 +291,7 @@ function render_practicas_anexos_lista(array $practices, array $anexos_definicio
                         type="checkbox"
                         class="practicas-anexos-tabla-check"
                         <?php echo $checked ? 'checked' : ''; ?>
-                        title="<?php echo htmlspecialchars('Anexo ' . (string) $code . ' - ' . ucwords((string) $fase['estado']), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-tooltip="<?php echo htmlspecialchars('Anexo ' . (string) $code . ' - ' . ucfirst((string) $fase['estado']), ENT_QUOTES, 'UTF-8'); ?>"
                         data-ajax-step
                         data-id-practica="<?php echo $id_practica; ?>"
                         data-id-practicas-anexo="<?php echo $id_anexo; ?>"
@@ -750,6 +750,10 @@ $active_page = 'practicas';
     </main>
   </div>
 
+  <div class="modulo-tooltip modulo-tooltip--inline" id="anexo-tooltip" hidden>
+    <span class="modulo-tooltip__name" id="anexo-tooltip-name"></span>
+  </div>
+
   <script>
     (function () {
       const getCardPanel = (card) => {
@@ -1106,6 +1110,50 @@ $active_page = 'practicas';
           searchDebounceTimer = window.setTimeout(fetchPracticas, 250);
         });
       }
+    })();
+
+    (function () {
+      const tooltip = document.getElementById('anexo-tooltip');
+      const tooltipName = document.getElementById('anexo-tooltip-name');
+      if (!tooltip || !tooltipName) return;
+
+      let tooltipVisible = false;
+
+      const updatePosition = (x, y) => {
+        const offset = 14;
+        let left = x + offset;
+        let top = y + offset;
+        const w = tooltip.offsetWidth || 200;
+        const h = tooltip.offsetHeight || 40;
+        if (left + w > window.innerWidth - 8) { left = x - w - offset; }
+        if (top + h > window.innerHeight - 8) { top = y - h - offset; }
+        tooltip.style.left = Math.max(8, left) + 'px';
+        tooltip.style.top = Math.max(8, top) + 'px';
+      };
+
+      document.addEventListener('mouseover', (event) => {
+        const cb = event.target.closest('.practicas-anexos-tabla-check');
+        if (cb && cb.dataset.tooltip) {
+          tooltipName.textContent = cb.dataset.tooltip;
+          tooltip.hidden = false;
+          tooltipVisible = true;
+          updatePosition(event.clientX, event.clientY);
+        } else if (tooltipVisible && !event.target.closest('.practicas-anexos-tabla-check')) {
+          tooltip.hidden = true;
+          tooltipVisible = false;
+        }
+      });
+
+      document.addEventListener('mousemove', (event) => {
+        if (tooltipVisible) { updatePosition(event.clientX, event.clientY); }
+      });
+
+      document.addEventListener('mouseout', (event) => {
+        if (tooltipVisible && !event.relatedTarget?.closest('.practicas-anexos-tabla-check')) {
+          tooltip.hidden = true;
+          tooltipVisible = false;
+        }
+      });
     })();
   </script>
 </body>

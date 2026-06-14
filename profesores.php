@@ -363,7 +363,7 @@ $active_page = 'profesores';
       </div>
       <ul class="practicas-ras-popover__criteria" id="modulo-detail-data"></ul>
       <div class="practicas-ras-popover__footer">
-        <a id="modulo-detail-link" class="practicas-ras-popover__link" href="#">Ver módulo completo →</a>
+        <a id="modulo-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles del módulo →</a>
       </div>
     </div>
   </div>

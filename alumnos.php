@@ -201,6 +201,7 @@ $students_heading = $selected_group_name !== ''
         <a class="tab-nav-link active" href="alumnos.php">Alumnos</a>
         <a id="link-asistencia" class="tab-nav-link" href="asistencia.php<?php echo $_tab_qs; ?>">Asistencia</a>
         <a id="link-calificaciones" class="tab-nav-link" href="calificaciones.php<?php echo $_tab_qs; ?>">Calificaciones</a>
+        <a id="link-contacto" class="tab-nav-link" href="alumnos_contacto.php<?php echo $_tab_qs; ?>">Correos</a>
       </nav>
 
       <form method="get" class="topbar">
@@ -280,6 +281,7 @@ $students_heading = $selected_group_name !== ''
     const exportJsonLink = document.querySelector('#exportar-claves-json');
     const asistenciaLink = document.querySelector('#link-asistencia');
     const calificacionesLink = document.querySelector('#link-calificaciones');
+    const contactoLink = document.querySelector('#link-contacto');
     const studentsHeading = document.querySelector('#students-heading');
     let debounceTimer = null;
 
@@ -303,6 +305,7 @@ $students_heading = $selected_group_name !== ''
       const query = navParams.toString();
       if (asistenciaLink) asistenciaLink.href = query ? `asistencia.php?${query}` : 'asistencia.php';
       if (calificacionesLink) calificacionesLink.href = query ? `calificaciones.php?${query}` : 'calificaciones.php';
+      if (contactoLink) contactoLink.href = query ? `alumnos_contacto.php?${query}` : 'alumnos_contacto.php';
     };
 
     const updateHeading = () => {

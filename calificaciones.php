@@ -528,6 +528,7 @@ if ($show_results && $students !== [] && $modules !== []) {
         <a class="tab-nav-link" href="alumnos.php<?php echo $_tab_qs_alumnos; ?>">Alumnos</a>
         <a class="tab-nav-link" href="asistencia.php<?php echo $_tab_qs_asistencia; ?>">Asistencia</a>
         <a class="tab-nav-link active" href="calificaciones.php">Calificaciones</a>
+        <a class="tab-nav-link" href="alumnos_contacto.php<?php echo $_tab_qs_asistencia; ?>">Correos</a>
       </nav>
 
       <form class="topbar" method="get">
@@ -800,7 +801,7 @@ if ($show_results && $students !== [] && $modules !== []) {
       </div>
       <ul class="practicas-ras-popover__criteria" id="modulo-detail-data-cal"></ul>
       <div class="practicas-ras-popover__footer">
-        <a id="modulo-detail-link-cal" class="practicas-ras-popover__link" href="#">Ver módulo completo →</a>
+        <a id="modulo-detail-link-cal" class="practicas-ras-popover__link" href="#">Ver detalles del módulo →</a>
       </div>
     </div>
   </div>
@@ -820,7 +821,7 @@ if ($show_results && $students !== [] && $modules !== []) {
       </div>
       <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
       <div class="practicas-ras-popover__footer">
-        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver alumno completo →</a>
+        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles de alumno →</a>
       </div>
     </div>
   </div>
