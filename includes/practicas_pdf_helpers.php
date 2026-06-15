@@ -130,34 +130,40 @@ function full_name(array $row, string $prefix): string {
 }
 
 function build_address(array $practice): string {
-  $parts = array_filter([
-    trim((string) ($practice['direccion_via_tipo'] ?? '')),
-    trim((string) ($practice['direccion_nombre_via'] ?? '')),
-    trim((string) ($practice['direccion_numero'] ?? '')),
-    ($practice['direccion_bloque'] ?? '') !== '' ? 'Bloque ' . $practice['direccion_bloque'] : '',
-    ($practice['direccion_escalera'] ?? '') !== '' ? 'Esc. ' . $practice['direccion_escalera'] : '',
-    ($practice['direccion_planta'] ?? '') !== '' ? 'Planta ' . $practice['direccion_planta'] : '',
-    ($practice['direccion_puerta'] ?? '') !== '' ? 'Puerta ' . $practice['direccion_puerta'] : '',
-    trim((string) ($practice['direccion_otros'] ?? '')),
-  ], static fn (string $value): bool => $value !== '');
-
-  $cpLocalidad = trim(implode(' ', array_filter([
-    trim((string) ($practice['direccion_cp'] ?? '')),
-    trim((string) ($practice['direccion_localidad'] ?? '')),
-  ], static fn (string $value): bool => $value !== '')));
-
-  if ($cpLocalidad !== '') {
-    $parts[] = $cpLocalidad;
+  $calle = trim(trim((string) ($practice['direccion_via_tipo'] ?? '')) . ' ' . trim((string) ($practice['direccion_nombre_via'] ?? '')));
+  $parts = [];
+  if ($calle !== '') {
+    $parts[] = $calle;
   }
 
+  $numero = trim((string) ($practice['direccion_numero'] ?? ''));
+  if ($numero !== '') {
+    $parts[] = $numero;
+  }
+
+  if (($practice['direccion_bloque'] ?? '') !== '') { $parts[] = 'Bloque ' . $practice['direccion_bloque']; }
+  if (($practice['direccion_escalera'] ?? '') !== '') { $parts[] = 'Esc. ' . $practice['direccion_escalera']; }
+  if (($practice['direccion_planta'] ?? '') !== '') { $parts[] = 'Planta ' . $practice['direccion_planta']; }
+  if (($practice['direccion_puerta'] ?? '') !== '') { $parts[] = 'Puerta ' . $practice['direccion_puerta']; }
+
+  $otros = trim((string) ($practice['direccion_otros'] ?? ''));
+  if ($otros !== '') {
+    $parts[] = $otros;
+  }
+
+  $cp = trim((string) ($practice['direccion_cp'] ?? ''));
+  if ($cp !== '') {
+    $parts[] = $cp;
+  }
+
+  $localidad = trim((string) ($practice['direccion_localidad'] ?? ''));
   $provincia = trim((string) ($practice['direccion_provincia'] ?? ''));
-  if ($provincia !== '') {
-    $parts[] = $provincia;
-  }
-
-  $pais = trim((string) ($practice['direccion_pais'] ?? ''));
-  if ($pais !== '') {
-    $parts[] = $pais;
+  if ($localidad !== '' && $provincia !== '') {
+    $parts[] = $localidad . ' (' . $provincia . ')';
+  } elseif ($localidad !== '') {
+    $parts[] = $localidad;
+  } elseif ($provincia !== '') {
+    $parts[] = '(' . $provincia . ')';
   }
 
   return $parts ? implode(', ', $parts) : 'No disponible';

@@ -935,20 +935,21 @@ $dias_semana = [
                           $practica['tutor_apellido2'] ?? ''
                         )
                       );
-                      $direccion_partes = array_filter([
-                        $practica['via_tipo'] ? $practica['via_tipo'] : null,
-                        $practica['nombre_via'] ? $practica['nombre_via'] : null,
-                        $practica['numero'] ? 'Nº ' . $practica['numero'] : null,
-                        $practica['bloque'] ? 'Bloque ' . $practica['bloque'] : null,
-                        $practica['escalera'] ? 'Esc. ' . $practica['escalera'] : null,
-                        $practica['planta'] ? 'Planta ' . $practica['planta'] : null,
-                        $practica['puerta'] ? 'Puerta ' . $practica['puerta'] : null,
-                        $practica['otros'] ? $practica['otros'] : null,
-                        $practica['direccion_cp'] ? 'CP ' . $practica['direccion_cp'] : null,
-                        $practica['direccion_localidad'] ? $practica['direccion_localidad'] : null,
-                        $practica['direccion_provincia'] ? $practica['direccion_provincia'] : null,
-                        $practica['direccion_pais'] ? $practica['direccion_pais'] : null,
-                      ]);
+                      $al_calle = trim(($practica['via_tipo'] ?? '') . ' ' . ($practica['nombre_via'] ?? ''));
+                      $direccion_partes = [];
+                      if ($al_calle !== '') { $direccion_partes[] = $al_calle; }
+                      if ($practica['numero'] ?? '') { $direccion_partes[] = (string) $practica['numero']; }
+                      if ($practica['bloque'] ?? '') { $direccion_partes[] = 'Bloque ' . $practica['bloque']; }
+                      if ($practica['escalera'] ?? '') { $direccion_partes[] = 'Esc. ' . $practica['escalera']; }
+                      if ($practica['planta'] ?? '') { $direccion_partes[] = 'Planta ' . $practica['planta']; }
+                      if ($practica['puerta'] ?? '') { $direccion_partes[] = 'Puerta ' . $practica['puerta']; }
+                      if ($practica['otros'] ?? '') { $direccion_partes[] = (string) $practica['otros']; }
+                      if ($practica['direccion_cp'] ?? '') { $direccion_partes[] = (string) $practica['direccion_cp']; }
+                      $al_loc = trim((string) ($practica['direccion_localidad'] ?? ''));
+                      $al_prov = trim((string) ($practica['direccion_provincia'] ?? ''));
+                      if ($al_loc !== '' && $al_prov !== '') { $direccion_partes[] = $al_loc . ' (' . $al_prov . ')'; }
+                      elseif ($al_loc !== '') { $direccion_partes[] = $al_loc; }
+                      elseif ($al_prov !== '') { $direccion_partes[] = '(' . $al_prov . ')'; }
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars(format_value($practica['empresa']), ENT_QUOTES, 'UTF-8'); ?></td>
@@ -971,7 +972,7 @@ $dias_semana = [
                           (<?php echo htmlspecialchars($practica['tutor_dni'], ENT_QUOTES, 'UTF-8'); ?>)
                         <?php endif; ?>
                       </td>
-                      <td><?php echo htmlspecialchars($direccion_partes ? implode(' · ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($direccion_partes ? implode(', ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($practica['observaciones']), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>

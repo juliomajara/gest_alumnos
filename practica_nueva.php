@@ -348,12 +348,16 @@ function practice_address_label(array $address): string {
   $street = trim(implode(' ', array_filter([
     trim((string) ($address['via'] ?? '')),
     trim((string) ($address['nombre_via'] ?? '')),
-    trim((string) ($address['numero'] ?? '')),
   ], static fn (string $value): bool => $value !== '')));
 
   $parts = [];
   if ($street !== '') {
     $parts[] = $street;
+  }
+
+  $numero = trim((string) ($address['numero'] ?? ''));
+  if ($numero !== '') {
+    $parts[] = $numero;
   }
 
   $bloque = trim((string) ($address['bloque'] ?? ''));
@@ -376,19 +380,22 @@ function practice_address_label(array $address): string {
     $parts[] = $puerta;
   }
 
-  $cpLocalidad = trim(implode(' ', array_filter([
-    trim((string) ($address['cp'] ?? '')),
-    trim((string) ($address['localidad'] ?? '')),
-  ], static fn (string $value): bool => $value !== '')));
-  if ($cpLocalidad !== '') {
-    $parts[] = $cpLocalidad;
+  $cp = trim((string) ($address['cp'] ?? ''));
+  if ($cp !== '') {
+    $parts[] = $cp;
+  }
+
+  $localidad = trim((string) ($address['localidad'] ?? ''));
+  $provincia = trim((string) ($address['provincia'] ?? ''));
+  if ($localidad !== '' && $provincia !== '') {
+    $parts[] = $localidad . ' (' . $provincia . ')';
+  } elseif ($localidad !== '') {
+    $parts[] = $localidad;
+  } elseif ($provincia !== '') {
+    $parts[] = '(' . $provincia . ')';
   }
 
   $direccionCompleta = $parts ? implode(', ', $parts) : ('Dirección #' . (int) ($address['id_direccion'] ?? 0));
-  $provincia = trim((string) ($address['provincia'] ?? ''));
-  if ($provincia !== '') {
-    $direccionCompleta .= ' (' . $provincia . ')';
-  }
 
   return $prefix . ' ' . $direccionCompleta;
 }

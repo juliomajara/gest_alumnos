@@ -109,20 +109,44 @@ if ($id_empresa > 0) {
 
 if ($company) {
   $contacts_stmt = $pdo->prepare(
-    'SELECT apellido1,
+    'SELECT id_empresa_contacto,
+            apellido1,
             apellido2,
             nombre,
             cargo,
             comentarios
      FROM empresas_contactos
      WHERE id_empresa = :id_empresa
-     ORDER BY apellido1, apellido2, nombre'
+     ORDER BY id_empresa_contacto'
   );
   $contacts_stmt->execute(['id_empresa' => $id_empresa]);
-  $contacts = $contacts_stmt->fetchAll();
+  $contacts_raw = $contacts_stmt->fetchAll();
+
+  $contacts = [];
+  if ($contacts_raw) {
+    $contact_phones_stmt = $pdo->prepare(
+      'SELECT telefono, etiqueta FROM telefonos WHERE entidad_tipo = :tipo AND id_entidad = :id ORDER BY etiqueta, telefono'
+    );
+    $contact_emails_stmt = $pdo->prepare(
+      'SELECT direccion_correo, etiqueta FROM correos WHERE entidad_tipo = :tipo AND id_entidad = :id ORDER BY etiqueta, direccion_correo'
+    );
+    foreach ($contacts_raw as $contact) {
+      $id_contacto = (int) ($contact['id_empresa_contacto'] ?? 0);
+      $contact['telefonos'] = [];
+      $contact['correos'] = [];
+      if ($id_contacto > 0) {
+        $contact_phones_stmt->execute(['tipo' => 'empresa_contacto', 'id' => $id_contacto]);
+        $contact['telefonos'] = $contact_phones_stmt->fetchAll();
+        $contact_emails_stmt->execute(['tipo' => 'empresa_contacto', 'id' => $id_contacto]);
+        $contact['correos'] = $contact_emails_stmt->fetchAll();
+      }
+      $contacts[] = $contact;
+    }
+  }
 
   $tutors_stmt = $pdo->prepare(
-    'SELECT apellido1,
+    'SELECT id_empresas_tutor,
+            apellido1,
             apellido2,
             nombre,
             dni,
@@ -132,7 +156,29 @@ if ($company) {
      ORDER BY apellido1, apellido2, nombre'
   );
   $tutors_stmt->execute(['id_empresa' => $id_empresa]);
-  $tutors = $tutors_stmt->fetchAll();
+  $tutors_raw = $tutors_stmt->fetchAll();
+
+  $tutors = [];
+  if ($tutors_raw) {
+    $tutor_phones_stmt = $pdo->prepare(
+      'SELECT telefono, etiqueta FROM telefonos WHERE entidad_tipo = :tipo AND id_entidad = :id ORDER BY etiqueta, telefono'
+    );
+    $tutor_emails_stmt = $pdo->prepare(
+      'SELECT direccion_correo, etiqueta FROM correos WHERE entidad_tipo = :tipo AND id_entidad = :id ORDER BY etiqueta, direccion_correo'
+    );
+    foreach ($tutors_raw as $tutor) {
+      $id_tutor = (int) ($tutor['id_empresas_tutor'] ?? 0);
+      $tutor['telefonos'] = [];
+      $tutor['correos'] = [];
+      if ($id_tutor > 0) {
+        $tutor_phones_stmt->execute(['tipo' => 'empresa_tutor', 'id' => $id_tutor]);
+        $tutor['telefonos'] = $tutor_phones_stmt->fetchAll();
+        $tutor_emails_stmt->execute(['tipo' => 'empresa_tutor', 'id' => $id_tutor]);
+        $tutor['correos'] = $tutor_emails_stmt->fetchAll();
+      }
+      $tutors[] = $tutor;
+    }
+  }
 
   $address_stmt = $pdo->prepare(
     'SELECT d.id_direccion,
@@ -198,9 +244,7 @@ if ($company) {
             et.dni AS tutor_dni,
             a.nombre AS alumno_nombre,
             a.apellido1 AS alumno_apellido1,
-            a.apellido2 AS alumno_apellido2,
-            a.nia AS alumno_nia,
-            a.dni AS alumno_dni,
+            ci.abreviatura AS ciclo_abreviatura,
             d.nombre_via,
             d.numero,
             d.bloque,
@@ -217,6 +261,7 @@ if ($company) {
      FROM practicas pr
      LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = pr.id_empresa_tutor
      LEFT JOIN alumnos a ON a.id_alumno = pr.id_alumno
+     LEFT JOIN ciclos ci ON ci.id_ciclo = pr.id_ciclo
      LEFT JOIN direcciones d ON d.id_direccion = pr.id_direccion
      LEFT JOIN vias v ON v.id_via = d.id_via
      LEFT JOIN provincias lp ON lp.id_provincia = d.id_provincia
@@ -254,20 +299,21 @@ $contacto_principal = $contacts[0] ?? null;
 $direccion_principal = $addresses[0] ?? null;
 $direccion_partes = [];
 if ($direccion_principal) {
-  $direccion_partes = array_filter([
-    $direccion_principal['via_tipo'] ? $direccion_principal['via_tipo'] : null,
-    $direccion_principal['nombre_via'] ? $direccion_principal['nombre_via'] : null,
-    $direccion_principal['numero'] ? 'Nº ' . $direccion_principal['numero'] : null,
-    $direccion_principal['bloque'] ? 'Bloque ' . $direccion_principal['bloque'] : null,
-    $direccion_principal['escalera'] ? 'Esc. ' . $direccion_principal['escalera'] : null,
-    $direccion_principal['planta'] ? 'Planta ' . $direccion_principal['planta'] : null,
-    $direccion_principal['puerta'] ? 'Puerta ' . $direccion_principal['puerta'] : null,
-    $direccion_principal['otros'] ? $direccion_principal['otros'] : null,
-    $direccion_principal['cp'] ? 'CP ' . $direccion_principal['cp'] : null,
-    $direccion_principal['localidad'] ? $direccion_principal['localidad'] : null,
-    $direccion_principal['provincia'] ? $direccion_principal['provincia'] : null,
-    $direccion_principal['pais'] ? $direccion_principal['pais'] : null,
-  ]);
+  $dp = $direccion_principal;
+  $dp_calle = trim(($dp['via_tipo'] ?? '') . ' ' . ($dp['nombre_via'] ?? ''));
+  if ($dp_calle !== '') { $direccion_partes[] = $dp_calle; }
+  if ($dp['numero'] ?? '') { $direccion_partes[] = (string) $dp['numero']; }
+  if ($dp['bloque'] ?? '') { $direccion_partes[] = 'Bloque ' . $dp['bloque']; }
+  if ($dp['escalera'] ?? '') { $direccion_partes[] = 'Esc. ' . $dp['escalera']; }
+  if ($dp['planta'] ?? '') { $direccion_partes[] = 'Planta ' . $dp['planta']; }
+  if ($dp['puerta'] ?? '') { $direccion_partes[] = 'Puerta ' . $dp['puerta']; }
+  if ($dp['otros'] ?? '') { $direccion_partes[] = (string) $dp['otros']; }
+  if ($dp['cp'] ?? '') { $direccion_partes[] = (string) $dp['cp']; }
+  $dp_loc = trim((string) ($dp['localidad'] ?? ''));
+  $dp_prov = trim((string) ($dp['provincia'] ?? ''));
+  if ($dp_loc !== '' && $dp_prov !== '') { $direccion_partes[] = $dp_loc . ' (' . $dp_prov . ')'; }
+  elseif ($dp_loc !== '') { $direccion_partes[] = $dp_loc; }
+  elseif ($dp_prov !== '') { $direccion_partes[] = '(' . $dp_prov . ')'; }
 }
 
 $nombre_completo = $company
@@ -299,20 +345,22 @@ if ($nombre_comercial !== '' && $nombre_comercial !== $nombre_completo) {
 $direcciones_principales = [];
 $direcciones_centro_trabajo = [];
 foreach ($addresses as $address) {
-  $direccion_texto = implode(' · ', array_filter([
-    $address['via_tipo'] ? $address['via_tipo'] : null,
-    $address['nombre_via'] ? $address['nombre_via'] : null,
-    $address['numero'] ? 'Nº ' . $address['numero'] : null,
-    $address['bloque'] ? 'Bloque ' . $address['bloque'] : null,
-    $address['escalera'] ? 'Esc. ' . $address['escalera'] : null,
-    $address['planta'] ? 'Planta ' . $address['planta'] : null,
-    $address['puerta'] ? 'Puerta ' . $address['puerta'] : null,
-    $address['otros'] ? $address['otros'] : null,
-    $address['cp'] ? 'CP ' . $address['cp'] : null,
-    $address['localidad'] ? $address['localidad'] : null,
-    $address['provincia'] ? $address['provincia'] : null,
-    $address['pais'] ? $address['pais'] : null,
-  ]));
+  $addr_calle = trim(($address['via_tipo'] ?? '') . ' ' . ($address['nombre_via'] ?? ''));
+  $addr_parts = [];
+  if ($addr_calle !== '') { $addr_parts[] = $addr_calle; }
+  if ($address['numero'] ?? '') { $addr_parts[] = (string) $address['numero']; }
+  if ($address['bloque'] ?? '') { $addr_parts[] = 'Bloque ' . $address['bloque']; }
+  if ($address['escalera'] ?? '') { $addr_parts[] = 'Esc. ' . $address['escalera']; }
+  if ($address['planta'] ?? '') { $addr_parts[] = 'Planta ' . $address['planta']; }
+  if ($address['puerta'] ?? '') { $addr_parts[] = 'Puerta ' . $address['puerta']; }
+  if ($address['otros'] ?? '') { $addr_parts[] = (string) $address['otros']; }
+  if ($address['cp'] ?? '') { $addr_parts[] = (string) $address['cp']; }
+  $addr_loc = trim((string) ($address['localidad'] ?? ''));
+  $addr_prov = trim((string) ($address['provincia'] ?? ''));
+  if ($addr_loc !== '' && $addr_prov !== '') { $addr_parts[] = $addr_loc . ' (' . $addr_prov . ')'; }
+  elseif ($addr_loc !== '') { $addr_parts[] = $addr_loc; }
+  elseif ($addr_prov !== '') { $addr_parts[] = '(' . $addr_prov . ')'; }
+  $direccion_texto = implode(', ', $addr_parts);
 
   if ($direccion_texto === '') {
     continue;
@@ -431,23 +479,50 @@ $dias_semana = [
               <div class="practica-detalle-campo">
                 <span class="practica-detalle-campo-etiqueta">Contacto 1</span>
                 <span class="practica-detalle-campo-valor">
+                  <?php if ($contacto_principal): ?>
                   <?php
-                    $contacto_nombre = $contacto_principal
-                      ? trim(sprintf(
-                        '%s %s %s',
-                        $contacto_principal['nombre'] ?? '',
-                        $contacto_principal['apellido1'] ?? '',
-                        $contacto_principal['apellido2'] ?? ''
-                      ))
-                      : null;
+                    $contacto_nombre = trim(sprintf(
+                      '%s %s %s',
+                      $contacto_principal['nombre'] ?? '',
+                      $contacto_principal['apellido1'] ?? '',
+                      $contacto_principal['apellido2'] ?? ''
+                    ));
+                    $c1_tel = $contacto_principal['telefonos'][0]['telefono'] ?? null;
+                    $c1_email = $contacto_principal['correos'][0]['direccion_correo'] ?? null;
                   ?>
                   <div><?php echo htmlspecialchars(format_value($contacto_nombre), ENT_QUOTES, 'UTF-8'); ?></div>
                   <div>Cargo: <?php echo htmlspecialchars(format_value($contacto_principal['cargo'] ?? null), ENT_QUOTES, 'UTF-8'); ?></div>
-                  <div>Teléfono: <?php echo htmlspecialchars(format_value($telefono_principal), ENT_QUOTES, 'UTF-8'); ?></div>
-                  <div>Email: <?php echo htmlspecialchars(format_value($correo_principal), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div>Teléfono: <?php echo htmlspecialchars(format_value($c1_tel), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div>Email: <?php if ($c1_email) { $v = htmlspecialchars($c1_email, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); } ?></div>
                   <div>Comentarios: <?php echo htmlspecialchars(format_value($contacto_principal['comentarios'] ?? null), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <?php else: ?>
+                  <div><?php echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); ?></div>
+                  <?php endif; ?>
                 </span>
               </div>
+              <?php $contacto_2 = $contacts[1] ?? null; ?>
+              <?php if ($contacto_2): ?>
+              <div class="practica-detalle-campo">
+                <span class="practica-detalle-campo-etiqueta">Contacto 2</span>
+                <span class="practica-detalle-campo-valor">
+                  <?php
+                    $c2_nombre = trim(sprintf(
+                      '%s %s %s',
+                      $contacto_2['nombre'] ?? '',
+                      $contacto_2['apellido1'] ?? '',
+                      $contacto_2['apellido2'] ?? ''
+                    ));
+                    $c2_tel = $contacto_2['telefonos'][0]['telefono'] ?? null;
+                    $c2_email = $contacto_2['correos'][0]['direccion_correo'] ?? null;
+                  ?>
+                  <div><?php echo htmlspecialchars(format_value($c2_nombre), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div>Cargo: <?php echo htmlspecialchars(format_value($contacto_2['cargo'] ?? null), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div>Teléfono: <?php echo htmlspecialchars(format_value($c2_tel), ENT_QUOTES, 'UTF-8'); ?></div>
+                  <div>Email: <?php if ($c2_email) { $v = htmlspecialchars($c2_email, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); } ?></div>
+                  <div>Comentarios: <?php echo htmlspecialchars(format_value($contacto_2['comentarios'] ?? null), ENT_QUOTES, 'UTF-8'); ?></div>
+                </span>
+              </div>
+              <?php endif; ?>
             </div>
           </section>
         </div>
@@ -466,7 +541,7 @@ $dias_semana = [
                 <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Centro de trabajo</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(implode(' | ', $direcciones_centro_trabajo), ENT_QUOTES, 'UTF-8'); ?></span></div>
               <?php endif; ?>
               <?php if (!$direcciones_principales && !$direcciones_centro_trabajo): ?>
-                <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Dirección</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($direccion_partes ? implode(' · ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></span></div>
+                <div class="practica-detalle-campo"><span class="practica-detalle-campo-etiqueta">Dirección</span><span class="practica-detalle-campo-valor"><?php echo htmlspecialchars($direccion_partes ? implode(', ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></span></div>
               <?php endif; ?>
             </div>
           </section>
@@ -495,21 +570,29 @@ $dias_semana = [
                   <th>Apellido 1</th>
                   <th>Apellido 2</th>
                   <th>Cargo</th>
+                  <th>Teléfono</th>
+                  <th>Correo</th>
                   <th>Comentarios</th>
                 </tr>
               </thead>
               <tbody>
                 <?php if (!$contacts): ?>
                   <tr>
-                    <td colspan="5">No hay contactos registrados.</td>
+                    <td colspan="7">No hay contactos registrados.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($contacts as $contact): ?>
+                    <?php
+                      $ct_tel = $contact['telefonos'][0]['telefono'] ?? null;
+                      $ct_email = $contact['correos'][0]['direccion_correo'] ?? null;
+                    ?>
                     <tr>
                       <td><?php echo htmlspecialchars(format_value($contact['nombre']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($contact['apellido1']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($contact['apellido2']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($contact['cargo']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php if ($ct_tel) { $v = htmlspecialchars($ct_tel, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); } ?></td>
+                      <td><?php if ($ct_email) { $v = htmlspecialchars($ct_email, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); } ?></td>
                       <td><?php echo htmlspecialchars(format_value($contact['comentarios']), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
@@ -532,21 +615,29 @@ $dias_semana = [
                   <th>Apellido 1</th>
                   <th>Apellido 2</th>
                   <th>DNI</th>
+                  <th>Teléfono</th>
+                  <th>Correo</th>
                   <th>Comentarios</th>
                 </tr>
               </thead>
               <tbody>
                 <?php if (!$tutors): ?>
                   <tr>
-                    <td colspan="5">No hay tutores registrados.</td>
+                    <td colspan="7">No hay tutores registrados.</td>
                   </tr>
                 <?php else: ?>
                   <?php foreach ($tutors as $tutor): ?>
+                    <?php
+                      $t_tel = $tutor['telefonos'][0]['telefono'] ?? null;
+                      $t_email = $tutor['correos'][0]['direccion_correo'] ?? null;
+                    ?>
                     <tr>
                       <td><?php echo htmlspecialchars(format_value($tutor['nombre']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($tutor['apellido1']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($tutor['apellido2']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($tutor['dni']), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php if ($t_tel) { $v = htmlspecialchars($t_tel, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); } ?></td>
+                      <td><?php if ($t_email) { $v = htmlspecialchars($t_email, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars('No disponible', ENT_QUOTES, 'UTF-8'); } ?></td>
                       <td><?php echo htmlspecialchars(format_value($tutor['comentarios']), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
@@ -582,20 +673,19 @@ $dias_semana = [
                 <?php else: ?>
                   <?php foreach ($addresses as $address): ?>
                     <?php
-                      $direccion_detalle = array_filter([
-                        $address['via_tipo'] ? $address['via_tipo'] : null,
-                        $address['nombre_via'] ? $address['nombre_via'] : null,
-                        $address['numero'] ? 'Nº ' . $address['numero'] : null,
-                        $address['bloque'] ? 'Bloque ' . $address['bloque'] : null,
-                        $address['escalera'] ? 'Esc. ' . $address['escalera'] : null,
-                        $address['planta'] ? 'Planta ' . $address['planta'] : null,
-                        $address['puerta'] ? 'Puerta ' . $address['puerta'] : null,
-                        $address['otros'] ? $address['otros'] : null,
-                      ]);
+                      $det_calle = trim(($address['via_tipo'] ?? '') . ' ' . ($address['nombre_via'] ?? ''));
+                      $direccion_detalle = [];
+                      if ($det_calle !== '') { $direccion_detalle[] = $det_calle; }
+                      if ($address['numero'] ?? '') { $direccion_detalle[] = (string) $address['numero']; }
+                      if ($address['bloque'] ?? '') { $direccion_detalle[] = 'Bloque ' . $address['bloque']; }
+                      if ($address['escalera'] ?? '') { $direccion_detalle[] = 'Esc. ' . $address['escalera']; }
+                      if ($address['planta'] ?? '') { $direccion_detalle[] = 'Planta ' . $address['planta']; }
+                      if ($address['puerta'] ?? '') { $direccion_detalle[] = 'Puerta ' . $address['puerta']; }
+                      if ($address['otros'] ?? '') { $direccion_detalle[] = (string) $address['otros']; }
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars(format_value($address['etiqueta']), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($direccion_detalle ? implode(' · ', $direccion_detalle) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($direccion_detalle ? implode(', ', $direccion_detalle) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($address['cp']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($address['localidad']), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($address['provincia']), ENT_QUOTES, 'UTF-8'); ?></td>
@@ -652,33 +742,31 @@ $dias_semana = [
                       );
                       $alumno_nombre = trim(
                         sprintf(
-                          '%s %s %s',
+                          '%s %s',
                           $practica['alumno_nombre'] ?? '',
-                          $practica['alumno_apellido1'] ?? '',
-                          $practica['alumno_apellido2'] ?? ''
+                          $practica['alumno_apellido1'] ?? ''
                         )
                       );
+                      $ciclo_abr = trim((string) ($practica['ciclo_abreviatura'] ?? ''));
                       $alumno_detalle = $alumno_nombre ?: 'No disponible';
-                      if ($practica['alumno_nia']) {
-                        $alumno_detalle .= ' · NIA ' . $practica['alumno_nia'];
+                      if ($ciclo_abr !== '') {
+                        $alumno_detalle .= ' (' . $ciclo_abr . ')';
                       }
-                      if ($practica['alumno_dni']) {
-                        $alumno_detalle .= ' · DNI ' . $practica['alumno_dni'];
-                      }
-                      $direccion_partes = array_filter([
-                        $practica['via_tipo'] ? $practica['via_tipo'] : null,
-                        $practica['nombre_via'] ? $practica['nombre_via'] : null,
-                        $practica['numero'] ? 'Nº ' . $practica['numero'] : null,
-                        $practica['bloque'] ? 'Bloque ' . $practica['bloque'] : null,
-                        $practica['escalera'] ? 'Esc. ' . $practica['escalera'] : null,
-                        $practica['planta'] ? 'Planta ' . $practica['planta'] : null,
-                        $practica['puerta'] ? 'Puerta ' . $practica['puerta'] : null,
-                        $practica['otros'] ? $practica['otros'] : null,
-                        $practica['direccion_cp'] ? 'CP ' . $practica['direccion_cp'] : null,
-                        $practica['direccion_localidad'] ? $practica['direccion_localidad'] : null,
-                        $practica['direccion_provincia'] ? $practica['direccion_provincia'] : null,
-                        $practica['direccion_pais'] ? $practica['direccion_pais'] : null,
-                      ]);
+                      $prac_calle = trim(($practica['via_tipo'] ?? '') . ' ' . ($practica['nombre_via'] ?? ''));
+                      $direccion_partes = [];
+                      if ($prac_calle !== '') { $direccion_partes[] = $prac_calle; }
+                      if ($practica['numero'] ?? '') { $direccion_partes[] = (string) $practica['numero']; }
+                      if ($practica['bloque'] ?? '') { $direccion_partes[] = 'Bloque ' . $practica['bloque']; }
+                      if ($practica['escalera'] ?? '') { $direccion_partes[] = 'Esc. ' . $practica['escalera']; }
+                      if ($practica['planta'] ?? '') { $direccion_partes[] = 'Planta ' . $practica['planta']; }
+                      if ($practica['puerta'] ?? '') { $direccion_partes[] = 'Puerta ' . $practica['puerta']; }
+                      if ($practica['otros'] ?? '') { $direccion_partes[] = (string) $practica['otros']; }
+                      if ($practica['direccion_cp'] ?? '') { $direccion_partes[] = (string) $practica['direccion_cp']; }
+                      $prac_loc = trim((string) ($practica['direccion_localidad'] ?? ''));
+                      $prac_prov = trim((string) ($practica['direccion_provincia'] ?? ''));
+                      if ($prac_loc !== '' && $prac_prov !== '') { $direccion_partes[] = $prac_loc . ' (' . $prac_prov . ')'; }
+                      elseif ($prac_loc !== '') { $direccion_partes[] = $prac_loc; }
+                      elseif ($prac_prov !== '') { $direccion_partes[] = '(' . $prac_prov . ')'; }
                     ?>
                     <tr>
                       <td><?php echo htmlspecialchars($alumno_detalle, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -691,7 +779,7 @@ $dias_semana = [
                           (<?php echo htmlspecialchars($practica['tutor_dni'], ENT_QUOTES, 'UTF-8'); ?>)
                         <?php endif; ?>
                       </td>
-                      <td><?php echo htmlspecialchars($direccion_partes ? implode(' · ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($direccion_partes ? implode(', ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($practica['observaciones']), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>

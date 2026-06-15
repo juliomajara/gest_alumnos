@@ -66,7 +66,6 @@ function build_address(array $practice): string {
     trim((string) ($practice['direccion_nombre_via'] ?? '')),
   ])));
 
-  $provincia = trim((string) ($practice['direccion_provincia'] ?? ''));
   $parts = array_filter([
     $via,
     trim((string) ($practice['direccion_numero'] ?? '')),
@@ -75,9 +74,17 @@ function build_address(array $practice): string {
     ($practice['direccion_planta'] ?? '') !== '' ? 'Planta ' . $practice['direccion_planta'] : '',
     ($practice['direccion_puerta'] ?? '') !== '' ? 'Puerta ' . $practice['direccion_puerta'] : '',
     trim((string) ($practice['direccion_cp'] ?? '')),
-    trim((string) ($practice['direccion_localidad'] ?? '')),
-    $provincia !== '' ? '(' . $provincia . ')' : '',
   ], static fn (string $item): bool => $item !== '');
+
+  $localidad = trim((string) ($practice['direccion_localidad'] ?? ''));
+  $provincia = trim((string) ($practice['direccion_provincia'] ?? ''));
+  if ($localidad !== '' && $provincia !== '') {
+    $parts[] = $localidad . ' (' . $provincia . ')';
+  } elseif ($localidad !== '') {
+    $parts[] = $localidad;
+  } elseif ($provincia !== '') {
+    $parts[] = '(' . $provincia . ')';
+  }
 
   return $parts ? implode(', ', $parts) : 'No disponible';
 }
