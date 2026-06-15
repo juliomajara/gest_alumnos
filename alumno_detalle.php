@@ -566,27 +566,19 @@ $dias_semana = [
             <div class="practica-detalle-campos">
               <div class="practica-detalle-campo">
                 <span class="practica-detalle-campo-etiqueta">Tutor/a 1</span>
-                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['nombre_tutor1']), ENT_QUOTES, 'UTF-8'); ?></span>
-              </div>
-              <div class="practica-detalle-campo">
-                <span class="practica-detalle-campo-etiqueta">Teléfono tutor/a 1</span>
-                <span class="practica-detalle-campo-valor"><?php $raw = $student['telefono_tutor1']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($raw), ENT_QUOTES, 'UTF-8'); } ?></span>
-              </div>
-              <div class="practica-detalle-campo">
-                <span class="practica-detalle-campo-etiqueta">Correo tutor/a 1</span>
-                <span class="practica-detalle-campo-valor"><?php $raw = $student['correo_tutor1']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($raw), ENT_QUOTES, 'UTF-8'); } ?></span>
+                <span class="practica-detalle-campo-valor"><?php
+                  echo htmlspecialchars(format_value($student['nombre_tutor1']), ENT_QUOTES, 'UTF-8');
+                  $raw = $student['telefono_tutor1']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<br><span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; }
+                  $raw = $student['correo_tutor1']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<br><span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; }
+                ?></span>
               </div>
               <div class="practica-detalle-campo">
                 <span class="practica-detalle-campo-etiqueta">Tutor/a 2</span>
-                <span class="practica-detalle-campo-valor"><?php echo htmlspecialchars(format_value($student['nombre_tutor2']), ENT_QUOTES, 'UTF-8'); ?></span>
-              </div>
-              <div class="practica-detalle-campo">
-                <span class="practica-detalle-campo-etiqueta">Teléfono tutor/a 2</span>
-                <span class="practica-detalle-campo-valor"><?php $raw = $student['telefono_tutor2']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($raw), ENT_QUOTES, 'UTF-8'); } ?></span>
-              </div>
-              <div class="practica-detalle-campo">
-                <span class="practica-detalle-campo-etiqueta">Correo tutor/a 2</span>
-                <span class="practica-detalle-campo-valor"><?php $raw = $student['correo_tutor2']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; } else { echo htmlspecialchars(format_value($raw), ENT_QUOTES, 'UTF-8'); } ?></span>
+                <span class="practica-detalle-campo-valor"><?php
+                  echo htmlspecialchars(format_value($student['nombre_tutor2']), ENT_QUOTES, 'UTF-8');
+                  $raw = $student['telefono_tutor2']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<br><span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; }
+                  $raw = $student['correo_tutor2']; if ($raw) { $v = htmlspecialchars($raw, ENT_QUOTES, 'UTF-8'); echo '<br><span class="copy-trigger" data-copy="' . $v . '">' . $v . '</span>'; }
+                ?></span>
               </div>
             </div>
           </section>
