@@ -261,7 +261,9 @@ if ($company) {
      FROM practicas pr
      LEFT JOIN empresas_tutores et ON et.id_empresas_tutor = pr.id_empresa_tutor
      LEFT JOIN alumnos a ON a.id_alumno = pr.id_alumno
-     LEFT JOIN ciclos ci ON ci.id_ciclo = pr.id_ciclo
+     LEFT JOIN alumno_curso ac ON ac.id_alumno = pr.id_alumno AND ac.id_curso_escolar = (SELECT MAX(ac2.id_curso_escolar) FROM alumno_curso ac2 WHERE ac2.id_alumno = pr.id_alumno)
+     LEFT JOIN grupos g ON g.id_grupo = ac.id_grupo
+     LEFT JOIN ciclos ci ON ci.id_ciclo = g.id_ciclo
      LEFT JOIN direcciones d ON d.id_direccion = pr.id_direccion
      LEFT JOIN vias v ON v.id_via = d.id_via
      LEFT JOIN provincias lp ON lp.id_provincia = d.id_provincia
@@ -781,46 +783,6 @@ $dias_semana = [
                       </td>
                       <td><?php echo htmlspecialchars($direccion_partes ? implode(', ', $direccion_partes) : 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><?php echo htmlspecialchars(format_value($practica['observaciones']), ENT_QUOTES, 'UTF-8'); ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-          <div class="panel-grid">
-            <table>
-              <thead>
-                <tr>
-                  <th>ID práctica</th>
-                  <th>Alumno</th>
-                  <th>Día</th>
-                  <th>Hora entrada</th>
-                  <th>Hora salida</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!$horarios): ?>
-                  <tr>
-                    <td colspan="5">No hay horarios de prácticas registrados.</td>
-                  </tr>
-                <?php else: ?>
-                  <?php foreach ($horarios as $horario): ?>
-                    <?php
-                      $alumno_horario = trim(
-                        sprintf(
-                          '%s %s %s',
-                          $horario['alumno_nombre'] ?? '',
-                          $horario['alumno_apellido1'] ?? '',
-                          $horario['alumno_apellido2'] ?? ''
-                        )
-                      );
-                    ?>
-                    <tr>
-                      <td><?php echo htmlspecialchars((string) $horario['id_practica'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($alumno_horario ?: 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($dias_semana[(int) $horario['dia_semana']] ?? 'No disponible', ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($horario['hora_entrada'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo htmlspecialchars($horario['hora_salida'], ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php endif; ?>
