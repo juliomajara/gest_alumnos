@@ -150,7 +150,7 @@ $active_page = 'calendario';
         <div class="header-actions">
           <button class="edit-toggle" type="button" id="editToggle">Activar modo edición</button>
           <!-- MODIFICADO -->
-          <button class="edit-toggle is-active" type="button" id="modeNonLectivo" hidden>No lectivo</button>
+          <button class="edit-toggle edit-toggle-success" type="button" id="modeNonLectivo" hidden>No lectivo</button>
           <!-- MODIFICADO -->
           <button class="edit-toggle" type="button" id="modeTutoria" hidden>Tutoría</button>
         </div>
@@ -235,8 +235,8 @@ $active_page = 'calendario';
 
     // MODIFICADO
     const updateModeButtons = () => {
-      modeNonLectivo.classList.toggle('is-active', markMode === 'nonlectivo');
-      modeTutoria.classList.toggle('is-active', markMode === 'tutoria');
+      modeNonLectivo.classList.toggle('edit-toggle-success', markMode === 'nonlectivo');
+      modeTutoria.classList.toggle('edit-toggle-success', markMode === 'tutoria');
     };
 
     const updateEditButton = () => {

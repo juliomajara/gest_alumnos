@@ -622,12 +622,7 @@ if ($show_incomplete_only) {
     $practices,
     static function (array $practice) use ($anexos_definiciones, $marcados): bool {
       $id_practica = (int) $practice['id_practica'];
-      $anexos_mostrar = ['2.1', '2.2', '3', '7', '8'];
-      if ((int) ($practice['circ_excep'] ?? 0) === 1) {
-        $anexos_mostrar[] = '4';
-      }
-
-      $anexos_mostrar = array_values(array_filter($anexos_mostrar, static fn(string $code): bool => isset($anexos_definiciones[$code])));
+      $anexos_mostrar = array_values(array_filter(['2.1', '2.2', '3', '7', '8'], static fn(string $code): bool => isset($anexos_definiciones[$code]) && $anexos_definiciones[$code]['fases'] !== []));
 
       foreach ($anexos_mostrar as $code) {
         $anexo_data = $anexos_definiciones[$code];
@@ -636,14 +631,11 @@ if ($show_incomplete_only) {
         $seguimientos = [1];
 
         if ($code === '7') {
-          $seguimientos = [];
-          if (isset($marcados[$id_practica][$id_anexo]) && is_array($marcados[$id_practica][$id_anexo])) {
-            $seguimientos = array_keys($marcados[$id_practica][$id_anexo]);
-            sort($seguimientos);
+          $meses = calculate_anexo7_months($practice);
+          if ($meses === 0) {
+            continue;
           }
-          if ($seguimientos === []) {
-            $seguimientos = [1];
-          }
+          $seguimientos = range(1, $meses);
         }
 
         foreach ($seguimientos as $numero_seguimiento) {
