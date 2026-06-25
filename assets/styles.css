@@ -1035,6 +1035,11 @@ a.edit-toggle:focus {
   pointer-events: auto;
 }
 
+.panel-grid .help-tooltip-content .help-tooltip-table td {
+  text-align: left;
+  background: var(--card);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .help-tooltip-content {
     transition: opacity 0.01ms;

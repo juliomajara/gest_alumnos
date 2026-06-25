@@ -20,6 +20,32 @@ function pe_format_date(?string $value): string
     return $value;
 }
 
+function pe_calculate_practice_status(array $practice): string
+{
+    if ((int) ($practice['cancelada'] ?? 0) === 1) {
+        return 'Cancelada';
+    }
+
+    $fecha_inicio = $practice['fecha_inicio'] ?? null;
+    $fecha_fin_efectiva = $practice['fecha_fin_extra'] ?? $practice['fecha_fin'] ?? null;
+
+    if ($fecha_inicio === null || $fecha_fin_efectiva === null) {
+        return 'No disponible';
+    }
+
+    $today = (new DateTimeImmutable('today'))->format('Y-m-d');
+
+    if ($today < $fecha_inicio) {
+        return 'En espera';
+    }
+
+    if ($today <= $fecha_fin_efectiva) {
+        return 'En curso';
+    }
+
+    return 'Finalizada';
+}
+
 $pdo = db();
 $formato = ($_GET['formato'] ?? 'excel') === 'pdf' ? 'pdf' : 'excel';
 
@@ -76,6 +102,10 @@ $stmt = $pdo->prepare(
         p.anexo,
         p.fecha_inicio,
         p.fecha_fin,
+        p.fecha_fin_extra,
+        p.fecha_fin_real,
+        p.cancelada,
+        p.motivo_exclusion,
         a.nombre AS alumno_nombre,
         a.apellido1 AS alumno_apellido1,
         a.apellido2 AS alumno_apellido2,
@@ -122,13 +152,16 @@ tr:nth-child(even) td { background: #f9fafb; }
       <th>Alumno</th>
       <th>Empresa</th>
       <th>Fecha inicio</th>
-      <th>Fecha fin</th>
-      <th>Anexo</th>
+      <th>Fecha prevista fin</th>
+      <th>Fecha fin real</th>
+      <th>Estado</th>
+      <th>Motivo de cancelación</th>
+      <th>Convenio/Anexo</th>
     </tr>
   </thead>
   <tbody>
     <?php if ($practices === []): ?>
-    <tr><td colspan="5">No hay prácticas para los filtros seleccionados.</td></tr>
+    <tr><td colspan="8">No hay prácticas para los filtros seleccionados.</td></tr>
     <?php else: ?>
     <?php foreach ($practices as $p):
         $alumno_apellido2 = trim((string) ($p['alumno_apellido2'] ?? ''));
@@ -159,8 +192,20 @@ tr:nth-child(even) td { background: #f9fafb; }
             }
         }
 
-        $fecha_inicio = pe_format_date($p['fecha_inicio'] ?? null);
-        $fecha_fin    = pe_format_date($p['fecha_fin'] ?? null);
+        $fecha_inicio      = pe_format_date($p['fecha_inicio'] ?? null);
+        $fecha_prevista_fin = pe_format_date($p['fecha_fin_extra'] ?? $p['fecha_fin'] ?? null);
+        $estado            = pe_calculate_practice_status($p);
+        $fecha_fin_real_raw = $p['fecha_fin_real'] ?? null;
+        if ($estado === 'Finalizada') {
+            $fecha_fin_real = ($fecha_fin_real_raw !== null && $fecha_fin_real_raw !== '')
+                ? pe_format_date($fecha_fin_real_raw)
+                : 'Fecha prevista';
+        } elseif ($estado === 'Cancelada') {
+            $fecha_fin_real = pe_format_date($fecha_fin_real_raw);
+        } else {
+            $fecha_fin_real = '';
+        }
+        $motivo_cancelacion = ($p['motivo_exclusion'] !== null && $p['motivo_exclusion'] !== '') ? (string) $p['motivo_exclusion'] : '';
         $convenio     = ($p['convenio'] !== null && $p['convenio'] !== '') ? (string) $p['convenio'] : '';
         $anexo_val    = ($p['anexo'] !== null && $p['anexo'] !== '') ? (string) $p['anexo'] : '';
         $anexo        = $convenio . ' / ' . $anexo_val;
@@ -169,7 +214,10 @@ tr:nth-child(even) td { background: #f9fafb; }
       <td><?php echo pe_h($alumno); ?></td>
       <td><?php echo pe_h($empresa); ?></td>
       <td><?php echo pe_h($fecha_inicio); ?></td>
-      <td><?php echo pe_h($fecha_fin); ?></td>
+      <td><?php echo pe_h($fecha_prevista_fin); ?></td>
+      <td><?php echo pe_h($fecha_fin_real); ?></td>
+      <td><?php echo pe_h($estado); ?></td>
+      <td><?php echo pe_h($motivo_cancelacion); ?></td>
       <td><?php echo pe_h($anexo); ?></td>
     </tr>
     <?php endforeach; ?>

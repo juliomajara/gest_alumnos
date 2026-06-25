@@ -367,40 +367,41 @@ function render_practice_rows(array $practices): string
       <tr>
         <td><a class="empresa-name-trigger--practicas" href="practica_detalle.php?id_practica=<?php echo (int) $practice['id_practica']; ?>"><?php echo htmlspecialchars($anexo_21, ENT_QUOTES, 'UTF-8'); ?></a></td>
         <td>
-          <span
-            class="alumno-name-trigger"
-            role="button"
-            tabindex="0"
-            aria-haspopup="dialog"
-            aria-expanded="false"
-            data-alumno-id="<?php echo $alumno_id; ?>"
-            data-alumno-nombre="<?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?>"
-            data-alumno-nia="<?php echo htmlspecialchars($alumno_nia, ENT_QUOTES, 'UTF-8'); ?>"
-            data-alumno-dni="<?php echo htmlspecialchars($alumno_dni, ENT_QUOTES, 'UTF-8'); ?>"
-            data-alumno-telefono="<?php echo htmlspecialchars($alumno_telefono, ENT_QUOTES, 'UTF-8'); ?>"
-            data-alumno-correo-educamadrid="<?php echo htmlspecialchars($alumno_correo_educamadrid, ENT_QUOTES, 'UTF-8'); ?>"
-            data-alumno-correo-personal="<?php echo htmlspecialchars($alumno_correo_personal, ENT_QUOTES, 'UTF-8'); ?>"
-            data-practica-id="<?php echo (int) $practice['id_practica']; ?>"
-          ><?php echo $alumno_html; ?></span>
+          <span class="help-tooltip">
+            <span class="alumno-name-trigger" tabindex="0"><?php echo $alumno_html; ?></span>
+            <span class="help-tooltip-content" role="tooltip">
+              <span class="help-tooltip-title"><?php echo htmlspecialchars($alumno, ENT_QUOTES, 'UTF-8'); ?></span>
+              <table class="help-tooltip-table">
+                <tbody>
+                  <tr><td>NIA</td><td><?php echo $alumno_nia !== '' ? htmlspecialchars($alumno_nia, ENT_QUOTES, 'UTF-8') : 'No disponible'; ?></td></tr>
+                  <tr><td>DNI</td><td><?php echo $alumno_dni !== '' ? htmlspecialchars($alumno_dni, ENT_QUOTES, 'UTF-8') : 'No disponible'; ?></td></tr>
+                  <tr><td>EducaMadrid</td><td><?php echo $alumno_correo_educamadrid !== '' ? htmlspecialchars($alumno_correo_educamadrid, ENT_QUOTES, 'UTF-8') : 'No disponible'; ?></td></tr>
+                  <tr><td>Correo personal</td><td><?php echo $alumno_correo_personal !== '' ? htmlspecialchars($alumno_correo_personal, ENT_QUOTES, 'UTF-8') : 'No disponible'; ?></td></tr>
+                  <tr><td>Teléfono</td><td><?php echo $alumno_telefono !== '' ? htmlspecialchars($alumno_telefono, ENT_QUOTES, 'UTF-8') : 'No disponible'; ?></td></tr>
+                </tbody>
+              </table>
+            </span>
+          </span>
         </td>
         <td>
-          <span
-            class="empresa-name-trigger empresa-name-trigger--practicas"
-            role="button"
-            tabindex="0"
-            aria-haspopup="dialog"
-            aria-expanded="false"
-            data-empresa-id="<?php echo (int) $practice['id_empresa']; ?>"
-            data-empresa-localidad="<?php echo htmlspecialchars($empresa_localidad, ENT_QUOTES, 'UTF-8'); ?>"
-            data-empresa-nombre="<?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?>"
-            data-empresa-cif="<?php echo htmlspecialchars($empresa_cif, ENT_QUOTES, 'UTF-8'); ?>"
-            data-contacto-nombre="<?php echo htmlspecialchars($empresa_contacto_nombre, ENT_QUOTES, 'UTF-8'); ?>"
-            data-contacto-email="<?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?>"
-            data-contacto-telefono="<?php echo htmlspecialchars($empresa_contacto_telefono, ENT_QUOTES, 'UTF-8'); ?>"
-            data-tutor-nombre="<?php echo htmlspecialchars($empresa_tutor_nombre, ENT_QUOTES, 'UTF-8'); ?>"
-            data-tutor-email="<?php echo htmlspecialchars($empresa_tutor_email, ENT_QUOTES, 'UTF-8'); ?>"
-            data-tutor-telefono="<?php echo htmlspecialchars($empresa_tutor_telefono, ENT_QUOTES, 'UTF-8'); ?>"
-          ><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></span>
+          <span class="help-tooltip">
+            <span class="empresa-name-trigger--practicas" tabindex="0"><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></span>
+            <span class="help-tooltip-content" role="tooltip">
+              <span class="help-tooltip-title"><?php echo htmlspecialchars($empresa, ENT_QUOTES, 'UTF-8'); ?></span>
+              <table class="help-tooltip-table">
+                <tbody>
+                  <tr><td>CIF</td><td><?php echo htmlspecialchars($empresa_cif, ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <?php if ($empresa_localidad !== ''): ?><tr><td>Localidad</td><td><?php echo htmlspecialchars($empresa_localidad, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php endif; ?>
+                  <tr><td>Contacto</td><td><?php echo htmlspecialchars($empresa_contacto_nombre, ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <?php if ($empresa_contacto_email !== 'No disponible'): ?><tr><td>C. correo</td><td><?php echo htmlspecialchars($empresa_contacto_email, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php endif; ?>
+                  <?php if ($empresa_contacto_telefono !== 'No disponible'): ?><tr><td>C. teléfono</td><td><?php echo htmlspecialchars($empresa_contacto_telefono, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php endif; ?>
+                  <tr><td>Tutor</td><td><?php echo htmlspecialchars($empresa_tutor_nombre, ENT_QUOTES, 'UTF-8'); ?></td></tr>
+                  <?php if ($empresa_tutor_email !== 'No disponible'): ?><tr><td>T. correo</td><td><?php echo htmlspecialchars($empresa_tutor_email, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php endif; ?>
+                  <?php if ($empresa_tutor_telefono !== 'No disponible'): ?><tr><td>T. teléfono</td><td><?php echo htmlspecialchars($empresa_tutor_telefono, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php endif; ?>
+                </tbody>
+              </table>
+            </span>
+          </span>
         </td>
         <td><?php echo htmlspecialchars($fecha_inicio, ENT_QUOTES, 'UTF-8'); ?></td>
         <td><?php echo htmlspecialchars($fecha_fin, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -520,57 +521,14 @@ $active_page = 'practicas';
     </main>
   </div>
 
-  <div class="practicas-ras-popover-layer" id="empresa-detail-layer" hidden>
-    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
-    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--empresa" id="empresa-detail-popover" role="dialog" aria-modal="false" aria-labelledby="empresa-detail-title" hidden>
-      <div class="practicas-ras-popover__header">
-        <span class="practicas-ras-popover__eyebrow">Empresa</span>
-        <span id="empresa-detail-title" class="practicas-ras-popover__title"></span>
-        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle de la empresa">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <ul class="practicas-ras-popover__criteria" id="empresa-detail-data"></ul>
-      <div class="practicas-ras-popover__footer">
-        <a id="empresa-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles de la empresa →</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="practicas-ras-popover-layer" id="alumno-detail-layer" hidden>
-    <button type="button" class="practicas-ras-popover-backdrop" data-popover-close tabindex="-1" aria-hidden="true"></button>
-    <div class="practicas-ras-popover practicas-ras-popover--modulo practicas-ras-popover--empresa" id="alumno-detail-popover" role="dialog" aria-modal="false" aria-labelledby="alumno-detail-title" hidden>
-      <div class="practicas-ras-popover__header">
-        <span class="practicas-ras-popover__eyebrow">Alumno</span>
-        <span id="alumno-detail-title" class="practicas-ras-popover__title"></span>
-        <button type="button" class="practicas-ras-popover__close" data-popover-close aria-label="Cerrar detalle del alumno">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-      <ul class="practicas-ras-popover__criteria" id="alumno-detail-data"></ul>
-      <div class="practicas-ras-popover__footer">
-        <a id="alumno-detail-link" class="practicas-ras-popover__link" href="#">Ver detalles de alumno →</a>
-      </div>
-    </div>
-  </div>
-
   <script>
+  (function () {
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
     const tableBody = document.querySelector('tbody');
-    const layer = document.getElementById('empresa-detail-layer');
-    const popover = document.getElementById('empresa-detail-popover');
-    const title = document.getElementById('empresa-detail-title');
-    const detailList = document.getElementById('empresa-detail-data');
-    const detailLink = document.getElementById('empresa-detail-link');
     let debounceTimer = null;
-    let activeTrigger = null;
+
+    if (!form || !searchInput || !tableBody) return;
 
     const updateResults = (withDebounce = false) => {
       if (debounceTimer) {
@@ -613,368 +571,60 @@ $active_page = 'practicas';
       updateResults(true);
     });
 
-    if (layer && popover && title && detailList) {
-      const copyToClipboard = async (value) => {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(value);
-          return;
-        }
+    const gap = 10;
+    let activeContainer = null;
 
-        const helper = document.createElement('textarea');
-        helper.value = value;
-        helper.setAttribute('readonly', '');
-        helper.style.position = 'absolute';
-        helper.style.left = '-9999px';
-        document.body.appendChild(helper);
-        helper.select();
-        document.execCommand('copy');
-        document.body.removeChild(helper);
-      };
+    const positionTooltip = (container) => {
+      const tooltip = container.querySelector('.help-tooltip-content');
+      if (!tooltip) return;
 
-      const setPopoverPosition = (trigger) => {
-        const triggerRect = trigger.getBoundingClientRect();
-        const popoverRect = popover.getBoundingClientRect();
-        const gutter = 12;
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+      tooltip.style.position = 'fixed';
+      tooltip.style.right = 'auto';
+      tooltip.style.bottom = 'auto';
 
-        let top = triggerRect.top;
-        let left = triggerRect.right + gutter;
+      const trigger = container.firstElementChild;
+      const anchorRect = (trigger || container).getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
 
-        if (left + popoverRect.width > viewportWidth - gutter) {
-          left = triggerRect.left - popoverRect.width - gutter;
-        }
+      let left = anchorRect.left;
+      let top = anchorRect.bottom + gap;
 
-        if (left < gutter) {
-          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
-          top = triggerRect.bottom + gutter;
-        }
+      if (left + tooltipRect.width > vw - gap) {
+        left = anchorRect.right - tooltipRect.width;
+      }
+      if (top + tooltipRect.height > vh - gap) {
+        top = anchorRect.top - tooltipRect.height - gap;
+      }
 
-        if (top + popoverRect.height > viewportHeight - gutter) {
-          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
-        }
+      tooltip.style.left = `${Math.max(gap, Math.min(left, vw - tooltipRect.width - gap))}px`;
+      tooltip.style.top = `${Math.max(gap, Math.min(top, vh - tooltipRect.height - gap))}px`;
+    };
 
-        popover.style.top = `${Math.max(gutter, top)}px`;
-        popover.style.left = `${Math.max(gutter, left)}px`;
-      };
+    tableBody.addEventListener('mouseover', (event) => {
+      const container = event.target.closest('.help-tooltip');
+      if (!container || !tableBody.contains(container)) return;
+      if (activeContainer === container) return;
+      activeContainer = container;
+      positionTooltip(container);
+    });
 
-      const closePopover = () => {
-        popover.hidden = true;
-        layer.hidden = true;
-        if (activeTrigger) {
-          activeTrigger.setAttribute('aria-expanded', 'false');
-        }
-        activeTrigger = null;
-      };
+    tableBody.addEventListener('mouseout', (event) => {
+      const container = event.target.closest('.help-tooltip');
+      if (!container) return;
+      if (container.contains(event.relatedTarget)) return;
+      if (activeContainer === container) activeContainer = null;
+    });
 
-      const getValueOrFallback = (value) => {
-        const normalized = (value || '').trim();
-        return normalized !== '' ? normalized : 'No disponible';
-      };
+    window.addEventListener('resize', () => {
+      if (activeContainer) positionTooltip(activeContainer);
+    });
 
-      const createCopyNode = (value) => {
-        if (value === 'No disponible') {
-          return document.createTextNode(value);
-        }
-
-        const trigger = document.createElement('span');
-        trigger.className = 'copy-trigger';
-        trigger.dataset.copy = value;
-        trigger.textContent = value;
-        return trigger;
-      };
-
-      const addInfoItem = (label, value) => {
-        const item = document.createElement('li');
-        const strong = document.createElement('strong');
-        strong.textContent = label;
-        item.appendChild(strong);
-
-        const valueSpan = document.createElement('span');
-        valueSpan.textContent = value;
-        item.appendChild(valueSpan);
-
-        detailList.appendChild(item);
-      };
-
-      const addPersonItem = (label, person, email, phone) => {
-        const item = document.createElement('li');
-        const strong = document.createElement('strong');
-        strong.textContent = label;
-        item.appendChild(strong);
-
-        const valueSpan = document.createElement('span');
-        valueSpan.appendChild(document.createTextNode(person));
-
-        const emailLine = document.createElement('div');
-        emailLine.appendChild(createCopyNode(email));
-        valueSpan.appendChild(emailLine);
-
-        const phoneLine = document.createElement('div');
-        phoneLine.appendChild(createCopyNode(phone));
-        valueSpan.appendChild(phoneLine);
-
-        item.appendChild(valueSpan);
-        detailList.appendChild(item);
-      };
-
-      const openPopover = (trigger) => {
-        if (activeTrigger && activeTrigger !== trigger) {
-          activeTrigger.setAttribute('aria-expanded', 'false');
-        }
-
-        title.textContent = trigger.dataset.empresaNombre || 'Empresa';
-        if (detailLink) {
-          const empresaId = (trigger.dataset.empresaId || '').trim();
-          detailLink.setAttribute('href', empresaId !== '' ? `empresa_detalle.php?id_empresa=${encodeURIComponent(empresaId)}` : '#');
-        }
-        detailList.innerHTML = '';
-
-        addInfoItem('CIF', getValueOrFallback(trigger.dataset.empresaCif));
-        addInfoItem('Localidad', getValueOrFallback(trigger.dataset.empresaLocalidad));
-        addPersonItem(
-          'Persona de contacto',
-          getValueOrFallback(trigger.dataset.contactoNombre),
-          getValueOrFallback(trigger.dataset.contactoEmail),
-          getValueOrFallback(trigger.dataset.contactoTelefono)
-        );
-        addPersonItem(
-          'Tutor',
-          getValueOrFallback(trigger.dataset.tutorNombre),
-          getValueOrFallback(trigger.dataset.tutorEmail),
-          getValueOrFallback(trigger.dataset.tutorTelefono)
-        );
-
-        activeTrigger = trigger;
-        trigger.setAttribute('aria-expanded', 'true');
-        layer.hidden = false;
-        popover.hidden = false;
-        setPopoverPosition(trigger);
-      };
-
-      tableBody.addEventListener('click', (event) => {
-        const trigger = event.target.closest('.empresa-name-trigger');
-        if (trigger && tableBody.contains(trigger)) {
-          if (activeTrigger === trigger && !popover.hidden) {
-            closePopover();
-            return;
-          }
-
-          openPopover(trigger);
-          return;
-        }
-      });
-
-      popover.addEventListener('click', (event) => {
-        const copyButton = event.target.closest('[data-copy-value]');
-        if (!copyButton) {
-          return;
-        }
-
-        event.preventDefault();
-
-        const copyValue = copyButton.dataset.copyValue || '';
-        if (copyValue === '') {
-          return;
-        }
-
-        copyToClipboard(copyValue)
-          .then(() => {
-            const originalText = copyButton.textContent;
-            copyButton.textContent = 'Copiado';
-            window.setTimeout(() => {
-              copyButton.textContent = originalText;
-            }, 1000);
-            if (window.showCopyToast) { window.showCopyToast(copyValue); }
-          })
-          .catch(() => {});
-      });
-
-      tableBody.addEventListener('keydown', (event) => {
-        const trigger = event.target.closest('.empresa-name-trigger');
-        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          trigger.click();
-        }
-      });
-
-      popover.addEventListener('keydown', (event) => {
-        const copyTarget = event.target.closest('[data-copy-value]');
-        if (copyTarget && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          copyTarget.click();
-        }
-      });
-
-      layer.querySelectorAll('[data-popover-close]').forEach((element) => {
-        element.addEventListener('click', closePopover);
-      });
-
-      window.addEventListener('resize', () => {
-        if (activeTrigger && !popover.hidden) {
-          setPopoverPosition(activeTrigger);
-        }
-      });
-
-      window.addEventListener('scroll', () => {
-        if (activeTrigger && !popover.hidden) {
-          setPopoverPosition(activeTrigger);
-        }
-      }, true);
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !popover.hidden) {
-          closePopover();
-        }
-      });
-    }
-    const alumnoLayer = document.getElementById('alumno-detail-layer');
-    const alumnoPopover = document.getElementById('alumno-detail-popover');
-    const alumnoTitle = document.getElementById('alumno-detail-title');
-    const alumnoDetailList = document.getElementById('alumno-detail-data');
-    const alumnoDetailLink = document.getElementById('alumno-detail-link');
-    let activeAlumnoTrigger = null;
-
-    if (alumnoLayer && alumnoPopover && alumnoTitle && alumnoDetailList) {
-      const setAlumnoPopoverPosition = (trigger) => {
-        const triggerRect = trigger.getBoundingClientRect();
-        const popoverRect = alumnoPopover.getBoundingClientRect();
-        const gutter = 12;
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        let top = triggerRect.top;
-        let left = triggerRect.right + gutter;
-
-        if (left + popoverRect.width > viewportWidth - gutter) {
-          left = triggerRect.left - popoverRect.width - gutter;
-        }
-
-        if (left < gutter) {
-          left = Math.min(viewportWidth - popoverRect.width - gutter, Math.max(gutter, triggerRect.left));
-          top = triggerRect.bottom + gutter;
-        }
-
-        if (top + popoverRect.height > viewportHeight - gutter) {
-          top = Math.max(gutter, viewportHeight - popoverRect.height - gutter);
-        }
-
-        alumnoPopover.style.top = `${Math.max(gutter, top)}px`;
-        alumnoPopover.style.left = `${Math.max(gutter, left)}px`;
-      };
-
-      const closeAlumnoPopover = () => {
-        alumnoPopover.hidden = true;
-        alumnoLayer.hidden = true;
-        if (activeAlumnoTrigger) {
-          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
-        }
-        activeAlumnoTrigger = null;
-      };
-
-      const getAlumnoValueOrFallback = (value) => {
-        const normalized = (value || '').trim();
-        return normalized !== '' ? normalized : 'No disponible';
-      };
-
-      const addAlumnoInfoItem = (label, value) => {
-        const item = document.createElement('li');
-        const strong = document.createElement('strong');
-        strong.textContent = label;
-        item.appendChild(strong);
-        const valueSpan = document.createElement('span');
-        valueSpan.textContent = value;
-        item.appendChild(valueSpan);
-        alumnoDetailList.appendChild(item);
-      };
-
-      const addAlumnoCopyItem = (label, value) => {
-        const item = document.createElement('li');
-        const strong = document.createElement('strong');
-        strong.textContent = label;
-        item.appendChild(strong);
-        const valueSpan = document.createElement('span');
-        if (value !== '') {
-          const trigger = document.createElement('span');
-          trigger.className = 'copy-trigger';
-          trigger.dataset.copy = value;
-          trigger.textContent = value;
-          valueSpan.appendChild(trigger);
-        } else {
-          valueSpan.textContent = 'No disponible';
-        }
-        item.appendChild(valueSpan);
-        alumnoDetailList.appendChild(item);
-      };
-
-      const openAlumnoPopover = (trigger) => {
-        if (activeAlumnoTrigger && activeAlumnoTrigger !== trigger) {
-          activeAlumnoTrigger.setAttribute('aria-expanded', 'false');
-        }
-
-        alumnoTitle.textContent = trigger.dataset.alumnoNombre || 'Alumno';
-
-        if (alumnoDetailLink) {
-          const alumnoId = (trigger.dataset.alumnoId || '').trim();
-          alumnoDetailLink.setAttribute('href', alumnoId !== '' ? `alumno_detalle.php?id_alumno=${encodeURIComponent(alumnoId)}` : '#');
-        }
-
-        alumnoDetailList.innerHTML = '';
-        addAlumnoInfoItem('NIA', getAlumnoValueOrFallback(trigger.dataset.alumnoNia));
-        addAlumnoInfoItem('DNI', getAlumnoValueOrFallback(trigger.dataset.alumnoDni));
-        addAlumnoCopyItem('EducaMadrid', (trigger.dataset.alumnoCorreoEducamadrid || '').trim());
-        addAlumnoCopyItem('Correo personal', (trigger.dataset.alumnoCorreoPersonal || '').trim());
-        addAlumnoCopyItem('Teléfono', (trigger.dataset.alumnoTelefono || '').trim());
-
-        activeAlumnoTrigger = trigger;
-        trigger.setAttribute('aria-expanded', 'true');
-        alumnoLayer.hidden = false;
-        alumnoPopover.hidden = false;
-        setAlumnoPopoverPosition(trigger);
-      };
-
-      tableBody.addEventListener('click', (event) => {
-        const trigger = event.target.closest('.alumno-name-trigger');
-        if (trigger && tableBody.contains(trigger)) {
-          if (activeAlumnoTrigger === trigger && !alumnoPopover.hidden) {
-            closeAlumnoPopover();
-            return;
-          }
-          openAlumnoPopover(trigger);
-          return;
-        }
-      });
-
-      tableBody.addEventListener('keydown', (event) => {
-        const trigger = event.target.closest('.alumno-name-trigger');
-        if (trigger && tableBody.contains(trigger) && (event.key === 'Enter' || event.key === ' ')) {
-          event.preventDefault();
-          trigger.click();
-        }
-      });
-
-      alumnoLayer.querySelectorAll('[data-popover-close]').forEach((element) => {
-        element.addEventListener('click', closeAlumnoPopover);
-      });
-
-      window.addEventListener('resize', () => {
-        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
-          setAlumnoPopoverPosition(activeAlumnoTrigger);
-        }
-      });
-
-      window.addEventListener('scroll', () => {
-        if (activeAlumnoTrigger && !alumnoPopover.hidden) {
-          setAlumnoPopoverPosition(activeAlumnoTrigger);
-        }
-      }, true);
-
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !alumnoPopover.hidden) {
-          closeAlumnoPopover();
-        }
-      });
-    }
+    window.addEventListener('scroll', () => {
+      if (activeContainer) positionTooltip(activeContainer);
+    }, { passive: true });
+  })();
   </script>
   <script src="assets/copy.js"></script>
 </body>
