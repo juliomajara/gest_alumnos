@@ -5,6 +5,11 @@ require_once __DIR__ . '/db.php';
 
 $pdo = db();
 
+$active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 ORDER BY id_curso_escolar DESC LIMIT 1')->fetchColumn();
+$active_course_id = $active_course_id ? (int) $active_course_id : 0;
+$courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll();
+$selected_course_id = (int) ($_GET['id_curso_escolar'] ?? $active_course_id);
+
 $search_term = trim((string) ($_GET['q'] ?? ''));
 $allowed_orders = ['alumno_asc', 'alumno_desc', 'empresa_asc', 'empresa_desc', 'fecha_inicio_asc', 'fecha_inicio_desc', 'fecha_fin_asc', 'fecha_fin_desc', 'anexo_asc', 'anexo_desc', 'estado_asc', 'estado_desc'];
 $order_param = (string) ($_GET['orden'] ?? '');
@@ -120,6 +125,11 @@ if ($search_term !== '') {
   $params['search_term_empresa_apellido2'] = $search_like;
   $params['search_term_empresa_cif'] = $search_like;
   $params['search_term_empresa_convenio'] = $search_like;
+}
+
+if ($selected_course_id > 0) {
+  $filters[] = 'a.id_alumno IN (SELECT ac.id_alumno FROM alumno_curso ac WHERE ac.id_curso_escolar = :id_curso_escolar)';
+  $params['id_curso_escolar'] = $selected_course_id;
 }
 
 $where_clause = $filters ? 'WHERE ' . implode(' AND ', $filters) : '';
@@ -448,44 +458,59 @@ $active_page = 'practicas';
         </div>
         <div class="header-actions">
           <a class="primary-button" href="includes/practicas_exportar.php?<?php echo htmlspecialchars(http_build_query([
-            'q'      => $search_term,
-            'orden'  => $current_order,
-            'formato' => 'excel',
+            'q'               => $search_term,
+            'orden'           => $current_order,
+            'id_curso_escolar' => $selected_course_id ?: '',
+            'formato'         => 'excel',
           ]), ENT_QUOTES, 'UTF-8'); ?>">Exportar Excel</a>
           <a class="primary-button" href="includes/practicas_exportar.php?<?php echo htmlspecialchars(http_build_query([
-            'q'      => $search_term,
-            'orden'  => $current_order,
-            'formato' => 'pdf',
+            'q'               => $search_term,
+            'orden'           => $current_order,
+            'id_curso_escolar' => $selected_course_id ?: '',
+            'formato'         => 'pdf',
           ]), ENT_QUOTES, 'UTF-8'); ?>">Exportar PDF</a>
           <a class="edit-toggle edit-toggle-success" href="practica_nueva.php"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir práctica</a>
         </div>
       </header>
 
+      <?php $_tab_qs = $selected_course_id > 0 ? '?id_curso_escolar=' . $selected_course_id : ''; ?>
       <nav class="tab-nav">
-        <a class="tab-nav-link active" href="practicas.php">Prácticas</a>
-        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
-        <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
-        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
-        <a class="tab-nav-link" href="practicas_listado.php">Listado</a>
-        <a class="tab-nav-link" href="practicas_contacto.php">Correos</a>
+        <a class="tab-nav-link active" href="practicas.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>" data-tab-base="practicas.php">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>" data-tab-base="practicas_dias.php">Días de prácticas</a>
+        <a class="tab-nav-link" href="practicas_documentacion.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>" data-tab-base="practicas_documentacion.php">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>" data-tab-base="practicas_anexos.php">Seguimiento de Anexos</a>
+        <a class="tab-nav-link" href="practicas_listado.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>" data-tab-base="practicas_listado.php">Listado</a>
+        <a class="tab-nav-link" href="practicas_contacto.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>" data-tab-base="practicas_contacto.php">Correos</a>
       </nav>
 
       <form class="topbar" method="get">
-        <div class="topbar-search">
-          <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle>
-              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
-            </svg>
-          </span>
-          <input
-            type="search"
-            name="q"
-            placeholder="Buscar por alumno, empresa, DNI, CIF o convenio"
-            aria-label="Buscar por alumno, empresa, DNI, CIF o convenio"
-            value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
-          >
-          <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="id_curso_escolar" aria-label="Curso escolar">
+              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
+              <?php foreach ($courses as $course): ?>
+                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <div class="topbar-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar por alumno, empresa, DNI, CIF o convenio"
+              aria-label="Buscar por alumno, empresa, DNI, CIF o convenio"
+              value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
         </div>
       </form>
 
@@ -525,10 +550,11 @@ $active_page = 'practicas';
   (function () {
     const form = document.querySelector('.topbar');
     const searchInput = document.querySelector('input[name="q"]');
+    const courseSelect = document.querySelector('select[name="id_curso_escolar"]');
     const tableBody = document.querySelector('tbody');
     let debounceTimer = null;
 
-    if (!form || !searchInput || !tableBody) return;
+    if (!form || !searchInput || !tableBody || !courseSelect) return;
 
     const updateResults = (withDebounce = false) => {
       if (debounceTimer) {
@@ -570,6 +596,18 @@ $active_page = 'practicas';
     searchInput.addEventListener('input', () => {
       updateResults(true);
     });
+
+    courseSelect.addEventListener('change', () => {
+      updateTabLinks(courseSelect.value);
+      updateResults();
+    });
+
+    const updateTabLinks = (courseId) => {
+      document.querySelectorAll('.tab-nav-link[data-tab-base]').forEach((link) => {
+        const base = link.dataset.tabBase;
+        link.href = courseId ? `${base}?id_curso_escolar=${encodeURIComponent(courseId)}` : base;
+      });
+    };
 
     const gap = 10;
     let activeContainer = null;

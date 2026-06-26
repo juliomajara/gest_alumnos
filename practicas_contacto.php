@@ -137,20 +137,17 @@ $active_page = 'practicas';
         </div>
       </header>
 
+      <?php $_tab_qs = $course_id > 0 ? '?id_curso_escolar=' . $course_id : ''; ?>
       <nav class="tab-nav">
-        <a class="tab-nav-link" href="practicas.php">Prácticas</a>
-        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
-        <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
-        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
-        <a class="tab-nav-link" href="practicas_listado.php">Listado</a>
-        <a class="tab-nav-link active" href="practicas_contacto.php">Correos</a>
+        <a class="tab-nav-link" href="practicas.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Días de prácticas</a>
+        <a class="tab-nav-link" href="practicas_documentacion.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Seguimiento de Anexos</a>
+        <a class="tab-nav-link" href="practicas_listado.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Listado</a>
+        <a class="tab-nav-link active" href="practicas_contacto.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Correos</a>
       </nav>
 
       <section class="panel">
-        <div class="panel-header">
-          <h3>Filtros</h3>
-          <p>Selecciona el curso y filtra por rango de fechas de inicio y fin de las prácticas.</p>
-        </div>
         <form method="get" class="entity-form entity-stack">
           <div class="entity-grid">
             <label>
@@ -184,9 +181,6 @@ $active_page = 'practicas';
               Fin hasta
               <input type="date" name="fin_hasta" value="<?php echo htmlspecialchars((string) ($fin_hasta ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
             </label>
-          </div>
-          <div>
-            <button type="submit" class="primary-button">Aplicar filtros</button>
           </div>
         </form>
       </section>
@@ -294,6 +288,16 @@ $active_page = 'practicas';
     </main>
   </div>
 
+  <script>
+    (function () {
+      var filterForm = document.querySelector('form.entity-form');
+      if (filterForm) {
+        filterForm.querySelectorAll('select, input[type="date"]').forEach(function (el) {
+          el.addEventListener('change', function () { filterForm.submit(); });
+        });
+      }
+    })();
+  </script>
   <script>
     const selectAll = document.getElementById('select-all');
     const tipoCorreo = document.getElementById('tipo-correo');

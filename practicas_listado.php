@@ -30,6 +30,9 @@ function sort_ind_listado(string $col, string $cur_col, string $cur_dir): string
 
 $load_error = null;
 $active_course_id = null;
+$courses = [];
+$selected_course_id = 0;
+$search_term = trim((string) ($_GET['q'] ?? ''));
 $practices = [];
 
 $allowed_orders = ['alumno_asc', 'alumno_desc', 'localidad_alumno_asc', 'localidad_alumno_desc', 'localidad_empresa_asc', 'localidad_empresa_desc', 'fecha_inicio_asc', 'fecha_inicio_desc', 'fecha_fin_asc', 'fecha_fin_desc'];
@@ -41,9 +44,17 @@ $sort_dir = $_last_us !== false ? substr($current_order, $_last_us + 1) : 'asc';
 
 try {
   $pdo = db();
-  $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
+  $courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll();
+  $active_course_id = 0;
+  foreach ($courses as $_c) {
+    if ((int) ($_c['activo'] ?? 0) === 1) { $active_course_id = (int) $_c['id_curso_escolar']; break; }
+  }
+  if ($active_course_id === 0 && $courses !== []) { $active_course_id = (int) $courses[0]['id_curso_escolar']; }
+  $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $_GET['id_curso_escolar'])
+    ? (int) $_GET['id_curso_escolar']
+    : $active_course_id;
 
-  if ($active_course_id !== false && $active_course_id !== null) {
+  if ($selected_course_id > 0) {
     $dir = $sort_dir === 'desc' ? 'DESC' : 'ASC';
     $order_clause = match ($sort_col) {
       'localidad_alumno'  => "ORDER BY la.nombre $dir, a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC",
@@ -53,6 +64,16 @@ try {
       default             => "ORDER BY a.apellido1 $dir, a.apellido2 $dir, a.nombre $dir, p.id_practica ASC",
     };
 
+    $search_where_listado = '';
+    $search_params_listado = ['active_course_id' => $selected_course_id];
+    if ($search_term !== '') {
+      $search_like = '%' . $search_term . '%';
+      $search_where_listado = ' WHERE (a.nombre LIKE :q1 OR a.apellido1 LIKE :q2 OR a.apellido2 LIKE :q3 OR a.dni LIKE :q4)';
+      $search_params_listado['q1'] = $search_like;
+      $search_params_listado['q2'] = $search_like;
+      $search_params_listado['q3'] = $search_like;
+      $search_params_listado['q4'] = $search_like;
+    }
     $stmt = $pdo->prepare(
       'SELECT DISTINCT
          p.id_practica,
@@ -94,9 +115,10 @@ try {
          WHERE entidad_tipo = "alumno" AND etiqueta = "personal"
          GROUP BY id_entidad
        ) acor_personal ON acor_personal.id_entidad = a.id_alumno
+       ' . $search_where_listado . '
        ' . $order_clause
     );
-    $stmt->execute(['active_course_id' => (int) $active_course_id]);
+    $stmt->execute($search_params_listado);
     $practices = $stmt->fetchAll();
   }
 } catch (Throwable $error) {
@@ -126,20 +148,52 @@ try {
         </div>
       </header>
 
+      <?php $_tab_qs = $selected_course_id > 0 ? '?id_curso_escolar=' . $selected_course_id : ''; ?>
       <nav class="tab-nav">
-        <a class="tab-nav-link" href="practicas.php">Prácticas</a>
-        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
-        <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
-        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
-        <a class="tab-nav-link active" href="practicas_listado.php">Listado</a>
-        <a class="tab-nav-link" href="practicas_contacto.php">Correos</a>
+        <a class="tab-nav-link" href="practicas.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Días de prácticas</a>
+        <a class="tab-nav-link" href="practicas_documentacion.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Seguimiento de Anexos</a>
+        <a class="tab-nav-link active" href="practicas_listado.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Listado</a>
+        <a class="tab-nav-link" href="practicas_contacto.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Correos</a>
       </nav>
+
+      <form class="topbar" method="get">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="id_curso_escolar" aria-label="Curso escolar">
+              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
+              <?php foreach ($courses as $course): ?>
+                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <div class="topbar-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar por alumno, empresa, DNI, CIF o convenio"
+              aria-label="Buscar por alumno, empresa, DNI, CIF o convenio"
+              value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+      </form>
 
       <section class="panel">
         <div class="panel-grid">
           <?php if ($load_error !== null): ?>
             <p><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></p>
-          <?php elseif ($active_course_id === false || $active_course_id === null): ?>
+          <?php elseif ($selected_course_id <= 0): ?>
             <p>No hay un curso activo configurado.</p>
           <?php else: ?>
             <table>
@@ -228,6 +282,25 @@ try {
     </div>
   </div>
 
+  <script>
+    (function () {
+      var topbarFormListado = document.querySelector('form.topbar');
+      if (topbarFormListado) {
+        var topbarCourseListado = topbarFormListado.querySelector('select[name="id_curso_escolar"]');
+        var topbarSearchListado = topbarFormListado.querySelector('input[name="q"]');
+        var searchDebounceListado = null;
+        if (topbarCourseListado) {
+          topbarCourseListado.addEventListener('change', function () { topbarFormListado.submit(); });
+        }
+        if (topbarSearchListado) {
+          topbarSearchListado.addEventListener('input', function () {
+            window.clearTimeout(searchDebounceListado);
+            searchDebounceListado = window.setTimeout(function () { topbarFormListado.submit(); }, 250);
+          });
+        }
+      }
+    })();
+  </script>
   <script>
     const tableBody = document.querySelector('tbody');
     const alumnoLayer = document.getElementById('alumno-detail-layer');

@@ -355,6 +355,9 @@ $active_page = 'practicas';
 
 $load_error = null;
 $active_course_id = null;
+$courses = [];
+$selected_course_id = 0;
+$search_term = trim((string) ($_GET['q'] ?? ''));
 $practices = [];
 $generated_documents = [];
 $generation_errors = [];
@@ -368,9 +371,17 @@ $sort_dir = $_last_us !== false ? substr($current_order, $_last_us + 1) : 'asc';
 
 try {
   $pdo = db();
-  $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
+  $courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll();
+  $active_course_id = 0;
+  foreach ($courses as $_c) {
+    if ((int) ($_c['activo'] ?? 0) === 1) { $active_course_id = (int) $_c['id_curso_escolar']; break; }
+  }
+  if ($active_course_id === 0 && $courses !== []) { $active_course_id = (int) $courses[0]['id_curso_escolar']; }
+  $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $_GET['id_curso_escolar'])
+    ? (int) $_GET['id_curso_escolar']
+    : $active_course_id;
 
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && $active_course_id !== false && $active_course_id !== null) {
+  if ($_SERVER['REQUEST_METHOD'] === 'POST' && $selected_course_id > 0) {
     $selected_programa = $_POST['generar_programa'] ?? [];
     $selected_calendario = $_POST['generar_calendario'] ?? [];
     $selected_informe_valoracion = $_POST['generar_informe_valoracion'] ?? [];
@@ -418,7 +429,7 @@ try {
           AND p.id_practica IN (' . $placeholders . ')'
       );
 
-      $selected_stmt->execute(array_merge([(int) $active_course_id], $selected_ids));
+      $selected_stmt->execute(array_merge([$selected_course_id], $selected_ids));
       $selected_practices = $selected_stmt->fetchAll();
       $selected_practices_by_id = [];
       foreach ($selected_practices as $practice) {
@@ -634,7 +645,7 @@ try {
     }
   }
 
-  if ($active_course_id !== false && $active_course_id !== null) {
+  if ($selected_course_id > 0) {
     $dir = $sort_dir === 'desc' ? 'DESC' : 'ASC';
     $order_clause = match ($sort_col) {
       'empresa'      => "ORDER BY e.nombre $dir, p.id_practica ASC",
@@ -645,6 +656,22 @@ try {
       default        => "ORDER BY a.apellido1 $dir, a.apellido2 $dir, a.nombre $dir, p.id_practica ASC",
     };
 
+    $search_where_doc = '';
+    $search_params_doc = ['active_course_id' => $selected_course_id];
+    if ($search_term !== '') {
+      $search_like = '%' . $search_term . '%';
+      $search_where_doc = ' AND (a.nombre LIKE :q1 OR a.apellido1 LIKE :q2 OR a.apellido2 LIKE :q3'
+        . ' OR e.nombre LIKE :q4 OR e.apellido1 LIKE :q5 OR e.nombre_comercial LIKE :q6'
+        . ' OR a.dni LIKE :q7 OR e.cif LIKE :q8)';
+      $search_params_doc['q1'] = $search_like;
+      $search_params_doc['q2'] = $search_like;
+      $search_params_doc['q3'] = $search_like;
+      $search_params_doc['q4'] = $search_like;
+      $search_params_doc['q5'] = $search_like;
+      $search_params_doc['q6'] = $search_like;
+      $search_params_doc['q7'] = $search_like;
+      $search_params_doc['q8'] = $search_like;
+    }
     $practices_stmt = $pdo->prepare(
       'SELECT DISTINCT
         p.id_practica,
@@ -688,11 +715,11 @@ try {
         WHERE entidad_tipo = "alumno" AND etiqueta = "personal"
         GROUP BY id_entidad
       ) acor_personal ON acor_personal.id_entidad = a.id_alumno
-      WHERE ac.id_curso_escolar = :active_course_id
+      WHERE ac.id_curso_escolar = :active_course_id' . $search_where_doc . '
       ' . $order_clause
     );
 
-    $practices_stmt->execute(['active_course_id' => $active_course_id]);
+    $practices_stmt->execute($search_params_doc);
     $practices = $practices_stmt->fetchAll();
   }
 } catch (Throwable $error) {
@@ -725,14 +752,46 @@ try {
         </div>
       </header>
 
+      <?php $_tab_qs = $selected_course_id > 0 ? '?id_curso_escolar=' . $selected_course_id : ''; ?>
       <nav class="tab-nav">
-        <a class="tab-nav-link" href="practicas.php">Prácticas</a>
-        <a class="tab-nav-link" href="practicas_dias.php">Días de prácticas</a>
-        <a class="tab-nav-link active" href="practicas_documentacion.php">Documentación</a>
-        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
-        <a class="tab-nav-link" href="practicas_listado.php">Listado</a>
-        <a class="tab-nav-link" href="practicas_contacto.php">Correos</a>
+        <a class="tab-nav-link" href="practicas.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Prácticas</a>
+        <a class="tab-nav-link" href="practicas_dias.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Días de prácticas</a>
+        <a class="tab-nav-link active" href="practicas_documentacion.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Seguimiento de Anexos</a>
+        <a class="tab-nav-link" href="practicas_listado.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Listado</a>
+        <a class="tab-nav-link" href="practicas_contacto.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Correos</a>
       </nav>
+
+      <form class="topbar" method="get">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="id_curso_escolar" aria-label="Curso escolar">
+              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
+              <?php foreach ($courses as $course): ?>
+                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <div class="topbar-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar por alumno, empresa, DNI, CIF o convenio"
+              aria-label="Buscar por alumno, empresa, DNI, CIF o convenio"
+              value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
+          </div>
+        </div>
+      </form>
 
       <section class="panel">
         <div class="panel-header">
@@ -767,7 +826,7 @@ try {
             </div>
           <?php endif; ?>
 
-          <form method="post" action="practicas_documentacion.php">
+          <form method="post" action="practicas_documentacion.php<?php echo $selected_course_id > 0 ? '?id_curso_escolar=' . $selected_course_id : ''; ?>">
             <table>
               <thead>
                 <tr>
@@ -796,7 +855,7 @@ try {
                   <tr>
                     <td colspan="9"><?php echo htmlspecialchars($load_error, ENT_QUOTES, 'UTF-8'); ?></td>
                   </tr>
-                <?php elseif ($active_course_id === false || $active_course_id === null): ?>
+                <?php elseif ($selected_course_id <= 0): ?>
                   <tr>
                     <td colspan="9">No hay un curso activo configurado.</td>
                   </tr>
@@ -1044,6 +1103,25 @@ try {
     }
   </script>
   <script src="assets/copy.js"></script>
+  <script>
+    (function () {
+      var topbarFormDoc = document.querySelector('form.topbar');
+      if (topbarFormDoc) {
+        var topbarCourseDoc = topbarFormDoc.querySelector('select[name="id_curso_escolar"]');
+        var topbarSearchDoc = topbarFormDoc.querySelector('input[name="q"]');
+        var searchDebounceDoc = null;
+        if (topbarCourseDoc) {
+          topbarCourseDoc.addEventListener('change', function () { topbarFormDoc.submit(); });
+        }
+        if (topbarSearchDoc) {
+          topbarSearchDoc.addEventListener('input', function () {
+            window.clearTimeout(searchDebounceDoc);
+            searchDebounceDoc = window.setTimeout(function () { topbarFormDoc.submit(); }, 250);
+          });
+        }
+      }
+    })();
+  </script>
   <script>
     const selectAllPrograma = document.getElementById('select-all-programa');
     const selectAllCalendario = document.getElementById('select-all-calendario');

@@ -99,12 +99,33 @@ $fecha_input_value = ($fecha_seleccionada ?? new DateTimeImmutable('today'))->fo
 
 $student_rows = [];
 $load_error = null;
+$courses = [];
+$selected_course_id = 0;
+$search_term = trim((string) ($_GET['q'] ?? ''));
 
 try {
   $pdo = db();
-  $active_course_id = $pdo->query('SELECT id_curso_escolar FROM cursos_escolares WHERE activo = 1 LIMIT 1')->fetchColumn();
+  $courses = $pdo->query('SELECT id_curso_escolar, curso_escolar FROM cursos_escolares ORDER BY activo DESC, id_curso_escolar DESC')->fetchAll();
+  $active_course_id = 0;
+  foreach ($courses as $_c) {
+    if ((int) ($_c['activo'] ?? 0) === 1) { $active_course_id = (int) $_c['id_curso_escolar']; break; }
+  }
+  if ($active_course_id === 0 && $courses !== []) { $active_course_id = (int) $courses[0]['id_curso_escolar']; }
+  $selected_course_id = isset($_GET['id_curso_escolar']) && ctype_digit((string) $_GET['id_curso_escolar'])
+    ? (int) $_GET['id_curso_escolar']
+    : $active_course_id;
 
-  if ($active_course_id !== false) {
+  if ($selected_course_id > 0) {
+    $search_where_dias = '';
+    $search_params_dias = ['active_course_id' => $selected_course_id];
+    if ($search_term !== '') {
+      $search_like = '%' . $search_term . '%';
+      $search_where_dias = ' AND (a.nombre LIKE :q1 OR a.apellido1 LIKE :q2 OR a.apellido2 LIKE :q3 OR a.dni LIKE :q4)';
+      $search_params_dias['q1'] = $search_like;
+      $search_params_dias['q2'] = $search_like;
+      $search_params_dias['q3'] = $search_like;
+      $search_params_dias['q4'] = $search_like;
+    }
     $practices_stmt = $pdo->prepare(
       'SELECT DISTINCT
         p.id_practica,
@@ -142,10 +163,10 @@ try {
         WHERE entidad_tipo = "alumno" AND etiqueta = "personal"
         GROUP BY id_entidad
       ) acor_personal ON acor_personal.id_entidad = a.id_alumno
-      WHERE ac.id_curso_escolar = :active_course_id
+      WHERE ac.id_curso_escolar = :active_course_id' . $search_where_dias . '
       ORDER BY a.apellido1 ASC, a.apellido2 ASC, a.nombre ASC, p.id_practica ASC'
     );
-    $practices_stmt->execute(['active_course_id' => $active_course_id]);
+    $practices_stmt->execute($search_params_dias);
     $practices = $practices_stmt->fetchAll();
 
     if ($practices !== []) {
@@ -276,14 +297,48 @@ try {
         </div>
       </header>
 
+      <?php $_tab_qs = $selected_course_id > 0 ? '?id_curso_escolar=' . $selected_course_id : ''; ?>
       <nav class="tab-nav">
-        <a class="tab-nav-link" href="practicas.php">Prácticas</a>
-        <a class="tab-nav-link active" href="practicas_dias.php">Días de prácticas</a>
-        <a class="tab-nav-link" href="practicas_documentacion.php">Documentación</a>
-        <a class="tab-nav-link" href="practicas_anexos.php">Seguimiento de Anexos</a>
-        <a class="tab-nav-link" href="practicas_listado.php">Listado</a>
-        <a class="tab-nav-link" href="practicas_contacto.php">Correos</a>
+        <a class="tab-nav-link" href="practicas.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Prácticas</a>
+        <a class="tab-nav-link active" href="practicas_dias.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Días de prácticas</a>
+        <a class="tab-nav-link" href="practicas_documentacion.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Documentación</a>
+        <a class="tab-nav-link" href="practicas_anexos.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Seguimiento de Anexos</a>
+        <a class="tab-nav-link" href="practicas_listado.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Listado</a>
+        <a class="tab-nav-link" href="practicas_contacto.php<?php echo htmlspecialchars($_tab_qs, ENT_QUOTES, 'UTF-8'); ?>">Correos</a>
       </nav>
+
+      <form class="topbar" method="get">
+        <div class="topbar-actions entity-grid entity-grid--4">
+          <label class="calendar-select">
+            <select name="id_curso_escolar" aria-label="Curso escolar">
+              <option value="" <?php echo $selected_course_id <= 0 ? 'selected' : ''; ?>>Selecciona curso escolar</option>
+              <?php foreach ($courses as $course): ?>
+                <option value="<?php echo (int) $course['id_curso_escolar']; ?>" <?php echo (int) $course['id_curso_escolar'] === $selected_course_id ? 'selected' : ''; ?>>
+                  <?php echo htmlspecialchars((string) $course['curso_escolar'], ENT_QUOTES, 'UTF-8'); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </label>
+          <div class="topbar-search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+              </svg>
+            </span>
+            <input
+              type="search"
+              name="q"
+              placeholder="Buscar por alumno, empresa, DNI, CIF o convenio"
+              aria-label="Buscar por alumno, empresa, DNI, CIF o convenio"
+              value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"
+            >
+            <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
+            <?php if ($solo_activos): ?><input type="hidden" name="solo_activos" value="1"><?php endif; ?>
+            <?php if ($fecha_seleccionada !== null): ?><input type="hidden" name="fecha" value="<?php echo htmlspecialchars($fecha_input_value, ENT_QUOTES, 'UTF-8'); ?>"><?php endif; ?>
+          </div>
+        </div>
+      </form>
 
       <section class="panel">
         <div class="panel-header-with-actions">
@@ -295,6 +350,8 @@ try {
             <form method="get" id="form-fecha-calculo">
               <input type="hidden" name="orden" value="<?php echo htmlspecialchars($current_order, ENT_QUOTES, 'UTF-8'); ?>">
               <?php if ($solo_activos): ?><input type="hidden" name="solo_activos" value="1"><?php endif; ?>
+              <?php if ($selected_course_id > 0): ?><input type="hidden" name="id_curso_escolar" value="<?php echo $selected_course_id; ?>"><?php endif; ?>
+              <?php if ($search_term !== ''): ?><input type="hidden" name="q" value="<?php echo htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8'); ?>"><?php endif; ?>
               <input type="date" id="fecha-calculo" name="fecha" value="<?php echo htmlspecialchars($fecha_input_value, ENT_QUOTES, 'UTF-8'); ?>">
             </form>
           </div>
@@ -391,6 +448,21 @@ try {
       var inp = document.getElementById('fecha-calculo');
       if (inp) {
         inp.addEventListener('change', function () { this.form.submit(); });
+      }
+      var topbarFormDias = document.querySelector('form.topbar');
+      if (topbarFormDias) {
+        var topbarCourseDias = topbarFormDias.querySelector('select[name="id_curso_escolar"]');
+        var topbarSearchDias = topbarFormDias.querySelector('input[name="q"]');
+        var searchDebounceDias = null;
+        if (topbarCourseDias) {
+          topbarCourseDias.addEventListener('change', function () { topbarFormDias.submit(); });
+        }
+        if (topbarSearchDias) {
+          topbarSearchDias.addEventListener('input', function () {
+            window.clearTimeout(searchDebounceDias);
+            searchDebounceDias = window.setTimeout(function () { topbarFormDias.submit(); }, 250);
+          });
+        }
       }
     })();
   </script>
