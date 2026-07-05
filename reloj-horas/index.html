@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Aprende las horas</title>
+<meta name="theme-color" content="#3a6ea5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>🕐 Aprende las horas</h1>
+</header>
+
+<main class="app-main">
+
+  <section class="controls">
+    <div class="mode-toggle" role="tablist">
+      <button type="button" id="modeLeerBtn" class="mode-btn active" data-mode="leer" role="tab" aria-selected="true">👀 Leer la hora</button>
+      <button type="button" id="modePonerBtn" class="mode-btn" data-mode="poner" role="tab" aria-selected="false">✋ Poner la hora</button>
+    </div>
+
+    <div class="secondary-controls">
+      <label class="difficulty-label">
+        Dificultad
+        <select id="difficultySelect">
+          <option value="facil">Fácil (en punto)</option>
+          <option value="medio" selected>Medio (cuartos y medias)</option>
+          <option value="avanzado">Avanzado (cada 5 min)</option>
+          <option value="experto">Experto (cualquier minuto)</option>
+        </select>
+      </label>
+      <div class="score" id="scoreDisplay">Aciertos: 0 / 0</div>
+    </div>
+  </section>
+
+  <section class="clock-wrapper">
+    <svg id="clockSvg" viewBox="0 0 300 300" aria-hidden="true">
+      <circle class="clock-face" cx="150" cy="150" r="145"></circle>
+      <g id="ticksGroup"></g>
+      <g id="numbersGroup"></g>
+
+      <g id="hourHandGroup" class="hand-group">
+        <line class="hit-area" x1="150" y1="150" x2="150" y2="90"></line>
+        <line class="hour-hand" x1="150" y1="150" x2="150" y2="90"></line>
+      </g>
+      <g id="minuteHandGroup" class="hand-group">
+        <line class="hit-area" x1="150" y1="150" x2="150" y2="50"></line>
+        <line class="minute-hand" x1="150" y1="150" x2="150" y2="50"></line>
+      </g>
+
+      <circle class="center-dot" cx="150" cy="150" r="7"></circle>
+    </svg>
+  </section>
+
+  <section id="leerPanel" class="answer-panel">
+    <p class="question">¿Qué hora marca el reloj?</p>
+    <div class="time-inputs">
+      <select id="hourSelect" aria-label="Hora"></select>
+      <span class="colon">:</span>
+      <select id="minuteSelect" aria-label="Minutos"></select>
+    </div>
+  </section>
+
+  <section id="ponerPanel" class="answer-panel hidden">
+    <p class="question">Coloca las agujas marcando las <strong id="targetTimeText">--:--</strong></p>
+    <p class="hint">Arrastra la aguja corta (horas) o la larga (minutos)</p>
+  </section>
+
+  <div class="action-buttons">
+    <button type="button" id="checkBtn" class="primary-btn">Comprobar</button>
+    <button type="button" id="nextBtn" class="primary-btn hidden">Siguiente ▶</button>
+  </div>
+
+  <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+
+</main>
+
+<footer class="app-footer">
+  <button type="button" id="resetScoreBtn" class="link-btn">Reiniciar puntuación</button>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

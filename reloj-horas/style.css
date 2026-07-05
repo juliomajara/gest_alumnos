@@ -1,0 +1,313 @@
+:root {
+  --primary: #3a6ea5;
+  --primary-dark: #2c5482;
+  --bg: #f2f6fb;
+  --card: #ffffff;
+  --text: #1f2d3a;
+  --border: #d7e2ee;
+  --ok: #2e9e5b;
+  --ok-bg: #e5f7ec;
+  --fail: #c0392b;
+  --fail-bg: #fdeceb;
+  --hour-hand: #1f2d3a;
+  --minute-hand: #3a6ea5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  text-align: center;
+  padding: 14px 12px 6px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 8px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.controls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+  background: var(--card);
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.secondary-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.difficulty-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.difficulty-label select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--text);
+}
+
+.score {
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.clock-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#clockSvg {
+  width: min(80vw, 320px);
+  height: min(80vw, 320px);
+  touch-action: none;
+  user-select: none;
+}
+
+.clock-face {
+  fill: var(--card);
+  stroke: var(--border);
+  stroke-width: 4;
+}
+
+.tick-minor {
+  stroke: #b9c8d8;
+  stroke-width: 2;
+}
+
+.tick-major {
+  stroke: var(--text);
+  stroke-width: 4;
+}
+
+.clock-number {
+  font-size: 24px;
+  font-weight: 700;
+  fill: var(--text);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.hand-group {
+  transition: transform 0.35s ease;
+}
+
+.hand-group.no-transition {
+  transition: none;
+}
+
+.hour-hand {
+  stroke: var(--hour-hand);
+  stroke-width: 10;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.minute-hand {
+  stroke: var(--minute-hand);
+  stroke-width: 6;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.hit-area {
+  stroke: transparent;
+  stroke-width: 28;
+  stroke-linecap: round;
+  cursor: grab;
+}
+
+.hit-area.disabled {
+  pointer-events: none;
+  cursor: default;
+}
+
+.hand-group.dragging .hit-area {
+  cursor: grabbing;
+}
+
+.center-dot {
+  fill: var(--hour-hand);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.answer-panel {
+  width: 100%;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.answer-panel.hidden {
+  display: none;
+}
+
+.question {
+  margin: 0 0 10px;
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.hint {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: #5b7086;
+}
+
+.time-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.time-inputs select {
+  font-size: 1.4rem;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  min-width: 78px;
+  text-align: center;
+}
+
+.colon {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.action-buttons {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+}
+
+.primary-btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.primary-btn:active {
+  background: var(--primary-dark);
+}
+
+.primary-btn.hidden {
+  display: none;
+}
+
+.feedback {
+  min-height: 1.4em;
+  width: 100%;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.feedback.ok {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.feedback.fail {
+  color: var(--fail);
+  background: var(--fail-bg);
+}
+
+.app-footer {
+  text-align: center;
+  padding: 10px 12px 20px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: #5b7086;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (min-height: 700px) {
+  #clockSvg {
+    width: min(70vw, 300px);
+    height: min(70vw, 300px);
+  }
+}

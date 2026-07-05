@@ -1,0 +1,11 @@
+{
+  "name": "Aprende las horas",
+  "short_name": "Reloj",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f6fb",
+  "theme_color": "#3a6ea5",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
