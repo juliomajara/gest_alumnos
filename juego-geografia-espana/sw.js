@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geoespana-v2';
+const CACHE_NAME = 'geoespana-v3';
 
 const ESTATICOS = [
   'assets/css/style.css',
