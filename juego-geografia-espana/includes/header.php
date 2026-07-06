@@ -12,6 +12,12 @@
 <meta name="description" content="Aprende y practica las provincias y comunidades autónomas de España jugando desde el móvil.">
 <meta name="theme-color" content="#1f6f78">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/img/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GeoEspaña">
 <link rel="stylesheet" href="assets/css/style.css?v=3">
 </head>
 <body class="<?= h($body_class ?? '') ?>">

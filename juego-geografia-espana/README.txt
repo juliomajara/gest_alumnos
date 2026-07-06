@@ -29,6 +29,16 @@ Cómo funciona:
 - El ranking de cada modo ordena primero por porcentaje de aciertos y,
   en caso de empate, por menor tiempo.
 
+Instalar como app en el móvil:
+La web incluye manifest.json y un service worker, así que en Chrome,
+Brave, Edge o Samsung Internet (Android) el navegador ofrece "Instalar
+app" (no solo "Añadir a pantalla de inicio"): queda con icono propio y
+se abre a pantalla completa, sin barra de navegador. Para eso hace
+falta que se sirva por HTTPS: el subdominio gratuito de InfinityFree
+(algo.infinityfreeapp.com) ya lo trae activado; si usas un dominio
+propio, activa el SSL gratuito desde el panel de InfinityFree antes de
+comprobar la instalación.
+
 Estructura:
 - index.php                 Menú principal con los 4 modos de juego
 - juego.php                  Motor del juego (?tipo=&modo=&variante=)
@@ -40,6 +50,8 @@ Estructura:
 - includes/usuarios.php      Alta y consulta de cuentas
 - includes/puntuaciones.php  Ranking y guardado de partidas cronometradas
 - data/almacen/              usuarios.json y puntuaciones.json (con .htaccess)
+- manifest.json               Metadatos de instalación (nombre, iconos, colores)
+- sw.js                       Service worker (solo cachea CSS/JS/SVG/PNG)
 - assets/css/                Estilos
 - assets/js/                 Lógica del juego, zoom/pan del mapa, sonido y cronómetro
 - assets/svg/                Mapas de España (provincias y comunidades autónomas)
