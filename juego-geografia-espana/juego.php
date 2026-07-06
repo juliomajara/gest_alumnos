@@ -12,12 +12,17 @@ if (!in_array($tipo, $tipos_validos, true) || !in_array($modo, $modos_validos, t
     exit;
 }
 
+$ccaa_vecinas = cargar_json(__DIR__ . '/data/ccaa_vecinas.json');
+
 if ($tipo === 'provincias') {
-    $items = array_keys(cargar_json(__DIR__ . '/data/provincias.json'));
+    $provincias_ccaa = cargar_json(__DIR__ . '/data/provincias.json');
+    $items = array_keys($provincias_ccaa);
+    $provincia_a_ccaa = array_map(fn($info) => $info['ccaa'], $provincias_ccaa);
     $svg_path = __DIR__ . '/assets/svg/mapa-provincias.svg';
     $titulo_tipo = 'Provincias de España';
 } else {
     $items = cargar_json(__DIR__ . '/data/ccaa.json');
+    $provincia_a_ccaa = null;
     $svg_path = __DIR__ . '/assets/svg/mapa-ccaa.svg';
     $titulo_tipo = 'Comunidades Autónomas';
 }
@@ -90,7 +95,9 @@ require __DIR__ . '/includes/header.php';
   iniciarJuego({
     tipo: <?= json_encode($tipo, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     modo: <?= json_encode($modo, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
-    items: <?= json_encode(array_values($items), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>
+    items: <?= json_encode(array_values($items), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
+    provinciaCcaa: <?= json_encode($provincia_a_ccaa, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
+    ccaaVecinas: <?= json_encode($ccaa_vecinas, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>
   });
 </script>
 <?php require __DIR__ . '/includes/footer.php'; ?>

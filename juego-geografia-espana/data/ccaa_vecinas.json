@@ -1,0 +1,94 @@
+{
+ "Castilla y León": [
+  "La Rioja",
+  "Cantabria",
+  "Principado de Asturias",
+  "Galicia",
+  "Aragón",
+  "Comunidad de Madrid",
+  "Extremadura",
+  "Castilla-La Mancha",
+  "País Vasco"
+ ],
+ "Cataluña": [
+  "Comunidad Valenciana",
+  "Aragón"
+ ],
+ "Ceuta": [],
+ "Región de Murcia": [
+  "Andalucía",
+  "Comunidad Valenciana",
+  "Castilla-La Mancha"
+ ],
+ "La Rioja": [
+  "Castilla y León",
+  "Comunidad Foral de Navarra",
+  "Aragón",
+  "País Vasco"
+ ],
+ "Islas Baleares": [],
+ "Canarias": [],
+ "Cantabria": [
+  "Castilla y León",
+  "Principado de Asturias",
+  "País Vasco"
+ ],
+ "Andalucía": [
+  "Región de Murcia",
+  "Extremadura",
+  "Castilla-La Mancha"
+ ],
+ "Principado de Asturias": [
+  "Castilla y León",
+  "Cantabria",
+  "Galicia"
+ ],
+ "Comunidad Valenciana": [
+  "Cataluña",
+  "Región de Murcia",
+  "Aragón",
+  "Castilla-La Mancha"
+ ],
+ "Melilla": [],
+ "Comunidad Foral de Navarra": [
+  "La Rioja",
+  "Aragón",
+  "País Vasco"
+ ],
+ "Galicia": [
+  "Castilla y León",
+  "Principado de Asturias"
+ ],
+ "Aragón": [
+  "Castilla y León",
+  "Cataluña",
+  "La Rioja",
+  "Comunidad Valenciana",
+  "Comunidad Foral de Navarra",
+  "Castilla-La Mancha"
+ ],
+ "Comunidad de Madrid": [
+  "Castilla y León",
+  "Castilla-La Mancha"
+ ],
+ "Extremadura": [
+  "Castilla y León",
+  "Andalucía",
+  "Castilla-La Mancha"
+ ],
+ "Castilla-La Mancha": [
+  "Castilla y León",
+  "Región de Murcia",
+  "Andalucía",
+  "Comunidad Valenciana",
+  "Aragón",
+  "Comunidad de Madrid",
+  "Extremadura"
+ ],
+ "País Vasco": [
+  "Castilla y León",
+  "La Rioja",
+  "Cantabria",
+  "Comunidad Foral de Navarra"
+ ]
+}

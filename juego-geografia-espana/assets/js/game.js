@@ -10,10 +10,7 @@
     return copia;
   }
 
-  function elegirDistractores(items, correcto, cantidad) {
-    var candidatos = barajar(items.filter(function (n) { return n !== correcto; }));
-    return candidatos.slice(0, cantidad);
-  }
+  var NUM_OPCIONES = 8;
 
   function lanzarConfeti() {
     var colores = ['#e8622c', '#f4b942', '#1f6f78', '#2fae66', '#8b5fbf'];
@@ -35,7 +32,32 @@
     var tipo = config.tipo;
     var modo = config.modo;
     var items = config.items;
+    var provinciaCcaa = config.provinciaCcaa || null;
+    var ccaaVecinas = config.ccaaVecinas || {};
     var storageKey = tipo + '-' + modo;
+
+    function construirPoolCercano(nombreActual) {
+      if (tipo === 'provincias') {
+        var ccaaObjetivo = provinciaCcaa[nombreActual];
+        var ccaasPermitidas = [ccaaObjetivo].concat(ccaaVecinas[ccaaObjetivo] || []);
+        return items.filter(function (n) {
+          return n !== nombreActual && ccaasPermitidas.indexOf(provinciaCcaa[n]) !== -1;
+        });
+      }
+      return (ccaaVecinas[nombreActual] || []).slice();
+    }
+
+    function elegirOpciones(nombreActual, cantidad) {
+      var seleccion = barajar(construirPoolCercano(nombreActual)).slice(0, cantidad);
+      if (seleccion.length < cantidad) {
+        var usados = { };
+        usados[nombreActual] = true;
+        seleccion.forEach(function (n) { usados[n] = true; });
+        var relleno = barajar(items.filter(function (n) { return !usados[n]; }));
+        seleccion = seleccion.concat(relleno.slice(0, cantidad - seleccion.length));
+      }
+      return seleccion;
+    }
 
     var mapWrap = document.getElementById('map-wrap');
     var mapInner = document.getElementById('map-inner');
@@ -139,7 +161,7 @@
     }
 
     function renderOpciones() {
-      var opciones = barajar([nombreActual].concat(elegirDistractores(items, nombreActual, 3)));
+      var opciones = barajar([nombreActual].concat(elegirOpciones(nombreActual, NUM_OPCIONES - 1)));
       opcionesGrid.innerHTML = '';
       opciones.forEach(function (nombre) {
         var btn = document.createElement('button');
