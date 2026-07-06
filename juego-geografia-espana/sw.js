@@ -1,4 +1,4 @@
-const CACHE_NAME = 'geoespana-v1';
+const CACHE_NAME = 'geoespana-v2';
 
 const ESTATICOS = [
   'assets/css/style.css',
@@ -13,6 +13,7 @@ const ESTATICOS = [
   'assets/img/icon-maskable-512.png',
   'assets/svg/mapa-provincias.svg',
   'assets/svg/mapa-ccaa.svg',
+  'assets/svg/mapa-rios.svg',
 ];
 
 self.addEventListener('install', function (event) {

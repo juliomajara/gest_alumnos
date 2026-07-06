@@ -12,7 +12,7 @@ if (!in_array($tipo, TIPOS_VALIDOS, true) || !in_array($modo, MODOS_VALIDOS, tru
     exit;
 }
 
-$titulos_tipo = ['provincias' => 'Provincias de España', 'ccaa' => 'Comunidades Autónomas'];
+$titulos_tipo = ['provincias' => 'Provincias de España', 'ccaa' => 'Comunidades Autónomas', 'rios' => 'Ríos de España'];
 $titulos_modo = ['reconocer' => 'Reconoce el mapa', 'tocar' => 'Toca el mapa'];
 
 $filas = ranking_tipo_modo($tipo, $modo);

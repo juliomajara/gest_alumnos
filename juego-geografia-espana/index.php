@@ -5,7 +5,7 @@ require_once __DIR__ . '/includes/puntuaciones.php';
 
 $usuario = requerir_login();
 
-$page_title = 'GeoEspaña — Provincias y Comunidades';
+$page_title = 'GeoEspaña — Provincias, Comunidades y Ríos';
 $body_class = 'pagina-menu';
 require __DIR__ . '/includes/header.php';
 
@@ -34,6 +34,18 @@ $modos = [
         'titulo' => 'Comunidades · Toca el mapa',
         'texto' => 'Te decimos el nombre. Señálala tú en el mapa.',
     ],
+    [
+        'tipo' => 'rios', 'modo' => 'reconocer',
+        'icono' => '🌊', 'color' => 'card-cian',
+        'titulo' => 'Ríos · Reconoce el mapa',
+        'texto' => 'Se ilumina un río. Adivina cuál es entre varias opciones.',
+    ],
+    [
+        'tipo' => 'rios', 'modo' => 'tocar',
+        'icono' => '🖐️', 'color' => 'card-marron',
+        'titulo' => 'Ríos · Toca el mapa',
+        'texto' => 'Te decimos el nombre. Señálalo tú en el mapa.',
+    ],
 ];
 ?>
 <div class="app-container">
@@ -45,7 +57,7 @@ $modos = [
   <header class="portada-header">
     <div class="portada-logo" aria-hidden="true">🇪🇸</div>
     <h1>GeoEspaña</h1>
-    <p class="subtitulo">Aprende jugando las provincias y comunidades autónomas de España</p>
+    <p class="subtitulo">Aprende jugando las provincias, comunidades autónomas y ríos de España</p>
   </header>
 
   <main class="menu-grid">

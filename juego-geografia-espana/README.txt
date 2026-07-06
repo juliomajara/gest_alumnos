@@ -1,4 +1,4 @@
-GeoEspaña — Provincias y Comunidades Autónomas
+GeoEspaña — Provincias, Comunidades Autónomas y Ríos
 ================================================
 
 Cómo subirlo a InfinityFree:
@@ -39,8 +39,13 @@ falta que se sirva por HTTPS: el subdominio gratuito de InfinityFree
 propio, activa el SSL gratuito desde el panel de InfinityFree antes de
 comprobar la instalación.
 
+Modos de juego: provincias, comunidades autónomas y los 10 ríos más
+importantes (Miño, Duero, Tajo, Guadiana, Guadalquivir, Genil, Ebro,
+Júcar, Segura y Turia), cada uno con "reconoce el mapa" (se resalta y
+eliges el nombre) y "toca el mapa" (te dicen el nombre y lo señalas).
+
 Estructura:
-- index.php                 Menú principal con los 4 modos de juego
+- index.php                 Menú principal con los modos de juego
 - juego.php                  Motor del juego (?tipo=&modo=&variante=)
 - login.php / logout.php     Entrada con usuario + PIN, cierre de sesión
 - ranking.php                Clasificación de un modo concreto
@@ -54,5 +59,5 @@ Estructura:
 - sw.js                       Service worker (solo cachea CSS/JS/SVG/PNG)
 - assets/css/                Estilos
 - assets/js/                 Lógica del juego, zoom/pan del mapa, sonido y cronómetro
-- assets/svg/                Mapas de España (provincias y comunidades autónomas)
-- data/                      Listados de provincias/comunidades y CCAA vecinas en JSON
+- assets/svg/                Mapas de España (provincias, comunidades autónomas y ríos)
+- data/                      Provincias/comunidades/ríos y CCAA vecinas en JSON

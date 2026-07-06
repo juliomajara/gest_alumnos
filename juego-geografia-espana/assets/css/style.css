@@ -18,6 +18,7 @@
   --shadow-soft: 0 2px 8px rgba(30, 25, 15, 0.08);
   --radius: 18px;
   --sea: #dcecef;
+  --rio: #2f7fd1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,6 +42,7 @@
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.35);
     --sea: #1c2b2d;
+    --rio: #6badf0;
   }
 }
 
@@ -136,6 +138,8 @@ body {
 .modo-card.card-naranja{ --card-color: var(--primary); }
 .modo-card.card-verde  { --card-color: var(--success); }
 .modo-card.card-morado { --card-color: #8b5fbf; }
+.modo-card.card-cian    { --card-color: var(--rio); }
+.modo-card.card-marron  { --card-color: #a9652e; }
 
 .modo-card:active {
   transform: scale(0.97);
@@ -363,6 +367,61 @@ body {
   stroke: var(--card);
   stroke-width: 1.5;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.tierra-fondo {
+  fill: color-mix(in srgb, var(--secondary) 16%, var(--card));
+  stroke: color-mix(in srgb, var(--secondary) 30%, var(--card));
+  stroke-width: 0.7;
+  pointer-events: none;
+}
+
+.rio-linea,
+.rio-toque {
+  fill: none !important;
+}
+
+.rio-linea {
+  stroke: var(--rio);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke .2s ease;
+}
+
+.rio-toque {
+  stroke: transparent;
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.pagina-juego.modo-tocar .rio-toque {
+  cursor: pointer;
+}
+
+.rio-linea.es-resaltada {
+  stroke: var(--primary);
+  animation: pulso-rio 1.1s ease-in-out infinite;
+}
+
+.rio-linea.es-correcta {
+  stroke: var(--success) !important;
+  animation: none;
+}
+
+.rio-linea.es-incorrecta {
+  stroke: var(--error) !important;
+  animation: none;
+}
+
+.rio-linea.es-objetivo {
+  stroke: var(--success) !important;
+  animation: none;
+}
+
+@keyframes pulso-rio {
+  0%, 100% { stroke: var(--primary); }
+  50% { stroke: var(--accent); }
 }
 
 .africa-tierra {

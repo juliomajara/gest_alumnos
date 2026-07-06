@@ -22,11 +22,16 @@ if ($tipo === 'provincias') {
     $provincia_a_ccaa = array_map(fn($info) => $info['ccaa'], $provincias_ccaa);
     $svg_path = __DIR__ . '/assets/svg/mapa-provincias.svg';
     $titulo_tipo = 'Provincias de España';
-} else {
+} elseif ($tipo === 'ccaa') {
     $items = cargar_json(__DIR__ . '/data/ccaa.json');
     $provincia_a_ccaa = null;
     $svg_path = __DIR__ . '/assets/svg/mapa-ccaa.svg';
     $titulo_tipo = 'Comunidades Autónomas';
+} else {
+    $items = cargar_json(__DIR__ . '/data/rios.json');
+    $provincia_a_ccaa = null;
+    $svg_path = __DIR__ . '/assets/svg/mapa-rios.svg';
+    $titulo_tipo = 'Ríos de España';
 }
 
 $titulo_modo = $modo === 'reconocer' ? 'Reconoce el mapa' : 'Toca el mapa';

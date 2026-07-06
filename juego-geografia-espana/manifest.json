@@ -1,7 +1,7 @@
 {
-    "name": "GeoEspaña — Provincias y Comunidades",
+    "name": "GeoEspaña — Provincias, Comunidades y Ríos",
     "short_name": "GeoEspaña",
-    "description": "Aprende jugando las provincias y comunidades autónomas de España.",
+    "description": "Aprende jugando las provincias, comunidades autónomas y ríos de España.",
     "id": "/index.php",
     "start_url": "index.php",
     "scope": "./",

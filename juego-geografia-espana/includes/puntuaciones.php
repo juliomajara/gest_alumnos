@@ -5,7 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/almacen.php';
 require_once __DIR__ . '/usuarios.php';
 
-const TIPOS_VALIDOS = ['provincias', 'ccaa'];
+const TIPOS_VALIDOS = ['provincias', 'ccaa', 'rios'];
 const MODOS_VALIDOS = ['reconocer', 'tocar'];
 const VARIANTES_VALIDAS = ['aprendizaje', 'cronometrado'];
 

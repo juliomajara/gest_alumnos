@@ -31,7 +31,7 @@ $aciertos = filter_var($datos['aciertos'] ?? null, FILTER_VALIDATE_INT);
 $total = filter_var($datos['total'] ?? null, FILTER_VALIDATE_INT);
 $tiempoMs = filter_var($datos['tiempoMs'] ?? null, FILTER_VALIDATE_INT);
 
-$totales_esperados = ['provincias' => 52, 'ccaa' => 19];
+$totales_esperados = ['provincias' => 52, 'ccaa' => 19, 'rios' => 10];
 
 if (!in_array($tipo, TIPOS_VALIDOS, true) || !in_array($modo, MODOS_VALIDOS, true)) {
     responder_error('Tipo o modo inválido.');

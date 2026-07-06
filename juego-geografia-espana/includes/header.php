@@ -8,8 +8,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title><?= h($page_title ?? 'GeoEspaña — Provincias y Comunidades') ?></title>
-<meta name="description" content="Aprende y practica las provincias y comunidades autónomas de España jugando desde el móvil.">
+<title><?= h($page_title ?? 'GeoEspaña — Provincias, Comunidades y Ríos') ?></title>
+<meta name="description" content="Aprende y practica las provincias, comunidades autónomas y ríos de España jugando desde el móvil.">
 <meta name="theme-color" content="#1f6f78">
 <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.json">

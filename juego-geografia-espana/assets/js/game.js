@@ -52,7 +52,12 @@
           return n !== nombreActual && ccaasPermitidas.indexOf(provinciaCcaa[n]) !== -1;
         });
       }
-      return (ccaaVecinas[nombreActual] || []).slice();
+      if (tipo === 'ccaa') {
+        return (ccaaVecinas[nombreActual] || []).slice();
+      }
+      // Ríos: no hay agrupación geográfica de distractores; se rellenan al azar
+      // con el resto de ríos más abajo, en elegirOpciones().
+      return [];
     }
 
     function elegirOpciones(nombreActual, cantidad) {
@@ -142,11 +147,15 @@
       });
     }
 
-    function regionPorNombre(nombre) {
+    // Devuelve TODOS los elementos con ese data-name: casi siempre uno solo,
+    // pero un río tiene dos (la línea visible y su zona de toque invisible),
+    // y hay que resaltarlos/marcarlos a la vez.
+    function regionesPorNombre(nombre) {
+      var resultado = [];
       for (var i = 0; i < regiones.length; i++) {
-        if (regiones[i].dataset.name === nombre) return regiones[i];
+        if (regiones[i].dataset.name === nombre) resultado.push(regiones[i]);
       }
-      return null;
+      return resultado;
     }
 
     function actualizarMarcador() {
@@ -181,8 +190,7 @@
       limpiarRegiones();
 
       if (modo === 'reconocer') {
-        var objetivo = regionPorNombre(nombreActual);
-        if (objetivo) objetivo.classList.add('es-resaltada');
+        regionesPorNombre(nombreActual).forEach(function (r) { r.classList.add('es-resaltada'); });
         renderOpciones();
       } else {
         promptNombre.textContent = nombreActual;
@@ -231,11 +239,10 @@
         });
       }
 
-      var objetivo = regionPorNombre(nombreActual);
-      if (objetivo) {
-        objetivo.classList.remove('es-resaltada');
-        objetivo.classList.add('es-correcta');
-      }
+      regionesPorNombre(nombreActual).forEach(function (r) {
+        r.classList.remove('es-resaltada');
+        r.classList.add('es-correcta');
+      });
 
       finalizarTurno(esCorrecta);
     }
@@ -244,10 +251,11 @@
       esperandoSiguiente = true;
       var seleccion = el.dataset.name;
       var esCorrecta = seleccion === nombreActual;
-      el.classList.add(esCorrecta ? 'es-correcta' : 'es-incorrecta');
+      regionesPorNombre(seleccion).forEach(function (r) {
+        r.classList.add(esCorrecta ? 'es-correcta' : 'es-incorrecta');
+      });
       if (!esCorrecta) {
-        var objetivo = regionPorNombre(nombreActual);
-        if (objetivo) objetivo.classList.add('es-objetivo');
+        regionesPorNombre(nombreActual).forEach(function (r) { r.classList.add('es-objetivo'); });
       }
       finalizarTurno(esCorrecta);
     }
