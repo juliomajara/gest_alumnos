@@ -19,3 +19,6 @@
 # Archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+# Paquetes de distribución generados (p.ej. zip para InfinityFree)
+/dist/
