@@ -1,11 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/includes/puntuaciones.php';
 
 $usuario = requerir_login();
-$pdo = db();
 
 $page_title = 'GeoEspaña — Provincias y Comunidades';
 $body_class = 'pagina-menu';
@@ -52,7 +50,7 @@ $modos = [
 
   <main class="menu-grid">
     <?php foreach ($modos as $m):
-        $mejor = mejor_puntuacion_usuario($pdo, $usuario['id'], $m['tipo'], $m['modo']);
+        $mejor = mejor_puntuacion_usuario($usuario['id'], $m['tipo'], $m['modo']);
         $mejorTexto = $mejor
             ? 'Mejor: ' . (int) $mejor['aciertos'] . '/' . (int) $mejor['total'] . ' · ' . rtrim(rtrim(number_format((float) $mejor['pct'], 1), '0'), '.') . '% · ' . formatear_tiempo((int) $mejor['tiempo_ms'])
             : 'Aún sin puntuación cronometrada';

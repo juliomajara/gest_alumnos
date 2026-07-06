@@ -1,6 +1,5 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/includes/puntuaciones.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -47,15 +46,11 @@ if ($tiempoMs === false || $tiempoMs <= 0 || $tiempoMs > 3 * 60 * 60 * 1000) {
     responder_error('Tiempo inválido.');
 }
 
-$pdo = db();
-guardar_puntuacion($pdo, $usuario['id'], $tipo, $modo, $aciertos, $total, $tiempoMs);
+guardar_puntuacion($usuario['id'], $tipo, $modo, $aciertos, $total, $tiempoMs);
 
 $pct = $total > 0 ? round(($aciertos / $total) * 100, 2) : 0.0;
-$posicion = posicion_en_ranking($pdo, $tipo, $modo, $pct, $tiempoMs);
-
-$stmt = $pdo->prepare('SELECT COUNT(DISTINCT usuario_id) AS n FROM puntuaciones WHERE tipo = ? AND modo = ?');
-$stmt->execute([$tipo, $modo]);
-$totalJugadores = (int) $stmt->fetchColumn();
+$posicion = posicion_en_ranking($tipo, $modo, $pct, $tiempoMs);
+$totalJugadores = total_jugadores($tipo, $modo);
 
 echo json_encode([
     'ok' => true,

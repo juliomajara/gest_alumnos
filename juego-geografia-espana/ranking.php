@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/includes/puntuaciones.php';
 
 $usuario = requerir_login();
@@ -16,8 +15,7 @@ if (!in_array($tipo, TIPOS_VALIDOS, true) || !in_array($modo, MODOS_VALIDOS, tru
 $titulos_tipo = ['provincias' => 'Provincias de España', 'ccaa' => 'Comunidades Autónomas'];
 $titulos_modo = ['reconocer' => 'Reconoce el mapa', 'tocar' => 'Toca el mapa'];
 
-$pdo = db();
-$filas = ranking_tipo_modo($pdo, $tipo, $modo);
+$filas = ranking_tipo_modo($tipo, $modo);
 
 $page_title = 'Ranking · ' . $titulos_tipo[$tipo] . ' — GeoEspaña';
 $body_class = 'pagina-ranking';

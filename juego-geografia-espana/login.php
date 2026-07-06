@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/includes/usuarios.php';
 
 if (usuario_actual() !== null) {
     header('Location: index.php');
@@ -19,25 +19,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!preg_match('/^\d{4}$/', $pin)) {
         $error = 'El PIN debe ser un número de 4 dígitos.';
     } else {
-        $pdo = db();
-        $stmt = $pdo->prepare('SELECT id, pin_hash FROM usuarios WHERE nombre_usuario = ?');
-        $stmt->execute([$nombre]);
-        $fila = $stmt->fetch();
+        $usuario = usuario_por_nombre($nombre);
 
-        if ($fila) {
-            if (password_verify($pin, $fila['pin_hash'])) {
-                iniciar_sesion_usuario((int) $fila['id'], $nombre);
+        if ($usuario) {
+            if (password_verify($pin, $usuario['pin_hash'])) {
+                iniciar_sesion_usuario((int) $usuario['id'], $usuario['nombre_usuario']);
                 header('Location: index.php');
                 exit;
             }
             $error = 'PIN incorrecto para ese usuario.';
         } else {
             $hash = password_hash($pin, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('INSERT INTO usuarios (nombre_usuario, pin_hash) VALUES (?, ?)');
-            $stmt->execute([$nombre, $hash]);
-            iniciar_sesion_usuario((int) $pdo->lastInsertId(), $nombre);
-            header('Location: index.php');
-            exit;
+            $resultado = crear_usuario($nombre, $hash);
+
+            if ($resultado['existente']) {
+                // Alguien se registró con ese mismo nombre justo antes.
+                if (password_verify($pin, $resultado['usuario']['pin_hash'])) {
+                    iniciar_sesion_usuario((int) $resultado['usuario']['id'], $resultado['usuario']['nombre_usuario']);
+                    header('Location: index.php');
+                    exit;
+                }
+                $error = 'Ese nombre acaba de registrarse con otro PIN. Prueba con otro nombre de usuario.';
+            } else {
+                iniciar_sesion_usuario((int) $resultado['usuario']['id'], $resultado['usuario']['nombre_usuario']);
+                header('Location: index.php');
+                exit;
+            }
         }
     }
 }

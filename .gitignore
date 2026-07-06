@@ -23,5 +23,6 @@ Thumbs.db
 # Paquetes de distribución generados (p.ej. zip para InfinityFree)
 /dist/
 
-# Credenciales de base de datos del juego de geografía (usar config.example.php)
-/juego-geografia-espana/config.php
+# Datos de usuarios/puntuaciones del juego de geografía (se generan solos en producción)
+/juego-geografia-espana/data/almacen/usuarios.json
+/juego-geografia-espana/data/almacen/puntuaciones.json

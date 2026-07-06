@@ -1,73 +1,122 @@
 <?php
+
 declare(strict_types=1);
+
+require_once __DIR__ . '/almacen.php';
+require_once __DIR__ . '/usuarios.php';
 
 const TIPOS_VALIDOS = ['provincias', 'ccaa'];
 const MODOS_VALIDOS = ['reconocer', 'tocar'];
 const VARIANTES_VALIDAS = ['aprendizaje', 'cronometrado'];
 
-/**
- * Mejor puntuación (cronometrada) de un usuario para un tipo/modo:
- * mayor porcentaje y, en caso de empate, menor tiempo.
- */
-function mejor_puntuacion_usuario(PDO $pdo, int $usuarioId, string $tipo, string $modo): ?array
+function ruta_puntuaciones(): string
 {
-    $sql = 'SELECT p.aciertos, p.total, p.pct, p.tiempo_ms
-            FROM puntuaciones p
-            LEFT JOIN puntuaciones mejor
-              ON mejor.usuario_id = p.usuario_id
-             AND mejor.tipo = p.tipo AND mejor.modo = p.modo
-             AND (mejor.pct > p.pct OR (mejor.pct = p.pct AND mejor.tiempo_ms < p.tiempo_ms))
-            WHERE p.usuario_id = ? AND p.tipo = ? AND p.modo = ? AND mejor.id IS NULL
-            LIMIT 1';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$usuarioId, $tipo, $modo]);
-    $fila = $stmt->fetch();
-    return $fila ?: null;
+    return ruta_almacen('puntuaciones.json');
 }
 
-/**
- * Ranking (mejor puntuación por usuario) para un tipo/modo, ordenado por
- * porcentaje descendente y tiempo ascendente.
- */
-function ranking_tipo_modo(PDO $pdo, string $tipo, string $modo, int $limite = 100): array
+function puntuaciones_todas(): array
 {
-    $sql = 'SELECT u.nombre_usuario, p.usuario_id, p.aciertos, p.total, p.pct, p.tiempo_ms, p.creado_en
-            FROM puntuaciones p
-            JOIN usuarios u ON u.id = p.usuario_id
-            LEFT JOIN puntuaciones mejor
-              ON mejor.usuario_id = p.usuario_id
-             AND mejor.tipo = p.tipo AND mejor.modo = p.modo
-             AND (mejor.pct > p.pct OR (mejor.pct = p.pct AND mejor.tiempo_ms < p.tiempo_ms))
-            WHERE p.tipo = ? AND p.modo = ? AND mejor.id IS NULL
-            ORDER BY p.pct DESC, p.tiempo_ms ASC
-            LIMIT ' . (int) $limite;
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$tipo, $modo]);
-    return $stmt->fetchAll();
+    $datos = leer_json(ruta_puntuaciones(), ['siguiente_id' => 1, 'puntuaciones' => []]);
+    return $datos['puntuaciones'] ?? [];
 }
 
-/**
- * Posición (1-indexada) que ocuparía una puntuación dada dentro del ranking.
- */
-function posicion_en_ranking(PDO $pdo, string $tipo, string $modo, float $pct, int $tiempoMs): int
+/** ¿$a es mejor puntuación que $b? (mayor % y, en empate, menor tiempo) */
+function es_mejor_puntuacion(array $a, array $b): bool
 {
-    $sql = 'SELECT COUNT(DISTINCT p.usuario_id) AS mejores
-            FROM puntuaciones p
-            WHERE p.tipo = ? AND p.modo = ?
-              AND (p.pct > ? OR (p.pct = ? AND p.tiempo_ms < ?))';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$tipo, $modo, $pct, $pct, $tiempoMs]);
-    return (int) $stmt->fetchColumn() + 1;
+    if ($a['pct'] != $b['pct']) {
+        return $a['pct'] > $b['pct'];
+    }
+    return $a['tiempo_ms'] < $b['tiempo_ms'];
 }
 
-function guardar_puntuacion(PDO $pdo, int $usuarioId, string $tipo, string $modo, int $aciertos, int $total, int $tiempoMs): void
+/** Mejor puntuación de cada usuario para un tipo/modo: [usuario_id => registro] */
+function mejores_por_usuario(string $tipo, string $modo): array
+{
+    $mejores = [];
+    foreach (puntuaciones_todas() as $p) {
+        if ($p['tipo'] !== $tipo || $p['modo'] !== $modo) {
+            continue;
+        }
+        $uid = (int) $p['usuario_id'];
+        if (!isset($mejores[$uid]) || es_mejor_puntuacion($p, $mejores[$uid])) {
+            $mejores[$uid] = $p;
+        }
+    }
+    return $mejores;
+}
+
+function mejor_puntuacion_usuario(int $usuarioId, string $tipo, string $modo): ?array
+{
+    return mejores_por_usuario($tipo, $modo)[$usuarioId] ?? null;
+}
+
+function ranking_tipo_modo(string $tipo, string $modo, int $limite = 100): array
+{
+    $filas = [];
+    foreach (mejores_por_usuario($tipo, $modo) as $uid => $p) {
+        $usuario = usuario_por_id($uid);
+        if ($usuario === null) {
+            continue;
+        }
+        $filas[] = [
+            'nombre_usuario' => $usuario['nombre_usuario'],
+            'usuario_id' => $uid,
+            'aciertos' => $p['aciertos'],
+            'total' => $p['total'],
+            'pct' => $p['pct'],
+            'tiempo_ms' => $p['tiempo_ms'],
+            'creado_en' => $p['creado_en'],
+        ];
+    }
+
+    usort($filas, function (array $a, array $b): int {
+        if ($a['pct'] != $b['pct']) {
+            return $b['pct'] <=> $a['pct'];
+        }
+        return $a['tiempo_ms'] <=> $b['tiempo_ms'];
+    });
+
+    return array_slice($filas, 0, $limite);
+}
+
+function posicion_en_ranking(string $tipo, string $modo, float $pct, int $tiempoMs): int
+{
+    $candidato = ['pct' => $pct, 'tiempo_ms' => $tiempoMs];
+    $mejoresQueYo = 0;
+    foreach (mejores_por_usuario($tipo, $modo) as $p) {
+        if (es_mejor_puntuacion($p, $candidato)) {
+            $mejoresQueYo++;
+        }
+    }
+    return $mejoresQueYo + 1;
+}
+
+function total_jugadores(string $tipo, string $modo): int
+{
+    return count(mejores_por_usuario($tipo, $modo));
+}
+
+function guardar_puntuacion(int $usuarioId, string $tipo, string $modo, int $aciertos, int $total, int $tiempoMs): void
 {
     $pct = $total > 0 ? round(($aciertos / $total) * 100, 2) : 0.0;
-    $stmt = $pdo->prepare(
-        'INSERT INTO puntuaciones (usuario_id, tipo, modo, aciertos, total, pct, tiempo_ms)
-         VALUES (?, ?, ?, ?, ?, ?, ?)'
-    );
-    $stmt->execute([$usuarioId, $tipo, $modo, $aciertos, $total, $pct, $tiempoMs]);
+
+    actualizar_json(ruta_puntuaciones(), ['siguiente_id' => 1, 'puntuaciones' => []], function (array $datos) use ($usuarioId, $tipo, $modo, $aciertos, $total, $pct, $tiempoMs) {
+        $id = $datos['siguiente_id'] ?? 1;
+        $datos['puntuaciones'][] = [
+            'id' => $id,
+            'usuario_id' => $usuarioId,
+            'tipo' => $tipo,
+            'modo' => $modo,
+            'aciertos' => $aciertos,
+            'total' => $total,
+            'pct' => $pct,
+            'tiempo_ms' => $tiempoMs,
+            'creado_en' => date('Y-m-d H:i:s'),
+        ];
+        $datos['siguiente_id'] = $id + 1;
+
+        return ['datos' => $datos, 'valor' => null];
+    });
 }
 
 function formatear_tiempo(int $tiempoMs): string
