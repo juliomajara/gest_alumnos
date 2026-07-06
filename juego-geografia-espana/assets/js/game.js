@@ -10,7 +10,7 @@
     return copia;
   }
 
-  var NUM_OPCIONES = 8;
+  var NUM_OPCIONES = 6;
 
   function lanzarConfeti() {
     var colores = ['#e8622c', '#f4b942', '#1f6f78', '#2fae66', '#8b5fbf'];
