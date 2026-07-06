@@ -28,13 +28,21 @@
     }
   }
 
+  function formatearTiempo(ms) {
+    var centesimas = Math.floor((ms % 1000) / 10);
+    var segundosTotales = Math.floor(ms / 1000);
+    var minutos = Math.floor(segundosTotales / 60);
+    var segundos = segundosTotales % 60;
+    return minutos + ':' + (segundos < 10 ? '0' : '') + segundos + '.' + (centesimas < 10 ? '0' : '') + centesimas;
+  }
+
   window.iniciarJuego = function (config) {
     var tipo = config.tipo;
     var modo = config.modo;
+    var variante = config.variante;
     var items = config.items;
     var provinciaCcaa = config.provinciaCcaa || null;
     var ccaaVecinas = config.ccaaVecinas || {};
-    var storageKey = tipo + '-' + modo;
 
     function construirPoolCercano(nombreActual) {
       if (tipo === 'provincias') {
@@ -75,10 +83,14 @@
     var opcionesGrid = document.getElementById('opciones-grid');
     var feedbackToast = document.getElementById('feedback-toast');
 
+    var tiraTiempo = document.getElementById('tira-tiempo');
+
     var overlayFinal = document.getElementById('overlay-final');
     var finalPct = document.getElementById('final-pct');
     var finalDetalle = document.getElementById('final-detalle');
-    var finalRecord = document.getElementById('final-record');
+    var finalCronometro = document.getElementById('final-cronometro');
+    var finalAvisoAprendizaje = document.getElementById('final-aviso-aprendizaje');
+    var finalLinkRanking = document.getElementById('final-link-ranking');
     var finalFallos = document.getElementById('final-fallos');
     var btnReintentar = document.getElementById('btn-reintentar');
     var btnSonido = document.getElementById('btn-sonido');
@@ -91,6 +103,26 @@
     var fallos = [];
     var nombreActual = null;
     var esperandoSiguiente = false;
+
+    var horaInicio = null;
+    var idIntervaloReloj = null;
+
+    function iniciarCronometro() {
+      if (variante !== 'cronometrado') return;
+      tiraTiempo.classList.remove('oculta');
+      horaInicio = performance.now();
+      idIntervaloReloj = setInterval(function () {
+        tiraTiempo.textContent = '⏱ ' + formatearTiempo(performance.now() - horaInicio);
+      }, 100);
+    }
+
+    function detenerCronometro() {
+      if (idIntervaloReloj !== null) {
+        clearInterval(idIntervaloReloj);
+        idIntervaloReloj = null;
+      }
+      return horaInicio !== null ? Math.round(performance.now() - horaInicio) : 0;
+    }
 
     var zoom = crearMapZoom(mapWrap, mapInner, {
       onTap: function (x, y) {
@@ -233,11 +265,10 @@
     }
 
     function finalizarJuego() {
+      var tiempoMs = detenerCronometro();
       var pct = Math.round((aciertos / total) * 100);
-      var esRecord = GeoStats.registrar(storageKey, aciertos, total);
       finalPct.textContent = pct + '%';
       finalDetalle.textContent = 'Aciertos: ' + aciertos + ' de ' + total;
-      finalRecord.style.display = esRecord ? 'inline-block' : 'none';
 
       finalFallos.innerHTML = '';
       if (fallos.length === 0) {
@@ -256,6 +287,30 @@
         });
         finalFallos.appendChild(titulo);
         finalFallos.appendChild(ul);
+      }
+
+      finalLinkRanking.href = 'ranking.php?tipo=' + tipo + '&modo=' + modo;
+
+      if (variante === 'cronometrado') {
+        finalCronometro.textContent = '⏱ Tiempo: ' + formatearTiempo(tiempoMs) + ' — guardando en el ranking…';
+        finalCronometro.classList.remove('oculta');
+        finalLinkRanking.classList.remove('oculta');
+        fetch('guardar_puntuacion.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tipo: tipo, modo: modo, aciertos: aciertos, total: total, tiempoMs: tiempoMs })
+        }).then(function (r) { return r.json(); }).then(function (respuesta) {
+          if (respuesta.ok) {
+            finalCronometro.textContent = '⏱ Tiempo: ' + respuesta.tiempoFormateado +
+              ' — Puesto ' + respuesta.posicion + ' de ' + respuesta.totalJugadores;
+          } else {
+            finalCronometro.textContent = '⏱ Tiempo: ' + formatearTiempo(tiempoMs) + ' — no se pudo guardar el ranking.';
+          }
+        }).catch(function () {
+          finalCronometro.textContent = '⏱ Tiempo: ' + formatearTiempo(tiempoMs) + ' — no se pudo guardar el ranking.';
+        });
+      } else {
+        finalAvisoAprendizaje.classList.remove('oculta');
       }
 
       overlayFinal.classList.add('visible');
@@ -287,6 +342,7 @@
     }
 
     puntosTotalEl.textContent = total;
+    iniciarCronometro();
     siguientePregunta();
   };
 })();

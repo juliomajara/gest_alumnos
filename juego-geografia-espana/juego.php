@@ -1,13 +1,15 @@
 <?php
 require_once __DIR__ . '/includes/helpers.php';
+require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/puntuaciones.php';
 
-$tipos_validos = ['provincias', 'ccaa'];
-$modos_validos = ['reconocer', 'tocar'];
+requerir_login();
 
 $tipo = $_GET['tipo'] ?? '';
 $modo = $_GET['modo'] ?? '';
+$variante = $_GET['variante'] ?? '';
 
-if (!in_array($tipo, $tipos_validos, true) || !in_array($modo, $modos_validos, true)) {
+if (!in_array($tipo, TIPOS_VALIDOS, true) || !in_array($modo, MODOS_VALIDOS, true) || !in_array($variante, VARIANTES_VALIDAS, true)) {
     header('Location: index.php');
     exit;
 }
@@ -28,6 +30,7 @@ if ($tipo === 'provincias') {
 }
 
 $titulo_modo = $modo === 'reconocer' ? 'Reconoce el mapa' : 'Toca el mapa';
+$titulo_variante = $variante === 'cronometrado' ? 'Cronometrado' : 'Aprendizaje';
 $svg_contenido = file_get_contents($svg_path);
 
 $page_title = $titulo_tipo . ' · ' . $titulo_modo . ' — GeoEspaña';
@@ -39,7 +42,7 @@ require __DIR__ . '/includes/header.php';
     <a class="btn-volver" href="index.php" aria-label="Volver al menú">‹</a>
     <div class="juego-titulo">
       <h1><?= h($titulo_tipo) ?></h1>
-      <p><?= h($titulo_modo) ?></p>
+      <p><?= h($titulo_modo) ?> · <?= h($titulo_variante) ?></p>
     </div>
     <button type="button" class="btn-sonido" id="btn-sonido" aria-label="Silenciar sonido">🔊</button>
   </header>
@@ -48,6 +51,7 @@ require __DIR__ . '/includes/header.php';
 
   <div class="tira-puntuacion">
     <span>Aciertos: <span class="puntos" id="puntos-actual">0</span> / <span id="puntos-total">0</span></span>
+    <span class="tira-tiempo oculta" id="tira-tiempo">⏱ 0:00.0</span>
     <span class="racha oculta" id="racha">🔥 Racha x<span id="racha-valor">0</span></span>
   </div>
 
@@ -78,9 +82,11 @@ require __DIR__ . '/includes/header.php';
     <h2>¡Partida terminada!</h2>
     <div class="resultado-pct" id="final-pct">0%</div>
     <p class="resultado-detalle" id="final-detalle"></p>
-    <span class="record-badge" id="final-record" style="display:none;">🌟 ¡Nuevo récord!</span>
+    <p class="resultado-detalle oculta" id="final-cronometro"></p>
+    <p class="resultado-detalle oculta" id="final-aviso-aprendizaje">Modo aprendizaje: esta partida no se guarda en el ranking.</p>
     <div class="lista-fallos" id="final-fallos"></div>
     <div class="acciones-final">
+      <a class="btn-secundario oculta" id="final-link-ranking" href="#" style="text-align:center;text-decoration:none;">Ver ranking</a>
       <button type="button" class="btn-primario" id="btn-reintentar">Jugar de nuevo</button>
       <a class="btn-secundario" href="index.php" style="text-align:center;text-decoration:none;">Menú principal</a>
     </div>
@@ -90,11 +96,12 @@ require __DIR__ . '/includes/header.php';
 <script src="assets/js/stats.js?v=2"></script>
 <script src="assets/js/sound.js?v=1"></script>
 <script src="assets/js/map-zoom.js?v=1"></script>
-<script src="assets/js/game.js?v=1"></script>
+<script src="assets/js/game.js?v=2"></script>
 <script>
   iniciarJuego({
     tipo: <?= json_encode($tipo, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     modo: <?= json_encode($modo, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
+    variante: <?= json_encode($variante, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     items: <?= json_encode(array_values($items), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     provinciaCcaa: <?= json_encode($provincia_a_ccaa, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     ccaaVecinas: <?= json_encode($ccaa_vecinas, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>
